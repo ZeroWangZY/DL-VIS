@@ -22,6 +22,7 @@
     "camelcase": "^5.3.1",
     "case-sensitive-paths-webpack-plugin": "2.2.0",
     "css-loader": "3.2.0",
+    "d3": "^4.9.1",
     "dotenv": "8.2.0",
     "dotenv-expand": "5.1.0",
     "eslint": "^6.6.0",
@@ -70,7 +71,7 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
-    "lint": "npm run lint:ts && npm run lint:style",
+    "lint": "npm run lint:ts",
     "lint:ts": "eslint -f table --ext .ts,.tsx src --fix",
     "lint:style": "stylelint 'src/**/*.css' 'src/**/*.less' --fix --color"
   },
