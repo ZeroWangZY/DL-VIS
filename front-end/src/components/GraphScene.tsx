@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import "./GraphScene.css";
+import * as d3 from "d3";
 
 const GraphScene: React.FC = () => {
+  const svgRef = useRef(null);
+  useEffect(() => {
+    console.log(svgRef);
+  });
   return (
     <div>
       <div className="titleContainer">
@@ -12,7 +17,7 @@ const GraphScene: React.FC = () => {
           Auxiliary Nodes
         </div>
       </div>
-      <svg id="svg">
+      <svg id="svg" ref={svgRef}>
         <defs>
           {/* <!-- Arrow heads for reference edge paths of different predefined sizes per color. --> */}
           <path
