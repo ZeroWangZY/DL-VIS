@@ -1,1 +1,3 @@
 *.css
+src/common/graph/parser.ts
+src/common/graph/graph.ts
