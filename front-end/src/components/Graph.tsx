@@ -2,10 +2,16 @@ import React from "react";
 import "./Graph.css";
 import GraphScene from "./GraphScene";
 import { fetchAndParseGraphData } from "../common/graph/parser";
-import { build } from "../common/graph/graph";
+import { build as graphBuild } from "../common/graph/graph";
+import { build as hierarchyBuild } from '../common/graph/hierarchy'
 
 const Graph: React.FC = () => {
   const title = "main graph";
+  let hierarchyParams = {
+    verifyTemplate: true,
+    seriesNodeMinSize: 5,
+    seriesMap: {},
+  };
   fetchAndParseGraphData(
     process.env.PUBLIC_URL + "/data/test-graph-1.pbtxt",
     null
@@ -14,7 +20,7 @@ const Graph: React.FC = () => {
       console.log(graph);
       if (!graph.node) {
         throw "The graph is empty. Make sure that the graph is passed to the " +
-          "tf.summary.FileWriter after the graph is defined.";
+        "tf.summary.FileWriter after the graph is defined.";
       }
       let refEdges: any = {};
       refEdges["Assign 0"] = true;
@@ -36,10 +42,16 @@ const Graph: React.FC = () => {
         outEmbeddingTypes: ["^[a-zA-Z]+Summary$"],
         refEdges: refEdges
       };
-      return build(graph, buildParams);
+      return graphBuild(graph, buildParams);
     })
     .then(graph => {
       console.log("graph: ", graph);
+      return hierarchyBuild(graph, hierarchyParams)
+    })
+    .then(graphHierarchy => {
+      // Update the properties which notify the parent with the
+      // graph hierarchy and whether the data has live stats or not.
+      console.log("graphHierarchy: ", graphHierarchy)
     });
 
   return (

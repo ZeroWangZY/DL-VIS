@@ -1,4 +1,5 @@
-import * as graphlib from 'graphlib'
+import * as graphlib from '@dagrejs/graphlib'
+import { Hierarchy } from './hierarchy'
 const _ = require('lodash')
 
 export const NAMESPACE_DELIM = '/';
@@ -42,6 +43,49 @@ export interface NodeDef {
   op: string;
   /** List of attributes that describe/modify the operation. */
   attr: { key: string; value: Record<string, any> }[];
+}
+
+export interface Node {
+  /** The name of the node, used frequently to look up nodes by name. */
+  name: string;
+  /** Which type of node this is. */
+  type: NodeType;
+  /**
+   * Whether this node is a type that may contain other nodes. Those types
+   * should extend from GroupNode.
+   *
+   * For an OpNode, isGroupNode will be false, even though it may have
+   * embeddings. These embedding Nodes will have their parentNode set to the
+   * OpNode. However, embeddings are later rendered as annotations, not as
+   * children to be made visible on expansion (like a Metanode or SeriesNode).
+   */
+  isGroupNode: boolean;
+  /**
+   * The number of nodes this node represents. For OpNodes, this will be 1, and
+   * for GroupNodes it will be a count of the total number of descendents it
+   * contains.
+   */
+  cardinality: number;
+  /**
+   * The Node which is this Node's parent. This is of type Node and not
+   * GroupNode because of embeddings, which will have a parent OpNode.
+   */
+  parentNode: Node;
+  /** Runtime execution stats for this node, if available */
+  stats: NodeStats;
+  /** If the node is to be included or excluded from the main graph when
+   *  rendered. Defaults to UNSPECIFIED, which means that the rendering
+   *  algorithm determines if it will be included or not. Then can be set to
+   *  INCLUDE or EXCLUDE manually by the user.
+   */
+  include: InclusionType;
+  /**
+   * Node attributes specify customizable visual aspects of a node and
+   * application-specific metadata associated with a node. The name
+   * 'nodeAttributes' is meant to avoid naming-conflicts with the 'attr' in
+   * subclasses of Node.
+   */
+  nodeAttributes: { [key: string]: any; };
 }
 
 export interface VersionDef {
@@ -154,12 +198,167 @@ export interface OpNode extends Node {
   functionOutputIndex: number | undefined;
 }
 
-export interface BaseEdge extends graphlib.Edge {
+export interface BaseEdge extends graphlib.EdgeObject {
   isControlDependency: boolean;
   isReferenceEdge: boolean;
   /** The index of the output tensor of the source node. */
   outputTensorKey: string;
 }
+
+export interface Metaedge extends graphlib.EdgeObject {
+
+  /**
+   * Stores the original BaseEdges represented by this Metaedge.
+   */
+  baseEdgeList: BaseEdge[];
+
+  /**
+   * Whether this edge represents a relationship that is inbound (or outbound)
+   * to the object which contains this information. For example, in a Metanode's
+   * bridgegraph, each edge connects an immediate child to something outside
+   * the Metanode. If the destination of the edge is inside the Metanode, then
+   * its inbound property should be true. If the destination is outside the
+   * Metanode, then its inbound property should be false.
+   *
+   * The property is optional because not all edges can be described as
+   * inbound/outbound. For example, in a Metanode's metagraph, all of the edges
+   * connect immediate children of the Metanode. None should have an inbound
+   * property, or they should be null/undefined.
+   */
+  inbound?: boolean;
+
+  /**
+   * Number of regular edges (not control dependency edges).
+   */
+  numRegularEdges: number;
+
+  /**
+   * Number of control dependency edges.
+   */
+  numControlEdges: number;
+
+  /**
+   * Number of reference edges, which is an edge to an operation
+   * that takes a reference to its input and changes its value.
+   */
+  numRefEdges: number;
+
+  /**
+   * Total size (number of units) of all the tensors flowing through this edge.
+   */
+  totalSize: number;
+
+  addBaseEdge(edge: BaseEdge, h: Hierarchy): void;
+}
+
+export interface GroupNode extends Node {
+
+  metagraph: graphlib.Graph<GroupNode | OpNode, Metaedge>;
+
+  bridgegraph: graphlib.Graph<GroupNode | OpNode, Metaedge>;
+
+  deviceHistogram: { [device: string]: number };
+
+  compatibilityHistogram: { compatible: number, incompatible: number }
+
+  hasNonControlEdges: boolean;
+}
+export interface Metanode extends GroupNode {
+  depth: number;
+  templateId: string;
+  opHistogram: { [op: string]: number };
+  getFirstChild(): GroupNode | OpNode;
+  getRootOp(): OpNode;
+  /** Return name of all leaves inside a metanode. */
+  leaves(): string[];
+}
+
+export class MetanodeImpl implements Metanode {
+  name: string;
+  stats: NodeStats;
+  type: NodeType;
+  depth: number;
+  isGroupNode: boolean;
+  cardinality: number;
+  metagraph: graphlib.Graph<GroupNode | OpNode, Metaedge>;
+  bridgegraph: graphlib.Graph<GroupNode | OpNode, Metaedge>;
+  templateId: string;
+  opHistogram: { [op: string]: number };
+  deviceHistogram: { [op: string]: number };
+  compatibilityHistogram: { compatible: number, incompatible: number };
+  parentNode: Node;
+  hasNonControlEdges: boolean;
+  include: InclusionType;
+  nodeAttributes: { [key: string]: any; };
+
+  /** A label object for meta-nodes in the graph hierarchy */
+  constructor(name: string, opt = {}) {
+    this.name = name;
+    this.type = NodeType.META;
+    /** number of levels under this group */
+    this.depth = 1;
+    this.isGroupNode = true;
+    /** # of leaf nodes (including embedded ones) */
+    this.cardinality = 0;
+    /** graph contains metanodes, nodes, edges
+     * and metaedges for main items within this metanode
+     */
+    this.metagraph =
+      createGraph<GroupNode | OpNode, Metaedge>(name, GraphType.META, opt);
+    /** bridgegraph must be constructed lazily-see hierarchy.getBridgegraph() */
+    this.bridgegraph = null;
+    /**
+     * A dictionary that count ops type of nodes in this metanode
+     * (op type => count).
+     */
+    this.opHistogram = {};
+    this.deviceHistogram = {};
+    this.compatibilityHistogram = { compatible: 0, incompatible: 0 };
+    /** unique id for a metanode of similar subgraph */
+    this.templateId = null;
+    /** Metanode which contains this node, if any */
+    this.parentNode = null;
+    this.hasNonControlEdges = false;
+    this.include = InclusionType.UNSPECIFIED;
+  }
+
+  getFirstChild(): GroupNode | OpNode {
+    return this.metagraph.node(this.metagraph.nodes()[0]);
+  }
+
+  /**
+   * Returns the op node associated with the metanode.
+   * For example, if the metanode is 'sgd', the associated
+   * op node is sgd/(sgd).
+   */
+  getRootOp(): OpNode {
+    let nameSplit = this.name.split('/');
+    let rootOpName = this.name + '/(' + nameSplit[nameSplit.length - 1] + ')';
+    return <OpNode>this.metagraph.node(rootOpName);
+  }
+
+  /**
+   * Return an array of the names of all the leaves (non-GroupNodes) inside
+   * this metanode. This performs a breadth-first search of the tree, so
+   * immediate child leaves will appear earlier in the output array than
+   * descendant leaves.
+   */
+  leaves(): string[] {
+    let leaves = [];
+    let queue = [<Node>this];
+    let metagraph; // Defined here due to a limitation of ES6->5 compilation.
+    while (queue.length) {
+      let node = queue.shift();
+      if (node.isGroupNode) {
+        metagraph = (<GroupNode>node).metagraph;
+        _.each(metagraph.nodes(), name => queue.push(metagraph.node(name)));
+      } else {
+        leaves.push(node.name);
+      }
+    }
+    return leaves;
+  }
+};
 
 export class SlimGraph {
   nodes: { [nodeName: string]: OpNode };
@@ -260,6 +459,10 @@ export class NodeStats {
     }
     return this.endTime - this.startTime;
   }
+}
+
+export function createMetanode(name: string, opt = {}): Metanode {
+  return new MetanodeImpl(name, opt);
 }
 
 function normalizeInputs(inputs: string[]): NormalizedInput[] {
@@ -386,120 +589,32 @@ function addEdgeToGraph(
 }
 
 export class OpNodeImpl implements OpNode {
-  baseURI: string;
-  childNodes: NodeListOf<ChildNode>;
-  firstChild: ChildNode | null;
-  isConnected: boolean;
-  lastChild: ChildNode | null;
-  namespaceURI: string | null;
-  nextSibling: ChildNode | null;
-  nodeName: string;
-  nodeType: number;
-  nodeValue: string | null;
-  ownerDocument: Document | null;
-  parentElement: HTMLElement | null;
-  previousSibling: Node | null;
-  textContent: string | null;
-  appendChild<T extends Node>(newChild: T): T {
-    throw new Error("Method not implemented.");
-  }
-  cloneNode(deep?: boolean | undefined): Node {
-    throw new Error("Method not implemented.");
-  }
-  compareDocumentPosition(other: Node): number {
-    throw new Error("Method not implemented.");
-  }
-  contains(other: Node | null): boolean {
-    throw new Error("Method not implemented.");
-  }
-  getRootNode(options?: GetRootNodeOptions | undefined): Node {
-    throw new Error("Method not implemented.");
-  }
-  hasChildNodes(): boolean {
-    throw new Error("Method not implemented.");
-  }
-  insertBefore<T extends Node>(newChild: T, refChild: Node | null): T {
-    throw new Error("Method not implemented.");
-  }
-  isDefaultNamespace(namespace: string | null): boolean {
-    throw new Error("Method not implemented.");
-  }
-  isEqualNode(otherNode: Node | null): boolean {
-    throw new Error("Method not implemented.");
-  }
-  isSameNode(otherNode: Node | null): boolean {
-    throw new Error("Method not implemented.");
-  }
-  lookupNamespaceURI(prefix: string | null): string | null {
-    throw new Error("Method not implemented.");
-  }
-  lookupPrefix(namespace: string | null): string | null {
-    throw new Error("Method not implemented.");
-  }
-  normalize(): void {
-    throw new Error("Method not implemented.");
-  }
-  removeChild<T extends Node>(oldChild: T): T {
-    throw new Error("Method not implemented.");
-  }
-  replaceChild<T extends Node>(newChild: Node, oldChild: T): T {
-    throw new Error("Method not implemented.");
-  }
-  ATTRIBUTE_NODE: number;
-  CDATA_SECTION_NODE: number;
-  COMMENT_NODE: number;
-  DOCUMENT_FRAGMENT_NODE: number;
-  DOCUMENT_NODE: number;
-  DOCUMENT_POSITION_CONTAINED_BY: number;
-  DOCUMENT_POSITION_CONTAINS: number;
-  DOCUMENT_POSITION_DISCONNECTED: number;
-  DOCUMENT_POSITION_FOLLOWING: number;
-  DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC: number;
-  DOCUMENT_POSITION_PRECEDING: number;
-  DOCUMENT_TYPE_NODE: number;
-  ELEMENT_NODE: number;
-  ENTITY_NODE: number;
-  ENTITY_REFERENCE_NODE: number;
-  NOTATION_NODE: number;
-  PROCESSING_INSTRUCTION_NODE: number;
-  TEXT_NODE: number;
-  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
-    throw new Error("Method not implemented.");
-  }
-  dispatchEvent(event: Event): boolean {
-    throw new Error("Method not implemented.");
-  }
-  removeEventListener(type: string, callback: EventListener | EventListenerObject | null, options?: boolean | EventListenerOptions | undefined): void {
-    throw new Error("Method not implemented.");
-  }
   name: string;
   op: string;
   device: string;
-  stats: NodeStats | undefined;
-  attr: { key: string; value: any }[];
+  stats: NodeStats;
+  attr: { key: string, value: any }[];
   inputs: NormalizedInput[];
   type: NodeType;
   isGroupNode: boolean;
   cardinality: number;
   inEmbeddings: OpNode[];
   outEmbeddings: OpNode[];
-  parentNode: Node & ParentNode | null;
+  parentNode: Node;
   include: InclusionType;
   owningSeries: string;
   outputShapes: { [key: string]: TensorShape; };
-  nodeAttributes: {
-    [key: string]: any;
-  } | undefined;
+  nodeAttributes: { [key: string]: any; };
   xlaCluster: string;
   compatible: boolean;
 
   // This field is only defined if the op node represents an input_arg to a
   // library function. It is the index of the input_arg.
-  functionInputIndex: number | undefined;
+  functionInputIndex: number;
 
   // This field is only defined if the op node represents an output_arg of a
   // library function. It is the index of the output_arg.
-  functionOutputIndex: number | undefined;
+  functionOutputIndex: number;
 
   /**
    * Constructs a new Op node.
@@ -529,6 +644,17 @@ export class OpNodeImpl implements OpNode {
     this.include = InclusionType.UNSPECIFIED;
     this.owningSeries = null;
   }
+};
+
+export function createGraph<N, E>(name: string, type, opt = {}):
+  graphlib.Graph<N, E> {
+  let graph = new graphlib.Graph<N, E>(opt);
+  graph.setGraph({
+    name: name,
+    rankdir: 'BT',  // BT,TB,LR,RL
+    type: type
+  });
+  return graph;
 };
 
 export function getHierarchicalPath(name: string,
@@ -826,4 +952,164 @@ export function build(
   });
 
   return graph;
+};
+
+export class MetaedgeImpl implements Metaedge {
+  v: string;
+  w: string;
+  baseEdgeList: BaseEdge[];
+  inbound: boolean;
+  numRegularEdges: number;
+  numControlEdges: number;
+  numRefEdges: number;
+  totalSize: number;
+
+  constructor(v: string, w: string) {
+    this.v = v;
+    this.w = w;
+    this.baseEdgeList = [];
+    this.inbound = null;
+    this.numRegularEdges = 0;
+    this.numControlEdges = 0;
+    this.numRefEdges = 0;
+    this.totalSize = 0;
+  }
+
+  addBaseEdge(edge: BaseEdge, h: Hierarchy): void {
+    this.baseEdgeList.push(edge);
+    if (edge.isControlDependency) {
+      this.numControlEdges += 1;
+    } else {
+      this.numRegularEdges += 1;
+    }
+    if (edge.isReferenceEdge) {
+      this.numRefEdges += 1;
+    }
+    // Compute the size of the tensor flowing through this
+    // base edge.
+    this.totalSize += MetaedgeImpl.computeSizeOfEdge(edge, h);
+    h.maxMetaEdgeSize = Math.max(h.maxMetaEdgeSize, this.totalSize);
+  }
+
+  private static computeSizeOfEdge(edge: BaseEdge, h: Hierarchy):
+    number {
+    let opNode = <OpNode>h.node(edge.v);
+    if (!opNode.outputShapes) {
+      // No shape information. Asssume a single number. This gives
+      // a lower bound for the total size.
+      return 1;
+    }
+    h.hasShapeInfo = true;
+
+    // Sum the sizes of all output tensors.
+    return _(opNode.outputShapes).mapValues((shape: number[]) => {
+      // If the shape is unknown, treat it as 1 when computing
+      // total size. This gives a lower bound for the total size.
+      if (shape == null) {
+        return 1;
+      }
+      // Multiply all shapes to get the total size of the tensor.
+      // E.g. The total size of [4, 2, 1] is 4 * 2 * 1.
+      return _(shape).reduce((accumulated, currSize) => {
+        // If this particular dimension is unknown, treat
+        // it as 1 when computing total size. This gives a lower bound
+        // for the total size.
+        if (currSize === -1) {
+          currSize = 1;
+        }
+        return accumulated * currSize;
+      }, 1);
+    }).sum();
+  }
+}
+
+export function createMetaedge(v: string, w: string): Metaedge {
+  return new MetaedgeImpl(v, w);
+}
+
+export interface SeriesNode extends GroupNode {
+  hasLoop: boolean;
+  prefix: string;
+  suffix: string;
+  clusterId: number;
+  ids: number[];
+  parent: string;
+}
+class SeriesNodeImpl implements SeriesNode {
+  name: string;
+  type: NodeType;
+  stats: NodeStats;
+  hasLoop: boolean;
+  prefix: string;
+  suffix: string;
+  clusterId: number;
+  ids: number[];
+  parent: string;
+  isGroupNode: boolean;
+  cardinality: number;
+  metagraph: graphlib.Graph<GroupNode | OpNode, Metaedge>;
+  bridgegraph: graphlib.Graph<GroupNode | OpNode, Metaedge>;
+  parentNode: Node;
+  deviceHistogram: { [op: string]: number };
+  compatibilityHistogram: { compatible: number, incompatible: number };
+  hasNonControlEdges: boolean;
+  include: InclusionType;
+  nodeAttributes: { [key: string]: any; };
+
+  constructor(prefix: string, suffix: string, parent: string,
+    clusterId: number, name: string) {
+    this.name = name || getSeriesNodeName(prefix, suffix, parent);
+    this.type = NodeType.SERIES;
+    this.hasLoop = false;
+    this.prefix = prefix;
+    this.suffix = suffix;
+    this.clusterId = clusterId;
+    this.ids = [];
+    this.parent = parent;
+    this.isGroupNode = true;
+    this.cardinality = 0;
+    this.metagraph = createGraph<Metanode, Metaedge>(name, GraphType.SERIES);
+    // bridgegraph must be constructed lazily-see hierarchy.getBridgegraph()
+    this.bridgegraph = null;
+    this.parentNode = null;
+    this.deviceHistogram = {};
+    this.compatibilityHistogram = { compatible: 0, incompatible: 0 };
+    this.hasNonControlEdges = false;
+    this.include = InclusionType.UNSPECIFIED;
+  }
+}
+export function createSeriesNode(prefix: string, suffix: string,
+  parent: string, clusterId: number, name: string): SeriesNode {
+  return new SeriesNodeImpl(prefix, suffix, parent, clusterId, name);
+}
+
+export function getSeriesNodeName(prefix: string, suffix: string,
+  parent: string, startId?: number, endId?: number): string {
+  let numRepresentation =
+    (typeof startId !== 'undefined' && typeof endId !== 'undefined') ?
+      '[' + startId + '-' + endId + ']' :
+      '#';
+  let pattern = prefix + numRepresentation + suffix;
+  return (parent ? parent + '/' : '') + pattern;
+}
+
+function degreeSequence(graph: graphlib.Graph<any, any>): number[] {
+  let degrees = graph.nodes().map(function (name) {
+    return graph.neighbors(name).length;
+  });
+  degrees.sort();
+  return degrees;
+};
+
+export function hasSimilarDegreeSequence(graph1: graphlib.Graph<any, any>,
+  graph2: graphlib.Graph<any, any>): boolean {
+  let dg1 = degreeSequence(graph1);
+  let dg2 = degreeSequence(graph2);
+
+  for (let i = 0; i < dg1.length; i++) {
+    if (dg1[i] !== dg2[i]) {
+      return false;
+    }
+  }
+  return true;
 };
