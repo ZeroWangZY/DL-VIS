@@ -19,7 +19,7 @@ limitations under the License.
  *     implementations are defined at runtime.
  */
 
-declare module "@dagrejs/graphlib" {
+declare module "graphlib" {
   interface GraphOptions {
     name?: string;
     /**

@@ -6,7 +6,7 @@ import {
   getSeriesNodeName, createSeriesNode
 } from './graph'
 import { detect } from './template'
-import * as graphlib from '@dagrejs/graphlib'
+import * as graphlib from 'graphlib'
 import * as d3 from "d3";
 
 const _ = require('lodash')

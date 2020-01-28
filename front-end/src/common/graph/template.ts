@@ -1,7 +1,7 @@
 const _ = require('lodash')
 import { OpNode, Metanode, NodeType, Metaedge, hasSimilarDegreeSequence, SeriesNode } from './graph'
 import { Hierarchy } from './hierarchy'
-import * as graphlib from '@dagrejs/graphlib';
+import * as graphlib from 'graphlib';
 
 export function detect(h, verifyTemplate): { [templateId: string]: string[] } {
   // In any particular subgraph, there are either
@@ -19,15 +19,17 @@ export function detect(h, verifyTemplate): { [templateId: string]: string[] } {
   // Sort the templates by minimum level in the graph at which they appear,
   // as this leads to optimal setting of the colors of each template for
   // maximum differentiation.
+
+
   return <{ [templateId: string]: string[] }>_(templates)
-    .toPairs()
+    .pairs()
     .sortBy(function (pair: { level: number, nodes: string[] }[]) {
       return pair[1].level;
     })
     .map(function (pair: { level: number, nodes: string[] }[]) {
       return [pair[0], pair[1].nodes];
     })
-    .zipObject()
+    .object()
     .value();
 };
 
@@ -81,9 +83,7 @@ function clusterSimilarSubgraphs(h: Hierarchy) {
       }
       return hash;
     }, {});
-  console.log('_ is ', _)
-  console.log('_(hashDict): ', _(hashDict))
-  return _(hashDict).toPairs()
+  return _(hashDict).pairs()
     // filter nn metanode with only one member
     .filter(function (pair: { level: number, nodes: string[] }) {
       return pair[1].nodes.length > 1;
@@ -141,7 +141,7 @@ function groupTemplateAndAssignId(nnGroups, verifyTemplate) {
 
 function sortNodes(names: string[],
   graph: graphlib.Graph<Metanode | OpNode, Metaedge>, prefix: string) {
-  return _.sortBy(names,
+  return _.sortByAll(names,
     function (name) {
       let node = graph.node(name);
       return (<OpNode>node).op;

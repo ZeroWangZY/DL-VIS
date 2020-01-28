@@ -4,6 +4,8 @@ import GraphScene from "./GraphScene";
 import { fetchAndParseGraphData } from "../common/graph/parser";
 import { build as graphBuild } from "../common/graph/graph";
 import { build as hierarchyBuild } from '../common/graph/hierarchy'
+import { build as renderBuild } from '../common/graph/render'
+import { checkOpsForCompatibility } from "../common/graph/op";
 
 const Graph: React.FC = () => {
   const title = "main graph";
@@ -17,12 +19,11 @@ const Graph: React.FC = () => {
     null
   )
     .then(graph => {
-      console.log(graph);
       if (!graph.node) {
         throw "The graph is empty. Make sure that the graph is passed to the " +
         "tf.summary.FileWriter after the graph is defined.";
       }
-      let refEdges: any = {};
+      let refEdges: Record<string, boolean> = {};
       refEdges["Assign 0"] = true;
       refEdges["AssignAdd 0"] = true;
       refEdges["AssignSub 0"] = true;
@@ -45,13 +46,14 @@ const Graph: React.FC = () => {
       return graphBuild(graph, buildParams);
     })
     .then(graph => {
-      console.log("graph: ", graph);
+      checkOpsForCompatibility(graph)
       return hierarchyBuild(graph, hierarchyParams)
     })
     .then(graphHierarchy => {
-      // Update the properties which notify the parent with the
-      // graph hierarchy and whether the data has live stats or not.
-      console.log("graphHierarchy: ", graphHierarchy)
+      return renderBuild(graphHierarchy)
+    })
+    .then(renderHierarchy => {
+      console.log("renderHierarchy: ", renderHierarchy)
     });
 
   return (

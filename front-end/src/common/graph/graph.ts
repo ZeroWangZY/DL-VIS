@@ -1,4 +1,4 @@
-import * as graphlib from '@dagrejs/graphlib'
+import * as graphlib from 'graphlib'
 import { Hierarchy } from './hierarchy'
 const _ = require('lodash')
 
@@ -197,6 +197,25 @@ export interface OpNode extends Node {
   // library function. It is the index of the output_arg.
   functionOutputIndex: number | undefined;
 }
+export interface BridgeNode extends Node {
+  /**
+   * Whether this bridge node represents edges coming into its parent node.
+   */
+  inbound: boolean;
+}
+
+export interface EllipsisNode extends Node {
+  /**
+   * The number of nodes this ellipsis represents.
+   */
+  numMoreNodes: number;
+
+  /**
+   * Sets the number of nodes this ellipsis represents and changes the node
+   * name accordingly.
+   */
+  setNumMoreNodes(numNodes: number);
+}
 
 export interface BaseEdge extends graphlib.EdgeObject {
   isControlDependency: boolean;
@@ -359,7 +378,36 @@ export class MetanodeImpl implements Metanode {
     return leaves;
   }
 };
+export class EllipsisNodeImpl implements EllipsisNode {
+  name: string;
+  numMoreNodes: number;
+  stats: NodeStats;
+  type: NodeType;
+  isGroupNode: boolean;
+  cardinality: number;
+  parentNode: Node;
+  include: InclusionType;
+  nodeAttributes: {[key: string]: any;};
+  /**
+   * Constructs a new ellipsis annotation node.
+   *
+   * @param numNodes The number of additional annotations this node represents.
+   */
+  constructor(numNodes: number) {
+    this.type = NodeType.ELLIPSIS;
+    this.isGroupNode = false;
+    this.cardinality = 1;
+    this.parentNode = null;
+    this.stats = null;
+    this.setNumMoreNodes(numNodes);
+    this.include = InclusionType.UNSPECIFIED;
+  }
 
+  setNumMoreNodes(numNodes: number) {
+    this.numMoreNodes = numNodes;
+    this.name = '... ' + numNodes + ' more';
+  }
+};
 export class SlimGraph {
   nodes: { [nodeName: string]: OpNode };
   edges: BaseEdge[];

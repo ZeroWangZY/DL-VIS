@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import "./GraphScene.css";
-import * as d3 from "d3";
+// import * as d3 from "d3";
 
 const GraphScene: React.FC = () => {
   const svgRef = useRef(null);

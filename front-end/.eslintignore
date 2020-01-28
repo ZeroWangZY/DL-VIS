@@ -1,5 +1,2 @@
 *.css
-src/common/graph/parser.ts
-src/common/graph/graph.ts
-src/common/graph/hierarchy.ts
-src/common/graph/template.ts
+src/common/graph/*.ts
