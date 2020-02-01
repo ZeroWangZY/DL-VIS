@@ -88,6 +88,22 @@ export interface Node {
   nodeAttributes: { [key: string]: any; };
 }
 
+export function getIncludeNodeButtonString(include: InclusionType) {
+  if (include === InclusionType.EXCLUDE) {
+    return 'Add to main graph';
+  } else {
+    return 'Remove from main graph';
+  }
+};
+
+export function getGroupSeriesNodeButtonString(group: SeriesGroupingType) {
+  if (group === SeriesGroupingType.GROUP) {
+    return 'Ungroup this series of nodes';
+  } else {
+    return 'Group this series of nodes';
+  }
+};
+
 export interface VersionDef {
   // The version of the code that produced this data.
   producer: number;
@@ -387,7 +403,7 @@ export class EllipsisNodeImpl implements EllipsisNode {
   cardinality: number;
   parentNode: Node;
   include: InclusionType;
-  nodeAttributes: {[key: string]: any;};
+  nodeAttributes: { [key: string]: any; };
   /**
    * Constructs a new ellipsis annotation node.
    *

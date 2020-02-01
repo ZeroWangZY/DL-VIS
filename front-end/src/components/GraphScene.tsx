@@ -1,12 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import "./GraphScene.css";
+import { RenderGraphInfo } from "../common/graph/render";
+import { layoutScene } from "../common/graph/layout";
 // import * as d3 from "d3";
+interface GraphSceneProps {
+  renderHierarchy: RenderGraphInfo;
+}
 
-const GraphScene: React.FC = () => {
+const GraphScene: React.FC<GraphSceneProps> = (props: GraphSceneProps) => {
   const svgRef = useRef(null);
+  let { renderHierarchy } = props
   useEffect(() => {
-    console.log(svgRef);
-  });
+    if (renderHierarchy !== null) {
+      layoutScene(renderHierarchy.root)
+    }
+  }, [renderHierarchy]);
   return (
     <div>
       <div className="titleContainer">

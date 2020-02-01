@@ -27,7 +27,7 @@ declare module "graphlib" {
      * B = bottom, L = left, and R = right.
      */
     rankdir?: string;
-    type?: string|number;
+    type?: string | number;
     /** Number of pixels between each rank in the layout. */
     ranksep?: number;
     /** Number of pixels that separate nodes horizontally in the layout. */
@@ -78,3 +78,5 @@ declare module "graphlib" {
     setParent(name: string, parentName: string): void;
   }
 }
+
+declare const dagre: { layout(graph: graphlib.Graph<any, any>): void };
