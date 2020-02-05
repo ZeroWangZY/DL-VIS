@@ -1,0 +1,10411 @@
+node {
+  name: "train_inputs"
+  op: "Placeholder"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 256
+        }
+        dim {
+          size: 28
+        }
+        dim {
+          size: 28
+        }
+        dim {
+          size: 1
+        }
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\001\000\000\000@\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.10127393901348114
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.10127393901348114
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/max"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 1
+        }
+        dim {
+          size: 64
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv1_1/weights"
+  input: "train_network/conv1_1/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/weights/read"
+  op: "Identity"
+  input: "train_network/conv1_1/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 64
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 64
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv1_1/biases"
+  input: "train_network/conv1_1/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/biases/read"
+  op: "Identity"
+  input: "train_network/conv1_1/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_1/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/conv"
+  op: "Conv2D"
+  input: "train_inputs"
+  input: "train_network/conv1_1/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv1_1/conv"
+  input: "train_network/conv1_1/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv1_1/relu"
+  op: "Relu"
+  input: "train_network/conv1_1/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000@\000\000\000@\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.07216878235340118
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.07216878235340118
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/max"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 64
+        }
+        dim {
+          size: 64
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv1_2/weights"
+  input: "train_network/conv1_2/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/weights/read"
+  op: "Identity"
+  input: "train_network/conv1_2/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 64
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 64
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv1_2/biases"
+  input: "train_network/conv1_2/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/biases/read"
+  op: "Identity"
+  input: "train_network/conv1_2/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv1_2/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/conv"
+  op: "Conv2D"
+  input: "train_network/conv1_1/relu"
+  input: "train_network/conv1_2/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv1_2/conv"
+  input: "train_network/conv1_2/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv1_2/relu"
+  op: "Relu"
+  input: "train_network/conv1_2/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/pool1/pool1"
+  op: "MaxPool"
+  input: "train_network/conv1_2/relu"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "ksize"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000@\000\000\000\200\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.0589255653321743
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0589255653321743
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/max"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 64
+        }
+        dim {
+          size: 128
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv2_1/weights"
+  input: "train_network/conv2_1/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/weights/read"
+  op: "Identity"
+  input: "train_network/conv2_1/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 128
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 128
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv2_1/biases"
+  input: "train_network/conv2_1/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/biases/read"
+  op: "Identity"
+  input: "train_network/conv2_1/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_1/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/conv"
+  op: "Conv2D"
+  input: "train_network/pool1/pool1"
+  input: "train_network/conv2_1/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv2_1/conv"
+  input: "train_network/conv2_1/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv2_1/relu"
+  op: "Relu"
+  input: "train_network/conv2_1/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\200\000\000\000\200\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.05103103816509247
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.05103103816509247
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/max"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 128
+        }
+        dim {
+          size: 128
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv2_2/weights"
+  input: "train_network/conv2_2/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/weights/read"
+  op: "Identity"
+  input: "train_network/conv2_2/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 128
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 128
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv2_2/biases"
+  input: "train_network/conv2_2/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/biases/read"
+  op: "Identity"
+  input: "train_network/conv2_2/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv2_2/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/conv"
+  op: "Conv2D"
+  input: "train_network/conv2_1/relu"
+  input: "train_network/conv2_2/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv2_2/conv"
+  input: "train_network/conv2_2/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv2_2/relu"
+  op: "Relu"
+  input: "train_network/conv2_2/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/pool2/pool2"
+  op: "MaxPool"
+  input: "train_network/conv2_2/relu"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "ksize"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\200\000\000\000\000\001\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.0416666679084301
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0416666679084301
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/max"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 128
+        }
+        dim {
+          size: 256
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv3_1/weights"
+  input: "train_network/conv3_1/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/weights/read"
+  op: "Identity"
+  input: "train_network/conv3_1/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 256
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 256
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv3_1/biases"
+  input: "train_network/conv3_1/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/biases/read"
+  op: "Identity"
+  input: "train_network/conv3_1/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_1/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/conv"
+  op: "Conv2D"
+  input: "train_network/pool2/pool2"
+  input: "train_network/conv3_1/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv3_1/conv"
+  input: "train_network/conv3_1/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv3_1/relu"
+  op: "Relu"
+  input: "train_network/conv3_1/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\001\000\000\000\001\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.03608439117670059
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.03608439117670059
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/max"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 256
+        }
+        dim {
+          size: 256
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv3_2/weights"
+  input: "train_network/conv3_2/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/weights/read"
+  op: "Identity"
+  input: "train_network/conv3_2/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 256
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 256
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv3_2/biases"
+  input: "train_network/conv3_2/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/biases/read"
+  op: "Identity"
+  input: "train_network/conv3_2/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_2/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/conv"
+  op: "Conv2D"
+  input: "train_network/conv3_1/relu"
+  input: "train_network/conv3_2/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv3_2/conv"
+  input: "train_network/conv3_2/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv3_2/relu"
+  op: "Relu"
+  input: "train_network/conv3_2/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\001\000\000\000\001\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.03608439117670059
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.03608439117670059
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/max"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 256
+        }
+        dim {
+          size: 256
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv3_3/weights"
+  input: "train_network/conv3_3/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/weights/read"
+  op: "Identity"
+  input: "train_network/conv3_3/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 256
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 256
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv3_3/biases"
+  input: "train_network/conv3_3/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/biases/read"
+  op: "Identity"
+  input: "train_network/conv3_3/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv3_3/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/conv"
+  op: "Conv2D"
+  input: "train_network/conv3_2/relu"
+  input: "train_network/conv3_3/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv3_3/conv"
+  input: "train_network/conv3_3/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv3_3/relu"
+  op: "Relu"
+  input: "train_network/conv3_3/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/pool3/pool3"
+  op: "MaxPool"
+  input: "train_network/conv3_3/relu"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "ksize"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\001\000\000\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.02946278266608715
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.02946278266608715
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/max"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 256
+        }
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv4_1/weights"
+  input: "train_network/conv4_1/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/weights/read"
+  op: "Identity"
+  input: "train_network/conv4_1/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 512
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv4_1/biases"
+  input: "train_network/conv4_1/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/biases/read"
+  op: "Identity"
+  input: "train_network/conv4_1/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_1/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/conv"
+  op: "Conv2D"
+  input: "train_network/pool3/pool3"
+  input: "train_network/conv4_1/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv4_1/conv"
+  input: "train_network/conv4_1/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv4_1/relu"
+  op: "Relu"
+  input: "train_network/conv4_1/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\002\000\000\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/max"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 512
+        }
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv4_2/weights"
+  input: "train_network/conv4_2/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/weights/read"
+  op: "Identity"
+  input: "train_network/conv4_2/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 512
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv4_2/biases"
+  input: "train_network/conv4_2/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/biases/read"
+  op: "Identity"
+  input: "train_network/conv4_2/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_2/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/conv"
+  op: "Conv2D"
+  input: "train_network/conv4_1/relu"
+  input: "train_network/conv4_2/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv4_2/conv"
+  input: "train_network/conv4_2/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv4_2/relu"
+  op: "Relu"
+  input: "train_network/conv4_2/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\002\000\000\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/max"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 512
+        }
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv4_3/weights"
+  input: "train_network/conv4_3/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/weights/read"
+  op: "Identity"
+  input: "train_network/conv4_3/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 512
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv4_3/biases"
+  input: "train_network/conv4_3/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/biases/read"
+  op: "Identity"
+  input: "train_network/conv4_3/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv4_3/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/conv"
+  op: "Conv2D"
+  input: "train_network/conv4_2/relu"
+  input: "train_network/conv4_3/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv4_3/conv"
+  input: "train_network/conv4_3/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv4_3/relu"
+  op: "Relu"
+  input: "train_network/conv4_3/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/pool4/pool4"
+  op: "MaxPool"
+  input: "train_network/conv4_3/relu"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "ksize"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\002\000\000\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/max"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 512
+        }
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv5_1/weights"
+  input: "train_network/conv5_1/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/weights/read"
+  op: "Identity"
+  input: "train_network/conv5_1/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 512
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv5_1/biases"
+  input: "train_network/conv5_1/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/biases/read"
+  op: "Identity"
+  input: "train_network/conv5_1/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_1/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/conv"
+  op: "Conv2D"
+  input: "train_network/pool4/pool4"
+  input: "train_network/conv5_1/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv5_1/conv"
+  input: "train_network/conv5_1/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv5_1/relu"
+  op: "Relu"
+  input: "train_network/conv5_1/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\002\000\000\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/max"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 512
+        }
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv5_2/weights"
+  input: "train_network/conv5_2/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/weights/read"
+  op: "Identity"
+  input: "train_network/conv5_2/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 512
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv5_2/biases"
+  input: "train_network/conv5_2/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/biases/read"
+  op: "Identity"
+  input: "train_network/conv5_2/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_2/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/conv"
+  op: "Conv2D"
+  input: "train_network/conv5_1/relu"
+  input: "train_network/conv5_2/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv5_2/conv"
+  input: "train_network/conv5_2/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv5_2/relu"
+  op: "Relu"
+  input: "train_network/conv5_2/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\003\000\000\000\003\000\000\000\000\002\000\000\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.025515519082546234
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/max"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/mul"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 3
+        }
+        dim {
+          size: 3
+        }
+        dim {
+          size: 512
+        }
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/Assign"
+  op: "Assign"
+  input: "train_network/conv5_3/weights"
+  input: "train_network/conv5_3/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/weights/read"
+  op: "Identity"
+  input: "train_network/conv5_3/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 512
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/biases/Assign"
+  op: "Assign"
+  input: "train_network/conv5_3/biases"
+  input: "train_network/conv5_3/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/biases/read"
+  op: "Identity"
+  input: "train_network/conv5_3/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/conv5_3/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/conv"
+  op: "Conv2D"
+  input: "train_network/conv5_2/relu"
+  input: "train_network/conv5_3/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/bias_add"
+  op: "BiasAdd"
+  input: "train_network/conv5_3/conv"
+  input: "train_network/conv5_3/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/conv5_3/relu"
+  op: "Relu"
+  input: "train_network/conv5_3/bias_add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/pool5/pool5"
+  op: "MaxPool"
+  input: "train_network/conv5_3/relu"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "ksize"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\000\002\000\000\000\020\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.03608439117670059
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.03608439117670059
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/fc6/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/fc6/weights/Initializer/random_uniform/max"
+  input: "train_network/fc6/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/fc6/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/fc6/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/fc6/weights/Initializer/random_uniform/mul"
+  input: "train_network/fc6/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 512
+        }
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/Assign"
+  op: "Assign"
+  input: "train_network/fc6/weights"
+  input: "train_network/fc6/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/fc6/weights/read"
+  op: "Identity"
+  input: "train_network/fc6/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 4096
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/fc6/biases/Assign"
+  op: "Assign"
+  input: "train_network/fc6/biases"
+  input: "train_network/fc6/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/fc6/biases/read"
+  op: "Identity"
+  input: "train_network/fc6/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc6/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\377\377\377\377\000\002\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc6/Reshape"
+  op: "Reshape"
+  input: "train_network/pool5/pool5"
+  input: "train_network/fc6/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/fc6/MatMul"
+  op: "MatMul"
+  input: "train_network/fc6/Reshape"
+  input: "train_network/fc6/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/fc6/BiasAdd"
+  op: "BiasAdd"
+  input: "train_network/fc6/MatMul"
+  input: "train_network/fc6/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/fc6/Relu"
+  op: "Relu"
+  input: "train_network/fc6/BiasAdd"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/gamma/Initializer/ones/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/gamma"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/gamma/Initializer/ones/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/gamma"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 1.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/gamma/Initializer/ones"
+  op: "Fill"
+  input: "train_network/batch_normalization/gamma/Initializer/ones/shape_as_tensor"
+  input: "train_network/batch_normalization/gamma/Initializer/ones/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/gamma"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/gamma"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/gamma"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/gamma/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization/gamma"
+  input: "train_network/batch_normalization/gamma/Initializer/ones"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/gamma"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/gamma/read"
+  op: "Identity"
+  input: "train_network/batch_normalization/gamma"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/beta/Initializer/zeros/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/beta"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/beta/Initializer/zeros/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/beta"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/beta/Initializer/zeros"
+  op: "Fill"
+  input: "train_network/batch_normalization/beta/Initializer/zeros/shape_as_tensor"
+  input: "train_network/batch_normalization/beta/Initializer/zeros/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/beta"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/beta"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/beta"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/beta/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization/beta"
+  input: "train_network/batch_normalization/beta/Initializer/zeros"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/beta"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/beta/read"
+  op: "Identity"
+  input: "train_network/batch_normalization/beta"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/beta"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_mean/Initializer/zeros/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_mean/Initializer/zeros/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_mean/Initializer/zeros"
+  op: "Fill"
+  input: "train_network/batch_normalization/moving_mean/Initializer/zeros/shape_as_tensor"
+  input: "train_network/batch_normalization/moving_mean/Initializer/zeros/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_mean"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_mean/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization/moving_mean"
+  input: "train_network/batch_normalization/moving_mean/Initializer/zeros"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_mean/read"
+  op: "Identity"
+  input: "train_network/batch_normalization/moving_mean"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_variance/Initializer/ones/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_variance/Initializer/ones/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 1.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_variance/Initializer/ones"
+  op: "Fill"
+  input: "train_network/batch_normalization/moving_variance/Initializer/ones/shape_as_tensor"
+  input: "train_network/batch_normalization/moving_variance/Initializer/ones/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_variance"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_variance/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization/moving_variance"
+  input: "train_network/batch_normalization/moving_variance/Initializer/ones"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization/moving_variance/read"
+  op: "Identity"
+  input: "train_network/batch_normalization/moving_variance"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/mean/reduction_indices"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/mean"
+  op: "Mean"
+  input: "train_network/fc6/Relu"
+  input: "train_network/batch_norm1/batch_normalization/moments/mean/reduction_indices"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "keep_dims"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/StopGradient"
+  op: "StopGradient"
+  input: "train_network/batch_norm1/batch_normalization/moments/mean"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/SquaredDifference"
+  op: "SquaredDifference"
+  input: "train_network/fc6/Relu"
+  input: "train_network/batch_norm1/batch_normalization/moments/StopGradient"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/variance/reduction_indices"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/variance"
+  op: "Mean"
+  input: "train_network/batch_norm1/batch_normalization/moments/SquaredDifference"
+  input: "train_network/batch_norm1/batch_normalization/moments/variance/reduction_indices"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "keep_dims"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/Squeeze"
+  op: "Squeeze"
+  input: "train_network/batch_norm1/batch_normalization/moments/mean"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+        i: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/moments/Squeeze_1"
+  op: "Squeeze"
+  input: "train_network/batch_norm1/batch_normalization/moments/variance"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+        i: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg/decay"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.009999999776482582
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg/sub"
+  op: "Sub"
+  input: "train_network/batch_normalization/moving_mean/read"
+  input: "train_network/batch_norm1/batch_normalization/moments/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg/mul"
+  op: "Mul"
+  input: "train_network/batch_norm1/batch_normalization/AssignMovingAvg/sub"
+  input: "train_network/batch_norm1/batch_normalization/AssignMovingAvg/decay"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg"
+  op: "AssignSub"
+  input: "train_network/batch_normalization/moving_mean"
+  input: "train_network/batch_norm1/batch_normalization/AssignMovingAvg/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1/decay"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.009999999776482582
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1/sub"
+  op: "Sub"
+  input: "train_network/batch_normalization/moving_variance/read"
+  input: "train_network/batch_norm1/batch_normalization/moments/Squeeze_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1/mul"
+  op: "Mul"
+  input: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1/sub"
+  input: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1/decay"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1"
+  op: "AssignSub"
+  input: "train_network/batch_normalization/moving_variance"
+  input: "train_network/batch_norm1/batch_normalization/AssignMovingAvg_1/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/add/y"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0010000000474974513
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/add"
+  op: "Add"
+  input: "train_network/batch_norm1/batch_normalization/moments/Squeeze_1"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/add/y"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/Rsqrt"
+  op: "Rsqrt"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/mul"
+  op: "Mul"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/Rsqrt"
+  input: "train_network/batch_normalization/gamma/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/mul_1"
+  op: "Mul"
+  input: "train_network/fc6/Relu"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/mul_2"
+  op: "Mul"
+  input: "train_network/batch_norm1/batch_normalization/moments/Squeeze"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/sub"
+  op: "Sub"
+  input: "train_network/batch_normalization/beta/read"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/mul_2"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm1/batch_normalization/batchnorm/add_1"
+  op: "Add"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/mul_1"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\000\020\000\000\000\020\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.027063293382525444
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.027063293382525444
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/fc7/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/fc7/weights/Initializer/random_uniform/max"
+  input: "train_network/fc7/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/fc7/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/fc7/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/fc7/weights/Initializer/random_uniform/mul"
+  input: "train_network/fc7/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/Assign"
+  op: "Assign"
+  input: "train_network/fc7/weights"
+  input: "train_network/fc7/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/fc7/weights/read"
+  op: "Identity"
+  input: "train_network/fc7/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 4096
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/fc7/biases/Assign"
+  op: "Assign"
+  input: "train_network/fc7/biases"
+  input: "train_network/fc7/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/fc7/biases/read"
+  op: "Identity"
+  input: "train_network/fc7/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc7/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\377\377\377\377\000\020\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc7/Reshape"
+  op: "Reshape"
+  input: "train_network/batch_norm1/batch_normalization/batchnorm/add_1"
+  input: "train_network/fc7/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/fc7/MatMul"
+  op: "MatMul"
+  input: "train_network/fc7/Reshape"
+  input: "train_network/fc7/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/fc7/BiasAdd"
+  op: "BiasAdd"
+  input: "train_network/fc7/MatMul"
+  input: "train_network/fc7/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/fc7/Relu"
+  op: "Relu"
+  input: "train_network/fc7/BiasAdd"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/gamma/Initializer/ones/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/gamma"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/gamma/Initializer/ones/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/gamma"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 1.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/gamma/Initializer/ones"
+  op: "Fill"
+  input: "train_network/batch_normalization_1/gamma/Initializer/ones/shape_as_tensor"
+  input: "train_network/batch_normalization_1/gamma/Initializer/ones/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/gamma"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/gamma"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/gamma"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/gamma/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization_1/gamma"
+  input: "train_network/batch_normalization_1/gamma/Initializer/ones"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/gamma"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/gamma/read"
+  op: "Identity"
+  input: "train_network/batch_normalization_1/gamma"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/beta/Initializer/zeros/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/beta"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/beta/Initializer/zeros/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/beta"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/beta/Initializer/zeros"
+  op: "Fill"
+  input: "train_network/batch_normalization_1/beta/Initializer/zeros/shape_as_tensor"
+  input: "train_network/batch_normalization_1/beta/Initializer/zeros/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/beta"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/beta"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/beta"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/beta/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization_1/beta"
+  input: "train_network/batch_normalization_1/beta/Initializer/zeros"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/beta"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/beta/read"
+  op: "Identity"
+  input: "train_network/batch_normalization_1/beta"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/beta"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_mean/Initializer/zeros/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_mean/Initializer/zeros/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_mean/Initializer/zeros"
+  op: "Fill"
+  input: "train_network/batch_normalization_1/moving_mean/Initializer/zeros/shape_as_tensor"
+  input: "train_network/batch_normalization_1/moving_mean/Initializer/zeros/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_mean"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_mean/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization_1/moving_mean"
+  input: "train_network/batch_normalization_1/moving_mean/Initializer/zeros"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_mean/read"
+  op: "Identity"
+  input: "train_network/batch_normalization_1/moving_mean"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_variance/Initializer/ones/shape_as_tensor"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 4096
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_variance/Initializer/ones/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 1.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_variance/Initializer/ones"
+  op: "Fill"
+  input: "train_network/batch_normalization_1/moving_variance/Initializer/ones/shape_as_tensor"
+  input: "train_network/batch_normalization_1/moving_variance/Initializer/ones/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "index_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_variance"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_variance/Assign"
+  op: "Assign"
+  input: "train_network/batch_normalization_1/moving_variance"
+  input: "train_network/batch_normalization_1/moving_variance/Initializer/ones"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_normalization_1/moving_variance/read"
+  op: "Identity"
+  input: "train_network/batch_normalization_1/moving_variance"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/mean/reduction_indices"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/mean"
+  op: "Mean"
+  input: "train_network/fc7/Relu"
+  input: "train_network/batch_norm2/batch_normalization/moments/mean/reduction_indices"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "keep_dims"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/StopGradient"
+  op: "StopGradient"
+  input: "train_network/batch_norm2/batch_normalization/moments/mean"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/SquaredDifference"
+  op: "SquaredDifference"
+  input: "train_network/fc7/Relu"
+  input: "train_network/batch_norm2/batch_normalization/moments/StopGradient"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/variance/reduction_indices"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/variance"
+  op: "Mean"
+  input: "train_network/batch_norm2/batch_normalization/moments/SquaredDifference"
+  input: "train_network/batch_norm2/batch_normalization/moments/variance/reduction_indices"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "keep_dims"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/Squeeze"
+  op: "Squeeze"
+  input: "train_network/batch_norm2/batch_normalization/moments/mean"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+        i: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/moments/Squeeze_1"
+  op: "Squeeze"
+  input: "train_network/batch_norm2/batch_normalization/moments/variance"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+        i: 0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg/decay"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.009999999776482582
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg/sub"
+  op: "Sub"
+  input: "train_network/batch_normalization_1/moving_mean/read"
+  input: "train_network/batch_norm2/batch_normalization/moments/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg/mul"
+  op: "Mul"
+  input: "train_network/batch_norm2/batch_normalization/AssignMovingAvg/sub"
+  input: "train_network/batch_norm2/batch_normalization/AssignMovingAvg/decay"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg"
+  op: "AssignSub"
+  input: "train_network/batch_normalization_1/moving_mean"
+  input: "train_network/batch_norm2/batch_normalization/AssignMovingAvg/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_mean"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1/decay"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.009999999776482582
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1/sub"
+  op: "Sub"
+  input: "train_network/batch_normalization_1/moving_variance/read"
+  input: "train_network/batch_norm2/batch_normalization/moments/Squeeze_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1/mul"
+  op: "Mul"
+  input: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1/sub"
+  input: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1/decay"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1"
+  op: "AssignSub"
+  input: "train_network/batch_normalization_1/moving_variance"
+  input: "train_network/batch_norm2/batch_normalization/AssignMovingAvg_1/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/batch_normalization_1/moving_variance"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/add/y"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.0010000000474974513
+      }
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/add"
+  op: "Add"
+  input: "train_network/batch_norm2/batch_normalization/moments/Squeeze_1"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/add/y"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/Rsqrt"
+  op: "Rsqrt"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/mul"
+  op: "Mul"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/Rsqrt"
+  input: "train_network/batch_normalization_1/gamma/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/mul_1"
+  op: "Mul"
+  input: "train_network/fc7/Relu"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/mul_2"
+  op: "Mul"
+  input: "train_network/batch_norm2/batch_normalization/moments/Squeeze"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/sub"
+  op: "Sub"
+  input: "train_network/batch_normalization_1/beta/read"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/mul_2"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/batch_norm2/batch_normalization/batchnorm/add_1"
+  op: "Add"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/mul_1"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform/shape"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\000\020\000\000\n\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform/min"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: -0.038226641714572906
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform/max"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.038226641714572906
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform/RandomUniform"
+  op: "RandomUniform"
+  input: "train_network/fc8/weights/Initializer/random_uniform/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "seed"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "seed2"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform/sub"
+  op: "Sub"
+  input: "train_network/fc8/weights/Initializer/random_uniform/max"
+  input: "train_network/fc8/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform/mul"
+  op: "Mul"
+  input: "train_network/fc8/weights/Initializer/random_uniform/RandomUniform"
+  input: "train_network/fc8/weights/Initializer/random_uniform/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Initializer/random_uniform"
+  op: "Add"
+  input: "train_network/fc8/weights/Initializer/random_uniform/mul"
+  input: "train_network/fc8/weights/Initializer/random_uniform/min"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 4096
+        }
+        dim {
+          size: 10
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/Assign"
+  op: "Assign"
+  input: "train_network/fc8/weights"
+  input: "train_network/fc8/weights/Initializer/random_uniform"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/fc8/weights/read"
+  op: "Identity"
+  input: "train_network/fc8/weights"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/weights"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/biases/Initializer/Const"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/biases"
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 10
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/biases"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/biases"
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 10
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "train_network/fc8/biases/Assign"
+  op: "Assign"
+  input: "train_network/fc8/biases"
+  input: "train_network/fc8/biases/Initializer/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/biases"
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "train_network/fc8/biases/read"
+  op: "Identity"
+  input: "train_network/fc8/biases"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@train_network/fc8/biases"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\377\377\377\377\000\020\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "train_network/fc8/Reshape"
+  op: "Reshape"
+  input: "train_network/batch_norm2/batch_normalization/batchnorm/add_1"
+  input: "train_network/fc8/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "train_network/fc8/MatMul"
+  op: "MatMul"
+  input: "train_network/fc8/Reshape"
+  input: "train_network/fc8/weights/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "train_network/fc8/BiasAdd"
+  op: "BiasAdd"
+  input: "train_network/fc8/MatMul"
+  input: "train_network/fc8/biases/read"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "train_network/fc8/Relu"
+  op: "Relu"
+  input: "train_network/fc8/BiasAdd"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "init"
+  op: "NoOp"
+  input: "^train_network/batch_normalization/beta/Assign"
+  input: "^train_network/batch_normalization/gamma/Assign"
+  input: "^train_network/batch_normalization/moving_mean/Assign"
+  input: "^train_network/batch_normalization/moving_variance/Assign"
+  input: "^train_network/batch_normalization_1/beta/Assign"
+  input: "^train_network/batch_normalization_1/gamma/Assign"
+  input: "^train_network/batch_normalization_1/moving_mean/Assign"
+  input: "^train_network/batch_normalization_1/moving_variance/Assign"
+  input: "^train_network/conv1_1/biases/Assign"
+  input: "^train_network/conv1_1/weights/Assign"
+  input: "^train_network/conv1_2/biases/Assign"
+  input: "^train_network/conv1_2/weights/Assign"
+  input: "^train_network/conv2_1/biases/Assign"
+  input: "^train_network/conv2_1/weights/Assign"
+  input: "^train_network/conv2_2/biases/Assign"
+  input: "^train_network/conv2_2/weights/Assign"
+  input: "^train_network/conv3_1/biases/Assign"
+  input: "^train_network/conv3_1/weights/Assign"
+  input: "^train_network/conv3_2/biases/Assign"
+  input: "^train_network/conv3_2/weights/Assign"
+  input: "^train_network/conv3_3/biases/Assign"
+  input: "^train_network/conv3_3/weights/Assign"
+  input: "^train_network/conv4_1/biases/Assign"
+  input: "^train_network/conv4_1/weights/Assign"
+  input: "^train_network/conv4_2/biases/Assign"
+  input: "^train_network/conv4_2/weights/Assign"
+  input: "^train_network/conv4_3/biases/Assign"
+  input: "^train_network/conv4_3/weights/Assign"
+  input: "^train_network/conv5_1/biases/Assign"
+  input: "^train_network/conv5_1/weights/Assign"
+  input: "^train_network/conv5_2/biases/Assign"
+  input: "^train_network/conv5_2/weights/Assign"
+  input: "^train_network/conv5_3/biases/Assign"
+  input: "^train_network/conv5_3/weights/Assign"
+  input: "^train_network/fc6/biases/Assign"
+  input: "^train_network/fc6/weights/Assign"
+  input: "^train_network/fc7/biases/Assign"
+  input: "^train_network/fc7/weights/Assign"
+  input: "^train_network/fc8/biases/Assign"
+  input: "^train_network/fc8/weights/Assign"
+}
+versions {
+  producer: 26
+}

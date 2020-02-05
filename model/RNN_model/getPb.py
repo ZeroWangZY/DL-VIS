@@ -1,0 +1,76 @@
+# -*- coding: utf-8 -*-
+# file: main.py
+# author: JinTian
+# time: 11/03/2017 9:53 AM
+# Copyright 2017 JinTian. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------------------------------------------------
+import argparse
+import os
+import tensorflow as tf
+from poems.model import rnn_model
+from poems.model import bilstm_model
+from poems.poems import process_poems, generate_batch
+
+tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size.')
+tf.app.flags.DEFINE_float('learning_rate', 0.01, 'learning rate.')
+tf.app.flags.DEFINE_string('model_dir', os.path.abspath('./model'), 'model save path.')
+tf.app.flags.DEFINE_string('file_path', os.path.abspath('./data/poems.txt'), 'file name of poems.')
+tf.app.flags.DEFINE_string('model_prefix', 'poems', 'model save prefix.')
+tf.app.flags.DEFINE_integer('epochs', 50, 'train how many epochs.')
+
+FLAGS = tf.app.flags.FLAGS
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', type=str, default='lstm', help='lstm or bilstm or gru or rnn?')
+    return parser.parse_args()
+
+def run_training():
+    args = parse_args()
+    FLAGS.model_dir += '/' + args.model
+
+    if not os.path.exists(FLAGS.model_dir):
+        os.makedirs(FLAGS.model_dir)
+
+    poems_vector, word_to_int, vocabularies = process_poems(FLAGS.file_path)
+    batches_inputs, batches_outputs = generate_batch(FLAGS.batch_size, poems_vector, word_to_int)
+
+    input_data = tf.placeholder(tf.int32, [FLAGS.batch_size, None])
+    output_targets = tf.placeholder(tf.int32, [FLAGS.batch_size, None])
+
+    if(args.model == 'bilstm'):
+        end_points = bilstm_model(model='bilstm', input_data=input_data, output_data=output_targets, vocab_size=len(vocabularies), rnn_size=128, num_layers=2, batch_size=64, learning_rate=FLAGS. learning_rate)
+    else:
+        end_points = rnn_model(model=args.model, input_data=input_data, output_data=output_targets, vocab_size=len(
+            vocabularies), rnn_size=128, num_layers=2, batch_size=64, learning_rate=FLAGS.learning_rate)
+
+    saver = tf.train.Saver(tf.global_variables())
+    init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+    with tf.Session() as sess:
+        # sess = tf_debug.LocalCLIDebugWrapperSession(sess=sess)
+        # sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
+        sess.run(init_op)
+
+        with open(args.model + ".pbtxt", "w") as f:
+            f.write(str(sess.graph.as_graph_def()))
+        tf.summary.FileWriter('logs/' + args.model, sess.graph)
+
+
+def main(_):
+    run_training()
+
+
+if __name__ == '__main__':
+    tf.app.run()
