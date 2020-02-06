@@ -338,7 +338,7 @@ export function selectChild(
 export function buildGroup(container,
   renderNode: RenderGroupNodeInfo,
   sceneElement,
-  sceneClass: string): d3.Selection<any, any, any, any> {
+  sceneClass?: string): d3.Selection<any, any, any, any> {
   sceneClass = sceneClass || Class.Scene.GROUP;
   let isNewSceneGroup = selectChild(container, 'g', sceneClass).empty();
   let sceneGroup = selectOrCreateChild(container, 'g', sceneClass);

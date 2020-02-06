@@ -8,7 +8,6 @@ import { build as renderBuild, RenderGraphInfo } from '../common/graph/render'
 import { checkOpsForCompatibility } from "../common/graph/op";
 
 const Graph: React.FC = () => {
-  const title = "main graph";
   const [renderHierarchy, setRenderHierarchy] = useState<RenderGraphInfo>(null)
   let hierarchyParams = {
     verifyTemplate: true,
@@ -16,8 +15,11 @@ const Graph: React.FC = () => {
     seriesMap: {},
   };
   useEffect(() => {
+    const bert = '/data/bert-graph.pbtxt'
+    const graph1 = '/data/test-graph-1.pbtxt'
+    const graph2 = '/data/test-graph-2.pbtxt'
     fetchAndParseGraphData(
-      process.env.PUBLIC_URL + "/data/test-graph-1.pbtxt",
+      process.env.PUBLIC_URL + graph1,
       null
     )
       .then(graph => {
@@ -63,7 +65,6 @@ const Graph: React.FC = () => {
   return (
     <div className="container">
       <div className="vertical">
-        <h2>{title}</h2>
         {/* <graph-scene
           id="scene"
           className="auto"
