@@ -21,9 +21,33 @@ function startsWith(string, target, position) {
     return string.slice(position, position + target.length) == target
 }
 
-// function bulidNodeOpMap(graph){
-//   let nodes = graph.nodes
-
+// function fomatNode(hierarchy, nodeOpMap){
+//   let nodes = [];
+//  // if(hierarchy.nodes&&hierarchy.links){
+//     for(let node in hierarchy.nodes){
+//       if(JSON.stringify(nodes[node]) !== '{}'){
+//         nodes.push({
+//           id: node,
+//           group: nodeOpMap[node],
+//           child: fomatNode(hierarchy.nodes[node], nodeOpMap)
+//         })
+//        // hierarchy.nodes[node] = fomatNode(hierarchy.nodes[node], nodeOpMap)
+//       }else{
+//         nodes.push({
+//           id: node,
+//           group: nodeOpMap[node]
+//         })
+//       }
+//     }
+//     hierarchy.nodes = nodes
+//  // }
+//   // for(let node in hierarchy){
+//   //   nodes.push({
+//   //     id: node,
+//   //     group: nodeOpMap[node]
+//   //   })
+//   // }
+//   return nodes
 // }
 
 function getHierarchicalPath(name){
@@ -89,19 +113,30 @@ function hierarchyEdge(graph){
     let test = []
     if(JSON.stringify(hierarchyNode) !== '{}'){
       let path = ''
-      hierarchy = classfyEdge(hierarchyNode,links,path)
+      hierarchy = classfyEdge(hierarchyNode,graph.nodeOpMap,links,path)
     }
     //由map形式整理为数组
-
+  //  console.log(fomatNode(hierarchy,graph.nodeOpMap))
     
 
     graph.hierarchy = hierarchy
 }
-function classfyEdge(nodes,links,path){
-  let hierarchyEdge = {}
+function classfyEdge(nodes,nodeOpMap,links,path){
+  let hierarchyEdgeMap = {}
+  let hierarchyEdge = []
+  let hierarchyNode = []
   for(let node in nodes){
     if(JSON.stringify(nodes[node]) !== '{}'){
-      nodes[node] = classfyEdge(nodes[node],links,`${path}${node}/`)
+      hierarchyNode.push({
+        id: node,
+        child: classfyEdge(nodes[node],nodeOpMap,links,`${path}${node}/`)
+      })
+     // nodes[node] = classfyEdge(nodes[node],links,`${path}${node}/`)
+    }else{
+      hierarchyNode.push({
+        id: node,
+        group: nodeOpMap[`${path}${node}`]
+      })
     }
   }
 
@@ -117,11 +152,17 @@ function classfyEdge(nodes,links,path){
   //    link.target  = link.target.substring(0, indexT+1);
 
       if(link.source.startsWith(path)&&link.target.startsWith(path)&&nodes.hasOwnProperty(source)&&nodes.hasOwnProperty(target)&&source!==target){
-        hierarchyEdge[source] = target
+        hierarchyEdgeMap[source] = target
       }
   }
+  for(let link in hierarchyEdgeMap){
+    hierarchyEdge.push({
+      source: link,
+      target: hierarchyEdgeMap[link]
+    })
+  }
   return {
-    nodes,
+    nodes: hierarchyNode,
     links: hierarchyEdge
   }
 }
@@ -147,13 +188,13 @@ function hierarchyBuild(graph){
  // console.log(graph)
   hierarchyEdge(graph)
   //return nodes
-  console.log(graph)
+  return graph.hierarchy
 }
 
 
 
-fetchAndParseGraphData('./pbtxtdata/test-graph-1.pbtxt').then(pbtxtData => {
-    graph = buildGraph(pbtxtData);
-    let test = hierarchyBuild(graph)
-  // console.log(test)
-})
+// fetchAndParseGraphData('./pbtxtdata/test-graph-1.pbtxt').then(pbtxtData => {
+//     let graph = buildGraph(pbtxtData);
+//     let hierarchy = hierarchyBuild(graph)
+//     console.log(hierarchy)
+// })
