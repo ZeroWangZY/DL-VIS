@@ -63,6 +63,9 @@
                                 orient="auto">
                                 <path d="M0,0 L4,2  L0,4 L2,2 L0,0" style="fill: #4d4d4d;" />
                         </marker>
+                        <pattern id="person" patternUnits="objectBoundingBox" width="1" height="1">
+                            　　<rect x="3" y="3" width="10" height="10" fill="#7FBBA1" stroke="#5CA083"/>
+                        </pattern>
                     </defs>
                 </svg>
             </div>
@@ -79,6 +82,60 @@
     let defaultDistance = 30;
     let checkedOp = []; // 勾选的operation
     let graph = {}; // 存储d3画图所需数据
+    let testGraph = {
+                        "nodes": [
+                            {"id": "mul_1", "group": 1},
+                            {"id": "AssignAdd", "group": 2},
+                            {"id": "add", "group": 1},
+                            {"id": "mul", "group": 2},
+                            {"id": "x", "group": 1},
+                            // {"id": "111", "group": 1},
+                            // {"id": "222", "group": 4},
+                            // {"id": "333", "group": 2},
+                            // {"id": "444", "group": 2},
+                            // {"id": "555", "group": 1},
+                            {
+                                "id": "temperature",
+                                "group":1,
+                                "children": {
+                                    "nodes": [
+                                        {"id": "sub", "group": 3},
+                                        {"id": "temperature", "group": 3},
+                                        {"id": "current", "group": 4},
+                                        {"id": "difference", "group": 2},
+                                        {"id": "y", "group": 5},
+                                        
+                                    ],
+                                    "links": [
+                                        {"source": "y", "target": "sub"},
+                                        {"source": "sub", "target": "difference"},
+                                        {"source": "temperature", "target": "current"},
+                                        {"source": "temperature", "target": "sub"},
+                                        {"source": "sub", "target": "add"},
+                                        {"source": "AssignAdd", "target": "temperature"},
+
+                                    ]
+                                }
+                            }
+                        ],
+                        "links": [
+                                {"source": "mul_1", "target": "AssignAdd"},
+                                {"source": "x", "target": "mul_1"},
+                                {"source": "add", "target": "mul_1"},
+                                {"source": "mul", "target": "add"},
+                                {"source": "temperature", "target": "add"},
+                                {"source": "AssignAdd", "target": "temperature"},  
+                                // {"source": "111", "target": "mul_1"},
+                                // {"source": "mul", "target": "222"},
+                                // {"source": "333", "target": "111"},
+                                // {"source": "AssignAdd", "target": "555"},
+                                // {"source": "444", "target": "mul_1"},
+                                // {"source": "m555ul", "target": "add"},
+                                // {"source": "temperature", "target": "333"},
+                                // {"source": "333", "target": "temperature"}    
+                        ]
+                        };
+        // drawGraph(testGraph, defaultDistance, [1,2,3,4,5]);
 
     // 选择文件
     function chooseFile() { 
@@ -110,7 +167,7 @@
                     }
                     checkedOp = groups.concat();
                     updateFilerList(groups);
-                    drawGraph(svgContainer, graph, defaultDistance, checkedOp);
+                    drawGraph(graph, defaultDistance, checkedOp, true);
                 });
             };
             reader.readAsArrayBuffer(file[0]);
@@ -121,7 +178,7 @@
     function changeDistance () {
         let value = document.getElementById("distance-range").value;
         defaultDistance = value;
-        drawGraph(svgContainer, graph, value, checkedOp);
+        drawGraph(graph, value, checkedOp);
     }
 
     // 全选 or 取消全选
@@ -179,7 +236,7 @@
                 checkedOp.push(operations[i].parentNode.lastElementChild.innerText);
             }
         }
-        drawGraph(svgContainer, graph, defaultDistance, checkedOp);
+        drawGraph(graph, defaultDistance, checkedOp);
     }
 
     // filter 勾选操作
