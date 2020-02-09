@@ -82,7 +82,8 @@
     let svgContainer = d3.select('#svg-container');
     let defaultDistance = 30;
     let checkedOp = []; // 勾选的operation
-    let graph = {}; // 存储d3画图所需数据
+    let graph = {}; // 存储d3画图所需数据 不带层级关系
+    let hierarchyGraph = {};// 带层级关系的图
     let testGraph = {
                         "nodes": [
                             {"id": "mul_1", "group": 1},
@@ -98,7 +99,7 @@
                             {
                                 "id": "temperature",
                                 "group":1,
-                                "children": {
+                                "child": {
                                     "nodes": [
                                         {"id": "sub", "group": 3},
                                         {"id": "temperature", "group": 3},
@@ -158,6 +159,7 @@
             reader.onload = function(){
                 parseGraphPbTxt(this.result).then(pbtxtData => {
                     graph = buildGraph(pbtxtData);
+                    hierarchyGraph = hierarchyBuild(graph);
                     // 把op提取出来
                     let nodes = graph.nodes;
                     let groups = [];
@@ -179,7 +181,7 @@
     function changeDistance () {
         let value = document.getElementById("distance-range").value;
         defaultDistance = value;
-        drawGraph(graph, value, checkedOp);
+        drawGraph(hierarchyGraph, value, checkedOp);
     }
 
     // 全选 or 取消全选
@@ -237,7 +239,7 @@
                 checkedOp.push(operations[i].parentNode.lastElementChild.innerText);
             }
         }
-        drawGraph(graph, defaultDistance, checkedOp);
+        drawGraph(hierarchyGraph, defaultDistance, checkedOp);
     }
 
     // filter 勾选操作

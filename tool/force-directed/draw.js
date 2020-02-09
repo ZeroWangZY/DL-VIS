@@ -51,6 +51,8 @@ let link = linkG.selectAll("line"), node= nodeG.selectAll("circle"), labelText =
 let zoom = d3.zoom()
     .on('zoom', zoomed)
 gMain.call(zoom);
+// gMain.on("dblclick.zoom", null);
+
 function zoomed() {
     gDraw.attr('transform', d3.event.transform);
 }
@@ -160,14 +162,14 @@ function drawGraph(graph, dist, checkedOp, init = false) {
         .data(nodesAfterFiltering)
         .enter()
         .append("circle")
-        .attr("r", (d) => ('children' in d) ? 8 : 5)
+        .attr("r", (d) => ('child' in d) ? 8 : 5)
         // .selectAll("ellipse")
         // .data(graph.nodes)
         // .enter().append("ellipse")  
         // .attr("rx", function(d) { return d.rx; })
         // .attr("ry", function(d) { return d.ry; })
-        .attr("fill", (d) => ('children' in d) ? 'url(#person)' :  color(d.group))
-        .attr("stroke", (d) => ('children' in d) ? 'node' : "#eee")
+        .attr("fill", (d) => ('child' in d) ? 'url(#person)' :  color(d.group))
+        .attr("stroke", (d) => ('child' in d) ? 'node' : "#eee")
         .call(d3.drag()
                 .on("start", dragstart)
                 .on("drag", dragged)
@@ -175,14 +177,15 @@ function drawGraph(graph, dist, checkedOp, init = false) {
         )
         .on("mouseover", onMousehover)
         .on("mouseout", onMouseout)
-        .on("click", onNodeClick);
+        .on("mousedown", onNodeClick) //右键关闭
+        .on("click", onNodeClick); // 
 
     labelText = labelG.selectAll("text")
         .data(nodesAfterFiltering)
         .enter()
         .append("text")  
         .attr("dy", 2)
-        .text(function(d) {return d.id})
+        .text(function(d) {return ('fullId' in d) ? d.fullId : d.id})// label层级关系也要显示
         .attr("fill", "#c0c0c0")
         .attr('display', isLabelDisplay?'block':'none');
 
@@ -216,37 +219,47 @@ function updateGraph () {
 }
 
 function onNodeClick (d) {
-    if (("children" in d) && !d.open) {
-        d.open = true;
-        let clickIndex = nodesAfterFiltering.indexOf(d);
-        // console.log(clickIndex, nodesAfterFiltering, linksAfterFiltering);
-        nodesAfterFiltering.splice(clickIndex, 1);// 删除点击的父节点
-        // 删除点击的node的相关连线
-        let tempLinks = linksAfterFiltering.filter(link => {
-            return link.source.index !== d.index && link.target.index !== d.index; // 用index 因为id有重复
-        });
-        console.log(tempLinks);
-        let newNodes = nodesAfterFiltering.concat(d.children.nodes); // 添加新节点
-        let newLinks = tempLinks.concat(d.children.links); // 添加新边
-        console.log(newNodes, newLinks);
-        let newGraph = {
-            "nodes": newNodes,
-            "links": newLinks
+    // 判断鼠标左击还是右击
+    // 左击 打开 右击 收起
+    if (d3.event.button === 0) {
+        if (("child" in d) && !d.open) {
+            d.open = true;
+            // 点击的可以展开的节点一定是最外层 找到它
+            let clickIndex = nodesAfterFiltering.indexOf(d);
+            // 把父节点的名字存到子节点中
+            let childNodes = d.child.nodes.map(childnode=>{return {...childnode, 'fullId': d.id + "/" + childnode.id, 'parent': d.id}});
+            nodesAfterFiltering.splice(clickIndex, 1);// 删除点击的父节点
+            let newNodes = nodesAfterFiltering.concat(childNodes); // 添加展开的新节点
+            console.log(childNodes, newNodes);
+    
+            // 删除点击的node的相关连线
+            let tempLinks = linksAfterFiltering.filter(link => {
+                return link.source.index !== d.index && link.target.index !== d.index; // 用index 因为id有重复
+            });
+            // console.log("父节点相关连线：" + tempLinks);
+            let newLinks = tempLinks.concat(d.child.links); // 添加新边
+            // console.log(newLinks);
+            let newGraph = {
+                "nodes": newNodes,
+                "links": newLinks
+            }
+            drawGraph(newGraph, distance, checkedOpPreserved);
         }
-        drawGraph(newGraph, distance, checkedOpPreserved);
-    } else if (("children" in d) && d.open) {
-        d.open = false;
-        console.log("close");
-        // 删除child
-        let newNodes = nodesAfterFiltering.filter(i => !d.children.nodes.includes(i));
-        let newLinks = linksAfterFiltering.filter(i => !d.children.links.includes(i));
-        // 添加父节点
-        console.log(nodesAfterFiltering,linksAfterFiltering, newNodes, newLinks);
-        let newGraph = {
-            "nodes": newNodes,
-            "links": newLinks
-        }
-        drawGraph(newGraph, distance, checkedOpPreserved);
+    } else if (d3.event.button === 0) {
+        // if (("child" in d) && d.open) {
+        //     d.open = false;
+        //     console.log("close");
+        //     // 删除child
+        //     let newNodes = nodesAfterFiltering.filter(i => !d.child.nodes.includes(i));
+        //     let newLinks = linksAfterFiltering.filter(i => !d.child.links.includes(i));
+        //     // 添加父节点
+        //     console.log(nodesAfterFiltering,linksAfterFiltering, newNodes, newLinks);
+        //     let newGraph = {
+        //         "nodes": newNodes,
+        //         "links": newLinks
+        //     }
+        //     drawGraph(newGraph, distance, checkedOpPreserved);
+        // }
     }
 }
 
@@ -394,3 +407,6 @@ function ticked() {
         .attr('text-anchor', function(d) { return d.x < svgWidth/2 ? 'end':'start'})
         .attr("dx", function(d) { return d.x < svgWidth/2 ? -5 : 5});
 }
+document.oncontextmenu = function(e){
+    e.preventDefault();
+};
