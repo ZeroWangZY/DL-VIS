@@ -133,7 +133,7 @@ function drawGraph(graph, dist, checkedOp, init = false) {
             return nodesName.indexOf(link.source)!==-1 && nodesName.indexOf(link.target)!==-1
         }
     });
-    console.log(linksAfterFiltering);
+    // console.log(linksAfterFiltering);
     let nodes = {};
 
     for (let i = 0; i < nodesAfterFiltering.length; i++) {
