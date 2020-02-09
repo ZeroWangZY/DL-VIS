@@ -21,6 +21,21 @@ function startsWith(string, target, position) {
     return string.slice(position, position + target.length) == target
 }
 
+function deleteSameStart(source,target) {
+  let length = Math.min(source.length,target.length)
+  let index = 0
+  for(let i = 0; i < length; i++) {
+      if(target[i] !== source[i]){
+        index = i
+            break
+      }
+  }
+  return { 
+    target: target.substring(index),
+    sameSatrt: target.substring(0,index)
+  }
+}
+
 // function fomatNode(hierarchy, nodeOpMap){
 //   let nodes = [];
 //  // if(hierarchy.nodes&&hierarchy.links){
@@ -139,20 +154,24 @@ function classfyEdge(nodes,nodeOpMap,links,path){
       })
     }
   }
-
-  for(let link of links){
-   //   let indexS = link.source.startsWith(path);  
-     
-    //  link.source  = link.source.substring(0, indexS+1);
-
- //     let indexT = link.target.startsWith(path);  
-
-      let source = link.source.replace(path, "").split('/')[0];
-      let target = link.target.replace(path, "").split('/')[0];
-  //    link.target  = link.target.substring(0, indexT+1);
-
-      if(link.source.startsWith(path)&&link.target.startsWith(path)&&nodes.hasOwnProperty(source)&&nodes.hasOwnProperty(target)&&source!==target){
-        hierarchyEdgeMap[`${source}|${target}`] = true
+ // debugger
+  for(let link of links){ 
+    //  let source = link.source.replace(path, "").split('/')[0];
+    //  let target = link.target.replace(path, "").split('/')[0];
+    
+      // if(link.source.startsWith(path)&&link.target.startsWith(path)&&nodes.hasOwnProperty(source)&&nodes.hasOwnProperty(target)&&source!==target){
+      //   hierarchyEdgeMap[`${source}|${target}`] = true
+      // }
+      if(link.source.startsWith(`${path}`)){
+        let source = `${path}${link.source.replace(path, "").split('/')[0]}`
+        let { target, sameSatrt } = deleteSameStart(link.source, link.target)
+      //  console.log(target)
+        while(target.lastIndexOf('/') !== -1){
+        //  debugger
+          hierarchyEdgeMap[`${source}|${sameSatrt}${target}`] = true
+          let index = target.lastIndexOf('/')
+          target = target.substring(0,index)
+        }
       }
   }
   for(let link in hierarchyEdgeMap){
