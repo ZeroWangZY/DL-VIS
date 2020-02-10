@@ -55,7 +55,6 @@ let link = linkG.selectAll("line"), node= nodeG.selectAll("circle"), labelText =
 let zoom = d3.zoom()
     .on('zoom', zoomed)
 gMain.call(zoom);
-// gMain.on("dblclick.zoom", null);
 
 function zoomed() {
     gDraw.attr('transform', d3.event.transform);
@@ -85,26 +84,6 @@ let tooltipName = tooltip.append("text")
 let tooltipGroup = tooltip.append("text")
     .attr("x", "1.5em")
     .attr("y", "3em");
-    
-// hint 只加载一次
-// let legendText = ['Leaf nodes', 'Clustered nodes']
-// let legend = svg.append("g")
-//     .classed("legend", true)
-//     .attr("transform", "translate(" + (svgWidth - 100) + "," + (svgHeight - 120) +")");
-// // legend.append('circle')
-// //     .attr("r", 8)
-// //     .attr("fill", "#eee")
-// //     .attr('cx', 10)
-// //     .attr('cy', 10);
-// legend.append('text')
-//     .attr('x', svgWidth - 100)
-//     .attr('y', svgHeight - 120)
-//     .selectAll("tspan")
-//     .data(legendText)
-//     .enter()
-//     .append('tspan')
-//     .attr('dx', function(d,i) { return i * 18; })
-//     .text(function(d) { return d; });
 
 let hints = ['Clustered nodes',
     'Use the scroll wheel to zoom',
@@ -173,8 +152,8 @@ function drawGraph(graph, dist, checkedOp, init = false) {
         }
     });
     deletedLinksPool = deletedLinksPool.concat(deletedLinks)
-    console.log("links nodes after filter:");
-    console.log(linksAfterFiltering, nodesAfterFiltering);
+    // console.log("links nodes after filter:");
+    // console.log(linksAfterFiltering, nodesAfterFiltering);
     if(init) {
         graphForDraw = {
             "nodes": nodesAfterFiltering,
