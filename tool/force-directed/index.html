@@ -87,34 +87,58 @@
     let testGraph = {
                         "nodes": [
                             {"id": "mul_1", "group": 1},
-                            {"id": "AssignAdd", "group": 2},
+                            {"id": "AssignAdd",
+                        
+                                "child": {
+                                    "nodes": [
+                                        {"id": "A111", "group": 3},
+                                        {"id": "A222", "group": 3},
+                                        {"id": "A333", "group": 4}
+                                    ],
+                                    "links": [
+                                        {"source": "A111", "target": "A222"},
+                                        {"source": "A333", "target": "A222"},
+                                        {"source": "A222", "target": "add"},
+                                        {"source": "A222", "target": "y111"},
+
+                                    ]
+                                }
+                            },
                             {"id": "add", "group": 1},
                             {"id": "mul", "group": 2},
-                            {"id": "x", "group": 1},
-                            // {"id": "111", "group": 1},
-                            // {"id": "222", "group": 4},
-                            // {"id": "333", "group": 2},
-                            // {"id": "444", "group": 2},
-                            // {"id": "555", "group": 1},
+                            {"id": "x", "group": 2},
                             {
                                 "id": "temperature",
-                                "group":1,
                                 "child": {
                                     "nodes": [
                                         {"id": "sub", "group": 3},
-                                        {"id": "temperature", "group": 3},
+                                        {"id": "temp", "group": 3},
                                         {"id": "current", "group": 4},
                                         {"id": "difference", "group": 2},
-                                        {"id": "y", "group": 5},
+                                        {"id": "y",
+                                            "child": {
+                                                "nodes": [
+                                                    {"id": "y111", "group": 3},
+                                                    {"id": "y222", "group": 3},
+                                                    {"id": "y333", "group": 4}
+                                                ],
+                                                "links": [
+                                                    {"source": "y111", "target": "y222"},
+                                                    {"source": "y333", "target": "sub"},
+                                                    {"source": "y222", "target": "y333"},
+
+                                                ]
+                                            }
+                                        },
                                         
                                     ],
                                     "links": [
                                         {"source": "y", "target": "sub"},
                                         {"source": "sub", "target": "difference"},
-                                        {"source": "temperature", "target": "current"},
-                                        {"source": "temperature", "target": "sub"},
+                                        {"source": "temp", "target": "current"},
+                                        {"source": "temp", "target": "sub"},
                                         {"source": "sub", "target": "add"},
-                                        {"source": "AssignAdd", "target": "temperature"},
+                                        {"source": "AssignAdd", "target": "temp"},
 
                                     ]
                                 }
@@ -126,19 +150,14 @@
                                 {"source": "add", "target": "mul_1"},
                                 {"source": "mul", "target": "add"},
                                 {"source": "temperature", "target": "add"},
-                                {"source": "AssignAdd", "target": "temperature"},  
-                                // {"source": "111", "target": "mul_1"},
-                                // {"source": "mul", "target": "222"},
-                                // {"source": "333", "target": "111"},
-                                // {"source": "AssignAdd", "target": "555"},
-                                // {"source": "444", "target": "mul_1"},
-                                // {"source": "m555ul", "target": "add"},
-                                // {"source": "temperature", "target": "333"},
-                                // {"source": "333", "target": "temperature"}    
+                                {"source": "AssignAdd", "target": "temperature"}
                         ]
                         };
         // drawGraph(testGraph, defaultDistance, [1,2,3,4,5]);
-
+    // 取消默认的右击事件
+    document.getElementById("svg-container").oncontextmenu = function(e){
+        e.preventDefault();
+    };
     // 选择文件
     function chooseFile() { 
         document.getElementById("btn_file").click(); 
@@ -160,23 +179,32 @@
                 parseGraphPbTxt(this.result).then(pbtxtData => {
                     graph = buildGraph(pbtxtData);
                     hierarchyGraph = hierarchyBuild(graph);
-                    // 把op提取出来
-                    let nodes = graph.nodes;
+                    console.log(hierarchyGraph)
+                    // 把op全部提取出来
+                    let nodes = hierarchyGraph.nodes;
                     let groups = [];
                     for (let node of nodes) {
-                        if (groups.indexOf(node.group) == -1) {
-                            groups.push(node.group);
-                        }
+                        traverse(node, groups);
                     }
                     checkedOp = groups.concat();
                     updateFilerList(groups);
-                    drawGraph(graph, defaultDistance, checkedOp, true);
+                    drawGraph(hierarchyGraph, defaultDistance, checkedOp, true);
                 });
             };
             reader.readAsArrayBuffer(file[0]);
         }
     }
 
+    function traverse(node, groups) {
+        // 为叶节点
+        if (("group" in node) && groups.indexOf(node.group) == -1) {
+            groups.push(node.group);
+        } else if ("child" in node) {
+            for (let childnode of node.child.nodes) {
+                traverse(childnode,groups);
+            }
+        }
+    }
     // 修改力引导图中的distance
     function changeDistance () {
         let value = document.getElementById("distance-range").value;

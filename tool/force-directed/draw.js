@@ -5,6 +5,9 @@ let distance = 30;
 let checkedOpPreserved = [];
 let nodesAfterFiltering, linksAfterFiltering; // filter之后的nodes 和 Links
 
+let deletedNodesPool = [];//在点击交互中的所删除的父节点
+let deletedLinksPool = [];//在点击交互中的所删除的与父节点相关的边
+
 let color = d3.scaleOrdinal(d3.schemeCategory20); // 节点颜色 根据group区分
 
 // svg 初始化
@@ -117,18 +120,20 @@ function drawGraph(graph, dist, checkedOp, init = false) {
     }
     distance = dist;
     checkedOpPreserved = checkedOp;
-    // 根据选择的op过滤graph
+    // 根据选择的op过滤graph, 有子节点的节点一律不回被过滤（因为它下面包括很多类型的子节点
     // let graphAfterFiltering = {...graph};
-    nodesAfterFiltering = graph.nodes.filter(node => checkedOp.indexOf(node.group)!==-1);
+    let copyNodes = graph.nodes.map(node => ({...node}));
+    nodesAfterFiltering = graph.nodes.filter(node => checkedOp.indexOf(node.group)!==-1 || "child" in node);
     let nodesName = nodesAfterFiltering.map(d=>d.id);
-    linksAfterFiltering = graph.links.filter(link => {
+    let copyLinks = graph.links.map(link => ({...link}));
+    linksAfterFiltering = copyLinks.filter(link => {
         if(typeof(link.source) === "object") {
             return nodesName.indexOf(link.source.id)!==-1 && nodesName.indexOf(link.target.id)!==-1
         } else {
             return nodesName.indexOf(link.source)!==-1 && nodesName.indexOf(link.target)!==-1
         }
     });
-    console.log(nodesAfterFiltering, linksAfterFiltering)
+    // console.log(linksAfterFiltering);
     let nodes = {};
 
     for (let i = 0; i < nodesAfterFiltering.length; i++) {
@@ -189,6 +194,10 @@ function drawGraph(graph, dist, checkedOp, init = false) {
         .attr("fill", "#c0c0c0")
         .attr('display', isLabelDisplay?'block':'none');
 
+    // link = linkG.selectAll("line");
+    // node= nodeG.selectAll("circle");
+    // labelText = labelG.selectAll("text");
+
     let forceCollide = d3.forceCollide()
         .radius(10)
         .strength(0.95);
@@ -211,33 +220,58 @@ function drawGraph(graph, dist, checkedOp, init = false) {
         .on("tick", ticked);
     simulation.force("link")
         .links(linksAfterFiltering);
-    
 };
 
-function updateGraph () {
-    
-}
-
 function onNodeClick (d) {
+    tooltip.attr("visibility", "hidden");
     // 判断鼠标左击还是右击
     // 左击 打开 右击 收起
     if (d3.event.button === 0) {
-        if (("child" in d) && !d.open) {
-            d.open = true;
+        if ("child" in d) {
+            // d.open = true;
             // 点击的可以展开的节点一定是最外层 找到它
             let clickIndex = nodesAfterFiltering.indexOf(d);
             // 把父节点的名字存到子节点中
-            let childNodes = d.child.nodes.map(childnode=>{return {...childnode, 'fullId': d.id + "/" + childnode.id, 'parent': d.id}});
-            nodesAfterFiltering.splice(clickIndex, 1);// 删除点击的父节点
+            let childNodes = d.child.nodes.map(childnode=>{return {...childnode, 'fullId': d.id + "/" + childnode.id, 'parent': d.id, 'parentIndex': d.index}});
+            deletedNodesPool = deletedNodesPool.concat(nodesAfterFiltering.splice(clickIndex, 1));// 删除点击的父节点
             let newNodes = nodesAfterFiltering.concat(childNodes); // 添加展开的新节点
-            console.log(childNodes, newNodes);
     
             // 删除点击的node的相关连线
             let tempLinks = linksAfterFiltering.filter(link => {
                 return link.source.index !== d.index && link.target.index !== d.index; // 用index 因为id有重复
             });
-            // console.log("父节点相关连线：" + tempLinks);
+            deletedLinksPool = deletedLinksPool.concat(linksAfterFiltering.filter(link => {
+                return link.source.index === d.index || link.target.index === d.index; // 用index 因为id有重复
+            }));
             let newLinks = tempLinks.concat(d.child.links); // 添加新边
+            // console.log(newNodes, newLinks);
+            let newGraph = {
+                "nodes": newNodes,
+                "links": newLinks
+            }
+            drawGraph(newGraph, distance, checkedOpPreserved);
+        }
+    } else if (d3.event.button === 2) {
+        // 把当前层级收起来
+        if ("parent" in d) {
+            let parentIndex = d.parentIndex;
+            // 找到父节点并从pool中删除
+            let i;
+            for (i = 0; i < deletedNodesPool.length; i++) {
+                if (deletedNodesPool[i].index === parentIndex) { 
+                    break;
+                }
+            }
+            let parentNode = deletedNodesPool[i];
+            deletedNodesPool.splice(i, 1);
+            // 删除子节点 添加父节点
+            let newNodes = nodesAfterFiltering.filter(i => i.parentIndex !== parentIndex);
+            newNodes.push(parentNode);
+            // 添加父节点相关的边 删去子节点的边
+            let parentLinks = deletedLinksPool.filter(link => link.source.index === d.parentIndex || link.target.index === d.parentIndex);
+            deletedLinksPool =  deletedLinksPool.filter(link => link.source.index !== d.parentIndex && link.target.index !== d.parentIndex);
+
+            let newLinks = linksAfterFiltering.filter(link => !parentNode.child.links.includes(link)).concat(parentLinks);
             // console.log(newLinks);
             let newGraph = {
                 "nodes": newNodes,
@@ -245,21 +279,6 @@ function onNodeClick (d) {
             }
             drawGraph(newGraph, distance, checkedOpPreserved);
         }
-    } else if (d3.event.button === 0) {
-        // if (("child" in d) && d.open) {
-        //     d.open = false;
-        //     console.log("close");
-        //     // 删除child
-        //     let newNodes = nodesAfterFiltering.filter(i => !d.child.nodes.includes(i));
-        //     let newLinks = linksAfterFiltering.filter(i => !d.child.links.includes(i));
-        //     // 添加父节点
-        //     console.log(nodesAfterFiltering,linksAfterFiltering, newNodes, newLinks);
-        //     let newGraph = {
-        //         "nodes": newNodes,
-        //         "links": newLinks
-        //     }
-        //     drawGraph(newGraph, distance, checkedOpPreserved);
-        // }
     }
 }
 
@@ -269,7 +288,7 @@ function onMousehover (d) {
     tooltip.attr("visibility", "visible")
         .attr("transform", "translate(" + d3.event.offsetX + "," + d3.event.offsetY + ")");
     let name = "Id: " + d.id;
-    let group = "Op: " + d.group;
+    let group = "Op: " + (("group" in d) ? d.group : "(group)");
     // 计算宽度
     tooltipName.text(name);
     tooltipGroup.text(group);
@@ -407,6 +426,4 @@ function ticked() {
         .attr('text-anchor', function(d) { return d.x < svgWidth/2 ? 'end':'start'})
         .attr("dx", function(d) { return d.x < svgWidth/2 ? -5 : 5});
 }
-document.oncontextmenu = function(e){
-    e.preventDefault();
-};
+
