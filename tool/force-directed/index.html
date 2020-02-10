@@ -64,7 +64,7 @@
                                 <path d="M0,0 L4,2  L0,4 L2,2 L0,0" style="fill: #4d4d4d;" />
                         </marker>
                         <pattern id="person" patternUnits="objectBoundingBox" width="1" height="1">
-                            　　<rect x="3" y="3" width="10" height="10" fill="#7FBBA1" stroke="#5CA083"/>
+                            　　<rect x="3" y="3" width="10" height="10" fill="#a6a3a3" stroke="#333"/>
                         </pattern>
                     </defs>
                 </svg>
@@ -209,7 +209,7 @@
     function changeDistance () {
         let value = document.getElementById("distance-range").value;
         defaultDistance = value;
-        drawGraph(hierarchyGraph, value, checkedOp);
+        updateGraph(value, checkedOp);
     }
 
     // 全选 or 取消全选
@@ -267,7 +267,7 @@
                 checkedOp.push(operations[i].parentNode.lastElementChild.innerText);
             }
         }
-        drawGraph(hierarchyGraph, defaultDistance, checkedOp);
+        updateGraph(defaultDistance, checkedOp);
     }
 
     // filter 勾选操作

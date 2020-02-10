@@ -1,10 +1,10 @@
-@width: 1000px;
+@width: 1333px;
 @height: 600px;
 #main {
     width: @width;
     height: @height;
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 333px 1000px;
     #control-panel {
         border: 1px #333 solid;
         // width: 400px;
@@ -32,7 +32,7 @@
                     left: 10px;
                     bottom: 0;
                     right: 0;
-                    width: @width / 3;
+                    width: 333px;
                     height: 25px;
                     button {
                         background-color: #fff;
@@ -104,7 +104,7 @@
                     -webkit-appearance: none;
                     // top: 50%;
                     // left: 50%;
-                    width: @width / 5;
+                    width: 200px;
                     height: 1.25em;
                     padding: 0 0.5em;
                     // border-radius: 0.625em;
@@ -260,7 +260,7 @@
             .link {
                 stroke: #999;
             }
-            .hint {
+            .hint, .legend {
                 font-size: 14px;
                 text-anchor: end;
                 fill: #333;

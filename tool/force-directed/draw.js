@@ -5,6 +5,7 @@ let distance = 30;
 let checkedOpPreserved = [];
 let nodesAfterFiltering, linksAfterFiltering; // filter之后的nodes 和 Links
 
+let graphForDraw = {};
 let deletedNodesPool = [];//在点击交互中的所删除的父节点
 let deletedLinksPool = [];//在点击交互中的所删除的与父节点相关的边
 
@@ -86,25 +87,55 @@ let tooltipGroup = tooltip.append("text")
     .attr("y", "3em");
     
 // hint 只加载一次
-let hints = ['Use the scroll wheel to zoom',
-    'Hold the shift key to select nodes'];
+// let legendText = ['Leaf nodes', 'Clustered nodes']
+// let legend = svg.append("g")
+//     .classed("legend", true)
+//     .attr("transform", "translate(" + (svgWidth - 100) + "," + (svgHeight - 120) +")");
+// // legend.append('circle')
+// //     .attr("r", 8)
+// //     .attr("fill", "#eee")
+// //     .attr('cx', 10)
+// //     .attr('cy', 10);
+// legend.append('text')
+//     .attr('x', svgWidth - 100)
+//     .attr('y', svgHeight - 120)
+//     .selectAll("tspan")
+//     .data(legendText)
+//     .enter()
+//     .append('tspan')
+//     .attr('dx', function(d,i) { return i * 18; })
+//     .text(function(d) { return d; });
+
+let hints = ['Clustered nodes',
+    'Use the scroll wheel to zoom',
+    'Hold the shift key to select nodes',
+    'Left click to open node level',
+    'Right click to close node level'];
 let gHint = svg.append('g')
     .classed('hint', true);
-    gHint.append('rect')
+gHint.append('rect')
     .attr('width', 245)
-    .attr('height', 40)
+    .attr('height', 100)
     .attr('stroke', '#333')
     .attr('fill', '#eee')
     .attr('stroke-dasharray', '7 7')
     .attr('x', svgWidth)
     .attr('y', svgHeight)
-    .attr('transform','translate(-255, -50)')
+    .attr('transform','translate(-255, -110)');
+gHint.append('rect')
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", "#a6a3a3")
+    .attr("stroke", "#333")
+    .attr('x', svgWidth - 150)
+    .attr('y', svgHeight - 105)
 gHint.selectAll('text')
     .data(hints)
     .enter()
     .append('text')
     .attr('x', svgWidth - 20)
-    .attr('y', function(d,i) { return svgHeight - 35 + i * 18; })
+    .attr('y', function(d,i) { return svgHeight - 92 + i * 18; })
+    .attr("font-style", function(d, i) {return (i!==0)?"italic":""})
     .text(function(d) { return d; });
 
 // 绑定shift键事件
@@ -122,10 +153,11 @@ function drawGraph(graph, dist, checkedOp, init = false) {
     checkedOpPreserved = checkedOp;
     // 根据选择的op过滤graph, 有子节点的节点一律不回被过滤（因为它下面包括很多类型的子节点
     // let graphAfterFiltering = {...graph};
-    let copyNodes = graph.nodes.map(node => ({...node}));
+    // let copyNodes = graph.nodes.map(node => ({...node}));
     nodesAfterFiltering = graph.nodes.filter(node => checkedOp.indexOf(node.group)!==-1 || "child" in node);
     let nodesName = nodesAfterFiltering.map(d=>d.id);
     let copyLinks = graph.links.map(link => ({...link}));
+    // 过滤掉的边也需要保存 方便回溯
     linksAfterFiltering = copyLinks.filter(link => {
         if(typeof(link.source) === "object") {
             return nodesName.indexOf(link.source.id)!==-1 && nodesName.indexOf(link.target.id)!==-1
@@ -133,7 +165,22 @@ function drawGraph(graph, dist, checkedOp, init = false) {
             return nodesName.indexOf(link.source)!==-1 && nodesName.indexOf(link.target)!==-1
         }
     });
-    // console.log(linksAfterFiltering);
+    let deletedLinks = copyLinks.filter(link => {
+        if(typeof(link.source) === "object") {
+            return nodesName.indexOf(link.source.id)===-1 || nodesName.indexOf(link.target.id)===-1
+        } else {
+            return nodesName.indexOf(link.source)===-1 || nodesName.indexOf(link.target)===-1
+        }
+    });
+    deletedLinksPool = deletedLinksPool.concat(deletedLinks)
+    console.log("links nodes after filter:");
+    console.log(linksAfterFiltering, nodesAfterFiltering);
+    if(init) {
+        graphForDraw = {
+            "nodes": nodesAfterFiltering,
+            "links": linksAfterFiltering
+        }
+    }
     let nodes = {};
 
     for (let i = 0; i < nodesAfterFiltering.length; i++) {
@@ -222,6 +269,11 @@ function drawGraph(graph, dist, checkedOp, init = false) {
         .links(linksAfterFiltering);
 };
 
+
+function updateGraph (value, checkedOp) {
+    drawGraph(graphForDraw, value, checkedOp);
+}
+
 function onNodeClick (d) {
     tooltip.attr("visibility", "hidden");
     // 判断鼠标左击还是右击
@@ -232,56 +284,175 @@ function onNodeClick (d) {
             // 点击的可以展开的节点一定是最外层 找到它
             let clickIndex = nodesAfterFiltering.indexOf(d);
             // 把父节点的名字存到子节点中
-            let childNodes = d.child.nodes.map(childnode=>{return {...childnode, 'fullId': d.id + "/" + childnode.id, 'parent': d.id, 'parentIndex': d.index}});
+            let childNodes = d.child.nodes;//.map(childnode=>{return {...childnode, 'id':d.id + "/" + childnode.id, 'fullId': d.id + "/" + childnode.id, 'parent': d.id, 'parentIndex': d.index}});
+            for (let node of childNodes) {
+                // 前缀不能重复添加
+                if(!('parent' in node)) {
+                    node.id = d.id + "/" + node.id;
+                    // node.fullId = d.id + "/" + node.id;
+                    node.parent = d.id;
+                    node.parentIndex =  d.index;
+                }
+            }
             deletedNodesPool = deletedNodesPool.concat(nodesAfterFiltering.splice(clickIndex, 1));// 删除点击的父节点
             let newNodes = nodesAfterFiltering.concat(childNodes); // 添加展开的新节点
     
             // 删除点击的node的相关连线
             let tempLinks = linksAfterFiltering.filter(link => {
-                return link.source.index !== d.index && link.target.index !== d.index; // 用index 因为id有重复
+                return link.source.id !== d.id && link.target.id !== d.id; // 用index 因为id有重复
             });
+
+            
+            // 去deletedLinksPool找跟child id有关的边 并在pool中删掉
+            let childNodeLinksInPool = [];
+            for(let childnode of childNodes) {
+                deletedLinksPool.forEach((link, index) => {
+                    if(typeof(link.source) === "object") {
+                        if (link.source.id === childnode.id || link.target.id === childnode.id) {
+                            childNodeLinksInPool.push(link);
+                            delete deletedLinksPool[index];
+                        }
+                    } else {
+                        if (link.source === childnode.id || link.target === childnode.id) {
+                            childNodeLinksInPool.push(link);
+                            delete deletedLinksPool[index];
+                        }
+                    }
+                });
+                deletedLinksPool = deletedLinksPool.filter(function (val) {
+                    return val;
+                });
+            }
+
             deletedLinksPool = deletedLinksPool.concat(linksAfterFiltering.filter(link => {
-                return link.source.index === d.index || link.target.index === d.index; // 用index 因为id有重复
+                return link.source.id === d.id || link.target.id === d.id; // 用index 因为id有重复
             }));
-            let newLinks = tempLinks.concat(d.child.links); // 添加新边
+            let newLinks = tempLinks.concat(childNodeLinksInPool, d.child.links); // 添加新边
             // console.log(newNodes, newLinks);
             let newGraph = {
                 "nodes": newNodes,
                 "links": newLinks
-            }
+            };
+            graphForDraw = {
+                "nodes": newNodes,
+                "links": newLinks
+            };
             drawGraph(newGraph, distance, checkedOpPreserved);
         }
     } else if (d3.event.button === 2) {
         // 把当前层级收起来
+        // 如果其兄弟节点有child 也要收起来 即把id前缀带有d.parent的都要收起来
         if ("parent" in d) {
-            let parentIndex = d.parentIndex;
+            // let parentIndex = d.parentIndex;
+            let parentId = d.parent;
             // 找到父节点并从pool中删除
             let i;
             for (i = 0; i < deletedNodesPool.length; i++) {
-                if (deletedNodesPool[i].index === parentIndex) { 
+                if (deletedNodesPool[i].id === parentId) { 
                     break;
                 }
             }
             let parentNode = deletedNodesPool[i];
             deletedNodesPool.splice(i, 1);
-            // 删除子节点 添加父节点
-            let newNodes = nodesAfterFiltering.filter(i => i.parentIndex !== parentIndex);
+            // 删除子节点 删除兄弟节点的子节点 添加父节点 
+            let newNodes = nodesAfterFiltering.filter(i => {
+                if (i.id.indexOf("/") !==-1) {
+                    return i.parent !== parentId && i.id.indexOf(parentId) === -1;
+                } else {
+                    return i.parent !== parentId;
+                }
+            });
             newNodes.push(parentNode);
-            // 添加父节点相关的边 删去子节点的边
-            let parentLinks = deletedLinksPool.filter(link => link.source.index === d.parentIndex || link.target.index === d.parentIndex);
-            deletedLinksPool =  deletedLinksPool.filter(link => link.source.index !== d.parentIndex && link.target.index !== d.parentIndex);
+            
+            // 添加父节点相关的边
+            let parentLinks = deletedLinksPool.filter(link => {
+                if (typeof(link.source) === "object") {
+                    return link.source.id === parentId || link.target.id === parentId;
+                } else {
+                    return link.source === parentId || link.target === parentId;
+                }
+            });
+            deletedLinksPool =  deletedLinksPool.filter(link => link.source.id !== parentId && link.target.id !== parentId);
 
-            let newLinks = linksAfterFiltering.filter(link => !parentNode.child.links.includes(link)).concat(parentLinks);
+            // 删去子节点的边
+            let templinksAfterFiltering = linksAfterFiltering.map(link => ({...link}));
+            for(let childlink of parentNode.child.links) {
+                templinksAfterFiltering.forEach((link, index) => {
+                    if (typeof(childlink.source) === "object") {
+                        if ((link.source.id === childlink.source.id) && (link.target.id === childlink.target.id)) {
+                            delete templinksAfterFiltering[index];
+                        }
+                    } else {
+                        if ((link.source.id === childlink.source) && (link.target.id === childlink.target)) {
+                            delete templinksAfterFiltering[index];
+                        }
+                    }
+                });
+                templinksAfterFiltering = templinksAfterFiltering.filter(function (val) {
+                    return val;
+                });
+
+                deletedLinksPool.forEach((link, index) => {
+                    if (typeof(link.source) === "object") {
+                        if ((link.source.id === childlink.source.id && link.target.id === childlink.target.id)
+                                ||(link.source.id === childlink.source && link.target.id === childlink.target)) {
+                            delete deletedLinksPool[index]
+                        }
+                    } else {
+                        if ((link.source === childlink.source.id && link.target === childlink.target.id)
+                                ||(link.source === childlink.source && link.target === childlink.target)) {
+                            delete deletedLinksPool[index]
+                        }
+                    }
+                    
+                });
+                deletedLinksPool = deletedLinksPool.filter(function (val) {
+                    return val;
+                });
+            }
+
+            // console.log(templinksAfterFiltering);
+            // 删除兄弟节点的子节点的边 (不用删 会在drawGraph过滤掉)
+            // templinksAfterFiltering = templinksAfterFiltering.filter(link => {
+            //     if (link.target.id.indexOf("/") !==-1) {
+            //         return link.target.id.indexOf(parentId) === -1;
+            //     } else if (link.source.id.indexOf("/") !==-1) {
+            //         return link.source.id.indexOf(parentId) === -1;
+            //     } else {
+            //         return link;
+            //     }
+            // })
+            // console.log(deletedLinksPool);
+
+            // deletedLinksPool = deletedLinksPool.filter(link => {
+            //     if (typeof(link.source) === "object") {
+            //         if (link.target.id.indexOf("/") !==-1 || link.source.id.indexOf("/") !==-1) {
+            //             return link.target.id.indexOf(parentId) === -1 && link.source.id.indexOf(parentId) === -1;
+            //         }
+            //         return link;
+            //     } else {
+            //         if (link.target.indexOf("/") !==-1 || link.source.indexOf("/") !==-1) {
+            //             return link.target.indexOf(parentId) === -1 && link.source.indexOf(parentId) === -1;
+            //         } 
+            //         return link;
+            //     }
+                
+            // })
+
+            let newLinks = templinksAfterFiltering.concat(parentLinks);
             // console.log(newLinks);
             let newGraph = {
                 "nodes": newNodes,
                 "links": newLinks
-            }
+            };
+            graphForDraw = {
+                "nodes": newNodes,
+                "links": newLinks
+            };
             drawGraph(newGraph, distance, checkedOpPreserved);
         }
     }
 }
-
 
 // tooltip的显隐
 function onMousehover (d) {

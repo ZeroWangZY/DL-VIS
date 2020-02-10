@@ -210,7 +210,7 @@ function hierarchyBuild(graph){
  // console.log(graph)
   hierarchyEdge(graph)
   //return nodes
-  console.log(graph)
+  // console.log(graph)
   return graph.hierarchy
 }
 
