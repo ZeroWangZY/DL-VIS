@@ -32,7 +32,7 @@ function deleteSameStart(source,target) {
   }
   return { 
     target: target.substring(index),
-    sameSatrt: target.substring(0,index)
+    sameStart: target.substring(0,index)
   }
 }
 
@@ -162,16 +162,19 @@ function classfyEdge(nodes,nodeOpMap,links,path){
       // if(link.source.startsWith(path)&&link.target.startsWith(path)&&nodes.hasOwnProperty(source)&&nodes.hasOwnProperty(target)&&source!==target){
       //   hierarchyEdgeMap[`${source}|${target}`] = true
       // }
-      if(link.source.startsWith(`${path}`)){
-        let source = `${path}${link.source.replace(path, "").split('/')[0]}`
-        let { target, sameSatrt } = deleteSameStart(link.source, link.target)
+      let source = `${path}${link.source.replace(path, "").split('/')[0]}`
+      let { target, sameStart } = deleteSameStart(link.source, link.target)
+      if(link.source.startsWith(`${path}`)&&!(startsWith(sameStart,path)&&sameStart.length>path.length)){
+        // let source = `${path}${link.source.replace(path, "").split('/')[0]}`
+        // let { target, sameSatrt } = deleteSameStart(link.source, link.target)
       //  console.log(target)
         while(target.lastIndexOf('/') !== -1){
         //  debugger
-          hierarchyEdgeMap[`${source}|${sameSatrt}${target}`] = true
+          hierarchyEdgeMap[`${source}|${sameStart}${target}`] = true
           let index = target.lastIndexOf('/')
           target = target.substring(0,index)
         }
+        hierarchyEdgeMap[`${source}|${sameStart}${target}`] = true
       }
   }
   for(let link in hierarchyEdgeMap){
