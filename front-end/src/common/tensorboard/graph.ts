@@ -85,7 +85,7 @@ export interface Node {
    * 'nodeAttributes' is meant to avoid naming-conflicts with the 'attr' in
    * subclasses of Node.
    */
-  nodeAttributes: { [key: string]: any; };
+  nodeAttributes: { [key: string]: any };
 }
 
 export function getIncludeNodeButtonString(include: InclusionType) {
@@ -783,7 +783,27 @@ function mapStrictHierarchy(nodeNames: string[],
 };
 
 export function build(
-  graphDef: GraphDef, params: BuildParams): SlimGraph | void {
+  graphDef: GraphDef): SlimGraph | void {
+  let refEdges: Record<string, boolean> = {};
+  refEdges["Assign 0"] = true;
+  refEdges["AssignAdd 0"] = true;
+  refEdges["AssignSub 0"] = true;
+  refEdges["assign 0"] = true;
+  refEdges["assign_add 0"] = true;
+  refEdges["assign_sub 0"] = true;
+  refEdges["count_up_to 0"] = true;
+  refEdges["ScatterAdd 0"] = true;
+  refEdges["ScatterSub 0"] = true;
+  refEdges["ScatterUpdate 0"] = true;
+  refEdges["scatter_add 0"] = true;
+  refEdges["scatter_sub 0"] = true;
+  refEdges["scatter_update 0"] = true;
+  let params = {
+    enableEmbedding: true,
+    inEmbeddingTypes: ["Const"],
+    outEmbeddingTypes: ["^[a-zA-Z]+Summary$"],
+    refEdges: refEdges
+  };
   /**
    * A dictionary that maps each in-embedding node name to the node
    * object.

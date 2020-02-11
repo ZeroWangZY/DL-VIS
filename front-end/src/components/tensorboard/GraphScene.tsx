@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./GraphScene.css";
-import { RenderGraphInfo } from "../common/graph/render";
-import { layoutScene } from "../common/graph/layout";
-import * as scene from '../common/graph/scene'
+import { RenderGraphInfo } from "../../common/tensorboard/render";
+import { layoutScene } from "../../common/tensorboard/layout";
+import * as scene from '../../common/tensorboard/scene'
 import * as d3 from "d3";
+import * as graph from '../../common/tensorboard/graph'
 interface GraphSceneProps {
   renderHierarchy: RenderGraphInfo;
 }
@@ -14,42 +15,83 @@ let zoomStartCoords = null
 let zoomTransform = null
 let zoom = null
 
+
 const GraphScene: React.FC<GraphSceneProps> = (props: GraphSceneProps) => {
   const svgRef = useRef(null);
   const rootRef = useRef(null)
   let { renderHierarchy } = props
 
+  const _build = () => {
+    layoutScene(renderHierarchy.root)
+    scene.buildGroup(d3.select(rootRef.current), renderHierarchy.root, {
+      _edgeGroupIndex: {},
+      renderHierarchy: renderHierarchy,
+      addNodeGroup: function (n, selection) {
+        _nodeGroupIndex[n] = selection;
+      },
+      getNodeGroup: function (n) {
+        return _nodeGroupIndex[n];
+      },
+      removeNodeGroup: function (n) {
+        delete _nodeGroupIndex[n];
+      },
+      isNodeHighlighted: function (n) {
+        return false
+        // return n === this.highlightedNode;
+      },
+      isNodeSelected: function (n) {
+        return false
+      },
+      colorBy: 'STRUCTURE',
+      addAnnotationGroup: function (a, d, selection) {
+        let an = a.node.name;
+        _annotationGroupIndex[an] = _annotationGroupIndex[an] || {};
+        _annotationGroupIndex[an][d.node.name] = selection;
+      },
+      getAnnotationGroupsIndex: function (a) {
+        return _annotationGroupIndex[a];
+      },
+      removeAnnotationGroup: function (a, d) {
+        delete _annotationGroupIndex[a.node.name][d.node.name];
+      },
+      templateIndex: renderHierarchy.hierarchy.getTemplateIndex(),
+      isNodeExpanded: function (node) {
+        return node.expanded;
+      },
+      fire: (eventName: string, detail) => {
+        if (eventName === 'node-toggle-expand') {
+          // Compute the sub-hierarchy scene.
+          let nodeName = detail.name;
+          let renderNode = renderHierarchy.getRenderNodeByName(nodeName);
+          // Op nodes are not expandable.
+          if (renderNode.node.type === graph.NodeType.OP) {
+            return;
+          }
+          renderHierarchy.buildSubhierarchy(nodeName);
+          renderNode.expanded = !renderNode.expanded;
+
+          setNodeExpanded(renderNode);
+        }
+      }
+    });
+  }
+
+  const setNodeExpanded = function (renderNode) {
+    _build();
+  }
+
   useEffect(() => {
     zoom = d3.zoom()
       .on('end', function () {
         if (zoomStartCoords) {
-          // Calculate the total distance dragged during the zoom event.
-          // If it is sufficiently small, then fire an event indicating
-          // that zooming has ended. Otherwise wait to fire the zoom end
-          // event, so that a mouse click registered as part of this zooming
-          // is ignored (as this mouse click was part of a zooming, and should
-          // not be used to indicate an actual click on the graph).
           let dragDistance = Math.sqrt(
             Math.pow(zoomStartCoords.x - zoomTransform.x, 2) +
             Math.pow(zoomStartCoords.y - zoomTransform.y, 2));
-          // if (dragDistance < this._maxZoomDistanceForClick) {
-          //   this._fireEnableClick();
-          // } else {
-          //   setTimeout(this._fireEnableClick.bind(this), 50);
-          // }
         }
         zoomStartCoords = null
       })
       .on('zoom', function () {
-        // Store the coordinates of the zoom event.
         zoomTransform = d3.event.transform
-
-        // If this is the first zoom event after a zoom-end, then
-        // store the coordinates as the start coordinates as well,
-        // and fire an event to indicate that zooming has started.
-        // This doesn't use the zoomstart event, as d3 sends this
-        // event on mouse-down, even if there has been no dragging
-        // done to translate the graph around.
         if (zoomStartCoords) {
           zoomStartCoords = zoomTransform
           // this.fire('disable-click');
@@ -71,44 +113,7 @@ const GraphScene: React.FC<GraphSceneProps> = (props: GraphSceneProps) => {
   }, [])
   useEffect(() => {
     if (renderHierarchy !== null) {
-      layoutScene(renderHierarchy.root)
-      scene.buildGroup(d3.select(rootRef.current), renderHierarchy.root, {
-        _edgeGroupIndex: {},
-        renderHierarchy: renderHierarchy,
-        addNodeGroup: function (n, selection) {
-          _nodeGroupIndex[n] = selection;
-        },
-        getNodeGroup: function (n) {
-          return _nodeGroupIndex[n];
-        },
-        removeNodeGroup: function (n) {
-          delete _nodeGroupIndex[n];
-        },
-        isNodeHighlighted: function (n) {
-          return false
-          // return n === this.highlightedNode;
-        },
-        isNodeSelected: function (n) {
-          return false
-        },
-        colorBy: 'STRUCTURE',
-        addAnnotationGroup: function (a, d, selection) {
-          let an = a.node.name;
-          _annotationGroupIndex[an] = _annotationGroupIndex[an] || {};
-          _annotationGroupIndex[an][d.node.name] = selection;
-        },
-        getAnnotationGroupsIndex: function (a) {
-          return _annotationGroupIndex[a];
-        },
-        removeAnnotationGroup: function (a, d) {
-          delete _annotationGroupIndex[a.node.name][d.node.name];
-        },
-        templateIndex: renderHierarchy.hierarchy.getTemplateIndex(),
-        isNodeExpanded: function (node) {
-          return node.expanded;
-        },
-        fire: function () { return }
-      });
+      _build()
     }
   }, [renderHierarchy]);
   return (
