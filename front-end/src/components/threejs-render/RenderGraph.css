@@ -1,16 +1,16 @@
 .contanier{
-  height: 500px;
+  height: 700px;
   width: 1000px
 }
 .float{
   float: left;
     width: 200px;
     margin-right: 20px;
-    height: 500px;
+    height: 700px;
     background: antiquewhite;
 }
 .main{
     overflow: hidden;
-    height: 500px;
+    height: 700px;
     background: beige;
 }

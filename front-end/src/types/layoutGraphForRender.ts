@@ -1,6 +1,6 @@
 import {RawEdge, NodeId, OperationNode, GroupNode, LayerNode, DataNode} from "./processed-graph";
-export type Coordinate = object // {x: value, y: value}
-export type Size = object // {width: value, height: value}
+export type Coordinate =  {x: number, y: number}
+export type Size =  {width: number, height: number}
 export interface DisplayedEdge extends RawEdge {
     label: string;
     points: Coordinate[];
