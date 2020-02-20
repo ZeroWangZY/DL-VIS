@@ -213,7 +213,6 @@ export class SimplifierImp {
         siblings = siblings.concat(siblingIdx);
       });
       const srcNodeIndices = [index, ...siblings];
-      debugger;
       this.replace(graph, srcNodeIndices, index);
     }
   }

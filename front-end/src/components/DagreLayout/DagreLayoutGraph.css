@@ -1,0 +1,39 @@
+#dagre-svg {
+    width: 100%;
+    overflow: hidden;
+}
+
+
+.node rect.label-container, ellipse.label-container {
+    fill: none;
+    stroke-width: 1px;
+    stroke:#333;
+}
+
+.node rect.label-container {
+    rx: 5;
+    ry: 5;
+}
+.nodeitem text {
+        cursor: auto;
+}
+
+
+/* .nodeitem-0 ellipse.label-container {
+    
+} */
+
+/* node type为data  */
+.nodeitem-3 rect.label-container {
+    stroke: none;
+}
+
+.clusters rect {
+    fill: #eee;
+    fill-opacity: 0.6;
+    stroke-width: 1px;
+    stroke:#333;
+}
+.clusters .label {
+    font-style: italic;
+}
