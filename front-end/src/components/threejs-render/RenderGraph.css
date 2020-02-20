@@ -1,0 +1,16 @@
+.contanier{
+  height: 500px;
+  width: 1000px
+}
+.float{
+  float: left;
+    width: 200px;
+    margin-right: 20px;
+    height: 500px;
+    background: antiquewhite;
+}
+.main{
+    overflow: hidden;
+    height: 500px;
+    background: beige;
+}
