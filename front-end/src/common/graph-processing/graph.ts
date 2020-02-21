@@ -150,7 +150,7 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   // return pGraph;
 
   let hGraph = buildHierarchy(pGraph);
-  logHierarchy(hGraph);
+  // logHierarchy(hGraph);
 
   return pGraph;
 }

@@ -21,15 +21,17 @@ const useTestProcessedGraph: () => ProcessedGraph = () => {
         const shufflenet = '/data/Shuffle.pbtxt'
         const vgg = '/data/VGG16.pbtxt'
         fetchAndParseGraphData(
-            process.env.PUBLIC_URL + conv,
+            process.env.PUBLIC_URL + bert,
             null
         )
             .then(graph => {
                 return pruneByOutput(graph);
+                // return graph;
             })
             .then(graph => {
                 const simplifier = new SimplifierImp();
                 return simplifier.withTracker()(graph);
+                // return graph;
             })
             .then(async graph => {
                 const hGraph = await buildGraph(graph);

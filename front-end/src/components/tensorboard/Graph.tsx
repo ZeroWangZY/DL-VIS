@@ -24,13 +24,15 @@ const Graph: React.FC = () => {
     const variableTest2 = '/data/variable-test2.pbtxt'
     const variableTest3 = '/data/variable-test3.pbtxt'
     fetchAndParseGraphData(
-      process.env.PUBLIC_URL + conv,
+      process.env.PUBLIC_URL + bert,
       null
     )
       .then(graph => {
+        // return graph;
         return pruneByOutput(graph);
       })
       .then(graph => {
+        // return graph;
         const simplifier = new SimplifierImp();
         return simplifier.withTracker()(graph);
       })

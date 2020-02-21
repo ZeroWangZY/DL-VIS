@@ -11,6 +11,9 @@ interface DagreLayoutGraphProps {
 // 找到该边需要需要连接到的节点 id
 function findExpandedParentNodeId(targetNodeId: string, nodeMap: { [nodeId: string]: NodeDef }): string {
     let expandedParentId = targetNodeId;
+    if (!nodeMap[expandedParentId]) {
+      debugger;
+    }
     let parent = nodeMap[expandedParentId].parent;
     // 如果有parent 且不为根节点 且未展开 则把边连到parent上 如果展开了 则直接连到原节点上
     while (parent && parent !== "___root___" && !nodeMap[parent]["expanded"]) {

@@ -16,11 +16,12 @@ interface PatternDef {
   rules: RegExp[];
 };
 
+// 这里规则的正则设计有待优化，很多情况。。。
 const namePatternsDict: PatternDef = {
   test: PatternType.NAME,
   rules: [
-    /gradients/,
-    /^GradientDescent/,
+    /gradients\//,
+    /GradientDescent\//,
     /Adam/,
   ]
 };
@@ -60,7 +61,7 @@ export class SimplifierImp {
   simplify(graph: RawGraph, patterns?: PatternDef[]): RawGraph {
     let ret = this.deepcopy(graph);
 
-    this.cleanInputs(ret);
+    this.cleanNameNInputs(ret);
 
     const $patterns = patterns ? patterns : this.defaultPatterns;
     for (let {test, rules} of $patterns) {
@@ -81,32 +82,36 @@ export class SimplifierImp {
     };
   }
 
-  cleanInputs(graph: RawGraph) {
-    graph.node.forEach(node => {
-      if (!node.input) {
-        return;
+  cleanName(name: string): string {
+    name = name.replace(/^\^/, "");
+    let ret = name;
+    let match = name.match(/(.*):(\w+:\d+)$/);
+    // 这个变量暂时没用
+    let outputTensorKey = '0';
+    if (match) {
+      // The output string consists of several characters and a number separated
+      // by a colon.
+      ret = match[1];
+      outputTensorKey = match[2];
+    } else {
+      match = name.match(/(.*):(\d+)$/);
+      if (match) {
+        // The output string consists of a single number.
+        ret = match[1];
+        outputTensorKey = match[2];
       }
-      node.input = node.input.map(n => {
-        let inputName = n.replace(/^\^/, "");
-        let name = inputName;
-        // 复制过来的，outputTensorKey暂时没用
-        let match = inputName.match(/(.*):(\w+:\d+)$/);
-        let outputTensorKey = '0';
-        if (match) {
-          // The output string consists of several characters and a number separated
-          // by a colon.
-          name = match[1];
-          outputTensorKey = match[2];
-        } else {
-          match = inputName.match(/(.*):(\d+)$/);
-          if (match) {
-            // The output string consists of a single number.
-            name = match[1];
-            outputTensorKey = match[2];
-          }
-        }
-        return name;
-      });
+    }
+
+    return ret;
+  }
+
+  cleanNameNInputs(graph: RawGraph) {
+    graph.node.forEach(node => {
+      node.name = this.cleanName(node.name);
+
+      if (node.input) {
+        node.input = node.input.map(n => this.cleanName(n))
+      }
     });
   }
 
@@ -120,6 +125,12 @@ export class SimplifierImp {
   }
 
   deleteNodes(graph: RawGraph, indices: number[]) {
+    // 节点关联的input也要删掉
+    for (let index of indices) {
+      const node = graph.node[index];
+      const name = node.name;
+      graph.node.forEach(n => this.deleteInputs(n, name));
+    }
     graph.node = graph.node.filter((_, idx) => !indices.includes(idx));
   }
 
