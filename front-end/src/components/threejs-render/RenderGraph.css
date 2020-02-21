@@ -12,5 +12,11 @@
 .main{
     overflow: hidden;
     height: 700px;
-    background: beige;
+    /* background: beige; */
+    padding: 10px;
+}
+.render-graph{
+    width: 100%;
+    height: 100%;
+    border: 1px solid black;
 }
