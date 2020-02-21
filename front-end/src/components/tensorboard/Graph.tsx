@@ -24,7 +24,7 @@ const Graph: React.FC = () => {
     const variableTest2 = '/data/variable-test2.pbtxt'
     const variableTest3 = '/data/variable-test3.pbtxt'
     fetchAndParseGraphData(
-      process.env.PUBLIC_URL + variableTest2,
+      process.env.PUBLIC_URL + conv,
       null
     )
       .then(graph => {

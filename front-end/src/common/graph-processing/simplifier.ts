@@ -59,6 +59,9 @@ export class SimplifierImp {
 
   simplify(graph: RawGraph, patterns?: PatternDef[]): RawGraph {
     let ret = this.deepcopy(graph);
+
+    this.cleanInputs(ret);
+
     const $patterns = patterns ? patterns : this.defaultPatterns;
     for (let {test, rules} of $patterns) {
       rules.forEach(rule => this.pruneByAttr(ret, rule, test));
@@ -68,6 +71,7 @@ export class SimplifierImp {
 
     const indicesToDelete = Array.from(this.indicesToDelete);
     this.deleteNodes(ret, indicesToDelete);
+
     return ret;
   }
 
@@ -75,6 +79,35 @@ export class SimplifierImp {
     return (graph: RawGraph): Promise<RawGraph> => {
       return wrapTaskWithTimeLogger(this.simplify).call(this, graph);
     };
+  }
+
+  cleanInputs(graph: RawGraph) {
+    graph.node.forEach(node => {
+      if (!node.input) {
+        return;
+      }
+      node.input = node.input.map(n => {
+        let inputName = n.replace(/^\^/, "");
+        let name = inputName;
+        // 复制过来的，outputTensorKey暂时没用
+        let match = inputName.match(/(.*):(\w+:\d+)$/);
+        let outputTensorKey = '0';
+        if (match) {
+          // The output string consists of several characters and a number separated
+          // by a colon.
+          name = match[1];
+          outputTensorKey = match[2];
+        } else {
+          match = inputName.match(/(.*):(\d+)$/);
+          if (match) {
+            // The output string consists of a single number.
+            name = match[1];
+            outputTensorKey = match[2];
+          }
+        }
+        return name;
+      });
+    });
   }
 
   addDeletion(index: number | number[]) {

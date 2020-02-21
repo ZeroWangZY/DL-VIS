@@ -23,20 +23,20 @@ import {
 import { wrapTaskWithTimeLogger } from "./utils";
 
 
-function testInputOutput(name: string): number {
+function testInputOutput(name: string): [number, string] {
   if (!name) {
-    return -1;
+    return [-1, name];
   }
   const scope = name.split(SCOPE_DELIM);
   const tgt = scope[scope.length - 1];
   const { INPUT, OUTPUT } = END_PATTERNS;
   if (INPUT.test(tgt)) {
-    return DataType.INPUT;
+    return [DataType.INPUT, tgt.replace(INPUT, "")];
   }
   if (OUTPUT.test(tgt)) {
-    return DataType.OUTPUT;
+    return [DataType.OUTPUT, tgt.replace(OUTPUT, "")];
   }
-  return -1;
+  return [-1, tgt];
 }
 
 
@@ -48,22 +48,26 @@ function testVariable(op: string) {
 
 function buildBasicNode(rNode: RawNode): OperationNode | DataNode {
   const { name, op } = rNode;
-  const dataType = testInputOutput(name);
+  const [dataType, displayedName] = testInputOutput(name);
+  const opts = {displayedName};
   if (dataType >= 0) {
     return new DataNodeImp({
       id: name,
       dataType,
+      opts,
     });
   }
   if (testVariable(op)) {
     return new DataNodeImp({
       id: name,
       dataType: DataType.VARIABLE,
+      opts,
     });
   }
   return new OperationNodeImp({
     id: name,
     op,
+    opts,
   });
 }
 
@@ -146,7 +150,7 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   // return pGraph;
 
   let hGraph = buildHierarchy(pGraph);
-  // logHierarchy(hGraph);
+  logHierarchy(hGraph);
 
   return pGraph;
 }
@@ -176,28 +180,31 @@ export function buildHierarchy(pGraph: ProcessedGraph): ProcessedGraph {
 }
 
 
-function testLayerType(name: string): string {
+function testLayerType(name: string): [string, string] {
   for (let [key, pattern] of Object.entries(LAYER_PATTERNS)) {
     if (pattern.test(name)) {
-      return key;
+      return [key, name.replace(pattern, "")];
     }
   }
-  return "";
+  return ["", name];
 }
 
 
 function buildAbstractNode(name: string): AbstractNode {
   let splitedScope = name.split(SCOPE_DELIM);
   const tgtName = splitedScope[splitedScope.length - 1];
-  const layerType = testLayerType(tgtName);
+  const [layerType, displayedName] = testLayerType(tgtName);
+  const opts = {displayedName};
   if (layerType) {
     return new LayerNodeImp({
       id: name,
       layerType: layerType as LayerType,
+      opts,
     });
   }
   return new GroupNodeImp({
     id: name,
+    opts,
   });
 }
 
