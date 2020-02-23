@@ -1,141 +1,176 @@
 import React, { Component } from "react";
 import * as THREE from "three";
-import {LayoutGraph} from '../../types/layoutGraphForRender'
-
+import { Event }from './threeEvent.js'
+// import 'three-onevent'
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// import './onEvent'
+import {LayoutGraph, DisplayedEdge, DisplayedNode} from '../../types/layoutGraphForRender'
+import {RawEdge, NodeId, OperationNode, GroupNode, LayerNode, DataNode} from "../../types/processed-graph";
+import  { addArrow, addLine, addText }  from './draw'
+import { Function } from "@babel/types";
+// import { Camera } from "three";
 interface  GraphProps {
     renderData: LayoutGraph;
+    clickEvent: (object: any) => void;
 }
-// interface  GraphState {
-   
-// }
-export class Graph extends Component<GraphProps> {
+interface  GraphState {
+    displayedNodes: DisplayedNode[]; //根据group的展开情况，当前显示的节点
+    dispalyedEdges: DisplayedEdge[];
+}
+export class Graph extends Component<GraphProps, GraphState> {
     private el: React.RefObject<HTMLDivElement>
-    scene: any
-    renderer: any
-    camera: any
+    private scene: any
+    private renderer: any
+    private camera: any
+    private event: any
+    displayedNodes: any
+    dispalyedEdges: any
     constructor(props) {
         super(props);
+        this.state = {
+            displayedNodes: props.renderData.displayedNodes,
+            dispalyedEdges: props.renderData.dispalyedEdges
+        };
+        // this.displayedNodes = [...this.props.renderData.displayedNodes]
+        // this.dispalyedEdges = [...this.props.renderData.dispalyedEdges]
         this.el = React.createRef();
         this.sceneSetup = this.sceneSetup.bind(this);
         this.addSceneLines = this.addSceneLines.bind(this);
         this.addSceneRect = this.addSceneRect.bind(this);
+        this.addSceneLabel = this.addSceneLabel.bind(this);
     }
     componentDidMount(){
+        console.log('Didmount')
         this.coordinateTransform()
         this.sceneSetup();
         this.addSceneLines();
-         this.addSceneRect();
+        this.addSceneRect();
+         this.addSceneLabel()
+        this.event = new Event({
+            camera: this.camera, 
+            scene: this.scene, 
+            renderer: this.renderer,
+            width: this.el.current.clientWidth, 
+            height: this.el.current.clientHeight
+        })
+        this.el.current.addEventListener( 'click', (event)=>{
+            let clickObject = this.event.mouseClickHandle(event)
+            clickObject&&this.props.clickEvent(clickObject)
+        }, true );
+        this.el.current.addEventListener( 'mousemove', this.event.mouseOverHandle, true );
         this.renderer.render( this.scene, this.camera );
     }
+    UNSAFE_componentWillUpdate(nextProps){ 
+        // console.log('UNSAFE_componentWillUpdate')
+        this.clearThree(this.scene)
+        // console.log(nextProps)
+        // this.setState({
+        //     displayedNodes: nextProps.renderData.displayedNodes,
+        //     dispalyedEdges: nextProps.renderData.dispalyedEdges
+        // })
+        // console.log(this.scene)
+        // this.renderer.renderLists.dispose();
+        // console.log(this.scene)
+        this.coordinateTransform()
+        this.addSceneLines();
+        this.addSceneRect();
+         this.addSceneLabel()
+        this.renderer.render( this.scene, this.camera );
+    }
+    componentWillUnmount() {
+        document.removeEventListener('click', this.event.mouseClickHandle);
+        document.removeEventListener('mousemove', this.event.mouseOverHandle);
+    }
     coordinateTransform(){
-        this.props.renderData.dispalyedEdges.forEach((link) => {
+        console.log(this.props.renderData.displayedNodes[0],this.state.displayedNodes[0])
+        this.state.dispalyedEdges.forEach((link) => {
             link.points.forEach(point => {
                 point.y = this.el.current.clientHeight - point.y
             });
         })
-        this.props.renderData.displayedNodes.forEach((node) => {
+        this.state.displayedNodes.forEach((node) => {
             node.point.y = this.el.current.clientHeight - node.point.y
         })
+        console.log(this.props.renderData.displayedNodes[0],this.state.displayedNodes[0])
     }
     sceneSetup(){
         const width = this.el.current.clientWidth
         const height = this.el.current.clientHeight;
-        console.log(width,height)
         const margin = 10
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(-margin, width-margin, height+margin , margin, 1, 1000)
         this.camera.position.z = 5
-       // this.camera.position.set( 0, 0, 100 );
-      //  this.camera.lookAt( 0, 0, 0 );
+
         this.renderer = new THREE.WebGLRenderer({
-             alpha: true,
+            //  alpha: true,
              antialias: true,
             // clearColor: 0xffffff
          });
         this.renderer.setSize(width, height );
         this.renderer.setClearColor('rgb(255,255,255)',1.0)
         this.el.current.appendChild( this.renderer.domElement );
-       // var controls=new THREE.OrbitControls(this.camera);//鼠标拖拽
     }
     addSceneLines(){
-         this.props.renderData.dispalyedEdges.forEach((link) => {
-            let data = link.points
-            let material = new THREE.LineBasicMaterial( { color: 0x333333 } );
-            let points = [];
-            for(let i=0; i<data.length; i++){
-                points.push( new THREE.Vector3( data[i].x, data[i].y, 0 ) );
-            }
-            let geometry = new THREE.BufferGeometry().setFromPoints( points );
-            let line = new THREE.Line( geometry, material );
+         this.state.dispalyedEdges.forEach((link) => {
+            let line = addLine(link.points)
             line.renderOrder = 2
             this.scene.add( line );
             //add arrow
-            let from = points[points.length-2]
-            let to = points[points.length-1]
-            let arrow = this.addArrow(from, to)
+            let from = new THREE.Vector3( link.points[link.points.length - 2].x, link.points[link.points.length - 2].y, 0 )
+            let to = new THREE.Vector3( link.points[link.points.length - 1].x, link.points[link.points.length - 1].y, 0 )
+            let arrow = addArrow(from, to)
             this.scene.add( arrow );
         })
     }
     addSceneRect(){
-        this.props.renderData.displayedNodes.forEach((node,i) => {
-          //  node.point.x =  node.point.x*2
+        this.state.displayedNodes.forEach((node,i) => {
             let geometry = new THREE.PlaneGeometry(node.size.width, node.size.height)
-            let material = new THREE.MeshBasicMaterial({ color: 0xF2F2F2})
+            let material = new THREE.MeshBasicMaterial({ color: 0xffffff})
             let circle = new THREE.Mesh(geometry, material)
+            circle.name = `${node.nodeId} rect`
             circle.position.set(node.point.x, node.point.y, 0)
 
             let edges = new THREE.EdgesGeometry( geometry );
             let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x333333 } ) );
             line.position.set(node.point.x, node.point.y, 0)
+            line.name = `${node.nodeId} edge`
             line.renderOrder = 1
             circle.renderOrder = 0
-            let label = this.createLabel(this.props.renderData.displayedNodes, this.props.renderData.nodeMap,75,this.el.current.clientWidth,this.el.current.clientHeight)
-            this.scene.add( label ); 
             this.scene.add( line );          
             this.scene.add(circle)
         })
     }
-    //可提出
-    createLabel(nodes, nodemap,size, canvasWidth, canvasHeight){
-        let canvas = document.createElement("canvas");
-        let context = canvas.getContext("2d");
-        canvas.width = canvasWidth*5;
-        canvas.height = canvasHeight*5;
-     //   context.fillStyle = 'rgba(255,255,255,0)';
-        context.font =`normal ${size}px Arial`;
-
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillStyle = "black";
-        nodes.forEach(node => {
-             context.fillText(nodemap[node.nodeId].displayedName, node.point.x*5, canvas.height - node.point.y*5);
+    addSceneLabel(){
+        let texts = this.state.displayedNodes.map(node => {
+            return {
+                label: this.props.renderData.nodeMap[node.nodeId].displayedName,
+                point:node.point
+            }
         });
-
-        let texture = new THREE.Texture(canvas);
-        texture.needsUpdate = true;
-
-        let material = new THREE.MeshBasicMaterial({
-            map : texture
-        });
-
-        let mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvasWidth, canvasHeight), material);
-       // mesh.overdraw = true;
-        
-        mesh.position.x = canvasWidth / 2 ;
-        mesh.position.y =canvasHeight / 2 ;
-
-        return mesh;
+        let label = addText(texts,75,this.el.current.clientWidth,this.el.current.clientHeight)
+        label.name = `texture`
+        // label.renderOrder = 0
+        this.scene.add( label ); 
     }
-    //可提出
-    addArrow(from, to){
-        let direction = to.clone().sub(from);
-        let length = direction.length();
-        let arrowHelper = new THREE.ArrowHelper(direction.normalize(), to, 1, 0x333333,10,10 );
-        arrowHelper.renderOrder = 100
-        return arrowHelper
-    }
+    clearThree(obj){
+        while(obj.children.length > 0){ 
+          obj.remove(obj.children[0]);
+        }
+        if(obj.geometry) obj.geometry.dispose()
+      
+        if(obj.material){ 
+          //in case of map, bumpMap, normalMap, envMap ...
+          Object.keys(obj.material).forEach(prop => {
+            if(!obj.material[prop])
+              return         
+            if(typeof obj.material[prop].dispose === 'function')                                  
+              obj.material[prop].dispose()                                                        
+          })
+          obj.material.dispose()
+        }
+      }   
     render() {
-        console.log(this.props.renderData)
+        // console.log(this.props.renderData)
         return <div className='render-graph' ref={this.el} />;
       }
 }
