@@ -290,3 +290,110 @@ export const mockDataForRender: LayoutGraph = {
     }
   ]
 }
+
+export const mockDataForRender2: LayoutGraph = {
+  nodeMap: {
+    '___root___': root,
+    'fc_layer': fcLayer,
+    'conv_layer': convLayer,
+    'softmax': softmax,
+    'fc_layer/bias': bias2,
+    'fc_layer/weights': weights2,
+    'fc_layer/relu': relu2,
+    'fc_layer/add': add2,
+    'fc_layer/mat_mul': matMul,
+    'conv_layer/bias': bias1,
+    'conv_layer/add': add1,
+    'conv_layer/relu': relu1,
+    'conv_layer/weights': weights1,
+    'conv_layer/conv2d': conv2d,
+    'x___input___': input,
+    'y': output
+  },
+  rawEdges: [{
+    source: input.id,
+    target: conv2d.id,
+  }, {
+    source: weights1.id,
+    target: conv2d.id,
+  }, {
+    source: conv2d.id,
+    target: add1.id,
+  }, {
+    source: bias1.id,
+    target: add1.id,
+  }, {
+    source: add1.id,
+    target: relu1.id,
+  }, {
+    source: relu1.id,
+    target: matMul.id,
+  }, {
+    source: weights2.id,
+    target: matMul.id,
+  }, {
+    source: matMul.id,
+    target: add2.id,
+  }, {
+    source: bias2.id,
+    target: add2.id,
+  }, {
+    source: add2.id,
+    target: relu2.id,
+  }, {
+    source: relu2.id,
+    target: softmax.id,
+  }, {
+    source: softmax.id,
+    target: output.id,
+  }],
+  displayedNodes: [
+    {
+        nodeId: 'fc_layer',
+        point: {"x": 160.4609375, "y": 437.2421875},
+        size: {"width": 73.5781, "height": 41.6094}
+    },
+    {
+        nodeId: 'conv_layer',
+        point: {"x": 154.16015625, "y": 183.21875},
+        size: {"width": 100.695, "height": 180.438}
+    },
+    {
+        nodeId: 'softmax',
+        point: {"x": 160.4609375, "y": 528.8515625},
+        size: {"width": 76.52,"height": 41.61}
+    },
+    {
+        nodeId: 'x___input___',
+        point: {"x": 14.40625, "y": 45.8046875},
+        size: {"width": 28.81, "height": 41.61}
+    },
+    {
+        nodeId: 'y',
+        point: {"x": 160.4609375, "y": 620.4609375},
+        size: {"width": 28.81, "height": 41.61}
+    }
+  ],
+  dispalyedEdges: [
+    {
+        source: input.id,
+        target: conv2d.id,
+        label: "",
+        points: [
+            {"x":28.8125,"y":54.074916007784196},
+            {"x":94.1953125,"y":91.609375},
+            {"x":105.83611072616408,"y":116.609375}
+        ]
+    },{
+        source: fcLayer.id,
+        target: softmax.id,
+        label: "",
+        points: [{"x":160.4609375,"y":458.046875},{"x":160.4609375,"y":483.046875},{"x":160.4609375,"y":508.046875}]
+    }, {
+        source: softmax.id,
+        target: output.id,
+        label: "",
+        points: [{"x":160.4609375,"y":549.65625},{"x":160.4609375,"y":574.65625},{"x":160.4609375,"y":599.65625}]
+    }
+  ]
+}
