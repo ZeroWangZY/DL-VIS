@@ -4,7 +4,7 @@ import { Event }from './threeEvent.js'
 // import 'three-onevent'
 // import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 // import './onEvent'
-import {LayoutGraph, DisplayedEdge, DisplayedNode} from '../../types/layoutGraphForRender'
+import {LayoutGraph, DisplayedEdge, DisplayedNode, Coordinate} from '../../types/layoutGraphForRender'
 import {RawEdge, NodeId, OperationNode, GroupNode, LayerNode, DataNode} from "../../types/processed-graph";
 import  { addArrow, addLine, addText }  from './draw'
 import { Function } from "@babel/types";
@@ -27,10 +27,10 @@ export class Graph extends Component<GraphProps, GraphState> {
     dispalyedEdges: any
     constructor(props) {
         super(props);
-        this.state = {
-            displayedNodes: props.renderData.displayedNodes,
-            dispalyedEdges: props.renderData.dispalyedEdges
-        };
+        // this.state = {
+        //     displayedNodes: [],
+        //     dispalyedEdges: []
+        // };
         // this.displayedNodes = [...this.props.renderData.displayedNodes]
         // this.dispalyedEdges = [...this.props.renderData.dispalyedEdges]
         this.el = React.createRef();
@@ -60,8 +60,8 @@ export class Graph extends Component<GraphProps, GraphState> {
         this.el.current.addEventListener( 'mousemove', this.event.mouseOverHandle, true );
         this.renderer.render( this.scene, this.camera );
     }
-    UNSAFE_componentWillUpdate(nextProps){ 
-        // console.log('UNSAFE_componentWillUpdate')
+    componentDidUpdate(nextProps){ 
+        console.log('UNSAFE_componentWillUpdate')
         this.clearThree(this.scene)
         // console.log(nextProps)
         // this.setState({
@@ -82,16 +82,31 @@ export class Graph extends Component<GraphProps, GraphState> {
         document.removeEventListener('mousemove', this.event.mouseOverHandle);
     }
     coordinateTransform(){
-        console.log(this.props.renderData.displayedNodes[0],this.state.displayedNodes[0])
-        this.state.dispalyedEdges.forEach((link) => {
-            link.points.forEach(point => {
-                point.y = this.el.current.clientHeight - point.y
+        // console.log(this.props.renderData.displayedNodes[0])
+        this.dispalyedEdges = this.props.renderData.dispalyedEdges.map((link) => {
+            let points: Coordinate[] = []
+            points = link.points.map(point => {
+                return {
+                    x: point.x,
+                    y: this.el.current.clientHeight - point.y 
+                }
             });
+            return {
+                points,
+                label: link.label
+            }
         })
-        this.state.displayedNodes.forEach((node) => {
-            node.point.y = this.el.current.clientHeight - node.point.y
+        this.displayedNodes = this.props.renderData.displayedNodes.map((node) => 
+        {
+            return {
+                nodeId: node.nodeId,
+                point: { 
+                    x: node.point.x,
+                    y: this.el.current.clientHeight - node.point.y 
+                },
+                size: node.size
+            }
         })
-        console.log(this.props.renderData.displayedNodes[0],this.state.displayedNodes[0])
     }
     sceneSetup(){
         const width = this.el.current.clientWidth
@@ -111,7 +126,7 @@ export class Graph extends Component<GraphProps, GraphState> {
         this.el.current.appendChild( this.renderer.domElement );
     }
     addSceneLines(){
-         this.state.dispalyedEdges.forEach((link) => {
+         this.dispalyedEdges.forEach((link) => {
             let line = addLine(link.points)
             line.renderOrder = 2
             this.scene.add( line );
@@ -123,7 +138,7 @@ export class Graph extends Component<GraphProps, GraphState> {
         })
     }
     addSceneRect(){
-        this.state.displayedNodes.forEach((node,i) => {
+        this.displayedNodes.forEach((node,i) => {
             let geometry = new THREE.PlaneGeometry(node.size.width, node.size.height)
             let material = new THREE.MeshBasicMaterial({ color: 0xffffff})
             let circle = new THREE.Mesh(geometry, material)
@@ -141,7 +156,7 @@ export class Graph extends Component<GraphProps, GraphState> {
         })
     }
     addSceneLabel(){
-        let texts = this.state.displayedNodes.map(node => {
+        let texts = this.displayedNodes.map(node => {
             return {
                 label: this.props.renderData.nodeMap[node.nodeId].displayedName,
                 point:node.point
