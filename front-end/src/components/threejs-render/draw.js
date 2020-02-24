@@ -47,8 +47,26 @@ let addText = function(texts,size,canvasWidth,canvasHeight){
     // mesh.overdraw = true;
     mesh.position.x = canvasWidth / 2 ;
     mesh.position.y =canvasHeight / 2 ;
-
+    mesh.name = `texture`
     return mesh;
 }
 
-export { addArrow, addLine, addText };
+let addRect  = function(width, height, x, y, id){
+    let geometry = new THREE.PlaneGeometry(width, height)
+    let material = new THREE.MeshBasicMaterial({ color: 0xffffff})
+    let circle = new THREE.Mesh(geometry, material)
+    circle.name = `${id} rect`
+    circle.position.set(x, y, 0)
+
+    let edges = new THREE.EdgesGeometry( geometry );
+    let line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0x333333 } ) );
+    line.position.set(x, y, 0)
+    line.name = `${id} edge`
+    line.renderOrder = 1
+    circle.renderOrder = 0
+    let group = new THREE.Group();
+    group.add( line );
+    group.add( circle );
+    return group
+}
+export { addArrow, addLine, addText, addRect };
