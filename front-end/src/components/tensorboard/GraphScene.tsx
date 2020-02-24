@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import "./GraphScene.css";
 import { RenderGraphInfo } from "../../common/tensorboard/render";
 import { layoutScene } from "../../common/tensorboard/layout";

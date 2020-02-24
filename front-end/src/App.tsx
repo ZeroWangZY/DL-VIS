@@ -6,7 +6,7 @@ import DagreLayout from "./components/DagreLayout/DagreLayout";
 const App: React.FC = () => {
   return (
     <div className="App">
-      {/* <TensorBoardGraph /> */}
+      <TensorBoardGraph />
       <DagreLayout />
     </div>
   );

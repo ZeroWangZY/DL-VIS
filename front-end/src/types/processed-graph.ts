@@ -1,8 +1,8 @@
-export enum NodeType { OPERTATION, LAYER, GROUP, DATA } 
-export enum LayerType { 
-  CONV = "CONV", 
-  RNN = "RNN", 
-  FC = "FC", 
+export enum NodeType { OPERTATION, LAYER, GROUP, DATA }
+export enum LayerType {
+  CONV = "CONV",
+  RNN = "RNN",
+  FC = "FC",
   OTHER = "OTHER",
 }
 export enum DataType { INPUT, OUTPUT, VARIABLE }
@@ -50,7 +50,7 @@ export interface LayerNode extends GroupNode {
   layerType: LayerType;
 }
 
-export interface DataNode extends BaseNode{
+export interface DataNode extends BaseNode {
   dataType: DataType;
 }
 
@@ -65,18 +65,12 @@ export interface RawEdge {
   target: NodeId;
 }
 
-export interface DisplayedEdge {
-  // NodeDef
-  source: NodeId;
-  // NodeDef
-  target: NodeId;
-}
-
 export interface ProcessedGraph {
   nodeMap: { [nodeId: string]: NodeDef };
   rootNode: GroupNode;
   rawEdges: RawEdge[];  // 原始的所有边
-  getDisplayedEdges(): DisplayedEdge[]; // 根据group的展开情况，当前显示的边
+  getDisplayedEdges(displayedNodes?: NodeId[]): RawEdge[]; // 根据group的展开情况，当前显示的边
+  getDisplayedNodes(): NodeId[]; // 根据group的展开情况，当前显示的节点
 }
 
 export class OperationNodeImp implements OperationNode {
@@ -86,7 +80,7 @@ export class OperationNodeImp implements OperationNode {
   parent: NodeId;
   operationType: string;
 
-  constructor({id, op, opts = {}}: {id: string; op: string; opts?: OptionsDef}) {
+  constructor({ id, op, opts = {} }: { id: string; op: string; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.OPERTATION;
@@ -103,7 +97,7 @@ export class GroupNodeImp implements GroupNode {
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开
 
-  constructor({id, children, opts = {}}: {id: string; children?: Set<NodeId>; opts?: OptionsDef}) {
+  constructor({ id, children, opts = {} }: { id: string; children?: Set<NodeId>; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.GROUP;
@@ -122,7 +116,7 @@ export class LayerNodeImp implements LayerNode {
   expanded: boolean;  // group是否被展开
   layerType: LayerType;
 
-  constructor({id, layerType, children, opts = {}}: {id: string; children?: Set<NodeId>; layerType: LayerType; opts?: OptionsDef}) {
+  constructor({ id, layerType, children, opts = {} }: { id: string; children?: Set<NodeId>; layerType: LayerType; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.LAYER;
@@ -140,7 +134,7 @@ export class DataNodeImp implements DataNode {
   parent: NodeId;
   dataType: DataType;
 
-  constructor({id, dataType, opts = {}}: {id: string; dataType: DataType; opts?: OptionsDef}) {
+  constructor({ id, dataType, opts = {} }: { id: string; dataType: DataType; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.DATA;
@@ -162,7 +156,61 @@ export class ProcessedGraphImp implements ProcessedGraph {
     this.rawEdges = [];
   }
 
-  getDisplayedEdges(): DisplayedEdge[] {
-    return this.rawEdges;
+  // 提取目前所有展开的节点
+  // 循环children 把要展开的节点加入展示节点数组
+  private traverseChildren(node: NodeDef, targetNodes: Array<string>) {
+    if (!("children" in node) || !node.expanded) {
+      targetNodes.push(node.id);
+    } else { //展开了
+      targetNodes.push(node.id);// 如果组展开了 这个父组的节点也要展示
+      node.children.forEach(nodeId => {
+        this.traverseChildren(this.nodeMap[nodeId], targetNodes);
+      })
+    }
+  }
+
+  // 找到该边需要需要连接到的节点 id
+  private findExpandedParentNodeId(targetNodeId: string): string {
+    let expandedParentId = targetNodeId;
+    let parent = this.nodeMap[expandedParentId].parent;
+    // 如果有parent 且不为根节点 且未展开 则把边连到parent上 如果展开了 则直接连到原节点上
+    while (parent && parent !== "___root___" && !this.nodeMap[parent]["expanded"]) {
+      expandedParentId = parent;
+      parent = this.nodeMap[expandedParentId].parent;
+    }
+    return expandedParentId;
+  }
+
+  getDisplayedNodes(): NodeId[] {
+    const displayedNodes: NodeId[] = [];
+    this.rootNode.children.forEach(nodeId => {
+      this.traverseChildren(this.nodeMap[nodeId], displayedNodes);
+    })
+    return displayedNodes
+  }
+
+  getDisplayedEdges(displayedNodes: NodeId[] = this.getDisplayedNodes()): RawEdge[] {
+    const displayedEdges: RawEdge[] = []
+    for (const edge of this.rawEdges) {
+      let newSource = this.findExpandedParentNodeId(edge.source);
+      let newTarget = this.findExpandedParentNodeId(edge.target);
+      if (displayedNodes.includes(newSource) && displayedNodes.includes(newTarget)) {
+        let newEdge = { source: newSource, target: newTarget };
+        let pushFlag = true;
+        if (newSource === newTarget) {
+          pushFlag = false;
+        } else {
+          displayedEdges.forEach(item => {
+            if ((item.source === newSource && item.target === newTarget)) {
+              pushFlag = false;
+            }
+          })
+        }
+        if (pushFlag) {
+          displayedEdges.push(newEdge)
+        }
+      }
+    }
+    return displayedEdges;
   }
 }
