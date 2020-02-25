@@ -7,6 +7,8 @@ const input: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.INPUT,
   parent: '___root___',
+  visibility: true
+
 }
 
 const conv2d: OperationNode = {
@@ -15,6 +17,7 @@ const conv2d: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'conv2d',
   parent: 'conv_layer',
+  visibility: true
 }
 
 const add1: OperationNode = {
@@ -23,6 +26,7 @@ const add1: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'add',
   parent: 'conv_layer',
+  visibility: true
 }
 
 const relu1: OperationNode = {
@@ -31,6 +35,7 @@ const relu1: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'relu',
   parent: 'conv_layer',
+  visibility: true
 }
 
 const weights1: DataNode = {
@@ -39,6 +44,7 @@ const weights1: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'conv_layer',
+  visibility: true
 }
 
 const bias1: DataNode = {
@@ -47,6 +53,7 @@ const bias1: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'conv_layer',
+  visibility: true
 }
 
 const matMul: OperationNode = {
@@ -55,6 +62,7 @@ const matMul: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'mat_mul',
   parent: 'fc_layer',
+  visibility: true
 }
 
 const add2: OperationNode = {
@@ -63,6 +71,7 @@ const add2: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'add',
   parent: 'fc_layer',
+  visibility: true
 }
 
 const relu2: OperationNode = {
@@ -71,6 +80,7 @@ const relu2: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'relu',
   parent: 'fc_layer',
+  visibility: true
 }
 
 const weights2: DataNode = {
@@ -79,6 +89,7 @@ const weights2: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'fc_layer',
+  visibility: true
 }
 
 const bias2: DataNode = {
@@ -87,6 +98,7 @@ const bias2: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'fc_layer',
+  visibility: true
 }
 
 const softmax: OperationNode = {
@@ -95,6 +107,7 @@ const softmax: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'softmax',
   parent: '___root___',
+  visibility: true
 }
 
 const output: DataNode = {
@@ -103,6 +116,7 @@ const output: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.OUTPUT,
   parent: '___root___',
+  visibility: true
 }
 
 const convLayer: LayerNode = {
@@ -113,6 +127,7 @@ const convLayer: LayerNode = {
   expanded: true,
   layerType: LayerType.CONV,
   parent: '___root___',
+  visibility: true
 }
 
 const fcLayer: LayerNode = {
@@ -123,6 +138,7 @@ const fcLayer: LayerNode = {
   expanded: false,
   layerType: LayerType.FC,
   parent: '___root___',
+  visibility: true
 }
 
 const root: GroupNode = {
@@ -132,6 +148,7 @@ const root: GroupNode = {
   children: new Set(['fc_layer', 'conv_layer', 'softmax', 'x___input___', 'y']),
   expanded: true,
   parent: '',
+  visibility: true
 }
 
 export const mockDataForRender: LayoutGraph = {

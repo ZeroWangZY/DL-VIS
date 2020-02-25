@@ -2,6 +2,7 @@ import { DataNode, NodeType, OperationNode, DataType, LayerNode, LayerType, Grou
 
 const input: DataNode = {
   id: 'x___input___',
+  visibility: true,
   displayedName: 'x',
   type: NodeType.DATA,
   dataType: DataType.INPUT,
@@ -10,6 +11,7 @@ const input: DataNode = {
 
 const conv2d: OperationNode = {
   id: 'conv_layer/conv2d',
+  visibility: true,
   displayedName: 'conv2d',
   type: NodeType.OPERTATION,
   operationType: 'conv2d',
@@ -19,6 +21,7 @@ const conv2d: OperationNode = {
 const add1: OperationNode = {
   id: 'conv_layer/add',
   displayedName: 'add',
+  visibility: true,
   type: NodeType.OPERTATION,
   operationType: 'add',
   parent: 'conv_layer',
@@ -30,6 +33,7 @@ const relu1: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'relu',
   parent: 'conv_layer',
+  visibility: true,
 }
 
 const weights1: DataNode = {
@@ -38,6 +42,7 @@ const weights1: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'conv_layer',
+  visibility: true,
 }
 
 const bias1: DataNode = {
@@ -46,6 +51,7 @@ const bias1: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'conv_layer',
+  visibility: true,
 }
 
 const matMul: OperationNode = {
@@ -54,6 +60,7 @@ const matMul: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'mat_mul',
   parent: 'fc_layer',
+  visibility: true,
 }
 
 const add2: OperationNode = {
@@ -62,6 +69,7 @@ const add2: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'add',
   parent: 'fc_layer',
+  visibility: true,
 }
 
 const relu2: OperationNode = {
@@ -70,6 +78,7 @@ const relu2: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'relu',
   parent: 'fc_layer',
+  visibility: true,
 }
 
 const weights2: DataNode = {
@@ -78,6 +87,7 @@ const weights2: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'fc_layer',
+  visibility: true,
 }
 
 const bias2: DataNode = {
@@ -86,6 +96,7 @@ const bias2: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.VARIABLE,
   parent: 'fc_layer',
+  visibility: true,
 }
 
 const softmax: OperationNode = {
@@ -94,6 +105,7 @@ const softmax: OperationNode = {
   type: NodeType.OPERTATION,
   operationType: 'softmax',
   parent: '___root___',
+  visibility: true,
 }
 
 const output: DataNode = {
@@ -102,6 +114,7 @@ const output: DataNode = {
   type: NodeType.DATA,
   dataType: DataType.OUTPUT,
   parent: '___root___',
+  visibility: true,
 }
 
 const convLayer: LayerNode = {
@@ -112,6 +125,7 @@ const convLayer: LayerNode = {
   expanded: false,
   layerType: LayerType.CONV,
   parent: '___root___',
+  visibility: true,
 }
 
 const fcLayer: LayerNode = {
@@ -122,6 +136,7 @@ const fcLayer: LayerNode = {
   expanded: false,
   layerType: LayerType.FC,
   parent: '___root___',
+  visibility: true,
 }
 
 const root: GroupNode = {
@@ -131,6 +146,7 @@ const root: GroupNode = {
   children: new Set(['fc_layer', 'conv_layer', 'softmax', 'x___input___', 'y']),
   expanded: true,
   parent: '',
+  visibility: true,
 }
 
 export const mockData1: ProcessedGraph = {
@@ -202,32 +218,37 @@ export const mockData2: ProcessedGraph = {
       type: NodeType.DATA,
       dataType: DataType.OUTPUT,
       parent: 'convolutional___conv___',
-    },
+      visibility: true,
+},
     "convolutional___conv___/add_3": {
       id: "convolutional___conv___/add_3",
       displayedName: "convolutional___conv___/add_3",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___",
-      operationType: "Add"
-    },
+      operationType: "Add",
+      visibility: true,
+},
     "convolutional___conv___/MatMul_1": {
       id: "convolutional___conv___/MatMul_1",
       displayedName: "convolutional___conv___/MatMul_1",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___",
-      operationType: "MatMul"
-    },
+      operationType: "MatMul",
+      visibility: true,
+},
     "convolutional___conv___/Variable_7": {
       id: "convolutional___conv___/Variable_7",
       displayedName: "convolutional___conv___/Variable_7",
       type: NodeType.DATA,
       parent: "convolutional___conv___",
-      dataType: DataType.VARIABLE
-    },
+      dataType: DataType.VARIABLE,
+      visibility: true,
+},
     "convolutional___conv___/dropout/mul": {
       id: "convolutional___conv___/dropout/mul",
       displayedName: "convolutional___conv___/dropout/mul",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout",
       operationType: "Mul"
     },
@@ -235,6 +256,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Variable_6",
       displayedName: "convolutional___conv___/Variable_6",
       type: NodeType.DATA,
+      visibility: true,
       parent: "convolutional___conv___",
       dataType: DataType.VARIABLE
     },
@@ -242,6 +264,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/truediv",
       displayedName: "convolutional___conv___/dropout/truediv",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout",
       operationType: "RealDiv"
     },
@@ -249,6 +272,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/Floor",
       displayedName: "convolutional___conv___/dropout/Floor",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout",
       operationType: "Floor"
     },
@@ -256,6 +280,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/add",
       displayedName: "convolutional___conv___/dropout/add",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout",
       operationType: "Add"
     },
@@ -263,6 +288,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/sub/(sub)",
       displayedName: "convolutional___conv___/dropout/sub/(sub)",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout/sub",
       operationType: "Sub"
     },
@@ -270,11 +296,13 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/random_uniform/(random_uniform)",
       displayedName: "convolutional___conv___/dropout/random_uniform/(random_uniform)",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout/random_uniform",
       operationType: "Add"
     },
     "convolutional___conv___/dropout/random_uniform/mul": {
       id: "convolutional___conv___/dropout/random_uniform/mul",
+      visibility: true,
       displayedName: "convolutional___conv___/dropout/random_uniform/mul",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/dropout/random_uniform",
@@ -284,11 +312,13 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/random_uniform/min",
       displayedName: "convolutional___conv___/dropout/random_uniform/min",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout/random_uniform",
       operationType: "Const"
     },
     "convolutional___conv___/dropout/random_uniform/RandomUniform": {
       id: "convolutional___conv___/dropout/random_uniform/RandomUniform",
+      visibility: true,
       displayedName: "convolutional___conv___/dropout/random_uniform/RandomUniform",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/dropout/random_uniform",
@@ -298,18 +328,21 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout/random_uniform/sub",
       displayedName: "convolutional___conv___/dropout/random_uniform/sub",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/dropout/random_uniform",
       operationType: "Sub"
     },
     "convolutional___conv___/dropout/random_uniform/max": {
       id: "convolutional___conv___/dropout/random_uniform/max",
       displayedName: "convolutional___conv___/dropout/random_uniform/max",
+      visibility: true,
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/dropout/random_uniform",
       operationType: "Const"
     },
     "convolutional___conv___/dropout/Shape": {
       id: "convolutional___conv___/dropout/Shape",
+      visibility: true,
       displayedName: "convolutional___conv___/dropout/Shape",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/dropout",
@@ -319,6 +352,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Relu_2",
       displayedName: "convolutional___conv___/Relu_2",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "Relu"
     },
@@ -326,6 +360,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/add_2",
       displayedName: "convolutional___conv___/add_2",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "Add"
     },
@@ -333,12 +368,14 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/MatMul",
       displayedName: "convolutional___conv___/MatMul",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "MatMul"
     },
     "convolutional___conv___/Variable_5": {
       id: "convolutional___conv___/Variable_5",
       displayedName: "convolutional___conv___/Variable_5",
+      visibility: true,
       type: NodeType.DATA,
       parent: "convolutional___conv___",
       dataType: DataType.VARIABLE
@@ -347,6 +384,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Reshape_1/(Reshape_1)",
       displayedName: "convolutional___conv___/Reshape_1/(Reshape_1)",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/Reshape_1",
       operationType: "Reshape"
     },
@@ -354,6 +392,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Variable_4",
       displayedName: "convolutional___conv___/Variable_4",
       type: NodeType.DATA,
+      visibility: true,
       parent: "convolutional___conv___",
       dataType: DataType.VARIABLE
     },
@@ -361,6 +400,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/MaxPool_1",
       displayedName: "convolutional___conv___/MaxPool_1",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "MaxPool"
     },
@@ -368,6 +408,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Reshape_1/shape",
       displayedName: "convolutional___conv___/Reshape_1/shape",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/Reshape_1",
       operationType: "Const"
     },
@@ -375,6 +416,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Relu_1",
       displayedName: "convolutional___conv___/Relu_1",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "Relu"
     },
@@ -382,6 +424,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/add_1",
       displayedName: "convolutional___conv___/add_1",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "Add"
     },
@@ -389,6 +432,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Conv2D_1",
       displayedName: "convolutional___conv___/Conv2D_1",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "Conv2D"
     },
@@ -397,11 +441,13 @@ export const mockData2: ProcessedGraph = {
       displayedName: "convolutional___conv___/Variable_3",
       type: NodeType.DATA,
       parent: "convolutional___conv___",
+      visibility: true,
       dataType: DataType.VARIABLE
     },
     "convolutional___conv___/MaxPool": {
       id: "convolutional___conv___/MaxPool",
       displayedName: "convolutional___conv___/MaxPool",
+      visibility: true,
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___",
       operationType: "MaxPool"
@@ -410,6 +456,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Variable_2",
       displayedName: "convolutional___conv___/Variable_2",
       type: NodeType.DATA,
+      visibility: true,
       parent: "convolutional___conv___",
       dataType: DataType.VARIABLE
     },
@@ -417,17 +464,20 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Relu",
       displayedName: "convolutional___conv___/Relu",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___",
       operationType: "Relu"
     },
     "convolutional___conv___/add": {
       id: "convolutional___conv___/add",
+      visibility: true,
       displayedName: "convolutional___conv___/add",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___",
       operationType: "Add"
     },
     "convolutional___conv___/Conv2D": {
+      visibility: true,
       id: "convolutional___conv___/Conv2D",
       displayedName: "convolutional___conv___/Conv2D",
       type: NodeType.OPERTATION,
@@ -438,12 +488,14 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Variable_1",
       displayedName: "convolutional___conv___/Variable_1",
       type: NodeType.DATA,
+      visibility: true,
       parent: "convolutional___conv___",
       dataType: DataType.VARIABLE
     },
     "convolutional___conv___/Reshape/(Reshape)": {
       id: "convolutional___conv___/Reshape/(Reshape)",
       displayedName: "convolutional___conv___/Reshape/(Reshape)",
+      visibility: true,
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/Reshape",
       operationType: "Reshape"
@@ -452,11 +504,13 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/Variable",
       displayedName: "convolutional___conv___/Variable",
       type: NodeType.DATA,
+      visibility: true,
       parent: "convolutional___conv___",
       dataType: DataType.VARIABLE
     },
     "convolutional___conv___/x___input___": {
       id: "convolutional___conv___/x___input___",
+      visibility: true,
       displayedName: "convolutional___conv___/x___input___",
       type: NodeType.DATA,
       parent: "convolutional___conv___",
@@ -465,6 +519,7 @@ export const mockData2: ProcessedGraph = {
     "convolutional___conv___/Reshape/shape": {
       id: "convolutional___conv___/Reshape/shape",
       displayedName: "convolutional___conv___/Reshape/shape",
+      visibility: true,
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/Reshape",
       operationType: "Const"
@@ -472,6 +527,7 @@ export const mockData2: ProcessedGraph = {
     "convolutional___conv___/dropout/sub/x": {
       id: "convolutional___conv___/dropout/sub/x",
       displayedName: "convolutional___conv___/dropout/sub/x",
+      visibility: true,
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/dropout/sub",
       operationType: "Const"
@@ -480,11 +536,13 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/sub/(sub)",
       displayedName: "convolutional___conv___/sub/(sub)",
       type: NodeType.OPERTATION,
+      visibility: true,
       parent: "convolutional___conv___/sub",
       operationType: "Sub"
     },
     "convolutional___conv___/sub/x": {
       id: "convolutional___conv___/sub/x",
+      visibility: true,
       displayedName: "convolutional___conv___/sub/x",
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___/sub",
@@ -493,12 +551,14 @@ export const mockData2: ProcessedGraph = {
     "convolutional___conv___/Placeholder": {
       id: "convolutional___conv___/Placeholder",
       displayedName: "convolutional___conv___/Placeholder",
+      visibility: true,
       type: NodeType.OPERTATION,
       parent: "convolutional___conv___",
       operationType: "Placeholder"
     },
     "convolutional___conv___": {
       id: "convolutional___conv___",
+      visibility: true,
       displayedName: "convolutional___conv___",
       type: NodeType.LAYER,
       parent: "___root___",
@@ -539,6 +599,7 @@ export const mockData2: ProcessedGraph = {
       id: "convolutional___conv___/dropout",
       displayedName: "convolutional___conv___/dropout",
       type: NodeType.GROUP,
+      visibility: true,
       parent: "convolutional___conv___",
       children: new Set([
         "convolutional___conv___/dropout/mul",
@@ -553,6 +614,7 @@ export const mockData2: ProcessedGraph = {
     },
     "convolutional___conv___/dropout/sub": {
       id: "convolutional___conv___/dropout/sub",
+      visibility: true,
       displayedName: "convolutional___conv___/dropout/sub",
       type: NodeType.GROUP,
       parent: "convolutional___conv___/dropout",
@@ -564,6 +626,7 @@ export const mockData2: ProcessedGraph = {
     },
     "convolutional___conv___/dropout/random_uniform": {
       id: "convolutional___conv___/dropout/random_uniform",
+      visibility: true,
       displayedName: "convolutional___conv___/dropout/random_uniform",
       type: NodeType.GROUP,
       parent: "convolutional___conv___/dropout",
@@ -580,6 +643,7 @@ export const mockData2: ProcessedGraph = {
     "convolutional___conv___/Reshape_1": {
       id: "convolutional___conv___/Reshape_1",
       displayedName: "convolutional___conv___/Reshape_1",
+      visibility: true,
       type: NodeType.GROUP,
       parent: "convolutional___conv___",
       children: new Set([
@@ -591,6 +655,7 @@ export const mockData2: ProcessedGraph = {
     "convolutional___conv___/Reshape": {
       id: "convolutional___conv___/Reshape",
       displayedName: "convolutional___conv___/Reshape",
+      visibility: true,
       type: NodeType.GROUP,
       parent: "convolutional___conv___",
       children: new Set([
@@ -602,6 +667,7 @@ export const mockData2: ProcessedGraph = {
     "convolutional___conv___/sub": {
       id: "convolutional___conv___/sub",
       displayedName: "convolutional___conv___/sub",
+      visibility: true,
       type: NodeType.GROUP,
       parent: "convolutional___conv___",
       children: new Set([
@@ -613,6 +679,7 @@ export const mockData2: ProcessedGraph = {
   },
   "rootNode": {
     id: "___root___",
+    visibility: true,
     displayedName: "___root___",
     type: NodeType.GROUP,
     parent: "",

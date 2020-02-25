@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+/* eslint-disable react/react-in-jsx-scope */
+import React, { useEffect, useState, createContext, useContext } from "react";
 import { fetchAndParseGraphData } from "../common/graph-processing/parser";
 import { SimplifierImp } from "../common/graph-processing/simplifier";
 import { pruneByOutput } from "../common/graph-processing/prune";
 import { buildGraph } from "../common/graph-processing/graph";
-import { ProcessedGraph } from "../types/processed-graph";
+import { ProcessedGraph, ProcessedGraphImp } from "../types/processed-graph";
 
 const bert = '/data/bert.pbtxt'
 const graph1 = '/data/test-graph-1.pbtxt'
@@ -16,8 +17,20 @@ const resnet = '/data/ResNet.pbtxt'
 const shufflenet = '/data/Shuffle.pbtxt'
 const vgg = '/data/VGG16.pbtxt'
 
-export const useTestProcessedGraph: () => ProcessedGraph = () => {
-    const [processedGraph, setProcessedGraph] = useState<ProcessedGraph>(null)
+const TestProcessedGraphContext = createContext(null);
+
+interface ProcessedGraphAndChangeFlag {
+    processedGraph: ProcessedGraph;
+    graphChangeFlag: number;
+    graphChanged: () => void;
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line react/prop-types
+export const TestProcessedGraphProvider = ({ children }) => {
+    const [processedGraph, setProcessedGraph] =
+        useState<ProcessedGraph>(new ProcessedGraphImp());
+    const [graphChangeFlag, setGraphChangeFlag] = useState(0)
 
     useEffect(() => {
         fetchAndParseGraphData(
@@ -36,7 +49,22 @@ export const useTestProcessedGraph: () => ProcessedGraph = () => {
                 setProcessedGraph(hGraph)
             })
     }, [])
-    return processedGraph;
+
+    return (
+        <TestProcessedGraphContext.Provider value={{
+            processedGraph: processedGraph,
+            graphChangeFlag: graphChangeFlag,
+            graphChanged: function () { setGraphChangeFlag(graphChangeFlag + 1) }
+        }}>
+            {children}
+        </TestProcessedGraphContext.Provider>
+    )
+};
+
+
+export const useTestProcessedGraph: () => ProcessedGraphAndChangeFlag = () => {
+    const contextValue = useContext(TestProcessedGraphContext);
+    return contextValue;
 }
 
 

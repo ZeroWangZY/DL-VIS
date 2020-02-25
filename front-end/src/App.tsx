@@ -1,14 +1,16 @@
 import React from "react";
 import "./App.css";
-import TensorBoardGraph from "./components/tensorboard/Graph";
-import DagreLayout from "./components/DagreLayout/DagreLayout";
+import AppEntry from './components/AppEntry'
+import { TestProcessedGraphProvider } from "./hooks/useTestData";
 
 const App: React.FC = () => {
   return (
-    <div className="App">
-      <TensorBoardGraph />
-      <DagreLayout />
-    </div>
+    <TestProcessedGraphProvider>
+      <div className="App">
+        <AppEntry />
+      </div>
+    </TestProcessedGraphProvider>
+
   );
 };
 

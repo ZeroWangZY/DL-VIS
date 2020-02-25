@@ -35,6 +35,7 @@ export interface BaseNode {
   displayedName: string;
   type: NodeType;
   parent: NodeId;
+  visibility: boolean; // 是否可见，如果为false，则节点和节点的children均不被显示出来
 }
 
 export interface OperationNode extends BaseNode {
@@ -79,6 +80,7 @@ export class OperationNodeImp implements OperationNode {
   type: NodeType;
   parent: NodeId;
   operationType: string;
+  visibility: boolean = true
 
   constructor({ id, op, opts = {} }: { id: string; op: string; opts?: OptionsDef }) {
     this.id = id;
@@ -96,6 +98,7 @@ export class GroupNodeImp implements GroupNode {
   parent: NodeId;
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开
+  visibility: boolean = true
 
   constructor({ id, children, opts = {} }: { id: string; children?: Set<NodeId>; opts?: OptionsDef }) {
     this.id = id;
@@ -115,6 +118,7 @@ export class LayerNodeImp implements LayerNode {
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开
   layerType: LayerType;
+  visibility: boolean = true
 
   constructor({ id, layerType, children, opts = {} }: { id: string; children?: Set<NodeId>; layerType: LayerType; opts?: OptionsDef }) {
     this.id = id;
@@ -133,6 +137,7 @@ export class DataNodeImp implements DataNode {
   type: NodeType;
   parent: NodeId;
   dataType: DataType;
+  visibility: boolean = true
 
   constructor({ id, dataType, opts = {} }: { id: string; dataType: DataType; opts?: OptionsDef }) {
     this.id = id;
@@ -159,7 +164,9 @@ export class ProcessedGraphImp implements ProcessedGraph {
   // 提取目前所有展开的节点
   // 循环children 把要展开的节点加入展示节点数组
   private traverseChildren(node: NodeDef, targetNodes: Array<string>) {
-    if (!("children" in node) || !node.expanded) {
+    if (!node.visibility) {
+      return
+    } else if (!("children" in node) || !node.expanded) {
       targetNodes.push(node.id);
     } else { //展开了
       targetNodes.push(node.id);// 如果组展开了 这个父组的节点也要展示

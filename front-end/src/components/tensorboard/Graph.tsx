@@ -4,7 +4,7 @@ import GraphScene from "./GraphScene";
 import { build as graphBuild } from "../../common/tensorboard/graph";
 import { build as hierarchyBuild } from '../../common/tensorboard/hierarchy'
 import { build as renderBuild, RenderGraphInfo } from '../../common/tensorboard/render'
-import { useTestRawGraph } from "../../effect/useTestData";
+import { useTestRawGraph } from "../../hooks/useTestData";
 
 const Graph: React.FC = () => {
   const testRawGraph = useTestRawGraph(false, false)

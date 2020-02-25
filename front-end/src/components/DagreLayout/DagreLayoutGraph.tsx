@@ -3,15 +3,13 @@ import "./DagreLayoutGraph.css";
 import { NodeType, ProcessedGraph, RawEdge, NodeId, GroupNode } from "../../types/processed-graph"
 import * as dagreD3 from "dagre-d3";
 import * as d3 from "d3";
-
-interface DagreLayoutGraphProps {
-    graphForLayout: ProcessedGraph;
-}
+import { useTestProcessedGraph } from "../../hooks/useTestData";
 
 let transform = null
 
-const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = (props: DagreLayoutGraphProps) => {
-    const { graphForLayout } = props;
+const DagreLayoutGraph = () => {
+    const {processedGraph, graphChangeFlag, graphChanged} = useTestProcessedGraph()
+    const graphForLayout = processedGraph;
     const svgRef = useRef();
 
     const toggleExpanded = id => {
@@ -21,7 +19,7 @@ const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = (props: DagreLayoutGra
         }
         node = node as GroupNode
         node.expanded = !node.expanded
-        draw()
+        graphChanged()
     }
 
     const draw = () => {
@@ -80,9 +78,10 @@ const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = (props: DagreLayoutGra
 
     useEffect(() => {
         if (graphForLayout === null) return
+        console.log('redraw')
         draw()
 
-    }, [graphForLayout]);
+    }, [graphForLayout, graphChangeFlag]);
 
     return (
         <div id="dagre-graph" style={{ height: '100%' }}>
