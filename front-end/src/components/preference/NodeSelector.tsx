@@ -7,8 +7,8 @@ import TreeView from '@material-ui/lab/TreeView';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
-import { useTestProcessedGraph } from '../hooks/useTestData';
-import { GroupNode, NodeId, NodeType } from '../types/processed-graph';
+import { GroupNode, NodeId, NodeType } from '../../types/processed-graph';
+import { useProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,13 +28,13 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function NodeSelector() {
   const classes = useStyles();
-  const { processedGraph, graphChangeFlag, graphChanged } = useTestProcessedGraph()
+  const processedGraph = useProcessedGraph()
   const { rootNode, nodeMap } = processedGraph
 
   const handleChange = (nodeId: NodeId) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const node = nodeMap[nodeId]
     node.visibility = !node.visibility
-    graphChanged()
+    broadcastGraphChange()
   };
 
   const genEleRecursively = (groupNode: GroupNode) => {

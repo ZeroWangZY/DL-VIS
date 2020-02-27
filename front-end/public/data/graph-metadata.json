@@ -1,0 +1,54 @@
+[
+  {
+    "name": "bert",
+    "url": "/data/bert.pbtxt",
+    "description": "有良好层次信息的BERT，没有标签信息"
+  },
+  {
+    "name": "mnist-conv",
+    "url": "/data/mnist-conv.pbtxt",
+    "description": "最基础的卷积网络，有良好的标签"
+  },
+  {
+    "name": "graph1",
+    "url": "/data/test-graph-1.pbtxt"
+  },
+  {
+    "name": "graph2",
+    "url": "/data/test-graph-2.pbtxt"
+  },
+  {
+    "name": "conv",
+    "url": "/data/test-conv.pbtxt"
+  },
+  {
+    "name": "variableTest2",
+    "url": "/data/variable-test2.pbtxt"
+  },
+  {
+    "name": "variableTest3",
+    "url": "/data/variable-test3.pbtxt"
+  },
+  {
+    "name": "biLSTM",
+    "url": "/data/biLSTM.pbtxt",
+    "description": "没有标签信息的biLSTM"
+  },
+  {
+    "name": "resnet",
+    "url": "/data/ResNet.pbtxt"
+  },
+  {
+    "name": "shufflenet",
+    "url": "/data/Shuffle.pbtxt"
+  },
+  {
+    "name": "vgg",
+    "url": "/data/VGG16.pbtxt"
+  },
+  {
+    "name": "bert-graph",
+    "url": "/data/bert-graph.pbtxt",
+    "description": "没有namespace信息的bert网络"
+  }
+]

@@ -3,13 +3,12 @@ import "./DagreLayoutGraph.css";
 import { NodeType, ProcessedGraph, RawEdge, NodeId, GroupNode } from "../../types/processed-graph"
 import * as dagreD3 from "dagre-d3";
 import * as d3 from "d3";
-import { useTestProcessedGraph } from "../../hooks/useTestData";
+import { useProcessedGraph, broadcastGraphChange } from "../../store/useProcessedGraph"
 
 let transform = null
 
 const DagreLayoutGraph = () => {
-    const {processedGraph, graphChangeFlag, graphChanged} = useTestProcessedGraph()
-    const graphForLayout = processedGraph;
+    const graphForLayout = useProcessedGraph()
     const svgRef = useRef();
 
     const toggleExpanded = id => {
@@ -19,7 +18,7 @@ const DagreLayoutGraph = () => {
         }
         node = node as GroupNode
         node.expanded = !node.expanded
-        graphChanged()
+        broadcastGraphChange()
     }
 
     const draw = () => {
@@ -81,7 +80,7 @@ const DagreLayoutGraph = () => {
         console.log('redraw')
         draw()
 
-    }, [graphForLayout, graphChangeFlag]);
+    });
 
     return (
         <div id="dagre-graph" style={{ height: '100%' }}>

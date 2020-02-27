@@ -8,12 +8,13 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
+import SettingsIcon from '@material-ui/icons/Settings';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import DagreLayout from "./DagreLayout/DagreLayout";
-import NodeSelector from './NodeSelector'
+import NodeSelector from './preference/NodeSelector'
 import TensorBoardGraph from './tensorboard/Graph'
+import GraphSelector from './preference/GraphSelector';
 const drawerWidth = 360;
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -106,7 +107,7 @@ const AppEntry: React.FC = () => {
             edge="start"
             className={clsx(classes.menuButton, open && classes.hide)}
           >
-            <MenuIcon />
+            <SettingsIcon />
           </IconButton>
           <Typography variant="h6" noWrap>
             葫芦娃的项目
@@ -130,6 +131,8 @@ const AppEntry: React.FC = () => {
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </div>
+        <Divider />
+        <GraphSelector />
         <Divider />
         <NodeSelector />
         <Divider />
