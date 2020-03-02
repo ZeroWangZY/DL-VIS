@@ -1,11 +1,12 @@
 #dagre-svg {
     width: 100%;
     overflow: hidden;
+    user-select: none;
 }
 
 
-.node rect.label-container, ellipse.label-container {
-    fill: none;
+.node rect, ellipse {
+    fill: #fff;
     stroke-width: 1px;
     stroke:#333;
 }
@@ -28,12 +29,23 @@
     stroke: none;
 }
 
-.clusters rect {
+.cluster rect {
     fill: #eee;
     fill-opacity: 0.6;
     stroke-width: 1px;
     stroke:#333;
 }
-.clusters .label {
+.cluster .label {
     font-style: italic;
+}
+
+.my-label text {
+  text-anchor: middle;
+  /* dominant-baseline: middle; */
+  cursor: pointer;
+}
+
+.edgePath path {
+  stroke: #333;
+  fill: none;
 }

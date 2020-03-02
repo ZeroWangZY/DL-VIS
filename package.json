@@ -51,5 +51,9 @@
     "conventional-changelog-cli": "^2.0.31",
     "husky": "^4.0.7",
     "lint-staged": "^9.5.0"
+  },
+  "dependencies": {
+    "dagre": "^0.8.5",
+    "react-motion": "^0.5.2"
   }
 }
