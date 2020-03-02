@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './DagreLayoutGraph.css';
 import { NodeType, ProcessedGraph, RawEdge, NodeId, GroupNode } from '../../types/processed-graph'
-// import * as dagreD3 from 'dagre-d3';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
 import { TransitionMotion, spring } from 'react-motion';
@@ -9,7 +8,7 @@ import { useProcessedGraph } from '../../store/useProcessedGraph';
 
 let transform = null
 
-const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = () => {
+const DagreLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
   const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
@@ -108,20 +107,6 @@ const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = () => {
     const graph = new dagre.graphlib.Graph({ compound: true })
       .setGraph({})
       .setDefaultEdgeLabel(function () { return {}; });;
-    // const render = new dagreD3.render();
-
-    // const svg = d3.select(svgRef.current)
-    // const svgGroup = d3.select(outputRef.current);
-    // console.log(svg, svgGroup)
-    // svgGroup.selectAll('*').remove()
-
-    // const svgGroup = svg.append('g').attr('transform', transform)
-    // let zoom = d3
-    //   .zoom().on('zoom', function () {
-    //     transform = d3.event.transform
-    //     svgGroup.attr('transform', d3.event.transform);
-    //   });
-    // svg.call(zoom).on('dblclick.zoom', null);
 
     const { nodeMap } = graphForLayout;
 
@@ -155,7 +140,6 @@ const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = () => {
     graph.graph().nodesep = 30;
 
     dagre.layout(graph);
-    // render(svgGroup, graph); //dagre-d3渲染节点
 
     let newNodes = {}, newEdges = {};
 
@@ -169,10 +153,6 @@ const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = () => {
     setEdges(newEdges);
     setGraph(graph);
 
-    // svgGroup.selectAll('.node')
-    //     .on('dblclick', (id: NodeId) => toggleExpanded(id))
-    // svgGroup.selectAll('.cluster')
-    //     .on('dblclick', (id: NodeId) => toggleExpanded(id))
   }
 
   const generateNodeStyles = () => {
@@ -221,6 +201,18 @@ const DagreLayoutGraph: React.FC<DagreLayoutGraphProps> = () => {
     }
     return styles;
   }
+
+  useEffect(() => {
+    const svg = d3.select(svgRef.current)
+    const outputG = d3.select(outputRef.current)
+    console.log(svg, outputG)
+    let zoom = d3
+      .zoom().on('zoom', function () {
+        transform = d3.event.transform
+        outputG.attr('transform', d3.event.transform);
+      });
+    svg.call(zoom).on('dblclick.zoom', null);
+  },[])
 
   useEffect(() => {
     if (graphForLayout === null) return
