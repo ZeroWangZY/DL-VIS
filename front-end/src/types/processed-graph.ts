@@ -176,16 +176,18 @@ export class ProcessedGraphImp implements ProcessedGraph {
     }
   }
 
-  // 找到该边需要需要连接到的节点 id
-  private findExpandedParentNodeId(targetNodeId: string): string {
-    let expandedParentId = targetNodeId;
-    let parent = this.nodeMap[expandedParentId].parent;
-    // 如果有parent 且不为根节点 且未展开 则把边连到parent上 如果展开了 则直接连到原节点上
-    while (parent && parent !== "___root___" && !this.nodeMap[parent]["expanded"]) {
-      expandedParentId = parent;
-      parent = this.nodeMap[expandedParentId].parent;
+  // 查找某节点最上层没有展开的节点
+  private findOldestUnexpandParentNodeId(targetNodeId: string): string {
+    let oldestUnexpandParent = targetNodeId
+    let parent = this.nodeMap[oldestUnexpandParent].parent;
+
+    while (parent && parent !== "___root___") {
+      if(!this.nodeMap[parent]["expanded"]){
+        oldestUnexpandParent = parent;
+      }
+      parent = this.nodeMap[parent].parent;
     }
-    return expandedParentId;
+    return oldestUnexpandParent;
   }
 
   getDisplayedNodes(): NodeId[] {
@@ -199,8 +201,8 @@ export class ProcessedGraphImp implements ProcessedGraph {
   getDisplayedEdges(displayedNodes: NodeId[] = this.getDisplayedNodes()): RawEdge[] {
     const displayedEdges: RawEdge[] = []
     for (const edge of this.rawEdges) {
-      let newSource = this.findExpandedParentNodeId(edge.source);
-      let newTarget = this.findExpandedParentNodeId(edge.target);
+      let newSource = this.findOldestUnexpandParentNodeId(edge.source);
+      let newTarget = this.findOldestUnexpandParentNodeId(edge.target);
       if (displayedNodes.includes(newSource) && displayedNodes.includes(newTarget)) {
         let newEdge = { source: newSource, target: newTarget };
         let pushFlag = true;

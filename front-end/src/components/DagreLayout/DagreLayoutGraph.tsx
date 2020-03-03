@@ -4,16 +4,14 @@ import { NodeType, ProcessedGraph, RawEdge, NodeId, GroupNode } from '../../type
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
 import { TransitionMotion, spring } from 'react-motion';
-import { useProcessedGraph } from '../../store/useProcessedGraph';
-
-let transform = null
+import { useProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
 
 const DagreLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
   const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
-
+  const [transform, setTransform] = useState(null)
   const svgRef = useRef();
   const outputRef = useRef();
 
@@ -36,71 +34,77 @@ const DagreLayoutGraph: React.FC = () => {
     }
     node = node as GroupNode
     node.expanded = !node.expanded
-    // 如果展开孩子
-    if (node.expanded) {
-      // 把孩子节点加入 指定parent
-      node.children.forEach(childId => {
-        let chileNode = graphForLayout.nodeMap[childId];
-        graph.setNode(childId, {
-          id: childId,
-          label: chileNode.displayedName,
-          shape: chileNode.type === NodeType.OPERTATION ? 'ellipse' : 'rect',
-          class: `nodeitem-${chileNode.type}`,
-          // clusterLabelPos: 'top',
-          width: chileNode.displayedName.length * 10,
-          height: 50
-        });
-        graph.setParent(childId, id);
-      });
+    broadcastGraphChange()
 
-      // 删去连在父节点的边
-      let inEdges = graph.inEdges(id), outEdges = graph.outEdges(id);
-      inEdges.forEach(inEdge => {
-        graph.removeEdge(inEdge)
-      });
-      outEdges.forEach(outEdge => {
-        graph.removeEdge(outEdge)
-      });
+    /**
+     测了一下，动态地添加节点和边不会节省计算时间，dagre依然是把所有的节点和边重新计算一遍。
+     所以暂时把这一段注释掉了
+    */
+    // 如果展开孩子
+    // if (node.expanded) {
+    //   // 把孩子节点加入 指定parent
+    //   node.children.forEach(childId => {
+    //     let chileNode = graphForLayout.nodeMap[childId];
+    //     graph.setNode(childId, {
+    //       id: childId,
+    //       label: chileNode.displayedName,
+    //       shape: chileNode.type === NodeType.OPERTATION ? 'ellipse' : 'rect',
+    //       class: `nodeitem-${chileNode.type}`,
+    //       // clusterLabelPos: 'top',
+    //       width: chileNode.displayedName.length * 10,
+    //       height: 50
+    //     });
+    //     graph.setParent(childId, id);
+    //   });
+
+    //   // 删去连在父节点的边
+    //   let inEdges = graph.inEdges(id), outEdges = graph.outEdges(id);
+    //   inEdges.forEach(inEdge => {
+    //     graph.removeEdge(inEdge)
+    //   });
+    //   outEdges.forEach(outEdge => {
+    //     graph.removeEdge(outEdge)
+    //   });
       
-    } else {// 如果关上
-      // 删除子节点  应该循环删除所有 todo
-      node.children.forEach(childId => {
-        graph.removeNode(childId);// 子节点的边也自动删除了
-      });
-      // graph.removeNode(id);
-      // 重新获得父节点的大小
-      graph.setNode(id, {
-        id: id,
-        label: node.displayedName,
-        shape: node.type === NodeType.OPERTATION ? 'ellipse' : 'rect',
-        class: `nodeitem-${node.type}`,
-        // clusterLabelPos: 'top',
-        width: node.displayedName.length * 10,
-        height: 50
-      });
-    }
-    // draw()
-    const displayedEdges: Array<RawEdge> = graphForLayout.getDisplayedEdges(graph.nodes());
-    for (const {source, target} of displayedEdges) {
-      // 如果之前没存在这条边 加进去
-      if(!graph.hasEdge(source, target)) {
-        graph.setEdge(source, target);
-      }
-    }
-    // 重新布局算位置
-    dagre.layout(graph);
-    let newNodes = {}, newEdges = {};
-    graph.nodes().forEach(function(v) {
-      newNodes[v] = graph.node(v);
-    });
-    graph.edges().forEach(function(edge) {
-      newEdges[`${edge.v}-${edge.w}`] = graph.edge(edge);
-    });
-    newNodes[id].class = (node.expanded) ?  newNodes[id].class + " cluster" : newNodes[id].class.split("")[0];
-    // 重新render
-    setNodes(newNodes);
-    setEdges(newEdges);
-    setGraph(graph);
+    // } else {// 如果关上
+    //   // 删除子节点  应该循环删除所有 todo
+    //   node.children.forEach(childId => {
+    //     graph.removeNode(childId);// 子节点的边也自动删除了
+    //   });
+    //   // graph.removeNode(id);
+    //   // 重新获得父节点的大小
+    //   graph.setNode(id, {
+    //     id: id,
+    //     label: node.displayedName,
+    //     shape: node.type === NodeType.OPERTATION ? 'ellipse' : 'rect',
+    //     class: `nodeitem-${node.type}`,
+    //     // clusterLabelPos: 'top',
+    //     width: node.displayedName.length * 10,
+    //     height: 50
+    //   });
+    // }
+    // // draw()
+    // const displayedEdges: Array<RawEdge> = graphForLayout.getDisplayedEdges(graph.nodes());
+    // for (const {source, target} of displayedEdges) {
+    //   // 如果之前没存在这条边 加进去
+    //   if(!graph.hasEdge(source, target)) {
+    //     graph.setEdge(source, target);
+    //   }
+    // }
+    // // 重新布局算位置
+    // dagre.layout(graph);
+    // let newNodes = {}, newEdges = {};
+    // graph.nodes().forEach(function(v) {
+    //   newNodes[v] = graph.node(v);
+    // });
+    // graph.edges().forEach(function(edge) {
+    //   newEdges[`${edge.v}-${edge.w}`] = graph.edge(edge);
+    // });
+    // newNodes[id].class = (node.expanded) ?  newNodes[id].class + " cluster" : newNodes[id].class.split("")[0];
+    // // 重新render
+    // setNodes(newNodes);
+    // setEdges(newEdges);
+    // setGraph(graph);
   }
 
   const draw = () => {
@@ -109,10 +113,14 @@ const DagreLayoutGraph: React.FC = () => {
       .setDefaultEdgeLabel(function () { return {}; });;
 
     const { nodeMap } = graphForLayout;
-
+    let start = Date.now();
     const displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
+    console.log('getDisplayedNodes:', Date.now() - start, 'ms');
+    start = Date.now()
     const displayedEdges: Array<RawEdge> = graphForLayout.getDisplayedEdges(displayedNodes);
+    console.log('getDisplayedEdges:', Date.now() - start, 'ms');
 
+    start = Date.now()
     for (const nodeId of displayedNodes) {
       const node = nodeMap[nodeId];
       graph.setNode(node.id, {
@@ -136,19 +144,24 @@ const DagreLayoutGraph: React.FC = () => {
         arrowhead: 'vee'
       });
     }
+    console.log('setNode and set Edge:', Date.now() - start, 'ms');
 
+    start = Date.now()
     graph.graph().nodesep = 30;
-
     dagre.layout(graph);
+    console.log('dagre.layout:', Date.now() - start, 'ms');
 
     let newNodes = {}, newEdges = {};
 
+    start = Date.now()
     graph.nodes().forEach(function(v) {
       newNodes[v] = graph.node(v);
     });
     graph.edges().forEach(function(edge) {
       newEdges[`${edge.v}-${edge.w}`] = graph.edge(edge);
     });
+    console.log('create newNodes and newEdges:', Date.now() - start, 'ms');
+
     setNodes(newNodes);
     setEdges(newEdges);
     setGraph(graph);
@@ -156,6 +169,7 @@ const DagreLayoutGraph: React.FC = () => {
   }
 
   const generateNodeStyles = () => {
+    let start = Date.now();
     let styles = [];
     for (const nodeId in nodes) {
       styles.push({
@@ -175,11 +189,13 @@ const DagreLayoutGraph: React.FC = () => {
         }
       })
     }
+    console.log('generateNodeStyles:', Date.now() - start, 'ms');
     return styles;
   }
 
   // todo
   const generateEdgeStyles = () => {
+    let start = Date.now();
     let styles = [];
     for (const edgeId in edges) {
       const pointNum = edges[edgeId].points.length;
@@ -199,16 +215,19 @@ const DagreLayoutGraph: React.FC = () => {
         }
       });
     }
+    console.log('generateEdgeStyles:', Date.now() - start, 'ms');
     return styles;
   }
 
   useEffect(() => {
     const svg = d3.select(svgRef.current)
     const outputG = d3.select(outputRef.current)
-    console.log(svg, outputG)
+
     let zoom = d3
       .zoom().on('zoom', function () {
-        transform = d3.event.transform
+        // setTransform(d3.event.transform)
+        // transform = d3.event.transform
+        // 没使用setTransform还是考虑到transform变化后generate style都会重新执行
         outputG.attr('transform', d3.event.transform);
       });
     svg.call(zoom).on('dblclick.zoom', null);
