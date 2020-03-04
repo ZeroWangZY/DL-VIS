@@ -15,6 +15,7 @@ import DagreLayout from "./DagreLayout/DagreLayout";
 import NodeSelector from './preference/NodeSelector'
 import TensorBoardGraph from './tensorboard/Graph'
 import GraphSelector from './preference/GraphSelector';
+import RenderGraph from './threejs-render/RenderGraph';
 const drawerWidth = 360;
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -143,7 +144,8 @@ const AppEntry: React.FC = () => {
         })}
       >
         <div className={classes.drawerHeader} />
-        <DagreLayout />
+        {/* <DagreLayout /> */}
+        <RenderGraph />
         {/* <TensorBoardGraph /> */}
       </main>
     </div>
