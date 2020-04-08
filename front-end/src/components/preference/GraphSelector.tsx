@@ -8,7 +8,7 @@ import Select from '@material-ui/core/Select';
 import { setProcessedGraph } from '../../store/useProcessedGraph'
 import { fetchAndParseGraphData } from '../../common/graph-processing/parser';
 import { pruneByOutput } from '../../common/graph-processing/prune';
-import { SimplifierImp } from '../../common/graph-processing/simplifier';
+import { SimplifierImp } from '../../common/graph-processing/simplifier2';
 import { buildGraph } from '../../common/graph-processing/graph';
 
 const useStyles = makeStyles((theme: Theme) =>

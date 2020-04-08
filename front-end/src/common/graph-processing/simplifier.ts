@@ -60,7 +60,6 @@ export class SimplifierImp {
 
   simplify(graph: RawGraph, patterns?: PatternDef[]): RawGraph {
     let ret = this.deepcopy(graph);
-
     this.cleanNameNInputs(ret);
 
     const $patterns = patterns ? patterns : this.defaultPatterns;
@@ -69,10 +68,8 @@ export class SimplifierImp {
     }
 
     this.replaceVariable(ret);
-
     const indicesToDelete = Array.from(this.indicesToDelete);
     this.deleteNodes(ret, indicesToDelete);
-
     return ret;
   }
 
