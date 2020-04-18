@@ -100,11 +100,11 @@ export class GroupNodeImp implements GroupNode {
   expanded: boolean;  // group是否被展开
   visibility: boolean = true
 
-  constructor({ id, children, opts = {} }: { id: string; children?: Set<NodeId>; opts?: OptionsDef }) {
+  constructor({ id, children, parent, opts = {} }: { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.GROUP;
-    this.parent = "";
+    this.parent = parent || "";
     this.children = children || new Set();
     this.expanded = false;
   }
@@ -120,11 +120,11 @@ export class LayerNodeImp implements LayerNode {
   layerType: LayerType;
   visibility: boolean = true
 
-  constructor({ id, layerType, children, opts = {} }: { id: string; children?: Set<NodeId>; layerType: LayerType; opts?: OptionsDef }) {
+  constructor({ id, layerType, children, parent, opts = {} }: { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.LAYER;
-    this.parent = "";
+    this.parent = parent || "";
     this.children = children || new Set();
     this.expanded = false;
     this.layerType = layerType;

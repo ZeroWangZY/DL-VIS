@@ -1,51 +1,192 @@
 #dagre-svg {
-    width: 100%;
-    overflow: hidden;
-    user-select: none;
+  width: 100%;
+  overflow: hidden;
+  user-select: none;
 }
-
-
-.node rect, ellipse {
-    fill: #fff;
-    stroke-width: 1px;
-    stroke:#333;
-}
-
-.node rect.label-container {
-    rx: 5;
-    ry: 5;
-}
-.nodeitem text {
-        cursor: auto;
-}
-
-
-/* .nodeitem-0 ellipse.label-container {
-    
-} */
-
-/* node type为data  */
-.nodeitem-3 rect.label-container {
-    stroke: none;
-}
-
-.cluster rect {
-    fill: #eee;
-    fill-opacity: 0.6;
-    stroke-width: 1px;
-    stroke:#333;
-}
-.cluster .label {
-    font-style: italic;
-}
-
-.my-label text {
-  text-anchor: middle;
-  /* dominant-baseline: middle; */
+.nodetype-1, .nodetype-2 {
   cursor: pointer;
 }
 
+/* 默认节点样式 group node*/
+.node .label-container {
+  fill: #eeeeee;
+  stroke-width: 1px;
+  stroke:#999999;
+}
+.node .label-container {
+  rx: 5;
+  ry: 5;
+}
+.node-label text {
+  fill: #333;
+  text-anchor: middle;
+  font-size: 14px;
+}
+/* 默认边样式 */
 .edgePath path {
-  stroke: #333;
+  stroke: #999999;
   fill: none;
+}
+
+
+/* 背景 */
+.bg-rect {
+  fill: white;
+}
+
+/* operation node */
+.nodetype-0 text{
+  font-size: 10px;
+}
+.nodetype-0 .label-container {
+  fill: #fff;
+  rx: 15;
+  ry: 5;
+}
+
+/* layer node */
+/* fc */
+.nodetype-1 .fc-layer-label-g circle {
+  fill: #eee;
+  stroke: #999999;
+}
+.nodetype-1 .fc-layer-label-g line {
+  stroke: #999999;
+  stroke-width: 1px;
+  stroke-opacity: 0.7;
+}
+.nodetype-1 text {
+  fill: #fff;
+}
+.nodetype-1 .fc-layer-label-container {
+  fill: #cbcbcb;
+  stroke-width: 1px;
+  stroke:#999999;
+  /* fill-opacity: 0.7; */
+}
+/* conv */
+.nodetype-1 .conv-layer-label-g rect {
+  fill: #cbcbcb;
+  stroke: #999999;
+  stroke-width: 1px;
+}
+/* RNN */
+.nodetype-1 .rnn-layer-label-g rect{
+  fill: #cbcbcb;
+  stroke: #999999;
+  stroke-width: 1px;
+}
+.nodetype-1 .rnn-layer-label-g path{
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1px;
+}
+/* other */
+.nodetype-1 .other-layer-label-g rect{
+  fill: #cbcbcb;
+  stroke: #999999;
+  stroke-width: 1px;
+}
+
+/* data node */
+.nodetype-3 text {
+  font-size: 10px;
+}
+.nodetype-3 .label-container {
+  fill: white;
+}
+
+/* input output */
+.datatype-0 .label-container, .datatype-1 .label-container {
+  rx: 5;
+  ry: 5;
+  stroke-width: 2px;
+}
+
+
+/* 展开的聚合节点 */
+.cluster .label-container {
+  fill: #b2b2b2;
+  fill-opacity: 0.2;
+  stroke-width: 1px;
+  stroke:#6a6a6a;
+}
+.cluster text {
+  font-style: italic;
+}
+
+.cluster.layertype-FC rect {
+  fill: #b2b2b2;
+  fill-opacity: 0.2;
+  stroke-width: 1px;
+  stroke:#6a6a6a;
+}
+.cluster.layertype-FC text {
+  fill: #333;
+}
+.cluster.layertype-FC line {
+  stroke: none;
+}
+
+.cluster.layertype-CONV rect {
+  fill: #f0f0f0;
+  /* fill-opacity: 0.2; */
+  stroke-width: 1px;
+  stroke:#6a6a6a;
+}
+.cluster.layertype-CONV text {
+  fill: #333;
+}
+
+.cluster.layertype-RNN rect {
+  fill: #b2b2b2;
+  fill-opacity: 0.2;
+  stroke-width: 1px;
+  stroke:#6a6a6a;
+}
+.cluster.layertype-RNN text {
+  fill: #333;
+}
+.cluster.layertype-OTHER rect {
+  fill: #b2b2b2;
+  fill-opacity: 0.2;
+  stroke-width: 1px;
+  stroke:#6a6a6a;
+}
+.cluster.layertype-OTHER text {
+  fill: #333;
+}
+
+/* 选中样式 */
+.selected .label-container {
+  fill: #5d83be;
+  stroke: #333;
+}
+.selected text {
+  fill: white;
+}
+.selected.nodetype-0 text, .selected.nodetype-3 text {
+  fill: #5d83be;
+}
+.selected.nodetype-1.layertype-CONV rect {
+  fill: #5d83be;
+  stroke: #333;
+}
+.cluster.selected.nodetype-1.layertype-CONV rect {
+  fill-opacity: 0.2;
+}
+.selected.nodetype-1.layertype-FC rect {
+  fill: #5d83be;
+  stroke: #333;
+}
+.selected.nodetype-1.layertype-FC circle {
+  stroke: #333;
+}
+.selected.nodetype-1.layertype-RNN rect {
+  fill: #5d83be;
+  stroke: #333;
+}
+.selected.nodetype-1.layertype-OTHER rect {
+  fill: #5d83be;
+  stroke: #333;
 }
