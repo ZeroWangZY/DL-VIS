@@ -34,7 +34,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
   }
   componentDidMount() {
     const { renderData } = this.state;
-    const that = this
+    const { setState } = this
      d3.select(this.ref).select('rect').on("mousemove", function () {
       let mouseX = d3.mouse((this as any) as SVGSVGElement)[0]
       let x = renderData.xScale.invert(mouseX)
@@ -49,7 +49,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
           color: line.color
         }
       })
-      that.setState({
+      setState({
         tooltipData,
         lineX: renderData.series[0].data[index].data.x,
         toolPosition: {
