@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import PropTypes from 'prop-types'
 import { Motion, spring } from 'react-motion';
 import { interpolate } from 'd3-interpolate';
 
@@ -13,7 +14,7 @@ const enhancedSpring = (value, config) => {
   return spring(value, config);
 };
 
-export default class SmartMotion extends PureComponent {
+class SmartMotion extends PureComponent {
   oldValues = {};
   newInters = {};
   currentStepValues = {};
@@ -78,3 +79,10 @@ export default class SmartMotion extends PureComponent {
     );
   }
 }
+
+SmartMotion.propTypes = {
+  children: PropTypes.any,
+  style: PropTypes.func,
+};
+
+export default SmartMotion

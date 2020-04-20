@@ -17,6 +17,7 @@ module.exports = {
     "prefer-const": 0,
     "@typescript-eslint/no-use-before-define": 0,
     "@typescript-eslint/no-inferrable-types": 0,
+    "@typescript-eslint/no-this-alias": "off",
     "consistent-this": [ERROR, "self"],
   },
   settings: {
