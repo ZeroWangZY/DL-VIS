@@ -19,6 +19,9 @@
     "noEmit": true,
     "jsx": "react"
   },
+  "rule": {
+    "no-this-alias": "off"
+  },
   "include": [
     "src"
   ]

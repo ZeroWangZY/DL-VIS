@@ -1,0 +1,24 @@
+.axis path{
+    stroke: rgb(106, 124, 137);
+    /* font-size: 11px; */
+}
+.axis line{
+    stroke: rgb(106, 124, 137);
+    /* font-size: 11px; */
+}
+.axis text{
+    fill: rgb(106, 124, 137);
+    font-size: 11px;
+}
+.tipbox {
+    pointer-events: all;
+}
+.tooltip {
+    width: 100px;
+    height: 50px;
+    border: solid;
+}
+/* .axis-text {
+    fill: rgb(106, 124, 137);
+    font-size: 11px;
+} */

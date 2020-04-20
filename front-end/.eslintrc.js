@@ -16,7 +16,8 @@ module.exports = {
     // e.g. "@typescript-eslint/explicit-function-return-type": "off",
     "prefer-const": 0,
     "@typescript-eslint/no-use-before-define": 0,
-    "@typescript-eslint/no-inferrable-types": 0
+    "@typescript-eslint/no-inferrable-types": 0,
+    "consistent-this": [ERROR, "self"],
   },
   settings: {
     react: {

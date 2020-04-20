@@ -1,5 +1,5 @@
 import { DataNode, NodeType, OperationNode, DataType, LayerNode, LayerType, GroupNode, ProcessedGraph } from "../types/processed-graph"
-import {LayoutGraph, DisplayedEdge, DisplayedNode} from "../types/layoutGraphForRender"
+import { LayoutGraph, DisplayedEdge, DisplayedNode } from "../types/layoutGraphForRender"
 
 const input: DataNode = {
   id: 'x___input___',
@@ -209,101 +209,101 @@ export const mockDataForRender: LayoutGraph = {
   }],
   displayedNodes: [
     {
-        nodeId: 'fc_layer',
-        point: {"x": 160.4609375, "y": 437.2421875},
-        size: {"width": 73.5781, "height": 41.6094}
+      nodeId: 'fc_layer',
+      point: { "x": 160.4609375, "y": 437.2421875 },
+      size: { "width": 73.5781, "height": 41.6094 }
     },
     {
-        nodeId: 'conv_layer',
-        point: {"x": 154.16015625, "y": 183.21875},
-        size: {"width": 200.695, "height": 366.438}
+      nodeId: 'conv_layer',
+      point: { "x": 154.16015625, "y": 183.21875 },
+      size: { "width": 200.695, "height": 366.438 }
     },
     {
-        nodeId: 'conv_layer/conv2d',
-        point: {"x": 115.5234375, "y": 137.4140625},
-        size: {"width": 71.53,"height": 41.61}
+      nodeId: 'conv_layer/conv2d',
+      point: { "x": 115.5234375, "y": 137.4140625 },
+      size: { "width": 71.53, "height": 41.61 }
     },
     {
-        nodeId: 'conv_layer/add',
-        point: {"x":160.4609375, "y": 229.0234375},
-        size: {"width": 46.98, "height":41.61}
+      nodeId: 'conv_layer/add',
+      point: { "x": 160.4609375, "y": 229.0234375 },
+      size: { "width": 46.98, "height": 41.61 }
     },
     {
-        nodeId: 'conv_layer/relu',
-        point: {"x":160.4609375, "y": 320.6328125},
-        size: {"width": 46.86,"height": 41.61}
+      nodeId: 'conv_layer/relu',
+      point: { "x": 160.4609375, "y": 320.6328125 },
+      size: { "width": 46.86, "height": 41.61 }
     },
     {
-        nodeId: 'conv_layer/weights',
-        point: {"x": 153.6875, "y": 45.8046875},
-        size: {"width": 75.3125,"height": 41.61}
+      nodeId: 'conv_layer/weights',
+      point: { "x": 153.6875, "y": 45.8046875 },
+      size: { "width": 75.3125, "height": 41.61 }
     },
     {
-        nodeId: 'conv_layer/bias',
-        point: {"x": 205.3984375, "y": 137.4140625},
-        size: {"width": 48.2188,"height": 41.61}
+      nodeId: 'conv_layer/bias',
+      point: { "x": 205.3984375, "y": 137.4140625 },
+      size: { "width": 48.2188, "height": 41.61 }
     },
     {
-        nodeId: 'softmax',
-        point: {"x": 160.4609375, "y": 528.8515625},
-        size: {"width": 76.52,"height": 41.61}
+      nodeId: 'softmax',
+      point: { "x": 160.4609375, "y": 528.8515625 },
+      size: { "width": 76.52, "height": 41.61 }
     },
     {
-        nodeId: 'x___input___',
-        point: {"x": 14.40625, "y": 45.8046875},
-        size: {"width": 28.81, "height": 41.61}
+      nodeId: 'x___input___',
+      point: { "x": 14.40625, "y": 45.8046875 },
+      size: { "width": 28.81, "height": 41.61 }
     },
     {
-        nodeId: 'y',
-        point: {"x": 160.4609375, "y": 620.4609375},
-        size: {"width": 28.81, "height": 41.61}
+      nodeId: 'y',
+      point: { "x": 160.4609375, "y": 620.4609375 },
+      size: { "width": 28.81, "height": 41.61 }
     }
   ],
   dispalyedEdges: [
     {
-        source: input.id,
-        target: conv2d.id,
-        label: "",
-        points: [
-            {"x":28.8125,"y":54.074916007784196},
-            {"x":94.1953125,"y":91.609375},
-            {"x":105.83611072616408,"y":116.609375}
-        ]
+      source: input.id,
+      target: conv2d.id,
+      label: "",
+      points: [
+        { "x": 28.8125, "y": 54.074916007784196 },
+        { "x": 94.1953125, "y": 91.609375 },
+        { "x": 105.83611072616408, "y": 116.609375 }
+      ]
     }, {
-        source: weights1.id,
-        target: conv2d.id,
-        label: "",
-        points: [{"x":153.6875,"y":66.609375},{"x":153.6875,"y":91.609375},{"x":132.85772002387856,"y":116.609375}]
+      source: weights1.id,
+      target: conv2d.id,
+      label: "",
+      points: [{ "x": 153.6875, "y": 66.609375 }, { "x": 153.6875, "y": 91.609375 }, { "x": 132.85772002387856, "y": 116.609375 }]
     }, {
-        source: conv2d.id,
-        target: add1.id,
-        label: "",
-        points: [{"x":115.5234375,"y":158.21875},{"x":115.5234375,"y":183.21875},{"x":140.05013031937574,"y":208.21875}]
+      source: conv2d.id,
+      target: add1.id,
+      label: "",
+      points: [{ "x": 115.5234375, "y": 158.21875 }, { "x": 115.5234375, "y": 183.21875 }, { "x": 140.05013031937574, "y": 208.21875 }]
     }, {
-        source: bias1.id,
-        target: add1.id,
-        label: "",
-        points: [{"x":205.3984375,"y":158.21875},{"x":205.3984375,"y":183.21875},{"x":180.87174468062426,"y":208.21875}]
+      source: bias1.id,
+      target: add1.id,
+      label: "",
+      points: [{ "x": 205.3984375, "y": 158.21875 }, { "x": 205.3984375, "y": 183.21875 }, { "x": 180.87174468062426, "y": 208.21875 }]
     }, {
-        source: add1.id,
-        target: relu1.id,
-        label: "",
-        points: [{"x":160.4609375,"y":249.828125},{"x":160.4609375,"y":274.828125},{"x":160.4609375,"y":299.828125}]
+      source: add1.id,
+      target: relu1.id,
+      label: "",
+      points: [{ "x": 160.4609375, "y": 249.828125 }, { "x": 160.4609375, "y": 274.828125 }, { "x": 160.4609375, "y": 299.828125 }]
     }, {
-        source: relu1.id,
-        target: fcLayer.id,
-        label: "",
-        points: [{"x":160.4609375,"y":341.4375},{"x":160.4609375,"y":366.4375},{"x":160.4609375,"y":391.4375},{"x":160.4609375,"y":416.4375}]
+      source: relu1.id,
+      target: fcLayer.id,
+      label: "",
+      points: [{ "x": 160.4609375, "y": 341.4375 }, { "x": 160.4609375, "y": 366.4375 }, { "x": 160.4609375, "y": 391.4375 }, { "x": 160.4609375, "y": 416.4375 }]
     }, {
-        source: fcLayer.id,
-        target: softmax.id,
-        label: "",
-        points: [{"x":160.4609375,"y":458.046875},{"x":160.4609375,"y":483.046875},{"x":160.4609375,"y":508.046875}]
+      source: fcLayer.id,
+      target: softmax.id,
+      label: "",
+      points: [{ "x": 160.4609375, "y": 458.046875 }, { "x": 160.4609375, "y": 483.046875 }, { "x": 160.4609375, "y": 508.046875 }]
     }, {
-        source: softmax.id,
-        target: output.id,
-        label: "",
-        points: [{"x":160.4609375,"y":549.65625},{"x":160.4609375,"y":574.65625},{"x":160.4609375,"y":599.65625}]
+      source: softmax.id,
+      target: output.id,
+      label: "",
+      points: [{ "x": 160.4609375, "y": 549.65625 }, { "x": 160.4609375, "y": 574.65625 }, { "x": 160.4609375, "y": 599.65625 }]
     }
   ]
 }

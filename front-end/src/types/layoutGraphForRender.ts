@@ -8,14 +8,14 @@ export interface Size {
   height: number;
 }
 export interface DisplayedEdge extends RawEdge {
-    label: string;
-    points: Coordinate[];
+  label: string;
+  points: Coordinate[];
 }
 
 export interface DisplayedNode {
-    nodeId: NodeId;
-    point: Coordinate;
-    size: Size;
+  nodeId: NodeId;
+  point: Coordinate;
+  size: Size;
 }
 
 export interface LayoutGraph {
