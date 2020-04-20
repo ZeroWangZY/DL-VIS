@@ -33,8 +33,10 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
    this.computed()
   }
   componentDidMount() {
+    /* eslint-disable */
     const { renderData } = this.state;
-    const { setState } = this
+    // const { setState } = this
+    const that  = this
      d3.select(this.ref).select('rect').on("mousemove", function () {
       let mouseX = d3.mouse((this as any) as SVGSVGElement)[0]
       let x = renderData.xScale.invert(mouseX)
@@ -49,7 +51,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
           color: line.color
         }
       })
-      setState({
+      that.setState({
         tooltipData,
         lineX: renderData.series[0].data[index].data.x,
         toolPosition: {
@@ -58,6 +60,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
         }
       })
     });
+    /* eslint-disable */
   }
   computed() {
     const { width, height, data } = this.props;
