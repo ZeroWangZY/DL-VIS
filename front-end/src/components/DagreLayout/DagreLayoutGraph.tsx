@@ -19,7 +19,6 @@ import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
 
-let graphTmp = null;
 let tmpId = "fc_layer" // 对应205行 todo
 
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
@@ -224,6 +223,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       graph.setNode(node.id, {
         id: node.id,
         label: node.displayedName,
+        nodetype: node.type,
+        expanded: (node.type === NodeType.LAYER) ? (node as LayerNodeImp).expanded : false,
         class: className,
         shape: "rect",
         width,
@@ -274,9 +275,9 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           class: nodes[nodeId].class,
           id: nodeId.replace(/\//g, '-'), //把"/"换成"-"，因为querySelector的Id不能带/
           label: nodes[nodeId].label,
-          type: graphTmp.nodeMap[nodeId].type,
-          expanded: (graphTmp.nodeMap[nodeId].type === NodeType.LAYER) ? graphTmp.nodeMap[nodeId]["expanded"] : null,
-          LineData: (graphTmp.nodeMap[nodeId].type === NodeType.LAYER) ?
+          type: nodes[nodeId].nodetype,
+          expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
+          LineData: (nodes[nodeId].nodetype === NodeType.LAYER) ?
             generateLineData(tmpId, iteration++) : [] // 根据Id和迭代次数 找到折线图数据
         },
         style: {
@@ -449,8 +450,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     if (selectedG.nodes().length <= 1 && e.target) {
       let clickNode;
       if (!selectedG.nodes().length) {
-        // clickNode = e.target.nodeName === "text" ? e.target.parentNode.parentNode : e.target.parentNode;
-        clickNode = e.target.parentNode.parentNode;
+        let tempNode = e.target.parentNode;
+        while(!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
+          tempNode = tempNode.parentNode;
+        }
+        clickNode = tempNode;
       } else {
         clickNode = selectedG.node();
       }
@@ -626,7 +630,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
-    graphTmp = graphForLayout;
   }, [graphForLayout]);
 
   const getLabelContainer = (nodeClass, width, height) => {
