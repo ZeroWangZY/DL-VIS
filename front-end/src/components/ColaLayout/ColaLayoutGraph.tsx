@@ -19,7 +19,6 @@ import { group } from "d3";
 
 const ColaLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
-  const [graph, setGraph] = useState();
   const [edges, setEdges] = useState([]);
   const [groupsObj, setGroupsObj] = useState({});
   const [groups, setGroups] = useState([]);
@@ -58,12 +57,15 @@ const ColaLayoutGraph: React.FC = () => {
     );
 
     let groupsObj = {},
+      groupsMap = {},
       groups = [];
+    let groupsNum = 0;
     displayedNodes.forEach((nodeId, i) => {
       const node = nodeMap[nodeId];
       if (node.parent !== "___root___") {
         if (!groupsObj.hasOwnProperty(node.parent)) {
           groupsObj[node.parent] = [nodeId];
+          groupsMap[node.parent] = groupsNum++;
         } else {
           groupsObj[node.parent].push(nodeId);
         }
@@ -84,16 +86,27 @@ const ColaLayoutGraph: React.FC = () => {
         label: node.displayedName,
         shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
         class: `nodeitem-${node.type}`,
+        type: node.type,
         width: Math.max(node.displayedName.length, 3) * 10,
         height: 50,
       };
       newNodes.push(newNode);
     }
+    const grouppadding = 40;
     if (Object.keys(groupsObj).length > 0) {
       groups = Object.keys(groupsObj).map((parentId) => {
+        let leave = [],
+          group = [];
+        groupsObj[parentId].forEach((id) => {
+          if (groupsMap.hasOwnProperty(id)) {
+            group.push(groupsMap[id]);
+          }
+          leave.push(nodeMap[id]["no"]);
+        });
         return {
-          leaves: groupsObj[parentId].map((id) => nodeMap[id]["no"]),
-          padding: 2,
+          leaves: leave,
+          groups: group,
+          padding: 40,
         };
       });
     }
@@ -110,24 +123,9 @@ const ColaLayoutGraph: React.FC = () => {
     });
 
     const constraints = [
-      // {
-      //   type: "alignment",
-      //   axis: "x",
-      //   offsets: [
-      //     { node: "1", offset: "0" },
-      //     { node: "2", offset: "0" },
-      //     { node: "3", offset: "0" },
-      //   ],
-      // },
-      // {
-      //   type: "alignment",
-      //   axis: "y",
-      //   offsets: [
-      //     { node: "0", offset: "0" },
-      //     { node: "1", offset: "0" },
-      //     // { node: "4", offset: "0" },
-      //   ],
-      // },
+      { axis: "y", left: 0, right: 3, gap: 100, equality: "true" },
+      { axis: "y", left: 1, right: 3, gap: 100, equality: "true" },
+      { axis: "y", left: 2, right: 3, gap: 100, equality: "true" },
     ];
 
     let graph = {
@@ -145,14 +143,15 @@ const ColaLayoutGraph: React.FC = () => {
       .links(graph.edges)
       .groups(graph.groups)
       .constraints(graph.constraints)
-      .handleDisconnected(false)
-      .start(10, 30, 30);
+      .groupCompactness(5)
+      .flowLayout("y", 100)
+      .start(5, 10, 10);
 
-    setNodes(newNodes);
-    setEdges(newEdges);
-    setGroups(groups);
+    console.log(graph.nodes);
+    setNodes(graph.nodes);
+    setEdges(graph.edges);
+    setGroups(graph.groups);
     setGroupsObj(groupsObj);
-    // setGraph(graph);
   };
 
   const generateNodeStyles = () => {
@@ -162,6 +161,7 @@ const ColaLayoutGraph: React.FC = () => {
         key: node.name,
         data: {
           class: node.class,
+          type: node.type,
           id: node.name,
           label: node.label,
         },
@@ -354,6 +354,10 @@ const ColaLayoutGraph: React.FC = () => {
                           }
                         >
                           {d.data.label}
+                          {d.data.type === NodeType.GROUP ||
+                          d.data.type === NodeType.LAYER
+                            ? "+"
+                            : null}
                         </text>
                       </g>
                     </g>
