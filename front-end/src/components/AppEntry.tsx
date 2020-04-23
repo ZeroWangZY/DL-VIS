@@ -15,6 +15,7 @@ import DagreLayout from "./DagreLayout/DagreLayout";
 import NodeSelector from './preference/NodeSelector'
 import TensorBoardGraph from './tensorboard/Graph'
 import GraphSelector from './preference/GraphSelector';
+import Diagnosis from './preference/Diagnosis';
 const drawerWidth = 360;
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -136,6 +137,7 @@ const AppEntry: React.FC = () => {
         <Divider />
         <NodeSelector />
         <Divider />
+        <Diagnosis />
       </Drawer>
       <main
         className={clsx(classes.content, {

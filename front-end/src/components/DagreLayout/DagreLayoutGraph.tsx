@@ -14,6 +14,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
+import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart} from '../../store/toggleForLineChart'
 import { useProcessedGraph, broadcastGraphChange, setProcessedGraph } from '../../store/useProcessedGraph';
 import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
@@ -24,6 +25,7 @@ let tmpId = "fc_layer" // 对应205行 todo
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
   let iteration = props.iteration
   const graphForLayout = useProcessedGraph();
+  const showAllLineChart = useToggleForLineChart();
   const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
@@ -68,6 +70,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [anchorEl, setAnchorEl] = useState(null);// popover的位置
   const [currentNodetype, setCurrentNodetype] = useState<number>(-1);
   const [currentLayertype, setCurrentLayertype] = useState<string>(null);
+  const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(true);
+  const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState([])
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -277,6 +281,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           label: nodes[nodeId].label,
           type: nodes[nodeId].nodetype,
           expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
+          showLineChart: (nodes[nodeId].nodetype === NodeType.LAYER && currentNotShowLineChartID.indexOf(nodeId) < 0) ? true : false,
           LineData: (nodes[nodeId].nodetype === NodeType.LAYER) ?
             generateLineData(tmpId, iteration++) : [] // 根据Id和迭代次数 找到折线图数据
         },
@@ -403,7 +408,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       broadcastGraphChange();
     })
   }
-
   // 修改节点属性, 暂时只考虑了修改单个节点属性
   const handleModifyNodetype = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
@@ -413,6 +417,16 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
       // 判断是否修改
       let newNode;
+      // 折线图默认全部显示，不显示的节点Id存在数组里
+      if (showAllLineChart && currentShowLineChart === false && currentNotShowLineChartID.indexOf(nodeId) < 0) {
+        setCurrentNotShowLineChartID([...currentNotShowLineChartID, nodeId])
+        broadcastGraphChange();
+      } else if (showAllLineChart && currentShowLineChart === true && currentNotShowLineChartID.indexOf(nodeId) >= 0) {
+        let pos = currentNotShowLineChartID.indexOf(nodeId)
+        currentNotShowLineChartID.splice(pos, 1)
+        setCurrentNotShowLineChartID(currentNotShowLineChartID)
+        broadcastGraphChange();
+      }
       if (oldNode.type !== currentNodetype) {// 修改了节点类型
         let opts = { displayedName: oldNode.displayedName };
         if (currentNodetype === NodeType.GROUP) {
@@ -451,7 +465,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       let clickNode;
       if (!selectedG.nodes().length) {
         let tempNode = e.target.parentNode;
-        while(!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
+        while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
           tempNode = tempNode.parentNode;
         }
         clickNode = tempNode;
@@ -496,6 +510,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   // 修改layer type
   const handleLayertypeChange = (e) => {
     setCurrentLayertype(e.target.value)
+  }
+
+  const handleLineChartToggle = (e) => {
+    setCurrentShowLineChart(e.target.value === "true" ? true : false)
   }
 
   // 点击空白处取消所有选择
@@ -688,7 +706,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                       onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
                       {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
                       <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
-                        {(d.data.type === NodeType.LAYER && d.data.expanded === false) ?
+                        {(d.data.type === NodeType.LAYER && d.data.expanded === false && d.data.showLineChart && showAllLineChart) ?
                           <g className="LineChartInNode" >
                             <LineGroup
                               transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
@@ -830,6 +848,23 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                       <MenuItem value={LayerType.RNN}>RNN</MenuItem>
                       <MenuItem value={LayerType.FC}>FC</MenuItem>
                       <MenuItem value={LayerType.OTHER}>OTHER</MenuItem>
+                    </Select>
+                  </div>
+                }
+                {currentNodetype === NodeType.LAYER &&
+                  <div id="showLineChart-modify-container">
+                    <InputLabel id="showLineChart-selector" style={{ fontSize: 10 }}>Show LineChart</InputLabel>
+                    <Select
+                      value={currentShowLineChart}
+                      onChange={handleLineChartToggle}
+                      style={{
+                        width: '100%',
+                        marginBottom: 10,
+                        fontSize: 14
+                      }}
+                    >
+                      <MenuItem value={"true"}>true</MenuItem>
+                      <MenuItem value={"false"}>false</MenuItem>
                     </Select>
                   </div>
                 }
