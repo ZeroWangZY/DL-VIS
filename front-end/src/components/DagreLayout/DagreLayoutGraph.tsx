@@ -497,7 +497,14 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     node.classed("selected", false);
     node.classed("previouslySelected", false);
     setAnchorEl(null);
-    setCurrentNodetype(-1);
+    //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
+    // setCurrentNodetype(-1);
+    setCurrentLayertype(null)
+  }
+  const handleClosePopoverWithoutDeselect = () => {
+    setAnchorEl(null);
+    //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
+    // setCurrentNodetype(-1);
     setCurrentLayertype(null)
   }
 
@@ -528,6 +535,17 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     const previouslySelected = d3.select(`#${id}`).attr("class").indexOf("selected") > -1 ? true : false;
     d3.select(`#${id}`).classed("selected", !previouslySelected);
     // d3.select(`#${id}`).classed("previouslySelected", !previouslySelected);
+  }
+
+  //鼠标悬停节点
+  const handleMouseOver = (e) => {
+    let currentElementClassList = e.currentTarget.classList;
+    if (currentElementClassList.value.indexOf("cluster") == -1) {
+      currentElementClassList.add("highlighted");
+    }
+  }
+  const handleMouseLeave = (e) => {
+    e.currentTarget.classList.remove("highlighted");
   }
 
   // 按键事件
@@ -682,7 +700,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
             <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" fill='#999999' stroke='#999999'></path>
           </marker>
           <marker id="rnn-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="5" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 L 8 5 z" fill='#fff' stroke='#fff'></path>
+            <path d="M 0 0 L 10 5 L 0 10 L 8 5 z" fill='#c7c7c7' stroke='#c7c7c7'></path>
           </marker>
         </defs>
         <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
@@ -703,6 +721,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                       id={d.data.id}
                       key={d.key}
                       transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
+                      onMouseOver={handleMouseOver}
+                      onMouseLeave={handleMouseLeave}
                       onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
                       {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
                       <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
@@ -718,7 +738,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                             </text>
                           </g> : <text
                             dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
-                            y={(d.data.class.indexOf('nodetype-1') > -1 || d.data.class.indexOf('nodetype-2') > -1) ? 0 : -10}// label偏移
+                            y={(d.data.class.indexOf(`nodetype-${NodeType.LAYER}`) > -1 || d.data.class.indexOf(`nodetype-${NodeType.GROUP}`) > -1) ? 0 : -10}// label偏移
                           >
                             {d.data.label}
                           </text>
@@ -754,7 +774,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       <Popover
         open={isPopoverOpen}
         anchorEl={anchorEl}
-        onClose={handleClosePopover}
+        onClose={currentNodetype<0?handleClosePopoverWithoutDeselect:handleClosePopover}//多选时关闭不取消已勾选项
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'right',
@@ -797,6 +817,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                   style={{
                     width: '100%',
                     fontSize: 14,
+                    marginBottom: 5
                   }}
                   onClick={handleAggregate}
                 >
@@ -874,7 +895,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                   size="small"
                   style={{
                     width: '100%',
-                    fontSize: 14
+                    fontSize: 14,
+                    marginBottom: 5
                   }}
                   onClick={handleModifyNodetype}
                 >
@@ -882,6 +904,18 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                 </Button>
               </div>
             }
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              style={{
+                width: '100%',
+                fontSize: 14
+              }}
+              onClick={handleClosePopover}
+            >
+              Cancel
+            </Button>
           </CardContent>
         </Card>
       </Popover>
