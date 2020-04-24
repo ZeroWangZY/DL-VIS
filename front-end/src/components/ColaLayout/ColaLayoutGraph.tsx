@@ -56,6 +56,8 @@ const ColaLayoutGraph: React.FC = () => {
       displayedNodes
     );
 
+    const constraints = [];
+
     let groupsObj = {},
       groups = [];
     let groupsNum = 0;
@@ -92,7 +94,7 @@ const ColaLayoutGraph: React.FC = () => {
       };
       newNodes.push(newNode);
     }
-    const grouppadding = 40;
+    const grouppadding = 30;
     if (Object.keys(groupsObj).length > 0) {
       groups = Object.keys(groupsObj).map((parentId) => {
         let leave = [],
@@ -121,13 +123,15 @@ const ColaLayoutGraph: React.FC = () => {
         arrowhead: "vee",
       };
       newEdges.push(newEdge);
+      // // add edge constraints
+      // constraints.push({
+      //   axis: "y",
+      //   left: newEdge.source,
+      //   right: newEdge.target,
+      //   gap: 150,
+      //   equality: "false",
+      // });
     });
-
-    const constraints = [
-      { axis: "y", left: 0, right: 3, gap: 100, equality: "true" },
-      { axis: "y", left: 1, right: 3, gap: 100, equality: "true" },
-      { axis: "y", left: 2, right: 3, gap: 100, equality: "true" },
-    ];
 
     let graph = {
       nodes: newNodes,
@@ -136,6 +140,8 @@ const ColaLayoutGraph: React.FC = () => {
       groups: groups,
     };
 
+    console.log("start Cola layout...");
+    let start = Date.now();
     let colaLayout = new cola.Layout()
       .size([700, 700])
       .linkDistance(150)
@@ -144,11 +150,12 @@ const ColaLayoutGraph: React.FC = () => {
       .links(graph.edges)
       .groups(graph.groups)
       .constraints(graph.constraints)
-      .groupCompactness(5)
+      .groupCompactness(30)
+      .convergenceThreshold(1e-9)
       .flowLayout("y", 100)
       .start(5, 10, 10);
 
-    console.log(graph.nodes);
+    console.log("cola.layout:", (Date.now() - start) / 1000, "s");
     setNodes(graph.nodes);
     setEdges(graph.edges);
     setGroups(graph.groups);
@@ -194,8 +201,8 @@ const ColaLayoutGraph: React.FC = () => {
         style: {
           gNodeTransX: spring((1 / 2) * (group.bounds.X + group.bounds.x)),
           gNodeTransY: spring((1 / 2) * (group.bounds.Y + group.bounds.y)),
-          rectHeight: spring(group.bounds.Y - group.bounds.y + 40),
-          rectWidth: spring(group.bounds.X - group.bounds.x + 40),
+          rectHeight: spring(group.bounds.Y - group.bounds.y - 10),
+          rectWidth: spring(group.bounds.X - group.bounds.x - 10),
         },
       });
     });
@@ -211,7 +218,7 @@ const ColaLayoutGraph: React.FC = () => {
         edge.target.bounds,
         5
       );
-      const startPoint = route.sourceIntersection;
+      const startPoint = edge.source; //route.sourceIntersection;
       const endPoint = route.arrowStart;
       styles.push({
         key: edge.id,
@@ -309,6 +316,24 @@ const ColaLayoutGraph: React.FC = () => {
               </g>
             )}
           </TransitionMotion>
+          <TransitionMotion styles={generateEdgeStyles()}>
+            {(interpolatedStyles) => (
+              <g className="edgePaths">
+                {interpolatedStyles.map((d) => (
+                  <g className="edgePath" key={d.key}>
+                    <path
+                      d={line([
+                        { x: d.style.startPointX, y: d.style.startPointY },
+                        ...d.data.lineData,
+                        { x: d.style.endPointX, y: d.style.endPointY },
+                      ])}
+                      markerEnd="url(#arrowhead)"
+                    ></path>
+                  </g>
+                ))}
+              </g>
+            )}
+          </TransitionMotion>
           <TransitionMotion styles={generateNodeStyles()}>
             {(interpolatedStyles) => (
               <g className="nodes">
@@ -364,25 +389,6 @@ const ColaLayoutGraph: React.FC = () => {
                     </g>
                   );
                 })}
-              </g>
-            )}
-          </TransitionMotion>
-
-          <TransitionMotion styles={generateEdgeStyles()}>
-            {(interpolatedStyles) => (
-              <g className="edgePaths">
-                {interpolatedStyles.map((d) => (
-                  <g className="edgePath" key={d.key}>
-                    <path
-                      d={line([
-                        { x: d.style.startPointX, y: d.style.startPointY },
-                        ...d.data.lineData,
-                        { x: d.style.endPointX, y: d.style.endPointY },
-                      ])}
-                      markerEnd="url(#arrowhead)"
-                    ></path>
-                  </g>
-                ))}
               </g>
             )}
           </TransitionMotion>
