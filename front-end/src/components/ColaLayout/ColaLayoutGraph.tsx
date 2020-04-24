@@ -57,17 +57,17 @@ const ColaLayoutGraph: React.FC = () => {
     );
 
     let groupsObj = {},
-      groupsMap = {},
       groups = [];
     let groupsNum = 0;
     displayedNodes.forEach((nodeId, i) => {
       const node = nodeMap[nodeId];
       if (node.parent !== "___root___") {
         if (!groupsObj.hasOwnProperty(node.parent)) {
-          groupsObj[node.parent] = [nodeId];
-          groupsMap[node.parent] = groupsNum++;
+          groupsObj[node.parent] = {};
+          groupsObj[node.parent]["nodes"] = [nodeId];
+          groupsObj[node.parent]["index"] = groupsNum++;
         } else {
-          groupsObj[node.parent].push(nodeId);
+          groupsObj[node.parent]["nodes"].push(nodeId);
         }
       }
     });
@@ -97,16 +97,17 @@ const ColaLayoutGraph: React.FC = () => {
       groups = Object.keys(groupsObj).map((parentId) => {
         let leave = [],
           group = [];
-        groupsObj[parentId].forEach((id) => {
-          if (groupsMap.hasOwnProperty(id)) {
-            group.push(groupsMap[id]);
+        groupsObj[parentId]["nodes"].forEach((id) => {
+          if (groupsObj.hasOwnProperty(id)) {
+            group.push(groupsObj[id]["index"]);
+          } else {
+            leave.push(nodeMap[id]["no"]);
           }
-          leave.push(nodeMap[id]["no"]);
         });
         return {
           leaves: leave,
           groups: group,
-          padding: 40,
+          padding: grouppadding,
         };
       });
     }
