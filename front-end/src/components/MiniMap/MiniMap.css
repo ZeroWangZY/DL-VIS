@@ -1,0 +1,21 @@
+.mini-map{
+    position: relative;
+}
+.mini-map svg{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+}
+.mini-map svg rect{
+    fill: white;
+    stroke: #111111;
+    stroke-width: 1px;
+    fill-opacity: 0;
+    filter: url(#minimapDropShadow);
+    cursor: move;
+}
+.mini-map canvas{
+    border: 1px solid #999;
+}

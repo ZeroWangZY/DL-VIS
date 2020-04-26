@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType } from '../../types/processed-graph'
+import { transformImp,GraphInfoType,TransformType } from '../../types/mini-map'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -14,6 +15,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
+import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphInfo';
 import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange} from '../../store/useProcessedGraph';
 import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart} from '../../store/toggleForLineChart'
 import { LineGroup } from '../LineCharts/index'
@@ -21,7 +23,6 @@ import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
 
 let tmpId = "fc_layer" // 对应205行 todo
-
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
   let iteration = props.iteration
   const graphForLayout = useProcessedGraph();
@@ -29,7 +30,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
-  const [transform, setTransform] = useState(null)
+  const transform = useTransform();
 
   const arr = mockDataForModelLevel.displayedLineChartForLayerNode;
   const generateLineData = (nodeId, iteration) => { // 根据nodeId iteration选择数据
@@ -636,6 +637,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         // setTransform(d3.event.transform)
         // transform = d3.event.transform
         // 没使用setTransform还是考虑到transform变化后generate style都会重新执行
+        setTransform(TransformType.GRAPH_TRANSFORM,d3.event.transform)
+        // broadTransformChange();
         outputG.attr('transform', d3.event.transform);
       });
     svg.call(zoom).on('dblclick.zoom', null);
@@ -661,10 +664,13 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
     setBgRectHeight(svgHeight);
   }, [])
-
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
+    setTimeout(function () {
+      // setTransformData(new transformImp())
+      modifyGraphInfo(GraphInfoType.UPDATE_NODE)
+    }, 1000);
   }, [graphForLayout]);
 
   const getLabelContainer = (nodeClass, width, height) => {
@@ -690,85 +696,84 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }
 
   const isPopoverOpen = Boolean(anchorEl);
-
   return (
     <div id='dagre-graph' style={{ height: '100%' }}>
       <svg id='dagre-svg' ref={svgRef} style={{ height: '100%' }} onContextMenu={(e) => { e.preventDefault() }}>
-        <defs>
-          <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" fill='#999999' stroke='#999999'></path>
-          </marker>
-          <marker id="rnn-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="5" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 L 8 5 z" fill='#c7c7c7' stroke='#c7c7c7'></path>
-          </marker>
-        </defs>
-        <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
-        <g
-          className='output'
-          id="output-g"
-          ref={outputRef}
-          transform={transform}
-          onContextMenu={(e) => handleRightClick(e)}>
-          {/* <g className='clusters'></g> */}
-          <TransitionMotion styles={generateNodeStyles()}>
-            {interpolatedStyles => (
-              <g className='nodes'>
-                {interpolatedStyles.map(d => {
-                  return (
-                    <g
-                      className={`node ${d.data.class}`}
-                      id={d.data.id}
-                      key={d.key}
-                      transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
-                      onMouseOver={handleMouseOver}
-                      onMouseLeave={handleMouseLeave}
-                      onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
-                      {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
-                      <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
-                        {(d.data.type === NodeType.LAYER && d.data.expanded === false && d.data.showLineChart && showAllLineChart) ?
-                          <g className="LineChartInNode" >
-                            <LineGroup
-                              transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
-                              width={d.style.rectWidth}
-                              height={d.style.rectHeight * 3 / 4}
-                              data={d.data.LineData} />
-                            <text transform={`translate(0,-${d.style.rectHeight * 3 / 8})`} dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}>
+        <g>
+          <defs>
+            <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" fill='#999999' stroke='#999999'></path>
+            </marker>
+            <marker id="rnn-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 L 8 5 z" fill='#fff' stroke='#fff'></path>
+            </marker>
+          </defs>
+          <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
+          <g
+            className='output'
+            id="output-g"
+            ref={outputRef}
+            transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
+            onContextMenu={(e) => handleRightClick(e)}>
+            {/* <g className='clusters'></g> */}
+            <TransitionMotion styles={generateNodeStyles()}>
+              {interpolatedStyles => (
+                <g className='nodes'>
+                  {interpolatedStyles.map(d => {
+                    return (
+                      <g
+                        className={`node ${d.data.class}`}
+                        id={d.data.id}
+                        key={d.key}
+                        transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
+                        onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
+                        {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
+                        <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
+                          {(d.data.type === NodeType.LAYER && d.data.expanded === false) ?
+                            <g className="LineChartInNode" >
+                              <LineGroup
+                                transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
+                                width={d.style.rectWidth}
+                                height={d.style.rectHeight * 3 / 4}
+                                data={d.data.LineData} />
+                              <text transform={`translate(0,-${d.style.rectHeight * 3 / 8})`} dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}>
+                                {d.data.label}
+                              </text>
+                            </g> : <text
+                              dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
+                              y={(d.data.class.indexOf('nodetype-1') > -1 || d.data.class.indexOf('nodetype-2') > -1) ? 0 : -10}// label偏移
+                            >
                               {d.data.label}
                             </text>
-                          </g> : <text
-                            dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
-                            y={(d.data.class.indexOf(`nodetype-${NodeType.LAYER}`) > -1 || d.data.class.indexOf(`nodetype-${NodeType.GROUP}`) > -1) ? 0 : -10}// label偏移
-                          >
-                            {d.data.label}
-                          </text>
-                        }
+                          }
+                        </g>
                       </g>
+                    )
+                  }
+                  )}
+                </g>
+              )}
+            </TransitionMotion>
+            <TransitionMotion styles={generateEdgeStyles()}>
+              {interpolatedStyles => (
+                <g className='edgePaths'>
+                  {interpolatedStyles.map(d => (
+                    <g className="edgePath" key={d.key}>
+                      <path
+                        d={line([
+                          { x: d.style.startPointX, y: d.style.startPointY },
+                          ...d.data.lineData,
+                          { x: d.style.endPointX, y: d.style.endPointY }
+                        ])}
+                        markerEnd="url(#arrowhead)"></path>
                     </g>
-                  )
-                }
-                )}
-              </g>
-            )}
-          </TransitionMotion>
-          <TransitionMotion styles={generateEdgeStyles()}>
-            {interpolatedStyles => (
-              <g className='edgePaths'>
-                {interpolatedStyles.map(d => (
-                  <g className="edgePath" key={d.key}>
-                    <path
-                      d={line([
-                        { x: d.style.startPointX, y: d.style.startPointY },
-                        ...d.data.lineData,
-                        { x: d.style.endPointX, y: d.style.endPointY }
-                      ])}
-                      markerEnd="url(#arrowhead)"></path>
-                  </g>
-                ))}
-              </g>
-            )}
-          </TransitionMotion>
+                  ))}
+                </g>
+              )}
+            </TransitionMotion>
+          </g>
+          <g id="gBrushHolder"></g>
         </g>
-        <g id="gBrushHolder"></g>
       </svg>
       <Popover
         open={isPopoverOpen}
