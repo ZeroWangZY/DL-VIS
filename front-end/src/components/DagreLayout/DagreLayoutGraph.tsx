@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './DagreLayoutGraph.css';
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp } from '../../types/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType } from '../../types/processed-graph'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -14,8 +14,8 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
+import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange} from '../../store/useProcessedGraph';
 import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart} from '../../store/toggleForLineChart'
-import { useProcessedGraph, broadcastGraphChange, setProcessedGraph } from '../../store/useProcessedGraph';
 import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
@@ -97,13 +97,21 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
   const toggleExpanded = id => {
     id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    let node = graphForLayout.nodeMap[id]
+    let node = graphForLayout.nodeMap[id];
     if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
       return
     }
-    node = node as GroupNode
-    node.expanded = !node.expanded
-    broadcastGraphChange()
+    node = node as GroupNode;
+    const currentExpanded = node.expanded;
+    modifyProcessedGraph(
+      ModificationType.MODIFY_NODE_ATTR,
+      {
+        nodeId: id,
+        modifyOptions: {
+          expanded: !currentExpanded
+        }
+      }
+    );
 
     /**
      测了一下，动态地添加节点和边不会节省计算时间，dagre依然是把所有的节点和边重新计算一遍。
@@ -355,31 +363,16 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       if (!aggregateFlag) {
         alert("Aggregation can only be applied at the same level!");
       } else {
-        // 聚合得到的节点
-        let newGroupNode = new GroupNodeImp({
-          id: groupName,
-          children: new Set(selectedNodeId),
-          parent: parentId
-        });
-
-        // 暂时不深拷贝 （发现SON.stringify对set结构不起作用
-        // let newGraphForLayout = JSON.parse(JSON.stringify(graphForLayout));
-
-        // 暂时直接改graphForLayout
-        graphForLayout.nodeMap[groupName] = newGroupNode;
-
-        // 更新父节点的孩子
-        let parentNode = (parentId === "___root___") ? graphForLayout.rootNode : graphForLayout.nodeMap[parentId];
-        parentNode = parentNode as GroupNode | LayerNode;
-        parentNode.children.add(groupName);
-        for (let id of selectedNodeId) {
-          parentNode.children.delete(id);
-          graphForLayout.nodeMap[id].parent = groupName;// 更新所有选中节点的parent
-        }
-
-        broadcastGraphChange();
-
-        // setProcessedGraph(newGraphForLayout);
+        modifyProcessedGraph(
+          ModificationType.NEW_NODE,
+          {
+            newNodeIdInfo: {
+              id: groupName,
+              children: new Set(selectedNodeId),
+              parent: parentId
+            }
+          }
+        )
       }
     }
   }
@@ -389,23 +382,12 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-      let nodeToDelete = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;// 要删除的节点
-
-      let parentNodeId = nodeToDelete.parent;
-      let parentNode = (parentNodeId === "___root___") ? graphForLayout.rootNode : graphForLayout.nodeMap[parentNodeId];
-
-      // 更新该节点的parent的children
-      (parentNode as GroupNode | LayerNode).children.delete(nodeId);
-      // 更新该节点的children的parent
-      let childrenIdSet = nodeToDelete.children;
-      childrenIdSet.forEach(childId => {
-        graphForLayout.nodeMap[childId].parent = parentNodeId;
-        (parentNode as GroupNode | LayerNode).children.add(childId);
-      })
-
-      // 删除该节点
-      delete graphForLayout.nodeMap[nodeId];
-      broadcastGraphChange();
+      modifyProcessedGraph(
+        ModificationType.DELETE_NODE,
+        {
+          nodeId
+        }
+      );
     })
   }
   // 修改节点属性, 暂时只考虑了修改单个节点属性
@@ -414,7 +396,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
       let oldNode = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;
-
+     
       // 判断是否修改
       let newNode;
       // 折线图默认全部显示，不显示的节点Id存在数组里
@@ -430,26 +412,43 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       if (oldNode.type !== currentNodetype) {// 修改了节点类型
         let opts = { displayedName: oldNode.displayedName };
         if (currentNodetype === NodeType.GROUP) {
-          newNode = new GroupNodeImp({
-            id: oldNode.id,
-            children: oldNode.children,
-            parent: oldNode.parent,
-            opts,
-          });
+          modifyProcessedGraph(
+            ModificationType.MODIFY_NODE_TYPE,
+            {
+              nodeId: oldNode.id,
+              modifyOptions: {
+                id: oldNode.id,
+                children: oldNode.children,
+                parent: oldNode.parent,
+                opts,
+              }
+            }
+          )
         } else if (currentNodetype === NodeType.LAYER) {
-          newNode = new LayerNodeImp({
-            id: oldNode.id,
-            children: oldNode.children,
-            parent: oldNode.parent,
-            layerType: LayerType[currentLayertype],
-            opts
-          });
+          modifyProcessedGraph(
+            ModificationType.MODIFY_NODE_TYPE,
+            {
+              nodeId: oldNode.id,
+              modifyOptions: {
+                id: oldNode.id,
+                children: oldNode.children,
+                parent: oldNode.parent,
+                layerType: LayerType[currentLayertype],
+                opts,
+              }
+            }
+          )
         }
-        graphForLayout.nodeMap[nodeId] = newNode;
-        broadcastGraphChange();
       } else if (oldNode.type === NodeType.LAYER && (oldNode as LayerNode).layerType !== currentLayertype) {
-        (oldNode as LayerNode).layerType = LayerType[currentLayertype];
-        broadcastGraphChange();
+        modifyProcessedGraph(
+          ModificationType.MODIFY_NODE_ATTR,
+          {
+            nodeId: oldNode.id,
+            modifyOptions: {
+              layerType: LayerType[currentLayertype]
+            }
+          }
+        );
       }
     })
   }
