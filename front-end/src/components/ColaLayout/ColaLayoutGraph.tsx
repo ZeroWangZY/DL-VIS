@@ -7,7 +7,7 @@ import {
   NodeId,
   GroupNode,
 } from "../../types/processed-graph";
-import * as dagre from "dagre";
+import * as setCola from "./setCola";
 import * as cola from "webcola";
 import * as d3 from "d3";
 import { TransitionMotion, spring } from "react-motion";
@@ -19,7 +19,7 @@ import { group } from "d3";
 
 const ColaLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
-  const [edges, setEdges] = useState([]);
+  const [links, setLinks] = useState([]);
   const [groupsObj, setGroupsObj] = useState({});
   const [groups, setGroups] = useState([]);
   const [nodes, setNodes] = useState([]);
@@ -56,7 +56,23 @@ const ColaLayoutGraph: React.FC = () => {
       displayedNodes
     );
 
-    const constraints = [];
+    const setcolaSpec = [
+      {
+        name: "layer",
+        sets: { partition: "depth" },
+        forEach: [
+          { constraint: "align", axis: "x", gap: "30" },
+          // { constraints: "padding", amount: 10 },
+        ],
+      },
+      {
+        name: "sort",
+        sets: ["layer"],
+        forEach: [
+          { constraint: "order", axis: "y", by: "depth", reverse: true },
+        ],
+      },
+    ];
 
     let groupsObj = {},
       groups = [];
@@ -113,51 +129,46 @@ const ColaLayoutGraph: React.FC = () => {
         };
       });
     }
-    let newEdges = [];
+    let newLinks = [];
     displayedEdges.forEach((edge, i) => {
-      let newEdge = {
+      let newLink = {
         id: `${edge.source}-${edge.target}`,
         source: nodeMap[edge.source]["no"],
         target: nodeMap[edge.target]["no"],
         arrowheadStyle: "fill: #333; stroke: #333;",
         arrowhead: "vee",
       };
-      newEdges.push(newEdge);
-      // // add edge constraints
-      // constraints.push({
-      //   axis: "y",
-      //   left: newEdge.source,
-      //   right: newEdge.target,
-      //   gap: 150,
-      //   equality: "false",
-      // });
+      newLinks.push(newLink);
     });
 
-    let graph = {
-      nodes: newNodes,
-      edges: newEdges,
-      constraints: constraints,
-      groups: groups,
-    };
+    let graph = setCola
+      .nodes(newNodes) // Set the graph nodes
+      .links(newLinks) // Set the graph links
+      .groups(groups) // (Optional) Set any predefined groups in the graph
+      // .guides(guides)            // (Optional) Define any guides that are used by the SetCoLa layout
+      .constraints(setcolaSpec) // Set the constraints
+      // .gap(20) // The default gap size to use for generating the constraints (if not specified in the SetCoLa spec)
+      .layout(); // Run the layout to convert the SetCoLa constraints to WebCoLa constraints
 
     console.log("start Cola layout...");
     let start = Date.now();
+
     let colaLayout = new cola.Layout()
       .size([700, 700])
       .linkDistance(150)
       .avoidOverlaps(true)
       .nodes(graph.nodes)
-      .links(graph.edges)
+      .links(graph.links)
       .groups(graph.groups)
       .constraints(graph.constraints)
       .groupCompactness(30)
       .convergenceThreshold(1e-9)
       .flowLayout("y", 100)
-      .start(5, 10, 10);
+      .start(10, 10, 10);
 
     console.log("cola.layout:", (Date.now() - start) / 1000, "s");
     setNodes(graph.nodes);
-    setEdges(graph.edges);
+    setLinks(graph.links);
     setGroups(graph.groups);
     setGroupsObj(groupsObj);
   };
@@ -167,12 +178,14 @@ const ColaLayoutGraph: React.FC = () => {
     for (const node of nodes) {
       styles.push({
         key: node.name,
-        data: {
-          class: node.class,
-          type: node.type,
-          id: node.name,
-          label: node.label,
-        },
+        data: node.hasOwnProperty("label")
+          ? {
+              class: node.class,
+              type: node.type,
+              id: node.name,
+              label: node.label,
+            }
+          : { class: "dummy", type: "dummy", id: node.name, label: node.name },
         style: {
           gNodeTransX: spring(node.x),
           gNodeTransY: spring(node.y),
@@ -212,11 +225,11 @@ const ColaLayoutGraph: React.FC = () => {
   // todo
   const generateEdgeStyles = () => {
     let styles = [];
-    for (const edge of edges) {
+    for (const edge of links) {
       let route = cola.makeEdgeBetween(
         edge.source.bounds,
         edge.target.bounds,
-        5
+        2
       );
       const startPoint = edge.source; //route.sourceIntersection;
       const endPoint = route.arrowStart;
@@ -338,6 +351,9 @@ const ColaLayoutGraph: React.FC = () => {
             {(interpolatedStyles) => (
               <g className="nodes">
                 {interpolatedStyles.map((d) => {
+                  if (d.data.class === "dummy") {
+                    return;
+                  }
                   return (
                     <g
                       className={`node ${d.data.class}`}
