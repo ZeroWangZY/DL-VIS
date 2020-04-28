@@ -50,5 +50,15 @@
     "name": "bert-graph",
     "url": "/data/bert-graph.pbtxt",
     "description": "没有namespace信息的bert网络"
+  },
+  {
+    "name": "resnet-with-gradients",
+    "url": "/data/resnet-with-gradients.pbtxt",
+    "description": "带有微分模块的resnet, 且带regulization loss的"
+  },
+  {
+    "name": "resnet-with-gradients-2",
+    "url": "/data/resnet-with-gradients-2.pbtxt",
+    "description": "带有微分模块的resnet"
   }
 ]
