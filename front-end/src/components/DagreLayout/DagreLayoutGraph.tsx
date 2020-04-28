@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType } from '../../types/processed-graph'
-import { transformImp,GraphInfoType,TransformType } from '../../types/mini-map'
+import { transformImp, GraphInfoType, TransformType } from '../../types/mini-map'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -15,9 +15,9 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
-import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphInfo';
-import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange} from '../../store/useProcessedGraph';
-import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart} from '../../store/toggleForLineChart'
+import { modifyGraphInfo, setTransform, useTransform, broadTransformChange } from '../../store/graphInfo';
+import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
+import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart } from '../../store/toggleForLineChart'
 import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
@@ -397,7 +397,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
       let oldNode = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;
-     
+
       // 判断是否修改
       let newNode;
       // 折线图默认全部显示，不显示的节点Id存在数组里
@@ -637,11 +637,15 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         // setTransform(d3.event.transform)
         // transform = d3.event.transform
         // 没使用setTransform还是考虑到transform变化后generate style都会重新执行
-        setTransform(TransformType.GRAPH_TRANSFORM,d3.event.transform)
+        setTransform(TransformType.GRAPH_TRANSFORM, d3.event.transform)
+        // console.log(d3.event.transform)
         // broadTransformChange();
         outputG.attr('transform', d3.event.transform);
       });
-    svg.call(zoom).on('dblclick.zoom', null);
+    // console.log(transform)
+    svg.datum(transform as any)
+      .call(zoom, d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k))
+      .on('dblclick.zoom', null);
 
     // 获得背景rect的高度
     const svgNode = svg.node() as HTMLElement;
@@ -663,7 +667,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       .on("end", brushend);
 
     setBgRectHeight(svgHeight);
-  }, [])
+  }, [transform])
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
@@ -709,76 +713,78 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
             </marker>
           </defs>
           <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
-          <g
-            className='output'
-            id="output-g"
-            ref={outputRef}
-            transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
-            onContextMenu={(e) => handleRightClick(e)}>
-            {/* <g className='clusters'></g> */}
-            <TransitionMotion styles={generateNodeStyles()}>
-              {interpolatedStyles => (
-                <g className='nodes'>
-                  {interpolatedStyles.map(d => {
-                    return (
-                      <g
-                        className={`node ${d.data.class}`}
-                        id={d.data.id}
-                        key={d.key}
-                        transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
-                        onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
-                        {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
-                        <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
-                          {(d.data.type === NodeType.LAYER && d.data.expanded === false) ?
-                            <g className="LineChartInNode" >
-                              <LineGroup
-                                transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
-                                width={d.style.rectWidth}
-                                height={d.style.rectHeight * 3 / 4}
-                                data={d.data.LineData} />
-                              <text transform={`translate(0,-${d.style.rectHeight * 3 / 8})`} dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}>
+          <svg id="output-svg">
+            <g
+              className='output'
+              id="output-g"
+              ref={outputRef}
+              transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
+              onContextMenu={(e) => handleRightClick(e)}>
+              {/* <g className='clusters'></g> */}
+              <TransitionMotion styles={generateNodeStyles()}>
+                {interpolatedStyles => (
+                  <g className='nodes'>
+                    {interpolatedStyles.map(d => {
+                      return (
+                        <g
+                          className={`node ${d.data.class}`}
+                          id={d.data.id}
+                          key={d.key}
+                          transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
+                          onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
+                          {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
+                          <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
+                            {(d.data.type === NodeType.LAYER && d.data.expanded === false) ?
+                              <g className="LineChartInNode" >
+                                <LineGroup
+                                  transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
+                                  width={d.style.rectWidth}
+                                  height={d.style.rectHeight * 3 / 4}
+                                  data={d.data.LineData} />
+                                <text transform={`translate(0,-${d.style.rectHeight * 3 / 8})`} dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}>
+                                  {d.data.label}
+                                </text>
+                              </g> : <text
+                                dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
+                                y={(d.data.class.indexOf('nodetype-1') > -1 || d.data.class.indexOf('nodetype-2') > -1) ? 0 : -10}// label偏移
+                              >
                                 {d.data.label}
                               </text>
-                            </g> : <text
-                              dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
-                              y={(d.data.class.indexOf('nodetype-1') > -1 || d.data.class.indexOf('nodetype-2') > -1) ? 0 : -10}// label偏移
-                            >
-                              {d.data.label}
-                            </text>
-                          }
+                            }
+                          </g>
                         </g>
+                      )
+                    }
+                    )}
+                  </g>
+                )}
+              </TransitionMotion>
+              <TransitionMotion styles={generateEdgeStyles()}>
+                {interpolatedStyles => (
+                  <g className='edgePaths'>
+                    {interpolatedStyles.map(d => (
+                      <g className="edgePath" key={d.key}>
+                        <path
+                          d={line([
+                            { x: d.style.startPointX, y: d.style.startPointY },
+                            ...d.data.lineData,
+                            { x: d.style.endPointX, y: d.style.endPointY }
+                          ])}
+                          markerEnd="url(#arrowhead)"></path>
                       </g>
-                    )
-                  }
-                  )}
-                </g>
-              )}
-            </TransitionMotion>
-            <TransitionMotion styles={generateEdgeStyles()}>
-              {interpolatedStyles => (
-                <g className='edgePaths'>
-                  {interpolatedStyles.map(d => (
-                    <g className="edgePath" key={d.key}>
-                      <path
-                        d={line([
-                          { x: d.style.startPointX, y: d.style.startPointY },
-                          ...d.data.lineData,
-                          { x: d.style.endPointX, y: d.style.endPointY }
-                        ])}
-                        markerEnd="url(#arrowhead)"></path>
-                    </g>
-                  ))}
-                </g>
-              )}
-            </TransitionMotion>
-          </g>
+                    ))}
+                  </g>
+                )}
+              </TransitionMotion>
+            </g>
+          </svg>
           <g id="gBrushHolder"></g>
         </g>
       </svg>
       <Popover
         open={isPopoverOpen}
         anchorEl={anchorEl}
-        onClose={currentNodetype<0?handleClosePopoverWithoutDeselect:handleClosePopover}//多选时关闭不取消已勾选项
+        onClose={currentNodetype < 0 ? handleClosePopoverWithoutDeselect : handleClosePopover}//多选时关闭不取消已勾选项
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'right',

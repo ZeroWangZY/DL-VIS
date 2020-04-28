@@ -24,7 +24,7 @@ export const useGraphInfo = () => {
 export const modifyGraphInfo = (action: GraphInfoType) => {
   switch (action) {
     case GraphInfoType.UPDATE_NODE:
-        graphInfo = document.getElementById('dagre-svg')
+        graphInfo = document.getElementById('output-svg')
         break;
   }
   broadGraphChange()

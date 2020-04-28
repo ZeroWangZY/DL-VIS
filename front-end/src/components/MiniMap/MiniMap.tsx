@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { GraphInfoType,TransformType } from '../../types/mini-map'
-import { useGraphInfo, useTransform, setTransform } from '../../store/graphInfo';
+import { GraphInfoType, TransformType } from '../../types/mini-map'
+import { useGraphInfo, useTransform, setTransform, broadTransformChange } from '../../store/graphInfo';
 import * as d3 from 'd3';
 import './MiniMap.css'
 
@@ -13,17 +13,56 @@ const MiniMap: React.FC = () => {
     let minimapSize = { width: 300, height: 180 }
     let scale = 4; // minimap大小为原来svg图大小的四分之一
     const viewpointCoord = { x: -transform.x / transform.k / scale, y: -transform.y / transform.k / scale };    // 矩形的初始坐标
+
+    function ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight) {
+        // 返回[fitK, newoutputsvgWidth, newoutputsvgHeight]
+        let fitK, newoutputsvgWidth, newoutputsvgHeight;
+        if (outputsvgWidth > svgWidth && outputsvgHeight > svgHeight) {
+            fitK = svgWidth / outputsvgWidth
+            if (outputsvgHeight * fitK > svgHeight)
+                fitK = svgHeight / outputsvgHeight
+        }
+        else if (outputsvgWidth > svgWidth) {
+            fitK = svgWidth / outputsvgWidth
+        }
+        else if (outputsvgHeight > svgHeight) {
+            fitK = svgHeight / outputsvgHeight
+        }
+        newoutputsvgWidth = fitK * outputsvgWidth;
+        newoutputsvgHeight = fitK * outputsvgHeight;
+
+        return [fitK, newoutputsvgWidth, newoutputsvgHeight]
+    }
+
     useEffect(() => {
         if (graphInfo === null) return
 
         // 获取此时svg元素真实的长宽
         const svgWidth = document.getElementById("dagre-svg").getBoundingClientRect().width;
         const svgHeight = document.getElementById("dagre-svg").getBoundingClientRect().height;
+        const outputsvgWidth = document.getElementById("output-svg").getBoundingClientRect().width;
+        const outputsvgHeight = document.getElementById("output-svg").getBoundingClientRect().height;
+        // console.log(outputsvgWidth, outputsvgHeight);
+        // console.log(svgWidth, svgHeight)
+
         minimapSize.width = svgWidth / scale;
         minimapSize.height = svgHeight / scale;
-        d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-            .attr('width', minimapSize.width)
-            .attr("height", minimapSize.height)
+
+        let fitK = 1;
+        let newoutputsvgWidth, newoutputsvgHeight;
+        if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth) {
+            [fitK, newoutputsvgWidth, newoutputsvgHeight]
+                = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
+        }
+        
+        if (fitK === 1)
+            d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+                .attr('width', minimapSize.width)
+                .attr("height", minimapSize.height)
+        else
+            d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+                .attr('width', minimapSize.width * fitK)
+                .attr("height", minimapSize.height * fitK)
         d3.select(mapRef.current)
             .attr('width', minimapSize.width)
             .attr("height", minimapSize.height)
@@ -47,11 +86,18 @@ const MiniMap: React.FC = () => {
         }
         let svgStyle = d3.select(graphInfo).append('style');
         svgStyle.text(stylesText);
+
+        // if (fitK !== 1) {
+        //     console.log(newoutputsvgWidth,newoutputsvgHeight)
+        //     d3.select(graphInfo).select("g.output").attr("width", `${newoutputsvgWidth}`)
+        //     d3.select(graphInfo).select("g.output").attr("height", `${newoutputsvgHeight}`)
+        //     console.log(d3.select(graphInfo).select("g.output").attr("transform"))
+        // }
         d3.select(graphInfo).attr("width", `${svgWidth}`) // 原来样式中的长宽为百分比，现在为它附上真实的长宽
         d3.select(graphInfo).attr("height", `${svgHeight}`)
 
         // 改变要画的图的transform
-        d3.select(graphInfo).select("g.output").attr("transform", `translate(0,0) scale(1)`)
+        d3.select(graphInfo).select("g.output").attr("transform", `translate(0,0) scale(${fitK})`)
         let svgXml = (new XMLSerializer()).serializeToString(graphInfo)
         svgStyle.remove();
 
@@ -62,7 +108,7 @@ const MiniMap: React.FC = () => {
         let svg = new Blob([svgXml], { type: "image/svg+xml;charset=utf-8" });
         let url = DOMURL.createObjectURL(svg);
         image.onload = function () {
-            context.drawImage(image, 0, 0, 300, 180);
+            context.drawImage(image, 0, 0, minimapSize.width, minimapSize.height);
         }
         image.src = url
     }, [graphInfo]);
@@ -81,15 +127,15 @@ const MiniMap: React.FC = () => {
 
     const dragend = (d) => { // 拖拽结束，设置transform
         setTransform(TransformType.MAP_TRANSFORM, { x: -viewpointCoord.x * scale, y: -viewpointCoord.y * scale, k: transform.k })
+        broadTransformChange();
     }
     useEffect(() => {
-        let drag = d3.drag().subject(Object).on('drag', dragmove)//.on("end", dragend);
+        let drag = d3.drag().subject(Object).on('drag', dragmove).on("end", dragend);
         d3.select(rectRef.current).datum(viewpointCoord as any).call(drag);
     });
     return (
         <div className={'mini-map'}>
             <svg>
-
                 <defs>
                     <filter id="minimapDropShadow" x="-20%" y="-20%" width="150%" height="150%">
                         <feOffset result="offOut" in="SourceGraphic" dx="1" dy="1"></feOffset>
