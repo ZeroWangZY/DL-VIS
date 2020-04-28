@@ -734,7 +734,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                           onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
                           {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
                           <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
-                            {(d.data.type === NodeType.LAYER && d.data.expanded === false) ?
+                            {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && showAllLineChart ?
                               <g className="LineChartInNode" >
                                 <LineGroup
                                   transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
