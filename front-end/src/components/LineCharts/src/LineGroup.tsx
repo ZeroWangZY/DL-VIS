@@ -32,6 +32,9 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
   UNSAFE_componentWillReceiveProps() {
    this.computed()
   }
+  componentDidUpdate(){
+    // console.log('test')
+  }
   componentDidMount() {
     const { renderData } = this.state;
     const self = this
@@ -91,6 +94,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
   }
 
   render() {
+    // console.log('test')
     const { width, height, transform, showAxis, showLegend, onSubmit, isInteractive } = this.props;
     const { renderData, tooltipData, lineX, toolPosition, legendData } = this.state;
     const lineGenerator = d3.line()
@@ -102,9 +106,9 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
         damping: 15,
       };
     const linePart = (<g>
-      {renderData.series.map(({ id, color, data }) => (
+      {renderData.series.map(({ id, color, data },i) => (
         <SmartMotion
-        key={id}
+        key={i}
         style={spring => ({
           d: spring(lineGenerator(data.map(d => d.position)), springConfig),
           stroke: spring(color, springConfig),

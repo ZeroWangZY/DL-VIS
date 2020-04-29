@@ -8,8 +8,15 @@ export enum LayerType {
 export enum DataType { INPUT, OUTPUT, VARIABLE }
 export type NodeId = string
 
-interface OptionsDef {
+export interface OptionsDef {
   [key: string]: any;
+}
+
+export enum ModificationType {
+  MODIFY_NODE_ATTR,
+  MODIFY_NODE_TYPE,
+  NEW_NODE,
+  DELETE_NODE
 }
 
 export const SCOPE_DELIM = "/";

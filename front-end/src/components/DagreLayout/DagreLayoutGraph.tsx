@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp } from '../../types/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType } from '../../types/processed-graph'
+import { transformImp, GraphInfoType, TransformType } from '../../types/mini-map'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -14,21 +15,22 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
-import { useProcessedGraph, broadcastGraphChange, setProcessedGraph } from '../../store/useProcessedGraph';
+import { modifyGraphInfo, setTransform, useTransform, broadTransformChange } from '../../store/graphInfo';
+import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
+import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart } from '../../store/toggleForLineChart'
 import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
 
-let graphTmp = null;
 let tmpId = "fc_layer" // 对应205行 todo
-
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
   let iteration = props.iteration
   const graphForLayout = useProcessedGraph();
+  const showAllLineChart = useToggleForLineChart();
   const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
-  const [transform, setTransform] = useState(null)
+  const transform = useTransform();
 
   const arr = mockDataForModelLevel.displayedLineChartForLayerNode;
   const generateLineData = (nodeId, iteration) => { // 根据nodeId iteration选择数据
@@ -69,6 +71,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [anchorEl, setAnchorEl] = useState(null);// popover的位置
   const [currentNodetype, setCurrentNodetype] = useState<number>(-1);
   const [currentLayertype, setCurrentLayertype] = useState<string>(null);
+  const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(true);
+  const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState([])
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -94,13 +98,21 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
   const toggleExpanded = id => {
     id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    let node = graphForLayout.nodeMap[id]
+    let node = graphForLayout.nodeMap[id];
     if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
       return
     }
-    node = node as GroupNode
-    node.expanded = !node.expanded
-    broadcastGraphChange()
+    node = node as GroupNode;
+    const currentExpanded = node.expanded;
+    modifyProcessedGraph(
+      ModificationType.MODIFY_NODE_ATTR,
+      {
+        nodeId: id,
+        modifyOptions: {
+          expanded: !currentExpanded
+        }
+      }
+    );
 
     /**
      测了一下，动态地添加节点和边不会节省计算时间，dagre依然是把所有的节点和边重新计算一遍。
@@ -224,6 +236,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       graph.setNode(node.id, {
         id: node.id,
         label: node.displayedName,
+        nodetype: node.type,
+        expanded: (node.type === NodeType.LAYER) ? (node as LayerNodeImp).expanded : false,
         class: className,
         shape: "rect",
         width,
@@ -274,9 +288,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           class: nodes[nodeId].class,
           id: nodeId.replace(/\//g, '-'), //把"/"换成"-"，因为querySelector的Id不能带/
           label: nodes[nodeId].label,
-          type: graphTmp.nodeMap[nodeId].type,
-          expanded: (graphTmp.nodeMap[nodeId].type === NodeType.LAYER) ? graphTmp.nodeMap[nodeId]["expanded"] : null,
-          LineData: (graphTmp.nodeMap[nodeId].type === NodeType.LAYER) ?
+          type: nodes[nodeId].nodetype,
+          expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
+          showLineChart: (nodes[nodeId].nodetype === NodeType.LAYER && currentNotShowLineChartID.indexOf(nodeId) < 0) ? true : false,
+          LineData: (nodes[nodeId].nodetype === NodeType.LAYER) ?
             generateLineData(tmpId, iteration++) : [] // 根据Id和迭代次数 找到折线图数据
         },
         style: {
@@ -349,31 +364,16 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       if (!aggregateFlag) {
         alert("Aggregation can only be applied at the same level!");
       } else {
-        // 聚合得到的节点
-        let newGroupNode = new GroupNodeImp({
-          id: groupName,
-          children: new Set(selectedNodeId),
-          parent: parentId
-        });
-
-        // 暂时不深拷贝 （发现SON.stringify对set结构不起作用
-        // let newGraphForLayout = JSON.parse(JSON.stringify(graphForLayout));
-
-        // 暂时直接改graphForLayout
-        graphForLayout.nodeMap[groupName] = newGroupNode;
-
-        // 更新父节点的孩子
-        let parentNode = (parentId === "___root___") ? graphForLayout.rootNode : graphForLayout.nodeMap[parentId];
-        parentNode = parentNode as GroupNode | LayerNode;
-        parentNode.children.add(groupName);
-        for (let id of selectedNodeId) {
-          parentNode.children.delete(id);
-          graphForLayout.nodeMap[id].parent = groupName;// 更新所有选中节点的parent
-        }
-
-        broadcastGraphChange();
-
-        // setProcessedGraph(newGraphForLayout);
+        modifyProcessedGraph(
+          ModificationType.NEW_NODE,
+          {
+            newNodeIdInfo: {
+              id: groupName,
+              children: new Set(selectedNodeId),
+              parent: parentId
+            }
+          }
+        )
       }
     }
   }
@@ -383,26 +383,14 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-      let nodeToDelete = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;// 要删除的节点
-
-      let parentNodeId = nodeToDelete.parent;
-      let parentNode = (parentNodeId === "___root___") ? graphForLayout.rootNode : graphForLayout.nodeMap[parentNodeId];
-
-      // 更新该节点的parent的children
-      (parentNode as GroupNode | LayerNode).children.delete(nodeId);
-      // 更新该节点的children的parent
-      let childrenIdSet = nodeToDelete.children;
-      childrenIdSet.forEach(childId => {
-        graphForLayout.nodeMap[childId].parent = parentNodeId;
-        (parentNode as GroupNode | LayerNode).children.add(childId);
-      })
-
-      // 删除该节点
-      delete graphForLayout.nodeMap[nodeId];
-      broadcastGraphChange();
+      modifyProcessedGraph(
+        ModificationType.DELETE_NODE,
+        {
+          nodeId
+        }
+      );
     })
   }
-
   // 修改节点属性, 暂时只考虑了修改单个节点属性
   const handleModifyNodetype = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
@@ -412,29 +400,56 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
       // 判断是否修改
       let newNode;
+      // 折线图默认全部显示，不显示的节点Id存在数组里
+      if (showAllLineChart && currentShowLineChart === false && currentNotShowLineChartID.indexOf(nodeId) < 0) {
+        setCurrentNotShowLineChartID([...currentNotShowLineChartID, nodeId])
+        broadcastGraphChange();
+      } else if (showAllLineChart && currentShowLineChart === true && currentNotShowLineChartID.indexOf(nodeId) >= 0) {
+        let pos = currentNotShowLineChartID.indexOf(nodeId)
+        currentNotShowLineChartID.splice(pos, 1)
+        setCurrentNotShowLineChartID(currentNotShowLineChartID)
+        broadcastGraphChange();
+      }
       if (oldNode.type !== currentNodetype) {// 修改了节点类型
         let opts = { displayedName: oldNode.displayedName };
         if (currentNodetype === NodeType.GROUP) {
-          newNode = new GroupNodeImp({
-            id: oldNode.id,
-            children: oldNode.children,
-            parent: oldNode.parent,
-            opts,
-          });
+          modifyProcessedGraph(
+            ModificationType.MODIFY_NODE_TYPE,
+            {
+              nodeId: oldNode.id,
+              modifyOptions: {
+                id: oldNode.id,
+                children: oldNode.children,
+                parent: oldNode.parent,
+                opts,
+              }
+            }
+          )
         } else if (currentNodetype === NodeType.LAYER) {
-          newNode = new LayerNodeImp({
-            id: oldNode.id,
-            children: oldNode.children,
-            parent: oldNode.parent,
-            layerType: LayerType[currentLayertype],
-            opts
-          });
+          modifyProcessedGraph(
+            ModificationType.MODIFY_NODE_TYPE,
+            {
+              nodeId: oldNode.id,
+              modifyOptions: {
+                id: oldNode.id,
+                children: oldNode.children,
+                parent: oldNode.parent,
+                layerType: LayerType[currentLayertype],
+                opts,
+              }
+            }
+          )
         }
-        graphForLayout.nodeMap[nodeId] = newNode;
-        broadcastGraphChange();
       } else if (oldNode.type === NodeType.LAYER && (oldNode as LayerNode).layerType !== currentLayertype) {
-        (oldNode as LayerNode).layerType = LayerType[currentLayertype];
-        broadcastGraphChange();
+        modifyProcessedGraph(
+          ModificationType.MODIFY_NODE_ATTR,
+          {
+            nodeId: oldNode.id,
+            modifyOptions: {
+              layerType: LayerType[currentLayertype]
+            }
+          }
+        );
       }
     })
   }
@@ -449,8 +464,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     if (selectedG.nodes().length <= 1 && e.target) {
       let clickNode;
       if (!selectedG.nodes().length) {
-        // clickNode = e.target.nodeName === "text" ? e.target.parentNode.parentNode : e.target.parentNode;
-        clickNode = e.target.parentNode.parentNode;
+        let tempNode = e.target.parentNode;
+        while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
+          tempNode = tempNode.parentNode;
+        }
+        clickNode = tempNode;
       } else {
         clickNode = selectedG.node();
       }
@@ -479,7 +497,14 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     node.classed("selected", false);
     node.classed("previouslySelected", false);
     setAnchorEl(null);
-    setCurrentNodetype(-1);
+    //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
+    // setCurrentNodetype(-1);
+    setCurrentLayertype(null)
+  }
+  const handleClosePopoverWithoutDeselect = () => {
+    setAnchorEl(null);
+    //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
+    // setCurrentNodetype(-1);
     setCurrentLayertype(null)
   }
 
@@ -494,6 +519,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     setCurrentLayertype(e.target.value)
   }
 
+  const handleLineChartToggle = (e) => {
+    setCurrentShowLineChart(e.target.value === "true" ? true : false)
+  }
+
   // 点击空白处取消所有选择
   const handleBgClick = () => {
     node = d3.select(".nodes").selectAll(".node");
@@ -506,6 +535,17 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     const previouslySelected = d3.select(`#${id}`).attr("class").indexOf("selected") > -1 ? true : false;
     d3.select(`#${id}`).classed("selected", !previouslySelected);
     // d3.select(`#${id}`).classed("previouslySelected", !previouslySelected);
+  }
+
+  //鼠标悬停节点
+  const handleMouseOver = (e) => {
+    let currentElementClassList = e.currentTarget.classList;
+    if (currentElementClassList.value.indexOf("cluster") == -1) {
+      currentElementClassList.add("highlighted");
+    }
+  }
+  const handleMouseLeave = (e) => {
+    e.currentTarget.classList.remove("highlighted");
   }
 
   // 按键事件
@@ -602,9 +642,15 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         // setTransform(d3.event.transform)
         // transform = d3.event.transform
         // 没使用setTransform还是考虑到transform变化后generate style都会重新执行
+        setTransform(TransformType.GRAPH_TRANSFORM, d3.event.transform)
+        // console.log(d3.event.transform)
+        // broadTransformChange();
         outputG.attr('transform', d3.event.transform);
       });
-    svg.call(zoom).on('dblclick.zoom', null);
+    // console.log(transform)
+    svg.datum(transform as any)
+      .call(zoom, d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k))
+      .on('dblclick.zoom', null);
 
     // 获得背景rect的高度
     const svgNode = svg.node() as HTMLElement;
@@ -626,12 +672,14 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       .on("end", brushend);
 
     setBgRectHeight(svgHeight);
-  }, [])
-
+  }, [transform])
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
-    graphTmp = graphForLayout;
+    setTimeout(function () {
+      // setTransformData(new transformImp())
+      modifyGraphInfo(GraphInfoType.UPDATE_NODE)
+    }, 1000);
   }, [graphForLayout]);
 
   const getLabelContainer = (nodeClass, width, height) => {
@@ -657,88 +705,91 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }
 
   const isPopoverOpen = Boolean(anchorEl);
-
   return (
     <div id='dagre-graph' style={{ height: '100%' }}>
       <svg id='dagre-svg' ref={svgRef} style={{ height: '100%' }} onContextMenu={(e) => { e.preventDefault() }}>
-        <defs>
-          <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" fill='#999999' stroke='#999999'></path>
-          </marker>
-          <marker id="rnn-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="5" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 L 8 5 z" fill='#fff' stroke='#fff'></path>
-          </marker>
-        </defs>
-        <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
-        <g
-          className='output'
-          id="output-g"
-          ref={outputRef}
-          transform={transform}
-          onContextMenu={(e) => handleRightClick(e)}>
-          {/* <g className='clusters'></g> */}
-          <TransitionMotion styles={generateNodeStyles()}>
-            {interpolatedStyles => (
-              <g className='nodes'>
-                {interpolatedStyles.map(d => {
-                  return (
-                    <g
-                      className={`node ${d.data.class}`}
-                      id={d.data.id}
-                      key={d.key}
-                      transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
-                      onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
-                      {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
-                      <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
-                        {(d.data.type === NodeType.LAYER && d.data.expanded === false) ?
-                          <g className="LineChartInNode" >
-                            <LineGroup
-                              transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
-                              width={d.style.rectWidth}
-                              height={d.style.rectHeight * 3 / 4}
-                              data={d.data.LineData} />
-                            <text transform={`translate(0,-${d.style.rectHeight * 3 / 8})`} dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}>
-                              {d.data.label}
-                            </text>
-                          </g> : <text
-                            dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
-                            y={(d.data.class.indexOf('nodetype-1') > -1 || d.data.class.indexOf('nodetype-2') > -1) ? 0 : -10}// label偏移
-                          >
-                            {d.data.label}
-                          </text>
-                        }
-                      </g>
-                    </g>
-                  )
-                }
-                )}
-              </g>
-            )}
-          </TransitionMotion>
-          <TransitionMotion styles={generateEdgeStyles()}>
-            {interpolatedStyles => (
-              <g className='edgePaths'>
-                {interpolatedStyles.map(d => (
-                  <g className="edgePath" key={d.key}>
-                    <path
-                      d={line([
-                        { x: d.style.startPointX, y: d.style.startPointY },
-                        ...d.data.lineData,
-                        { x: d.style.endPointX, y: d.style.endPointY }
-                      ])}
-                      markerEnd="url(#arrowhead)"></path>
+        <g>
+          <defs>
+            <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" fill='#999999' stroke='#999999'></path>
+            </marker>
+            <marker id="rnn-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 L 8 5 z" fill='#fff' stroke='#fff'></path>
+            </marker>
+          </defs>
+          <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
+          <svg id="output-svg">
+            <g
+              className='output'
+              id="output-g"
+              ref={outputRef}
+              transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
+              onContextMenu={(e) => handleRightClick(e)}>
+              {/* <g className='clusters'></g> */}
+              <TransitionMotion styles={generateNodeStyles()}>
+                {interpolatedStyles => (
+                  <g className='nodes'>
+                    {interpolatedStyles.map(d => {
+                      return (
+                        <g
+                          className={`node ${d.data.class}`}
+                          id={d.data.id}
+                          key={d.key}
+                          transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
+                          onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
+                          {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
+                          <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
+                            {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && showAllLineChart ?
+                              <g className="LineChartInNode" >
+                                <LineGroup
+                                  transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
+                                  width={d.style.rectWidth}
+                                  height={d.style.rectHeight * 3 / 4}
+                                  data={d.data.LineData} />
+                                <text transform={`translate(0,-${d.style.rectHeight * 3 / 8})`} dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}>
+                                  {d.data.label}
+                                </text>
+                              </g> : <text
+                                dominantBaseline={(d.data.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
+                                y={(d.data.class.indexOf('nodetype-1') > -1 || d.data.class.indexOf('nodetype-2') > -1) ? 0 : -10}// label偏移
+                              >
+                                {d.data.label}
+                              </text>
+                            }
+                          </g>
+                        </g>
+                      )
+                    }
+                    )}
                   </g>
-                ))}
-              </g>
-            )}
-          </TransitionMotion>
+                )}
+              </TransitionMotion>
+              <TransitionMotion styles={generateEdgeStyles()}>
+                {interpolatedStyles => (
+                  <g className='edgePaths'>
+                    {interpolatedStyles.map(d => (
+                      <g className="edgePath" key={d.key}>
+                        <path
+                          d={line([
+                            { x: d.style.startPointX, y: d.style.startPointY },
+                            ...d.data.lineData,
+                            { x: d.style.endPointX, y: d.style.endPointY }
+                          ])}
+                          markerEnd="url(#arrowhead)"></path>
+                      </g>
+                    ))}
+                  </g>
+                )}
+              </TransitionMotion>
+            </g>
+          </svg>
+          <g id="gBrushHolder"></g>
         </g>
-        <g id="gBrushHolder"></g>
       </svg>
       <Popover
         open={isPopoverOpen}
         anchorEl={anchorEl}
-        onClose={handleClosePopover}
+        onClose={currentNodetype < 0 ? handleClosePopoverWithoutDeselect : handleClosePopover}//多选时关闭不取消已勾选项
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'right',
@@ -781,6 +832,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                   style={{
                     width: '100%',
                     fontSize: 14,
+                    marginBottom: 5
                   }}
                   onClick={handleAggregate}
                 >
@@ -835,13 +887,31 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                     </Select>
                   </div>
                 }
+                {currentNodetype === NodeType.LAYER &&
+                  <div id="showLineChart-modify-container">
+                    <InputLabel id="showLineChart-selector" style={{ fontSize: 10 }}>Show LineChart</InputLabel>
+                    <Select
+                      value={currentShowLineChart}
+                      onChange={handleLineChartToggle}
+                      style={{
+                        width: '100%',
+                        marginBottom: 10,
+                        fontSize: 14
+                      }}
+                    >
+                      <MenuItem value={"true"}>true</MenuItem>
+                      <MenuItem value={"false"}>false</MenuItem>
+                    </Select>
+                  </div>
+                }
                 <Button
                   variant="outlined"
                   color="primary"
                   size="small"
                   style={{
                     width: '100%',
-                    fontSize: 14
+                    fontSize: 14,
+                    marginBottom: 5
                   }}
                   onClick={handleModifyNodetype}
                 >
@@ -861,6 +931,18 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                 </Button>
               </div>
             }
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              style={{
+                width: '100%',
+                fontSize: 14
+              }}
+              onClick={handleClosePopover}
+            >
+              Cancel
+            </Button>
           </CardContent>
         </Card>
       </Popover>

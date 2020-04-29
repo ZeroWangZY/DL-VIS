@@ -3,20 +3,28 @@
   overflow: hidden;
   user-select: none;
 }
+
+/* 悬停加粗边框 */
+.node.highlighted >g>rect{
+  stroke-width: 2px;
+}
+.node.highlighted >g>circle{
+  stroke-width: 2px;
+}
+
 .nodetype-1, .nodetype-2 {
   cursor: pointer;
 }
 
 /* 默认节点样式 group node*/
 .node .label-container {
-  fill: #eeeeee;
+  fill: white;
   stroke-width: 1px;
   stroke:#999999;
+  rx: 10;
+  ry: 10;
 }
-.node .label-container {
-  rx: 5;
-  ry: 5;
-}
+
 .node-label text {
   fill: #333;
   text-anchor: middle;
@@ -51,34 +59,34 @@
   stroke: #999999;
 }
 .nodetype-1 .fc-layer-label-g line {
-  stroke: #999999;
+  stroke: #c7c7c7;
   stroke-width: 1px;
   stroke-opacity: 0.7;
 }
 .nodetype-1 text {
-  fill: #fff;
+  fill: #333;
 }
 .nodetype-1 .fc-layer-label-container {
-  fill: #cbcbcb;
+  fill: white;
   stroke-width: 1px;
   stroke:#999999;
   /* fill-opacity: 0.7; */
 }
 /* conv */
 .nodetype-1 .conv-layer-label-g rect {
-  fill: #cbcbcb;
+  fill: white;
   stroke: #999999;
   stroke-width: 1px;
 }
 /* RNN */
 .nodetype-1 .rnn-layer-label-g rect{
-  fill: #cbcbcb;
+  fill: white;
   stroke: #999999;
   stroke-width: 1px;
 }
 .nodetype-1 .rnn-layer-label-g path{
   fill: none;
-  stroke: #fff;
+  stroke: #c7c7c7;
   stroke-width: 1px;
 }
 /* other */
@@ -109,7 +117,7 @@
   fill: #b2b2b2;
   fill-opacity: 0.2;
   stroke-width: 1px;
-  stroke:#6a6a6a;
+  stroke:#c7c7c7;
 }
 .cluster text {
   font-style: italic;
@@ -119,7 +127,7 @@
   fill: #b2b2b2;
   fill-opacity: 0.2;
   stroke-width: 1px;
-  stroke:#6a6a6a;
+  stroke:#c7c7c7;
 }
 .cluster.layertype-FC text {
   fill: #333;
@@ -127,12 +135,15 @@
 .cluster.layertype-FC line {
   stroke: none;
 }
+.cluster.layertype-FC circle {
+  stroke: #c7c7c7;
+}
 
 .cluster.layertype-CONV rect {
   fill: #f0f0f0;
   /* fill-opacity: 0.2; */
   stroke-width: 1px;
-  stroke:#6a6a6a;
+  stroke:#c7c7c7;
 }
 .cluster.layertype-CONV text {
   fill: #333;
@@ -142,7 +153,7 @@
   fill: #b2b2b2;
   fill-opacity: 0.2;
   stroke-width: 1px;
-  stroke:#6a6a6a;
+  stroke:#c7c7c7;
 }
 .cluster.layertype-RNN text {
   fill: #333;
@@ -151,7 +162,7 @@
   fill: #b2b2b2;
   fill-opacity: 0.2;
   stroke-width: 1px;
-  stroke:#6a6a6a;
+  stroke:#c7c7c7;
 }
 .cluster.layertype-OTHER text {
   fill: #333;
@@ -186,6 +197,7 @@
   fill: #5d83be;
   stroke: #333;
 }
+
 .selected.nodetype-1.layertype-OTHER rect {
   fill: #5d83be;
   stroke: #333;

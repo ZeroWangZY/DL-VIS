@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./DagreLayout.css";
 import DagreLayoutGraph from "./DagreLayoutGraph"
 import { LineChart } from '../LineCharts/index'
+import MiniMap from '../MiniMap/MiniMap';
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
 
 const DagreLayout: React.FC = () => {
@@ -33,6 +34,9 @@ const DagreLayout: React.FC = () => {
                     isInteractive={true}
                     data={lineChartData}>
                 </LineChart>
+            </div>
+            <div className="map-container">
+                <MiniMap/>
             </div>
         </div>
     );
