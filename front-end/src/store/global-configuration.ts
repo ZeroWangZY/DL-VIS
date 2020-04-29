@@ -7,12 +7,19 @@ interface GlobalConfigurations {
     replaceVariable: boolean,
     pruneByDefaultPatterns: boolean,
     renameVariable: boolean
-  }
+  },
+  currentLayout: LayoutType
+}
+
+export enum LayoutType {
+  DAGRE_FOR_TF,
+  TENSORBOARD
 }
 
 export enum GlobalConfigurationsModificationType {
   TOGGLE_DIAGNOSIS_MODE,
-  TOGGLE_PREPROCESSING_PLUGIN
+  TOGGLE_PREPROCESSING_PLUGIN,
+  SET_CURRENT_LAYOUT
 }
 
 let listeners = []
@@ -23,7 +30,8 @@ let globalConfigurations: GlobalConfigurations = {
     replaceVariable: true,
     pruneByDefaultPatterns: true,
     renameVariable: true
-  }
+  },
+  currentLayout: LayoutType.DAGRE_FOR_TF
 };
 
 const broadcast = () => {
@@ -50,6 +58,9 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
       globalConfigurations = Object.assign({}, globalConfigurations, {preprocessingPlugins: newPreprocessingPlugins})
       break
 
+    case GlobalConfigurationsModificationType.SET_CURRENT_LAYOUT:
+      globalConfigurations = Object.assign({}, globalConfigurations, {currentLayout: payload})
+      break
     default:
       break;
   }

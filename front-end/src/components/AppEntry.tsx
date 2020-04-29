@@ -17,6 +17,8 @@ import TensorBoardGraph from './tensorboard/Graph'
 import GraphSelector from './preference/GraphSelector';
 import Diagnosis from './preference/Diagnosis';
 import PreprocessingPluginsSelector from './preference/PreprocessingPluginsSelector'
+import LayoutSelector from './preference/LayoutSelector';
+import { LayoutType, useGlobalConfigurations } from '../store/global-configuration';
 
 const drawerWidth = 360;
 
@@ -84,7 +86,7 @@ const AppEntry: React.FC = () => {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = React.useState(true);
-
+  const { currentLayout } = useGlobalConfigurations()
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -135,6 +137,8 @@ const AppEntry: React.FC = () => {
           </IconButton>
         </div>
         <Divider />
+        <LayoutSelector />
+        <Divider />
         <GraphSelector />
         <Divider />
         <PreprocessingPluginsSelector />
@@ -149,8 +153,8 @@ const AppEntry: React.FC = () => {
         })}
       >
         <div className={classes.drawerHeader} />
-        <DagreLayout />
-        {/* <TensorBoardGraph /> */}
+        {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
+        {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
       </main>
     </div>
   );

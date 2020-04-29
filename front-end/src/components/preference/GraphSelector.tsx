@@ -9,7 +9,8 @@ import { setProcessedGraph } from '../../store/useProcessedGraph'
 import { fetchAndParseGraphData } from '../../common/graph-processing/tf-graph/parser';
 import { SimplifierImp } from '../../common/graph-processing/tf-graph/simplifier';
 import { buildGraph } from '../../common/graph-processing/tf-graph/graph';
-import { useGlobalConfigurations } from '../../store/global-configuration';
+import { useGlobalConfigurations, LayoutType } from '../../store/global-configuration';
+import { setTfRawGraph } from '../../store/tf-raw-graph';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,7 +33,7 @@ export default function GraphSelector() {
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([])
   const [currentGraphIndex, setCurrentGraphIndex] = useState<number>(0)
-  const { preprocessingPlugins } = useGlobalConfigurations()
+  const { preprocessingPlugins, currentLayout } = useGlobalConfigurations()
   const handleChange = (event: React.ChangeEvent<{ value: number }>) => {
     setCurrentGraphIndex(event.target.value);
   };
@@ -54,11 +55,15 @@ export default function GraphSelector() {
         const simplifier = new SimplifierImp(preprocessingPlugins);
         return simplifier.withTracker()(graph);
       })
+      .then(graph => {
+        setTfRawGraph(graph)
+        return graph
+      })
       .then(async graph => {
         const hGraph = await buildGraph(graph);
         setProcessedGraph(hGraph)
       })
-  }, [currentGraphIndex, graphMetadatas, preprocessingPlugins])
+  }, [currentGraphIndex, graphMetadatas, preprocessingPlugins, currentLayout])
 
   return (
     <div>

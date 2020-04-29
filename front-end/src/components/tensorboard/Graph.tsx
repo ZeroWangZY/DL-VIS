@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
 import "./Graph.css";
 import GraphScene from "./GraphScene";
-import { build as graphBuild } from "../../common/tensorboard/graph";
+import { build as graphBuild, SlimGraph } from "../../common/tensorboard/graph";
 import { build as hierarchyBuild } from '../../common/tensorboard/hierarchy'
 import { build as renderBuild, RenderGraphInfo } from '../../common/tensorboard/render'
-import { useTestRawGraph } from "../../hooks/useTestData";
+import { useTfRawGraph } from "../../store/tf-raw-graph";
 
 const Graph: React.FC = () => {
-  const testRawGraph = useTestRawGraph(false, false)
+  const tfRawGraph = useTfRawGraph()
   const [renderHierarchy, setRenderHierarchy] = useState<RenderGraphInfo>(null)
   useEffect(() => {
-    if (testRawGraph === null) return
-    testRawGraph
+    if (tfRawGraph === null) return
+    let graphPromise = new Promise<any>((resolve, reject) => {resolve(tfRawGraph)})
+    graphPromise
       .then(graph => {
         return graphBuild(graph);
       })
       .then(graph => {
-        return hierarchyBuild(graph, {
+        return hierarchyBuild(graph as SlimGraph, {
           verifyTemplate: true,
           seriesNodeMinSize: 5,
           seriesMap: {},
@@ -28,7 +29,7 @@ const Graph: React.FC = () => {
       .then(renderHierarchy => {
         setRenderHierarchy(renderHierarchy)
       });
-  }, [testRawGraph])
+  }, [tfRawGraph])
 
   return (
     <div className="container">

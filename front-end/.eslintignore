@@ -1,2 +1,3 @@
 *.css
 src/common/tensorboard/*.ts
+src/components/tensorboard/Graph.tsx

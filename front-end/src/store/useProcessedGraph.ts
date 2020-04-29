@@ -3,7 +3,6 @@ import { ProcessedGraph, ProcessedGraphImp, OptionsDef, ModificationType, GroupN
 
 let listeners = []
 let processedGraph: ProcessedGraph = new ProcessedGraphImp()
-
 // 广播变化, 让使用了该hook的组件重新渲染
 export const broadcastGraphChange = () => {
   processedGraph = Object.assign(new ProcessedGraphImp(), processedGraph)
