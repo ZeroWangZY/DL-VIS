@@ -17,7 +17,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
 import { modifyGraphInfo, setTransform, useTransform, broadTransformChange } from '../../store/graphInfo';
 import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
-import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart } from '../../store/toggleForLineChart'
+import { useGlobalConfigurations } from '../../store/global-configuration'
 import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
@@ -26,7 +26,7 @@ let tmpId = "fc_layer" // 对应205行 todo
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
   let iteration = props.iteration
   const graphForLayout = useProcessedGraph();
-  const showAllLineChart = useToggleForLineChart();
+  const { diagnosisMode } = useGlobalConfigurations();
   const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
@@ -401,10 +401,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       // 判断是否修改
       let newNode;
       // 折线图默认全部显示，不显示的节点Id存在数组里
-      if (showAllLineChart && currentShowLineChart === false && currentNotShowLineChartID.indexOf(nodeId) < 0) {
+      if (diagnosisMode && currentShowLineChart === false && currentNotShowLineChartID.indexOf(nodeId) < 0) {
         setCurrentNotShowLineChartID([...currentNotShowLineChartID, nodeId])
         broadcastGraphChange();
-      } else if (showAllLineChart && currentShowLineChart === true && currentNotShowLineChartID.indexOf(nodeId) >= 0) {
+      } else if (diagnosisMode && currentShowLineChart === true && currentNotShowLineChartID.indexOf(nodeId) >= 0) {
         let pos = currentNotShowLineChartID.indexOf(nodeId)
         currentNotShowLineChartID.splice(pos, 1)
         setCurrentNotShowLineChartID(currentNotShowLineChartID)
@@ -734,7 +734,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                           onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
                           {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
                           <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
-                            {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && showAllLineChart ?
+                            {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && diagnosisMode ?
                               <g className="LineChartInNode" >
                                 <LineGroup
                                   transform={`translate(-${d.style.rectWidth / 2},-${d.style.rectHeight * 3 / 8})`}
