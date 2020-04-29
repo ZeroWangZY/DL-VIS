@@ -1,6 +1,6 @@
 import { RawNode, RawGraph } from './parser';
-import { wrapTaskWithTimeLogger } from "./utils";
-import { SCOPE_DELIM } from '../../types/processed-graph';
+import { wrapTaskWithTimeLogger } from "../utils";
+import { SCOPE_DELIM } from '../../../types/processed-graph';
 
 
 enum PatternType {

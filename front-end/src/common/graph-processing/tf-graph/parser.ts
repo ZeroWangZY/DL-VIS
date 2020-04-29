@@ -1,4 +1,4 @@
-import { wrapTaskWithTimeLogger } from "./utils";
+import { wrapTaskWithTimeLogger } from "../utils";
 
 export interface RawNode {
   name: string;

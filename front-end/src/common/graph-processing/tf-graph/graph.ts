@@ -19,8 +19,8 @@ import {
   END_PATTERNS, 
   VARIABLE_PATTERNS, 
   LAYER_PATTERNS,
-} from "../../types/processed-graph";
-import { wrapTaskWithTimeLogger } from "./utils";
+} from "../../../types/processed-graph";
+import { wrapTaskWithTimeLogger } from "../utils";
 
 
 function testInputOutput(name: string): [number, string] {

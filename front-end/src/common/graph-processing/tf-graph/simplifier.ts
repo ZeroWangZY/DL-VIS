@@ -1,6 +1,6 @@
 import { RawNode, RawGraph } from './parser';
-import { wrapTaskWithTimeLogger } from "./utils";
-import { SCOPE_DELIM } from '../../types/processed-graph';
+import { wrapTaskWithTimeLogger } from "../utils";
+import { SCOPE_DELIM } from '../../../types/processed-graph';
 
 
 enum PatternType {
@@ -259,23 +259,84 @@ const replaceVariable: GraphMiddleware = (graph: RawGraph) => {
   deleteNodes(graph, nodeToDelete);
 }
 
+const pruneByOutput: GraphMiddleware = (rawGraph: RawGraph) => {
+  let nodes: RawNode[] = rawGraph.node
+  const nodeDict = buildDict(nodes)
+  const outputNodes = nodes.filter(node => {
+    return node.name.slice(-12, node.name.length) === '___output___'
+  })
+
+  if (outputNodes.length === 0) return rawGraph
+
+  const stack = outputNodes.map(node => node.name)
+  const resNodes = outputNodes
+  while (stack.length !== 0) {
+    const nodeName = stack.pop()
+    if (nodeDict[nodeName] !== null) {
+      const inputs = nodeDict[nodeName].input
+      if (inputs === undefined) continue
+      inputs.forEach(input => {
+        if (nodeDict[input] === null) return
+        resNodes.push(nodeDict[input])
+        stack.push(input)
+      })
+      nodeDict[nodeName] = null
+    }
+  }
+  rawGraph.node = resNodes
+  return rawGraph
+}
+
+function buildDict(nodes: RawNode[]): Record<string, RawNode> {
+  const dict: Record<string, RawNode> = {}
+  nodes.forEach(node => {
+    dict[node.name] = node
+  })
+  return dict
+}
+
+
 export class SimplifierImp {
   // TODO
   nodeMiddlewares: NodeMiddleware[];
   graphMiddlewares: GraphMiddleware[];
   
-  constructor() {
+  constructor(preprocessingPlugins) {
     // TODO
-    this.nodeMiddlewares = [
-      pruneByDefaultPatterns,
-      cleanNodeName,
-      cleanNodeInput,
-      renameVariable,
-    ];
+    console.log("preprocing plugisns", preprocessingPlugins)
+    if(preprocessingPlugins === null) {
+      this.nodeMiddlewares = [
+        pruneByDefaultPatterns,
+        cleanNodeName,
+        cleanNodeInput,
+        renameVariable,
+      ];
+  
+      this.graphMiddlewares = [
+        pruneByOutput,
+        replaceVariable,
+      ]
+    } else {
+      this.nodeMiddlewares = [
+        cleanNodeName,
+        cleanNodeInput,
+      ];
+      this.graphMiddlewares = []
 
-    this.graphMiddlewares = [
-      replaceVariable,
-    ]
+      if(preprocessingPlugins.pruneByOutput) {
+        this.graphMiddlewares.push(pruneByOutput)
+      }
+      if(preprocessingPlugins.replaceVariable) {
+        this.graphMiddlewares.push(replaceVariable)
+      }
+      if(preprocessingPlugins.pruneByDefaultPatterns) {
+        this.nodeMiddlewares.push(pruneByDefaultPatterns)
+      }
+      if(preprocessingPlugins.renameVariable) {
+        this.nodeMiddlewares.push(renameVariable)
+      }
+    }
+    
   }
 
   useNodeMiddleware(middleware: NodeMiddleware) {

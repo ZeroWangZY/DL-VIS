@@ -21,26 +21,34 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-export default function Diagnosis() {
-  const classes = useStyles();
-  const { diagnosisMode } = useGlobalConfigurations()
-  const handleChange = () => {
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE)
-  };
+const descriptions = {
+  pruneByOutput: "只保留正向子图",
+  replaceVariable: "Variable替换",
+  pruneByDefaultPatterns: "按规则裁剪",
+  renameVariable: "Variable重命名"
+}
 
+export default function PreprocessingPluginsSelector() {
+  const classes = useStyles();
+  const { preprocessingPlugins } = useGlobalConfigurations()
+  const handleChange = (key) => () => {
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_PREPROCESSING_PLUGIN, 
+      key)
+  };
 
   return (
     <div className={classes.container}>
       <Typography>
-        Diagnosis Mode
+        图处理方式选择
       </Typography>
-      <div
-        className={classes.content}
-      >
-        <FormControlLabel
-          control={<Switch checked={diagnosisMode} onChange={handleChange} />}
-          label={"diagnostic mode"}
-        />
+      <div className={classes.content}>
+        {Object.keys(descriptions).map(
+          key => (<FormControlLabel
+            key={key} control={<Switch checked={preprocessingPlugins[key]} onChange={handleChange(key)} />}
+            label={descriptions[key]}
+          />)
+        )}
+
       </div>
     </div>
 

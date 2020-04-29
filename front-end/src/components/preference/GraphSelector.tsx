@@ -6,10 +6,10 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import { setProcessedGraph } from '../../store/useProcessedGraph'
-import { fetchAndParseGraphData } from '../../common/graph-processing/parser';
-import { pruneByOutput } from '../../common/graph-processing/prune';
-import { SimplifierImp } from '../../common/graph-processing/simplifier2';
-import { buildGraph } from '../../common/graph-processing/graph';
+import { fetchAndParseGraphData } from '../../common/graph-processing/tf-graph/parser';
+import { SimplifierImp } from '../../common/graph-processing/tf-graph/simplifier';
+import { buildGraph } from '../../common/graph-processing/tf-graph/graph';
+import { useGlobalConfigurations } from '../../store/global-configuration';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,7 +32,7 @@ export default function GraphSelector() {
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([])
   const [currentGraphIndex, setCurrentGraphIndex] = useState<number>(0)
-
+  const { preprocessingPlugins } = useGlobalConfigurations()
   const handleChange = (event: React.ChangeEvent<{ value: number }>) => {
     setCurrentGraphIndex(event.target.value);
   };
@@ -51,17 +51,14 @@ export default function GraphSelector() {
       null
     )
       .then(graph => {
-        return pruneByOutput(graph);
-      })
-      .then(graph => {
-        const simplifier = new SimplifierImp();
+        const simplifier = new SimplifierImp(preprocessingPlugins);
         return simplifier.withTracker()(graph);
       })
       .then(async graph => {
         const hGraph = await buildGraph(graph);
         setProcessedGraph(hGraph)
       })
-  }, [currentGraphIndex, graphMetadatas])
+  }, [currentGraphIndex, graphMetadatas, preprocessingPlugins])
 
   return (
     <div>

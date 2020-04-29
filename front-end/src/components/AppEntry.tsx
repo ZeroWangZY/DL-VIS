@@ -16,6 +16,8 @@ import NodeSelector from './preference/NodeSelector'
 import TensorBoardGraph from './tensorboard/Graph'
 import GraphSelector from './preference/GraphSelector';
 import Diagnosis from './preference/Diagnosis';
+import PreprocessingPluginsSelector from './preference/PreprocessingPluginsSelector'
+
 const drawerWidth = 360;
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -134,6 +136,8 @@ const AppEntry: React.FC = () => {
         </div>
         <Divider />
         <GraphSelector />
+        <Divider />
+        <PreprocessingPluginsSelector />
         <Divider />
         <NodeSelector />
         <Divider />
