@@ -632,20 +632,15 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     const svg = d3.select(svgRef.current);
     const outputG = d3.select(outputRef.current);
 
-    let zoom = d3
-      .zoom().on('zoom', function () {
-        // setTransform(d3.event.transform)
-        // transform = d3.event.transform
-        // 没使用setTransform还是考虑到transform变化后generate style都会重新执行
-        setTransform(TransformType.GRAPH_TRANSFORM, d3.event.transform)
-        // console.log(d3.event.transform)
-        // broadTransformChange();
-        outputG.attr('transform', d3.event.transform);
-      });
     // console.log(transform)
-    svg.datum(transform as any)
-      .call(zoom, d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k))
-      .on('dblclick.zoom', null);
+    // console.log(outputG.attr("transform"))
+    let zoom = d3.zoom()
+      .on('zoom', function () {
+        setTransform(TransformType.GRAPH_TRANSFORM, d3.event.transform)
+        outputG.attr('transform', d3.event.transform);
+      })
+
+    svg.call(zoom).on('dblclick.zoom', null);
 
     // 获得背景rect的高度
     const svgNode = svg.node() as HTMLElement;
@@ -667,7 +662,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       .on("end", brushend);
 
     setBgRectHeight(svgHeight);
-  }, [transform])
+  }, [])
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
