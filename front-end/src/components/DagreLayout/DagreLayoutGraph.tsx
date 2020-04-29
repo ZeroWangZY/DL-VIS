@@ -585,7 +585,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
   const handleEnterLayer = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
-    console.log(selectedG)
+    let node = selectedG.node();
+    let nodeId = d3.select(node).attr("id");
+    // console.log(tmpId)
+    let lineData = generateLineData(tmpId, iteration);
+    
   } 
 
   const brushstart = () => {
@@ -917,20 +921,21 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                 >
                   Apply
                 </Button>
-                <Button
+              </div>
+            }
+              <Button
                   variant="outlined"
                   color="primary"
                   size="small"
                   style={{
                     width: '100%',
-                    fontSize: 14
+                    fontSize: 14,
+                    marginBottom: 5
                   }}
                   onClick={handleEnterLayer}
                 >
                   Layer-level
                 </Button>
-              </div>
-            }
             <Button
               variant="outlined"
               color="primary"
