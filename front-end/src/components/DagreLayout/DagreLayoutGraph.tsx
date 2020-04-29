@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType } from '../../types/processed-graph'
-import { transformImp, GraphInfoType, TransformType } from '../../types/mini-map'
+import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -15,9 +15,12 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
-import { modifyGraphInfo, setTransform, useTransform, broadTransformChange } from '../../store/graphInfo';
+import { useHistory, useLocation} from "react-router-dom";
+import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphInfo';
 import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
 import { useToggleForLineChart, broadcastToggleChange, setToggleForLineChart } from '../../store/toggleForLineChart'
+import { modifyData} from '../../store/layerLevel';
+import { ModifyLineData, LineChartType } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
 import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
@@ -31,10 +34,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
   const transform = useTransform();
+  const history = useHistory();
 
   const arr = mockDataForModelLevel.displayedLineChartForLayerNode;
   const generateLineData = (nodeId, iteration) => { // 根据nodeId iteration选择数据
-    let res = [];
+    let res: LineChartType[] = [];
     for (let i = 0; i < arr.length; i++) {
       if (arr[i].nodeId === nodeId) {
         let mean = arr[i].activation[iteration].data.mean.map((d, i) => {
@@ -55,9 +59,9 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
             y: d
           }
         })
-        res.push({ id: nodeId, data: mean, color: "rgb(98,218,170)" })
-        res.push({ id: nodeId, data: max, color: "rgb(233,108,91" })
-        res.push({ id: nodeId, data: min, color: "rgb(246,192,34)" })
+        res.push({ id: 'mean', data: mean, color: "rgb(98,218,170)" })
+        res.push({ id: 'max', data: max, color: "rgb(233,108,91" })
+        res.push({ id: 'min', data: min, color: "rgb(246,192,34)" })
         break;
       }
     }
@@ -587,9 +591,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     let node = selectedG.node();
     let nodeId = d3.select(node).attr("id");
-    // console.log(tmpId)
+
     let lineData = generateLineData(tmpId, iteration);
-    
+    modifyData(ModifyLineData.UPDATE_Line,lineData)
+    history.push("layer")
   } 
 
   const brushstart = () => {
@@ -682,7 +687,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     draw();
     setTimeout(function () {
       // setTransformData(new transformImp())
-      modifyGraphInfo(GraphInfoType.UPDATE_NODE)
+      modifyGraphInfo(elModifyType.UPDATE_NODE)
     }, 1000);
   }, [graphForLayout]);
 

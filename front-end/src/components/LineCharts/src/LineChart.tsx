@@ -9,9 +9,6 @@ export default class LineChart extends Component<LineChartProps, {}> {
   constructor(props) {
     super(props);
     this.state = {
-      // isTooltipVisible: false,
-      // tooltipContent: null,
-      // position: {},
     };
     this.ref = React.createRef()
   }

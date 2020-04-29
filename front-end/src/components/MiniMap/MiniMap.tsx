@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { GraphInfoType, TransformType } from '../../types/mini-map'
+import { elModifyType, TransformType } from '../../types/mini-map'
 import { useGraphInfo, useTransform, setTransform, broadTransformChange } from '../../store/graphInfo';
 import * as d3 from 'd3';
 import './MiniMap.css'
@@ -35,7 +35,7 @@ const MiniMap: React.FC = () => {
     }
 
     useEffect(() => {
-        if (graphInfo === null) return
+        if (graphInfo === null || canvas === undefined) return
 
         // 获取此时svg元素真实的长宽
         const svgWidth = document.getElementById("dagre-svg").getBoundingClientRect().width;
@@ -100,7 +100,7 @@ const MiniMap: React.FC = () => {
         d3.select(graphInfo).select("g.output").attr("transform", `translate(0,0) scale(${fitK})`)
         let svgXml = (new XMLSerializer()).serializeToString(graphInfo)
         svgStyle.remove();
-
+        // console.log(canvas)
         let context = canvas.getContext('2d');
         let image = new Image();
 
@@ -127,7 +127,7 @@ const MiniMap: React.FC = () => {
 
     const dragend = (d) => { // 拖拽结束，设置transform
         setTransform(TransformType.MAP_TRANSFORM, { x: -viewpointCoord.x * scale, y: -viewpointCoord.y * scale, k: transform.k })
-        broadTransformChange();
+        // broadTransformChange();
     }
     useEffect(() => {
         let drag = d3.drag().subject(Object).on('drag', dragmove).on("end", dragend);

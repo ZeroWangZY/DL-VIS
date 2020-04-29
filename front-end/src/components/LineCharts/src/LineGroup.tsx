@@ -131,7 +131,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
     </g> : "")
     return (
       <g transform={transform} className={'line-chart'} ref={(ref: SVGSVGElement) => this.ref = ref}>
-        {lineX && <line x1={renderData.xScale(lineX)} x2={renderData.xScale(lineX)} y1={height} y2={0} style={{
+        {lineX && <line x1={renderData.xScale(lineX)} x2={renderData.xScale(lineX)} y1={height} y2={15} style={{
           stroke: 'grey',
           strokeWidth: 1,
           strokeDasharray: '3,3'
@@ -154,7 +154,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
           </g>
         )}
         {showLegend && legendData.map((legend, i) =>
-          <g transform={`translate(20,0)`} key={i}>
+          <g transform={`translate(${i*95 + 20},0)`} key={i}>
             <line x1={0} x2={5} stroke={legend.color} />
             <circle cx={9} r={4} stroke={legend.color} fill={'#F1F3F3'}></circle>
             <line x1={13} x2={18} stroke={legend.color} />

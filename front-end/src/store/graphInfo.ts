@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { transformData, transformImp, GraphInfoType, TransformType } from '../types/mini-map'
+import { transformData, transformImp, elModifyType, TransformType } from '../types/mini-map'
 let graphListeners = []
 let transListeners = []
 let graphInfo: any = null
@@ -21,9 +21,9 @@ export const useGraphInfo = () => {
     }, [])
     return el
 }
-export const modifyGraphInfo = (action: GraphInfoType) => {
+export const modifyGraphInfo = (action: elModifyType) => {
   switch (action) {
-    case GraphInfoType.UPDATE_NODE:
+    case elModifyType.UPDATE_NODE:
         graphInfo = document.getElementById('output-svg')
         break;
   }

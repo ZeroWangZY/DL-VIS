@@ -1,4 +1,10 @@
 import React from 'react';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
 import clsx from 'clsx';
 import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
@@ -12,6 +18,7 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import DagreLayout from "./DagreLayout/DagreLayout";
+import LaylerLevel from "./LaylerLevel/LaylerLevel";
 import NodeSelector from './preference/NodeSelector'
 import TensorBoardGraph from './tensorboard/Graph'
 import GraphSelector from './preference/GraphSelector';
@@ -92,6 +99,7 @@ const AppEntry: React.FC = () => {
   };
 
   return (
+    <Router>
     <div className={classes.root}>
       <CssBaseline />
       <AppBar
@@ -145,10 +153,19 @@ const AppEntry: React.FC = () => {
         })}
       >
         <div className={classes.drawerHeader} />
-        <DagreLayout />
+        <Switch>
+        <Route path="/layer">
+            <LaylerLevel />
+        </Route>
+        <Route path="/">
+            <DagreLayout />
+        </Route>
+        </Switch>
+        {/* <DagreLayout /> */}
         {/* <TensorBoardGraph /> */}
       </main>
     </div>
+    </Router>
   );
 };
 
