@@ -116,7 +116,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
       >
       {style => (
         <path
-          key={id}
+          key={i}
           d={style.d}
           fill="none"
           strokeWidth={1}
