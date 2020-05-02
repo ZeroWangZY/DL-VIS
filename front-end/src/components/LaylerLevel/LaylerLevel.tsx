@@ -4,9 +4,11 @@ import { useLineData} from '../../store/layerLevel';
 import { useHistory } from "react-router-dom";
 import IterationChart from './IterationChart'
 import ActivationChart from './ActivationChart'
+import TsneClusterGraph from './TsneClusterGraph'
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import { fetchActivations } from '../../api/layerlevel'
 import { activationsData } from '../../mock/mockDataForLayerLevel'
+
 const LayerLevel: React.FC = () => {
     const linedata = useLineData();
     const history = useHistory();
@@ -33,6 +35,7 @@ const LayerLevel: React.FC = () => {
             </div>
             {linedata.length>0?<IterationChart linedata={linedata} getStep={getActivations}/>:<div/>}
             <ActivationChart activations={activations}/>
+            {activations.length === 1?<TsneClusterGraph activations={activations}/>:<div/>}
         </div>
     );
 }
