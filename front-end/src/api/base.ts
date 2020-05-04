@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const URL_ROOT = '';
 
-export default function fireAjax (method, URL, data?) {
+export default function fireAjax(method, URL, graphName?, data?) {
   if (method === 'POST') {
     return axios
       .post(URL_ROOT + URL, data)
@@ -11,8 +11,13 @@ export default function fireAjax (method, URL, data?) {
         throw error;
       });
   } else if (method === 'GET') {
-      return axios
-      .get(URL_ROOT + URL, data)
+    return axios
+      .get(URL_ROOT + URL, {
+        params: {
+          data: data,
+          graph_name: graphName
+        }
+      })
       .then(({ data }) => ({ data: data }))
       .catch(error => {
         throw error;

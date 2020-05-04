@@ -1,0 +1,20 @@
+[
+  {
+    "name": "alexnets"
+  },
+  {
+    "name": "bert_finetune"
+  },
+  {
+    "name": "bert_pretrain"
+  },
+  {
+    "name": "lenet"
+  },
+  {
+    "name": "mobilenetv2"
+  },
+  {
+    "name": "resnet"
+  }
+]

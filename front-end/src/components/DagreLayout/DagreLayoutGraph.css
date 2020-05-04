@@ -30,6 +30,13 @@
   text-anchor: middle;
   font-size: 14px;
 }
+.node.auxiliary .node-label{
+  opacity: 0;
+}
+.node.auxiliary .label:hover + .node-label{
+  opacity: 1;
+}
+
 /* 默认边样式 */
 .edgePath path {
   stroke: #999999;

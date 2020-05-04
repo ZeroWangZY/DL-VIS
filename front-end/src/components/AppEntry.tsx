@@ -169,6 +169,7 @@ const AppEntry: React.FC = () => {
         <Route path="/">
         {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
         {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
+        {currentLayout === LayoutType.DAGRE_FOR_MS ? <DagreLayout /> : null}
         </Route>
         </Switch>
       </main>

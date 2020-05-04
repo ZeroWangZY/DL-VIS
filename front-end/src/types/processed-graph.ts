@@ -5,7 +5,7 @@ export enum LayerType {
   FC = "FC",
   OTHER = "OTHER",
 }
-export enum DataType { INPUT, OUTPUT, VARIABLE }
+export enum DataType { INPUT, OUTPUT, VARIABLE, CONST, PARAMETER }
 export type NodeId = string
 
 export interface OptionsDef {
@@ -50,6 +50,7 @@ export interface BaseNode {
 
 export interface OperationNode extends BaseNode {
   operationType: string;
+  auxiliary?: Set<NodeId>;
 }
 
 export interface GroupNode extends BaseNode {
@@ -106,8 +107,9 @@ export class OperationNodeImp implements OperationNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
+  auxiliary?: Set<NodeId>;
 
-  constructor({ id, op, opts = {} }: { id: string; op: string; opts?: OptionsDef }) {
+  constructor({ id, auxiliary, op, opts = {} }: { id: string; auxiliary?: Set<NodeId>; op: string; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.OPERTATION;
@@ -115,6 +117,7 @@ export class OperationNodeImp implements OperationNode {
     this.operationType = op;
     this.outModuleConnection = new Set()
     this.inModuleConnection = new Set()
+    this.auxiliary = auxiliary || new Set();
   }
 }
 
