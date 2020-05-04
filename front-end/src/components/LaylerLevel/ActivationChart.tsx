@@ -7,9 +7,9 @@ interface ActivationProps {
 }
 const ActivationChart: React.FC<ActivationProps> = (props:ActivationProps) => {
     let { activations } = props
-    const lineChartWidth = 1000
+    const lineChartWidth = 600
     const lineChartHight = 200
-    const margin = { left: 30, right: 10, top: 10, bottom: 20 }
+    const margin = { left: 50, right: 30, top: 30, bottom: 50 }
     const lineGroupWidth = lineChartWidth - margin.left - margin.right
     const lineGroupHight = lineChartHight- margin.top - margin.bottom
 
@@ -47,7 +47,13 @@ const ActivationChart: React.FC<ActivationProps> = (props:ActivationProps) => {
             showAxis={true}/>:'')
     }
     return (
-        <div>
+        <div className='layer-container activation'
+        style={{
+            width: lineChartWidth,
+            height: lineChartHight,
+            position: 'relative',
+            margin: '0 25px'
+        }}>
             <svg width={lineChartWidth} height={lineChartHight}>
                 {linePart()}
             </svg>

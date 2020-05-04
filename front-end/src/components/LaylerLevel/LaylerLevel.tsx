@@ -16,6 +16,7 @@ const LayerLevel: React.FC = () => {
         history.push("/")
     }
     const [activations,setActivations] = useState([]);
+    const [tsneGraph,setTsneGraph] = useState({});
     useEffect(() => {
    
     })
@@ -28,14 +29,26 @@ const LayerLevel: React.FC = () => {
         }
         setActivations([...activations,...data])
     }
+    const getIteration = async(iteration)=> {
+        // console.log(iteration)
+        // let data = await fetchActivations({step: iteration})
+        let data = activationsData()
+        setTsneGraph(data)
+        setActivations([data])
+    }
     return (
         <div>
             <div className='return-button'>
                 <ArrowBackIosIcon onClick = {goback}/>
             </div>
-            {linedata.length>0?<IterationChart linedata={linedata} getStep={getActivations}/>:<div/>}
-            <ActivationChart activations={activations}/>
-            {activations.length === 1?<TsneClusterGraph activations={activations}/>:<div/>}
+            <IterationChart linedata={linedata} getStep={getActivations} onSubmit={getIteration}/>
+            <div
+             style={{
+                padding: '40px 0px'
+            }}>>
+                <ActivationChart activations={activations}/>
+                <TsneClusterGraph activations={tsneGraph}/>
+            </div>
         </div>
     );
 }

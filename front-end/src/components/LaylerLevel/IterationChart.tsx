@@ -5,16 +5,17 @@ import { computeXYScales }from '../LineCharts/src/computed'
 import * as d3 from 'd3';
 
 interface IterationProps {
-    linedata: LineChartType[];
+    linedata: LineChartType[]
     getStep: Function
+    onSubmit: (iteration: number) => void
 }
 const IterationChart: React.FC<IterationProps> = (props: IterationProps) => {
-    const lineChartWidth = 600
-    const lineChartHight = 300
-    const margin = { left: 30, right: 10, top: 10, bottom: 20 }
+    const lineChartWidth = 700
+    const lineChartHight = 350
+    const margin = { left: 50, right: 30, top: 30, bottom: 50 }
     const lineGroupWidth = lineChartWidth - margin.left - margin.right
     const lineGroupHight = lineChartHight- margin.top - margin.bottom
-    let { linedata, getStep } = props
+    let { linedata, getStep, onSubmit } = props
     const svgRef = useRef();
     let brushObject,
         xscale,
@@ -53,16 +54,21 @@ const IterationChart: React.FC<IterationProps> = (props: IterationProps) => {
         getStep(extent)
     }
     return (
-        <div>
+        <div className='layer-container iteration'
+        style={{
+            width: lineChartWidth,
+            height: lineChartHight
+        }}>
             <svg width={lineChartWidth} height={lineChartHight} ref={svgRef}>
-                <LineGroup
+            {linedata.length>0?<LineGroup
                 transform={`translate(${margin.left},${margin.top})`}
                 width={lineChartWidth - margin.left - margin.right}
                 height={lineChartHight- margin.top - margin.bottom}
                 data={linedata} 
+                onSubmit={onSubmit} 
                 isInteractive={true}
                 showAxis={true}
-                showLegend={true}/>
+                showLegend={true}/>:''}
             </svg>
         </div>
     );
