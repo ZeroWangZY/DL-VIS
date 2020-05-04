@@ -35,6 +35,9 @@ def load_cifar10() :
     np.random.seed(seed)
     np.random.shuffle(train_labels)
 
+    # print("hhh", train_data.max(), train_data.min(), train_data.mean(), test_data.mean())
+    # print("hhhh", train_labels)
+    print(train_data.shape, train_labels.shape, test_data.shape, test_labels.shape)
 
     return train_data, train_labels, test_data, test_labels
 
@@ -241,6 +244,7 @@ def data_augmentation(batch, img_size, dataset_name):
 
 
 def classification_loss(logit, label) :
+    print("yingyingying", logit, label)
     with tf.variable_scope("classification_loss"):
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=label, logits=logit))
         prediction = tf.equal(tf.argmax(logit, -1), tf.argmax(label, -1))

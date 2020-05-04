@@ -6,3 +6,8 @@ pip install -r requirements.txt
 
 ### run
 python manage.py runserver
+
+
+### 指定目录
+
+python manage.py runserver --logdir <dir>

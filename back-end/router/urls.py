@@ -18,5 +18,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
+    path('modellevel/layerinfo', views.getMiddleResult),
+    path('modellevel/snaphot', views.getLoss),
+    path('getPbtxt', views.getPb),
+    path('get_graph', views.get_graph)
 ]

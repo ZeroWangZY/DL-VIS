@@ -66,21 +66,21 @@ class BaseNet(object):
         self.train_inputs = tf.placeholder(tf.float32, [self.batch_size, self.img_size, self.img_size, self.c_dim], name='train_inputs')
         self.train_labels = tf.placeholder(tf.float32, [self.batch_size, self.label_dim], name='train_labels')
 
-        self.test_inptus = tf.placeholder(tf.float32, [len(self.test_x), self.img_size, self.img_size, self.c_dim], name='test_inputs')
+        self.test_inputs = tf.placeholder(tf.float32, [len(self.test_x), self.img_size, self.img_size, self.c_dim], name='test_inputs')
         self.test_labels = tf.placeholder(tf.float32, [len(self.test_y), self.label_dim], name='test_labels')
 
         self.lr = tf.placeholder(tf.float32, name='learning_rate')
 
         """ Model """
         self.train_logits = self.network(self.train_inputs)
-        self.test_logits = self.network(self.test_inptus, is_training=False)
+        self.test_logits = self.network(self.test_inputs, is_training=False)
 
         self.train_loss, self.train_accuracy = classification_loss(logit=self.train_logits, label=self.train_labels)
         self.test_loss, self.test_accuracy = classification_loss(logit=self.test_logits, label=self.test_labels)
         
-        reg_loss = tf.losses.get_regularization_loss()
-        self.train_loss += reg_loss
-        self.test_loss += reg_loss
+        # reg_loss = tf.losses.get_regularization_loss()
+        # self.train_loss += reg_loss
+        # self.test_loss += reg_loss
 
 
         """ Training """
@@ -142,6 +142,8 @@ class BaseNet(object):
 
         # loop for epoch
         start_time = time.time()
+        vgg_watch_list = ["train_network/conv1_1/relu:0", "train_network/conv2_1/relu:0", "train_network/conv3_1/relu:0", "train_network/conv4_1/relu:0", "train_network/conv5_1/relu:0"]
+
         for epoch in range(start_epoch, self.epoch):
             if epoch == int(self.epoch * 0.5) or epoch == int(self.epoch * 0.75) :
                 epoch_lr = epoch_lr * 0.1
@@ -160,7 +162,7 @@ class BaseNet(object):
                 }
 
                 test_feed_dict = {
-                    self.test_inptus : self.test_x,
+                    self.test_inputs : self.test_x,
                     self.test_labels : self.test_y
                 }
 
@@ -170,15 +172,21 @@ class BaseNet(object):
                     [self.optim, self.train_summary, self.train_loss, self.train_accuracy], feed_dict=train_feed_dict)
                 self.writer.add_summary(summary_str, counter)
 
+                # if(self.model_name == 'VGG16'):
+                #     for item in vgg_watch_list:
+                #         tensor_result = self.sess.run(self.sess.graph.get_tensor_by_name(item), feed_dict=train_feed_dict)
+                #         print("tensor_result: ", item, tensor_result.max(), tensor_result.min(), tensor_result.mean())
                 # test
-                summary_str, test_loss, test_accuracy = self.sess.run(
-                    [self.test_summary, self.test_loss, self.test_accuracy], feed_dict=test_feed_dict)
-                self.writer.add_summary(summary_str, counter)
+                # summary_str, test_loss, test_accuracy = self.sess.run(
+                #     [self.test_summary, self.test_loss, self.test_accuracy], feed_dict=test_feed_dict)
+                # self.writer.add_summary(summary_str, counter)
 
                 # display training status
                 counter += 1
-                print("Epoch: [%2d] [%5d/%5d] time: %4.4f, train_accuracy: %.2f, test_accuracy: %.2f, learning_rate : %.4f" \
-                      % (epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy, epoch_lr))
+                print("Epoch: [%2d] [%5d/%5d] time: %4.4f, train_accuracy: %.4f train_loss: %.4f" \
+                      % (epoch, idx, self.iteration, time.time() - start_time, train_accuracy, train_loss))
+                # print("Epoch: [%2d] [%5d/%5d] time: %4.4f, train_accuracy: %.2f, test_accuracy: %.6f, learning_rate : %.4f" \
+                #       % (epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy, epoch_lr))
 
             # After an epoch, start_batch_id is set to zero
             # non-zero value is only for the first epoch after loading pre-trained model
@@ -229,7 +237,7 @@ class BaseNet(object):
             print(" [!] Load failed...")
 
         test_feed_dict = {
-            self.test_inptus: self.test_x,
+            self.test_inputs: self.test_x,
             self.test_labels: self.test_y
         }
 

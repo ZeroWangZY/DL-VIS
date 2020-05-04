@@ -14,7 +14,7 @@
     "lint:client": "cd front-end && npm run lint",
     "start:server": "cd back-end && python manage.py runserver",
     "test:server": "echo \"Noop\" && exit 1",
-    "lint:server": "cd back-end && black graph/ && pylint graph",
+    "lint:server": "cd back-end && black graph/",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "repository": {

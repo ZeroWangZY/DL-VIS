@@ -66,7 +66,7 @@ def main():
         elif args.model == 'shuffle':
             cnn = ShuffleNet(sess, args)
         elif args.model == 'VGG':
-            print("yingyingying")
+            # print("yingyingying")
             cnn = VGG16(sess, args)
         else:
             return
@@ -80,7 +80,7 @@ def main():
         cnn.build_model()
 
         # show network architecture
-        show_all_variables()
+        # show_all_variables()
 
         if args.phase == 'train' :
             # launch the graph in a session
