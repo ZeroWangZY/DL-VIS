@@ -52,6 +52,10 @@ const IterationChart: React.FC<IterationProps> = (props: IterationProps) => {
         if (!d3.event.selection) return;    
         let extent = [parseInt(xscale.invert(d3.event.selection[0])), parseInt(xscale.invert(d3.event.selection[1]))]
         getStep(extent)
+
+        if (!brushObject) return;
+        brushObject.remove();
+        brushObject = null;
     }
     return (
         <div className='layer-container iteration'

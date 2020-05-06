@@ -34,17 +34,10 @@ const ActivationChart: React.FC<ActivationProps> = (props:ActivationProps) => {
 
     useEffect(() => {
     })
-
-    const linePart = () => {
+    const getLineData = (data) => {
         let lineChartData = []
-        activations.map((d,name) =>lineChartData=lineChartData.concat(compute(d.data.activations,name)))     
-        return (lineChartData.length>0?<LineGroup
-            transform={`translate(${margin.left},${margin.top})`}
-            width={lineGroupWidth}
-            height={lineGroupHight}
-            data={lineChartData} 
-            // isInteractive={true}
-            showAxis={true}/>:'')
+        data.map((d,name) =>lineChartData=lineChartData.concat(compute(d.data.activations,name)))  
+        return lineChartData
     }
     return (
         <div className='layer-container activation'
@@ -55,7 +48,13 @@ const ActivationChart: React.FC<ActivationProps> = (props:ActivationProps) => {
             margin: '0 25px'
         }}>
             <svg width={lineChartWidth} height={lineChartHight}>
-                {linePart()}
+                <LineGroup
+                transform={`translate(${margin.left},${margin.top})`}
+                width={lineGroupWidth}
+                height={lineGroupHight}
+                data={getLineData(activations)} 
+                // isInteractive={true}
+                showAxis={true}/>
             </svg>
         </div>
     );

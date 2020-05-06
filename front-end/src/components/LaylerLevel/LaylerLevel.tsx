@@ -22,12 +22,13 @@ const LayerLevel: React.FC = () => {
     })
     const getActivations = async(extent)=> {
        // console.log(extent)
+    //    setActivations([])
        let data = []
         for(let i = extent[0];i < extent[1];i ++){
             // let data = await fetchActivations({step: i})
             data.push(activationsData())
         }
-        setActivations([...activations,...data])
+        setActivations([...data])
     }
     const getIteration = async(iteration)=> {
         // console.log(iteration)

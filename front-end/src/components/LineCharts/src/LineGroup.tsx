@@ -27,14 +27,14 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
     this.computed = this.computed.bind(this)
   }
   UNSAFE_componentWillMount() {
-    this.computed()
+    this.computed(this.props)
   }
-  UNSAFE_componentWillReceiveProps() {
-   this.computed()
+  UNSAFE_componentWillReceiveProps(nextProps) {
+   this.computed(nextProps)
   }
-  componentDidUpdate(){
-    // console.log('test')
-  }
+  // componentDidUpdate(){
+  //   // console.log('test')
+  // }
   componentDidMount() {
     const { renderData } = this.state;
     const self = this
@@ -62,8 +62,8 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
       })
     });
   }
-  computed() {
-    const { width, height, data } = this.props;
+  computed(props) {
+    const { width, height, data } = props;
     const renderData = computeXYScales(data, width, height)
     let legendData = renderData.series.map((line: any) => {
       return {

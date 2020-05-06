@@ -4,7 +4,7 @@ function randData(){
     let activations = []
     let sign = []
     for(let i=0;i < 32;i ++){
-        for(let j=0;j < 30;j ++){ 
+        for(let j=0;j < 10;j ++){ 
             sign.push(Math.random()*10)
         }
         activations.push(sign)
