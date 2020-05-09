@@ -1,26 +1,5 @@
 import { useState, useEffect } from 'react'
-
-interface GlobalConfigurations {
-  diagnosisMode: boolean;
-  preprocessingPlugins: { // 图处理里时应用哪些处理方式
-    pruneByOutput: boolean,
-    replaceVariable: boolean,
-    pruneByDefaultPatterns: boolean,
-    renameVariable: boolean
-  },
-  currentLayout: LayoutType
-}
-
-export enum LayoutType {
-  DAGRE_FOR_TF,
-  TENSORBOARD
-}
-
-export enum GlobalConfigurationsModificationType {
-  TOGGLE_DIAGNOSIS_MODE,
-  TOGGLE_PREPROCESSING_PLUGIN,
-  SET_CURRENT_LAYOUT
-}
+import { GlobalConfigurations, LayoutType, GlobalConfigurationsModificationType } from './global-configuration.type'
 
 let listeners = []
 let globalConfigurations: GlobalConfigurations = {
@@ -31,6 +10,7 @@ let globalConfigurations: GlobalConfigurations = {
     pruneByDefaultPatterns: true,
     renameVariable: true
   },
+  isHiddenInterModuleEdges: false,
   currentLayout: LayoutType.DAGRE_FOR_TF
 };
 
@@ -44,8 +24,8 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
   switch (operation) {
     case GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE:
       globalConfigurations = Object.assign(
-        {}, 
-        globalConfigurations, 
+        {},
+        globalConfigurations,
         { diagnosisMode: !globalConfigurations.diagnosisMode }
       )
       break;
@@ -55,12 +35,20 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
       let obj = {}
       obj[payload] = !preprocessingPlugins[payload]
       const newPreprocessingPlugins = Object.assign({}, preprocessingPlugins, obj)
-      globalConfigurations = Object.assign({}, globalConfigurations, {preprocessingPlugins: newPreprocessingPlugins})
+      globalConfigurations = Object.assign({}, globalConfigurations, { preprocessingPlugins: newPreprocessingPlugins })
       break
 
     case GlobalConfigurationsModificationType.SET_CURRENT_LAYOUT:
-      globalConfigurations = Object.assign({}, globalConfigurations, {currentLayout: payload})
+      globalConfigurations = Object.assign({}, globalConfigurations, { currentLayout: payload })
       break
+
+    case GlobalConfigurationsModificationType.TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES:
+      globalConfigurations = Object.assign(
+        {},
+        globalConfigurations,
+        { isHiddenInterModuleEdges: !globalConfigurations.isHiddenInterModuleEdges }
+      )
+      break;
     default:
       break;
   }

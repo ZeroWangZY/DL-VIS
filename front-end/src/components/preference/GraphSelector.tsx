@@ -9,7 +9,7 @@ import { setProcessedGraph } from '../../store/useProcessedGraph'
 import { fetchAndParseGraphData } from '../../common/graph-processing/tf-graph/parser';
 import { SimplifierImp } from '../../common/graph-processing/tf-graph/simplifier';
 import { buildGraph } from '../../common/graph-processing/tf-graph/graph';
-import { useGlobalConfigurations, LayoutType } from '../../store/global-configuration';
+import { useGlobalConfigurations } from '../../store/global-configuration';
 import { setTfRawGraph } from '../../store/tf-raw-graph';
 
 const useStyles = makeStyles((theme: Theme) =>

@@ -202,3 +202,38 @@
   fill: #5d83be;
   stroke: #333;
 }
+
+
+.module-hole {
+  fill: #fff;
+  stroke: #333;
+}
+.moduleEdgePath path {
+  /* stroke: #ea7575; */
+  fill: none;
+}
+
+.in-module-node-hole circle {
+  fill: #fff;
+  stroke: #333;
+}
+
+.in-module-node-hole path {
+  /* stroke: #ea7575; */
+  fill: none;
+  stroke-width: 2px;
+}
+
+.out-module-node-hole circle {
+  fill: #fff;
+  stroke: #333;
+}
+.out-module-node-hole path {
+  /* stroke: #ea7575; */
+  fill: none;
+  stroke-width: 2px;
+}
+
+.hiddenEdges line {
+  stroke: #ea7575;
+}

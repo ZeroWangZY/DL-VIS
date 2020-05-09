@@ -43,6 +43,9 @@ export interface BaseNode {
   type: NodeType;
   parent: NodeId;
   visibility: boolean; // 是否可见，如果为false，则节点和节点的children均不被显示出来
+  belongModule: NodeId | null;
+  outModuleConnection: Set<NodeId>;
+  inModuleConnection: Set<NodeId>;
 }
 
 export interface OperationNode extends BaseNode {
@@ -52,6 +55,7 @@ export interface OperationNode extends BaseNode {
 export interface GroupNode extends BaseNode {
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开 
+  isModule: boolean;
 }
 
 export interface LayerNode extends GroupNode {
@@ -73,12 +77,23 @@ export interface RawEdge {
   target: NodeId;
 }
 
+export interface ModuleEdge extends RawEdge {
+  width: number; // 表示两个模块间的连线个数
+}
+
 export interface ProcessedGraph {
   nodeMap: { [nodeId: string]: NodeDef };
   rootNode: GroupNode;
   rawEdges: RawEdge[];  // 原始的所有边
-  getDisplayedEdges(displayedNodes?: NodeId[]): RawEdge[]; // 根据group的展开情况，当前显示的边
+  moduleEdges: ModuleEdge[];
+  modules: Set<NodeId>;
+  getDisplayedEdges(displayedNodes?: NodeId[], interModule?: boolean): RawEdge[]; // 根据group的展开情况，当前显示的边
   getDisplayedNodes(): NodeId[]; // 根据group的展开情况，当前显示的节点
+  getInHiddenEdges(nodeId: NodeId): ModuleEdge[]; // 挖孔设计中被隐藏的线
+  getOutHiddenEdges(nodeId: NodeId): ModuleEdge[]; // 挖孔设计中被隐藏的线
+  getInModuleConnection(nodeId: NodeId): Set<NodeId>;
+  getOutModuleConnection(nodeId: NodeId): Set<NodeId>;
+  getModuleConnection(nodeId: NodeId): object; // 根据当前展开情况修剪某个节点跟其他模块的连接，只保留模块层级
 }
 
 export class OperationNodeImp implements OperationNode {
@@ -87,7 +102,10 @@ export class OperationNodeImp implements OperationNode {
   type: NodeType;
   parent: NodeId;
   operationType: string;
-  visibility: boolean = true
+  visibility: boolean = true;
+  belongModule: string = null;
+  outModuleConnection: Set<NodeId>;
+  inModuleConnection: Set<NodeId>;
 
   constructor({ id, op, opts = {} }: { id: string; op: string; opts?: OptionsDef }) {
     this.id = id;
@@ -95,6 +113,8 @@ export class OperationNodeImp implements OperationNode {
     this.type = NodeType.OPERTATION;
     this.parent = "";
     this.operationType = op;
+    this.outModuleConnection = new Set()
+    this.inModuleConnection = new Set()
   }
 }
 
@@ -105,15 +125,23 @@ export class GroupNodeImp implements GroupNode {
   parent: NodeId;
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开
-  visibility: boolean = true
+  visibility: boolean = true;
+  isModule: boolean;
+  belongModule: string = null;
+  outModuleConnection: Set<NodeId>;
+  inModuleConnection: Set<NodeId>;
 
-  constructor({ id, children, parent, opts = {} }: { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef }) {
+  constructor({ id, children, parent, opts = {}, isModule = false }:
+    { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef; isModule?: boolean }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.GROUP;
     this.parent = parent || "";
     this.children = children || new Set();
     this.expanded = false;
+    this.isModule = isModule;
+    this.outModuleConnection = new Set()
+    this.inModuleConnection = new Set()
   }
 }
 
@@ -125,9 +153,14 @@ export class LayerNodeImp implements LayerNode {
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开
   layerType: LayerType;
-  visibility: boolean = true
+  visibility: boolean = true;
+  isModule: boolean;
+  belongModule: string = null;
+  outModuleConnection: Set<NodeId>;
+  inModuleConnection: Set<NodeId>;
 
-  constructor({ id, layerType, children, parent, opts = {} }: { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef }) {
+  constructor({ id, layerType, children, parent, opts = {}, isModule = false }:
+    { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef; isModule?: boolean }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.LAYER;
@@ -135,6 +168,9 @@ export class LayerNodeImp implements LayerNode {
     this.children = children || new Set();
     this.expanded = false;
     this.layerType = layerType;
+    this.isModule = isModule;
+    this.outModuleConnection = new Set()
+    this.inModuleConnection = new Set()
   }
 }
 
@@ -144,7 +180,10 @@ export class DataNodeImp implements DataNode {
   type: NodeType;
   parent: NodeId;
   dataType: DataType;
-  visibility: boolean = true
+  visibility: boolean = true;
+  belongModule: string = null;
+  outModuleConnection: Set<NodeId>;
+  inModuleConnection: Set<NodeId>;
 
   constructor({ id, dataType, opts = {} }: { id: string; dataType: DataType; opts?: OptionsDef }) {
     this.id = id;
@@ -152,6 +191,8 @@ export class DataNodeImp implements DataNode {
     this.type = NodeType.DATA;
     this.parent = "";
     this.dataType = dataType;
+    this.outModuleConnection = new Set()
+    this.inModuleConnection = new Set()
   }
 }
 
@@ -159,6 +200,8 @@ export class ProcessedGraphImp implements ProcessedGraph {
   nodeMap: { [nodeId: string]: NodeDef };
   rootNode: GroupNode;
   rawEdges: RawEdge[];  // 原始的所有边
+  moduleEdges;
+  modules;
 
   constructor() {
     this.nodeMap = Object.create(null);
@@ -166,8 +209,156 @@ export class ProcessedGraphImp implements ProcessedGraph {
       id: ROOT_SCOPE
     });
     this.rawEdges = [];
+    this.moduleEdges = [];
+    this.modules = new Set();
+  }
+  getInModuleConnection(nodeId: string): Set<NodeId> {
+    let node = this.nodeMap[nodeId]
+    if (node.type === NodeType.OPERTATION || node.type === NodeType.DATA) {
+      return node.inModuleConnection
+    }
+    if (node.belongModule === null) {
+      return new Set()
+    }
+    node = node as GroupNode
+    if (node.isModule) {
+      return new Set()
+    }
+    if (node.inModuleConnection.size > 0) {
+      return node.inModuleConnection
+    }
+    let retSet: Set<NodeId> = new Set()
+    let queue = [node.id]
+    while (queue.length > 0) {
+      const id = queue.shift()
+      const tempNode = this.nodeMap[id]
+      if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERTATION) {
+        retSet = new Set([...retSet, ...tempNode.inModuleConnection])
+      }
+      if (tempNode.type === NodeType.GROUP || tempNode.type === NodeType.LAYER) {
+        queue = queue.concat(Array.from((tempNode as GroupNode).children))
+      }
+    }
+    node.inModuleConnection = retSet
+    return retSet
   }
 
+  getOutModuleConnection(nodeId: string): Set<string> {
+    let node = this.nodeMap[nodeId]
+    if (node.type === NodeType.OPERTATION || node.type === NodeType.DATA) {
+      return node.outModuleConnection
+    }
+    if (node.belongModule === null) {
+      return new Set()
+    }
+    node = node as GroupNode
+    if (node.isModule) {
+      return new Set()
+    }
+    if (node.outModuleConnection.size > 0) {
+      return node.outModuleConnection
+    }
+    let retSet: Set<NodeId> = new Set()
+    let queue = [node.id]
+    while (queue.length > 0) {
+      const id = queue.shift()
+      const tempNode = this.nodeMap[id]
+      if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERTATION) {
+        retSet = new Set([...retSet, ...tempNode.outModuleConnection])
+      }
+      if (tempNode.type === NodeType.GROUP || tempNode.type === NodeType.LAYER) {
+        queue = queue.concat(Array.from((tempNode as GroupNode).children))
+      }
+    }
+    node.outModuleConnection = retSet
+    return retSet
+  }
+
+  getModuleConnection(nodeId: NodeId): object {
+    let displayedInModuleConnection: Set<NodeId> = new Set();
+    let displayedOutModuleConnection: Set<NodeId> = new Set();
+
+    const node = this.nodeMap[nodeId];
+    // 如果是group node或layer node 且 已展开 没有小短线
+    if (!("children" in node) || !node.expanded) {
+      let inModuleConnection = this.getInModuleConnection(nodeId);
+      let outModuleConnection = this.getOutModuleConnection(nodeId);
+      inModuleConnection.forEach(d => {
+        let targetNode = this.nodeMap[d];
+        let targetModule = targetNode.belongModule;
+        if (!targetModule) {
+          targetNode = targetNode as GroupNode;
+          if (targetNode.isModule) {
+            targetModule = d;
+          }
+        }
+        displayedInModuleConnection.add(targetModule)
+      })
+      outModuleConnection.forEach(d => {
+        let targetNode = this.nodeMap[d];
+        let targetModule = targetNode.belongModule;
+        if (!targetModule) {
+          targetNode = targetNode as GroupNode;
+          if (targetNode.isModule) {
+            targetModule = d;
+          }
+        }
+        displayedOutModuleConnection.add(targetModule)
+      })
+    }
+    return {
+      in: displayedInModuleConnection,
+      out: displayedOutModuleConnection
+    };
+  }
+
+  getInHiddenEdges(nodeId: string): ModuleEdge[] {
+    const inModuleConnections = this.getInModuleConnection(nodeId)
+    const currentNode = this.nodeMap[nodeId]
+    const res: ModuleEdge[] = []
+    for (const inModuleConnection of inModuleConnections) {
+      const inModuleNode = this.nodeMap[inModuleConnection]
+      let oldestUnexpandParent = this.nodeMap[this.findOldestUnexpandParentNodeId(inModuleConnection)]
+      if (oldestUnexpandParent.belongModule !== inModuleNode.belongModule) {
+        continue
+      }
+      if (!((oldestUnexpandParent.type === NodeType.GROUP || oldestUnexpandParent.type === NodeType.LAYER)
+        && (oldestUnexpandParent as GroupNode).isModule)) { 
+        this.insertModuleEdge(res, oldestUnexpandParent.id, inModuleNode.belongModule)
+      }
+      this.insertModuleEdge(res, inModuleNode.belongModule, currentNode.belongModule)
+      this.insertModuleEdge(res, currentNode.belongModule, nodeId)
+    }
+    return res
+  }
+  getOutHiddenEdges(nodeId: string): ModuleEdge[] {
+    const outModuleConnections = this.getOutModuleConnection(nodeId)
+    const currentNode = this.nodeMap[nodeId]
+    const res: ModuleEdge[] = []
+    for (const outModuleConnection of outModuleConnections) {
+      const outModuleNode = this.nodeMap[outModuleConnection]
+      let oldestUnexpandParent = this.nodeMap[this.findOldestUnexpandParentNodeId(outModuleConnection)]
+      if (oldestUnexpandParent.belongModule !== outModuleNode.belongModule) {
+        continue
+      }
+      this.insertModuleEdge(res, nodeId, currentNode.belongModule)
+      this.insertModuleEdge(res, currentNode.belongModule, outModuleNode.belongModule)
+      if (!((oldestUnexpandParent.type === NodeType.GROUP || oldestUnexpandParent.type === NodeType.LAYER)
+        && (oldestUnexpandParent as GroupNode).isModule)) { 
+        this.insertModuleEdge(res, outModuleNode.belongModule, oldestUnexpandParent.id)
+      }
+    }
+    return res
+  }
+
+  private insertModuleEdge(moduleEdges: ModuleEdge[], source: NodeId, target: NodeId){
+    let tempModuleEdge = moduleEdges.find(me => me.source === source && me.target === target)
+    if (tempModuleEdge === undefined) {
+      moduleEdges.push({ source, target, width: 1 })
+    } else {
+      tempModuleEdge.width += 1
+    }
+  }
   // 提取目前所有展开的节点
   // 循环children 把要展开的节点加入展示节点数组
   private traverseChildren(node: NodeDef, targetNodes: Array<string>) {
@@ -189,12 +380,18 @@ export class ProcessedGraphImp implements ProcessedGraph {
     let parent = this.nodeMap[oldestUnexpandParent].parent;
 
     while (parent && parent !== "___root___") {
-      if(!this.nodeMap[parent]["expanded"]){
+      if (!this.nodeMap[parent]["expanded"]) {
         oldestUnexpandParent = parent;
       }
       parent = this.nodeMap[parent].parent;
     }
     return oldestUnexpandParent;
+  }
+
+  private isInterModule(nodeId1: NodeId, nodeId2: NodeId): boolean {
+    return this.nodeMap[nodeId1].belongModule !== null
+      && this.nodeMap[nodeId2].belongModule !== null
+      && this.nodeMap[nodeId1].belongModule !== this.nodeMap[nodeId2].belongModule
   }
 
   getDisplayedNodes(): NodeId[] {
@@ -205,9 +402,12 @@ export class ProcessedGraphImp implements ProcessedGraph {
     return displayedNodes
   }
 
-  getDisplayedEdges(displayedNodes: NodeId[] = this.getDisplayedNodes()): RawEdge[] {
+  getDisplayedEdges(displayedNodes: NodeId[] = this.getDisplayedNodes(), interModule: boolean = true): RawEdge[] {
     const displayedEdges: RawEdge[] = []
     for (const edge of this.rawEdges) {
+      if (!interModule && this.isInterModule(edge.source, edge.target)) {
+        continue
+      }
       let newSource = this.findOldestUnexpandParentNodeId(edge.source);
       let newTarget = this.findOldestUnexpandParentNodeId(edge.target);
       if (displayedNodes.includes(newSource) && displayedNodes.includes(newTarget)) {

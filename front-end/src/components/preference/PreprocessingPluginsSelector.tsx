@@ -3,7 +3,8 @@ import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import Typography from '@material-ui/core/Typography';
-import { useGlobalConfigurations, modifyGlobalConfigurations, GlobalConfigurationsModificationType } from '../../store/global-configuration'
+import { useGlobalConfigurations, modifyGlobalConfigurations } from '../../store/global-configuration'
+import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,11 +31,14 @@ const descriptions = {
 
 export default function PreprocessingPluginsSelector() {
   const classes = useStyles();
-  const { preprocessingPlugins } = useGlobalConfigurations()
+  const { preprocessingPlugins, isHiddenInterModuleEdges } = useGlobalConfigurations()
   const handleChange = (key) => () => {
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_PREPROCESSING_PLUGIN, 
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_PREPROCESSING_PLUGIN,
       key)
   };
+  const toggleIsHiddenInterModuleEdges = () => {
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES)
+  }
 
   return (
     <div className={classes.container}>
@@ -48,7 +52,10 @@ export default function PreprocessingPluginsSelector() {
             label={descriptions[key]}
           />)
         )}
-
+        <FormControlLabel
+          control={<Switch checked={isHiddenInterModuleEdges} onChange={toggleIsHiddenInterModuleEdges} />}
+          label={'挖孔式边绑定'}
+        />
       </div>
     </div>
 

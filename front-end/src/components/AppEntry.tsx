@@ -18,7 +18,8 @@ import GraphSelector from './preference/GraphSelector';
 import Diagnosis from './preference/Diagnosis';
 import PreprocessingPluginsSelector from './preference/PreprocessingPluginsSelector'
 import LayoutSelector from './preference/LayoutSelector';
-import { LayoutType, useGlobalConfigurations } from '../store/global-configuration';
+import { useGlobalConfigurations } from '../store/global-configuration';
+import { LayoutType } from "../store/global-configuration.type";
 
 const drawerWidth = 360;
 

@@ -1,13 +1,13 @@
 // 这里开始从pb(即RawGraph)构建数据结构
 import { RawGraph, RawNode } from "./parser";
-import { 
+import {
   NodeDef,
   AbstractNode,
   LayerType,
   OperationNode,
   GroupNode,
-  LayerNode, 
-  DataNode, 
+  LayerNode,
+  DataNode,
   DataType,
   ProcessedGraph,
   OperationNodeImp,
@@ -15,13 +15,15 @@ import {
   DataNodeImp,
   LayerNodeImp,
   ProcessedGraphImp,
-  SCOPE_DELIM, 
-  END_PATTERNS, 
-  VARIABLE_PATTERNS, 
+  SCOPE_DELIM,
+  END_PATTERNS,
+  VARIABLE_PATTERNS,
   LAYER_PATTERNS,
+  NodeType,
 } from "../../../types/processed-graph";
 import { wrapTaskWithTimeLogger } from "../utils";
 
+const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum'])
 
 function testInputOutput(name: string): [number, string] {
   if (!name) {
@@ -49,7 +51,7 @@ function testVariable(op: string) {
 function buildBasicNode(rNode: RawNode): OperationNode | DataNode {
   const { name, op } = rNode;
   const [dataType, displayedName] = testInputOutput(name);
-  const opts = {displayedName};
+  const opts = { displayedName };
   if (dataType >= 0) {
     return new DataNodeImp({
       id: name,
@@ -93,9 +95,9 @@ function genParentScope(name: string): string[] {
 }
 
 
-function genNameMap(oldNames: string[]): {[oldName: string]: string} {
+function genNameMap(oldNames: string[]): { [oldName: string]: string } {
   oldNames = (oldNames || []).sort();
-  let nameMap: {[oldName: string]: string} = Object.create(null);
+  let nameMap: { [oldName: string]: string } = Object.create(null);
 
   for (let i = 0, len = oldNames.length; i < len - 1; i += 1) {
     const oldName = oldNames[i];
@@ -151,12 +153,52 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
 
   let hGraph = buildHierarchy(pGraph);
   // logHierarchy(hGraph);
-
-  return pGraph;
+  buildModule(hGraph)
+  return hGraph;
 }
 
 export function buildGraph(rGraph: RawGraph): Promise<ProcessedGraph> {
   return wrapTaskWithTimeLogger(_buildGraph)(rGraph);
+}
+
+
+function buildModule(hGraph: ProcessedGraph): void {
+  const nodeMap = hGraph.nodeMap;
+  for (const modulePattern of MODULE_PATTERN) {
+    if (nodeMap[modulePattern]) {
+      let module = nodeMap[modulePattern]
+      hGraph.modules.add(module.id)
+      module = module as GroupNode
+      module.isModule = true
+      let queue = [module.id]
+      while(queue.length > 0){
+        const nodeId = queue.shift()
+        const theNode = nodeMap[nodeId]
+        theNode.belongModule = module.id
+        if(theNode.type === NodeType.GROUP || theNode.type === NodeType.LAYER){
+          queue = queue.concat(Array.from((theNode as GroupNode).children))
+        }
+      }
+    }
+  }
+  for(const edge of hGraph.rawEdges) {
+    const sourceNode = nodeMap[edge.source]
+    const targetNode = nodeMap[edge.target]
+    if (sourceNode.belongModule !== null && targetNode.belongModule !== null && sourceNode.belongModule !== targetNode.belongModule){
+      sourceNode.outModuleConnection.add(targetNode.id)
+      targetNode.inModuleConnection.add(sourceNode.id)
+      let moduleEdge = hGraph.moduleEdges.find((moduleEdge => moduleEdge.source === sourceNode.belongModule && moduleEdge.target === targetNode.belongModule))
+      if (moduleEdge === undefined) {
+        hGraph.moduleEdges.push({
+          source: sourceNode.belongModule,
+          target: targetNode.belongModule,
+          width:1
+        })
+      } else {
+        moduleEdge.width += 1
+      }
+    }
+  }
 }
 
 
@@ -194,7 +236,7 @@ function buildAbstractNode(name: string): AbstractNode {
   let splitedScope = name.split(SCOPE_DELIM);
   const tgtName = splitedScope[splitedScope.length - 1];
   const [layerType, displayedName] = testLayerType(tgtName);
-  const opts = {displayedName};
+  const opts = { displayedName };
   if (layerType) {
     return new LayerNodeImp({
       id: name,

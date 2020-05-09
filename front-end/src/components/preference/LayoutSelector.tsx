@@ -4,7 +4,8 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-import { useGlobalConfigurations, modifyGlobalConfigurations, GlobalConfigurationsModificationType, LayoutType } from '../../store/global-configuration';
+import { useGlobalConfigurations, modifyGlobalConfigurations } from '../../store/global-configuration';
+import { GlobalConfigurationsModificationType, LayoutType } from "../../store/global-configuration.type";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

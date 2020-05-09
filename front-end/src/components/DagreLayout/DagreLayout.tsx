@@ -35,9 +35,9 @@ const DagreLayout: React.FC = () => {
                     data={lineChartData}>
                 </LineChart>
             </div>
-            <div className="map-container">
+            {/* <div className="map-container">
                 <MiniMap/>
-            </div>
+            </div> */}
         </div>
     );
 }
