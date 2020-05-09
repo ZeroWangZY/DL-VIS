@@ -29,7 +29,6 @@ interface GraphMetadata {
 }
 
 export default function GraphSelector() {
-  console.log('graph selector act')
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([])
   const [currentGraphIndex, setCurrentGraphIndex] = useState<number>(0)
@@ -48,9 +47,7 @@ export default function GraphSelector() {
   useEffect(() => {
     if (graphMetadatas.length < 1) return
     fetchAndParseGraphData(
-      process.env.PUBLIC_URL + graphMetadatas[currentGraphIndex].url,
-      null
-    )
+      process.env.PUBLIC_URL + graphMetadatas[currentGraphIndex].url, null)
       .then(graph => {
         const simplifier = new SimplifierImp(preprocessingPlugins);
         return simplifier.withTracker()(graph);

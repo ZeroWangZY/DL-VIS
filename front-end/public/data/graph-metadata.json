@@ -1,5 +1,10 @@
 [
   {
+    "name": "backend-pbtxt",
+    "url": "http://127.0.0.1:8000/getPbtxt",
+    "description": "后端获取数据"
+  },
+  {
     "name": "bert",
     "url": "/data/bert.pbtxt",
     "description": "有良好层次信息的BERT，没有标签信息"

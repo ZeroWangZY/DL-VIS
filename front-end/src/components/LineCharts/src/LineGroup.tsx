@@ -27,16 +27,17 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
     this.computed = this.computed.bind(this)
   }
   UNSAFE_componentWillMount() {
-    this.computed()
+    this.computed(this.props)
   }
-  UNSAFE_componentWillReceiveProps() {
-   this.computed()
+  UNSAFE_componentWillReceiveProps(nextProps) {
+   this.computed(nextProps)
   }
-  componentDidUpdate(){
-    // console.log('test')
-  }
+  // componentDidUpdate(){
+  //   // console.log('test')
+  // }
   componentDidMount() {
     const { renderData } = this.state;
+    if(renderData.series.length < 1 || renderData.series[0].data.length<1) return
     const self = this
      d3.select(this.ref).select('rect').on("mousemove", function () {
       let mouseX = d3.mouse((this as any) as SVGSVGElement)[0]
@@ -62,8 +63,8 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
       })
     });
   }
-  computed() {
-    const { width, height, data } = this.props;
+  computed(props) {
+    const { width, height, data } = props;
     const renderData = computeXYScales(data, width, height)
     let legendData = renderData.series.map((line: any) => {
       return {
@@ -94,8 +95,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
   }
 
   render() {
-    // console.log('test')
-    const { width, height, transform, showAxis, showLegend, onSubmit, isInteractive } = this.props;
+    const { width, height, transform, showAxis, showLegend, onSubmit, isInteractive,data } = this.props;
     const { renderData, tooltipData, lineX, toolPosition, legendData } = this.state;
     const lineGenerator = d3.line()
       .x(d => d[0])
@@ -116,7 +116,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
       >
       {style => (
         <path
-          key={id}
+          key={i}
           d={style.d}
           fill="none"
           strokeWidth={1}
@@ -131,7 +131,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
     </g> : "")
     return (
       <g transform={transform} className={'line-chart'} ref={(ref: SVGSVGElement) => this.ref = ref}>
-        {lineX && <line x1={renderData.xScale(lineX)} x2={renderData.xScale(lineX)} y1={height} y2={0} style={{
+        {lineX && <line x1={renderData.xScale(lineX)} x2={renderData.xScale(lineX)} y1={height} y2={15} style={{
           stroke: 'grey',
           strokeWidth: 1,
           strokeDasharray: '3,3'
@@ -154,7 +154,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
           </g>
         )}
         {showLegend && legendData.map((legend, i) =>
-          <g transform={`translate(20,0)`} key={i}>
+          <g transform={`translate(${i*95 + 20},0)`} key={i}>
             <line x1={0} x2={5} stroke={legend.color} />
             <circle cx={9} r={4} stroke={legend.color} fill={'#F1F3F3'}></circle>
             <line x1={13} x2={18} stroke={legend.color} />

@@ -60,9 +60,7 @@ def getLoss(request):
 
 def getPb(request):
     file_read = open(SUMMARY_DIR + '/model.pbtxt',"r+")
-    result = file_read.read()
-    
-    return HttpResponse(json.dumps(result), content_type="application/json")
+    return HttpResponse(file_read, content_type="application/octet-stream")
 
 def get_graph(request):
     data_loader = None

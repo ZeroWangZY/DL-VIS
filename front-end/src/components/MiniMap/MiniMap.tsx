@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { GraphInfoType, TransformType } from '../../types/mini-map'
+import { elModifyType, TransformType } from '../../types/mini-map'
 import { useGraphInfo, useTransform, setTransform, broadTransformChange } from '../../store/graphInfo';
 import * as d3 from 'd3';
 import './MiniMap.css'

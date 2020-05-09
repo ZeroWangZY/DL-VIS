@@ -14,7 +14,7 @@ export class transformImp implements transformData {
     }
 }
 
-export enum GraphInfoType {
+export enum elModifyType {
   UPDATE_NODE
 }
 

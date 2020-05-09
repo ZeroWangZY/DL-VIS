@@ -1,24 +1,22 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "./DagreLayout.css";
 import DagreLayoutGraph from "./DagreLayoutGraph"
 import { LineChart } from '../LineCharts/index'
 import MiniMap from '../MiniMap/MiniMap';
-import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
+import { fetchAndComputeSnaphot } from '../../common/model-level/snaphot'
 
 const DagreLayout: React.FC = () => {
-    // const margin = {left: 10,right: 10, top: 10, bottom: 10}
-    let lineData = mockDataForModelLevel.displayedLineChart.data.map(d => {
-        return {
-            x: d.iteration,
-            y: d.loss
-        }
-    })
+    const [lineData, setLineData] = useState([]);
     const [iteration, setIteration] = useState(0)
     let handleSubmitIteration = function (iteration: number) {
         setIteration(iteration);
     }
-
-    let lineChartData = [{ id: 'snapshot', data: lineData, color: '#9ecae1' }]
+    useEffect(() => {
+        fetchAndComputeSnaphot()
+        .then(data => {
+            setLineData(data)
+        })
+    },[])
     return (
         <div className="container">
             <div className="dagre-container">
@@ -31,8 +29,8 @@ const DagreLayout: React.FC = () => {
                     width={1100}
                     showLegend={true}
                     showAxis={true}
-                    isInteractive={true}
-                    data={lineChartData}>
+                    // isInteractive={true}
+                    data={lineData}>
                 </LineChart>
             </div>
             {/* <div className="map-container">

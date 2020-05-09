@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
-import { NodeType, LayerType, DataType, RawEdge, ModuleEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType } from '../../types/processed-graph'
-import { transformImp, GraphInfoType, TransformType } from '../../types/mini-map'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNodeImp, ModificationType, ModuleEdge } from '../../types/processed-graph'
+import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -15,12 +15,17 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
-import { modifyGraphInfo, setTransform, useTransform, broadTransformChange } from '../../store/graphInfo';
+import { useHistory, useLocation} from "react-router-dom";
+import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphInfo';
 import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
+import { modifyData} from '../../store/layerLevel';
+import { ModifyLineData, LineChartType } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
 // import { mockDataForRender } from '../../mock/mockDataForRender'
 import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
+import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
+import { async } from 'q';
 
 let tmpId = "fc_layer" // 对应205行 todo
 
@@ -49,38 +54,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [hiddenEdges, setHiddenEdges] = useState([]);
 
   const transform = useTransform();
-
-  const arr = mockDataForModelLevel.displayedLineChartForLayerNode;
-  const generateLineData = (nodeId, iteration) => { // 根据nodeId iteration选择数据
-    let res = [];
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i].nodeId === nodeId) {
-        let mean = arr[i].activation[iteration].data.mean.map((d, i) => {
-          return {
-            x: i,
-            y: d
-          }
-        })
-        let min = arr[i].activation[iteration].data.min.map((d, i) => {
-          return {
-            x: i,
-            y: d
-          }
-        })
-        let max = arr[i].activation[iteration].data.max.map((d, i) => {
-          return {
-            x: i,
-            y: d
-          }
-        })
-        res.push({ id: nodeId, data: mean, color: "rgb(98,218,170)" })
-        res.push({ id: nodeId, data: max, color: "rgb(233,108,91" })
-        res.push({ id: nodeId, data: min, color: "rgb(246,192,34)" })
-        break;
-      }
-    }
-    return res;
-  }
+  const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
 
@@ -91,6 +65,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [currentLayertype, setCurrentLayertype] = useState<string>(null);
   const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(true);
   const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState([])
+  const [layerLineChartData, setLayerLineChartData] = useState({})
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -205,7 +180,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     // setGraph(graph);
   }
 
-  const draw = () => {
+  const draw = async() => {
     const graph = new dagre.graphlib.Graph({ compound: true })
       .setGraph({})
       .setDefaultEdgeLabel(function () { return {}; });;
@@ -317,6 +292,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
     setModuleConnection(newModuleConnection);
     setAnchorEl(null);
+    await getLayerInfo(newNodes);
     setNodes(newNodes);
     setEdges(newEdges);
     setGraph(graph);
@@ -366,8 +342,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           type: nodes[nodeId].nodetype,
           expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
           showLineChart: (nodes[nodeId].nodetype === NodeType.LAYER && currentNotShowLineChartID.indexOf(nodeId) < 0) ? true : false,
-          LineData: (nodes[nodeId].nodetype === NodeType.LAYER) ?
-            generateLineData(tmpId, iteration++) : [], // 根据Id和迭代次数 找到折线图数据
+          LineData: (nodes[nodeId].nodetype === NodeType.LAYER) ? layerLineChartData[nodeId]: [],// 根据Id和迭代次数 找到折线图数据
           belongModule,
           moduleHoleFlag,
           moduleHoleType,// 模块是作为输入还是输出，控制module hole所在的y值
@@ -397,10 +372,22 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         }
       })
     }
-    // console.log('generateNodeStyles:', Date.now() - start, 'ms');
     return styles;
   }
-
+  const getLayerInfo = async(nodes) => {
+    for (const nodeId in nodes) {
+      if(nodes[nodeId].nodetype === NodeType.LAYER){
+        let data = await fetchAndGetLayerInfo({
+          "STEP_FROM": iteration - 20,
+          "STEP_TO": iteration + 20,
+          "NODE_ARRAY": [`${nodeId}:0`]
+        })
+        let _lineChartData = {}
+        _lineChartData[nodeId] = data
+        setLayerLineChartData({...layerLineChartData,..._lineChartData})
+      }
+    }
+  } 
   const generateEdgeStyles = () => {
     let start = Date.now();
     let styles = [];
@@ -714,6 +701,19 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     }
   }
 
+  const handleEnterLayer = async () => {
+    let selectedG = d3.select(svgRef.current).selectAll("g.selected");
+    let node = selectedG.node();
+    let nodeId = d3.select(node).attr("id");
+    let lineData = await fetchAndGetLayerInfo({
+          "STEP_FROM": iteration - 20,
+          "STEP_TO": iteration + 20,
+          "NODE_ARRAY": [`${nodeId}:0`]
+        });
+    modifyData(ModifyLineData.UPDATE_Line,lineData)
+    history.push("layer")
+  } 
+
   const brushstart = () => {
     node = d3.select(".nodes").selectAll(".node");
     node.each(function () {
@@ -921,7 +921,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     draw();
     setTimeout(function () {
       // setTransformData(new transformImp())
-      modifyGraphInfo(GraphInfoType.UPDATE_NODE)
+      modifyGraphInfo(elModifyType.UPDATE_NODE)
     }, 1000);
   }, [graphForLayout, isHiddenInterModuleEdges]);
 
@@ -1259,6 +1259,19 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                 </Button>
               </div>
             }
+              <Button
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  style={{
+                    width: '100%',
+                    fontSize: 14,
+                    marginBottom: 5
+                  }}
+                  onClick={handleEnterLayer}
+                >
+                  Layer-level
+                </Button>
             <Button
               variant="outlined"
               color="primary"

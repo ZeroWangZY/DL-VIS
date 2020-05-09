@@ -1,0 +1,23 @@
+.layer-container {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+.return-button{
+    width: 24px;
+}
+.MuiSvgIcon-root{
+    cursor: pointer;
+    transition:color 2s;
+    -webkit-transition:color 2s;
+}
+.MuiSvgIcon-root:hover{
+    color: #eea303;
+}
+.iteration{
+    margin: 0 auto;
+}
+.activation{
+    display: inline-block;
+}
+.tsne-cluster{
+    display: inline-block;
+}
