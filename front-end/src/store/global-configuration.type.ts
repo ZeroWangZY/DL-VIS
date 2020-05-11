@@ -12,7 +12,8 @@ export interface GlobalConfigurations {
 
 export enum LayoutType {
   DAGRE_FOR_TF,
-  TENSORBOARD
+  TENSORBOARD,
+  COLA_FOR_TF
 }
 
 export enum GlobalConfigurationsModificationType {

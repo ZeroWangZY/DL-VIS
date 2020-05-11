@@ -23,9 +23,10 @@ export default function LayoutSelector() {
   const { currentLayout } = useGlobalConfigurations()
   const selections = [
     LayoutType.DAGRE_FOR_TF,
-    LayoutType.TENSORBOARD
+    LayoutType.TENSORBOARD,
+    LayoutType.COLA_FOR_TF
   ]
-  const descriptions = ['tf图的dagre布局', 'TensorBoard布局']
+  const descriptions = ['tf图的dagre布局', 'TensorBoard布局', 'tf图的cola布局']
 
   const handleChange = (event: React.ChangeEvent<{ value: LayoutType }>) => {
     modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_CURRENT_LAYOUT, event.target.value);

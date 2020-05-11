@@ -167,17 +167,15 @@ const AppEntry: React.FC = () => {
       >
         <div className={classes.drawerHeader} />
         <Switch>
-        <Route path="/layer">
-            <LaylerLevel />
-        </Route>
-        <Route path="/">
-        {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
-        {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
-        </Route>
+          <Route path="/layer">
+              <LaylerLevel />
+          </Route>
+          <Route path="/">
+            {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
+            {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
+            {currentLayout === LayoutType.COLA_FOR_TF ? <ColaLayout /> : null}
+          </Route>
         </Switch>
-        {/* <DagreLayout /> */}
-        <ColaLayout />
-        {/* <TensorBoardGraph /> */}
       </main>
     </div>
     </Router>
