@@ -25,7 +25,7 @@ SECRET_KEY = 'v)fdnipbcg#*(w-@(xfgp+y1=9i^rv+1d2+@eo1rip1mz4$vsq'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

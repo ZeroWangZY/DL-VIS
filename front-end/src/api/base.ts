@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const URL_ROOT = 'http://127.0.0.1:8000';
+const URL_ROOT = '';
 
 export default function fireAjax (method, URL, data?) {
   if (method === 'POST') {

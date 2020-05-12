@@ -1,7 +1,7 @@
 [
   {
     "name": "backend-pbtxt",
-    "url": "http://127.0.0.1:8000/getPbtxt",
+    "url": "/api/tf/getPbtxt",
     "description": "后端获取数据"
   },
   {

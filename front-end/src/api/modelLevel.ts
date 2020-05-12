@@ -6,7 +6,7 @@ interface snaphot {
     "TEST_LOSS": number,
     "TEST_ACCURACY": number,
 }
-export const fetchSnaphot = (): Promise<{data: snaphot[]}> => fireAjax('GET', '/modellevel/snaphot');
+export const fetchSnaphot = (): Promise<{data: snaphot[]}> => fireAjax('GET', '/api/tf/modellevel/snaphot');
 
 
 interface layerInfo {
@@ -22,4 +22,4 @@ interface layerParams {
     "STEP_TO": number,
     "NODE_ARRAY": string[]
 }
-export const fetchLayerInfo = (params: layerParams): Promise<{data: layerInfo[]}> => fireAjax('POST', '/modellevel/layerinfo',params);
+export const fetchLayerInfo = (params: layerParams): Promise<{data: layerInfo[]}> => fireAjax('POST', '/api/tf/modellevel/layerinfo',params);

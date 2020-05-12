@@ -19,8 +19,8 @@ from . import views
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    path('modellevel/layerinfo', views.getMiddleResult),
-    path('modellevel/snaphot', views.getLoss),
-    path('getPbtxt', views.getPb),
-    path('get_graph', views.get_graph)
+    path('api/tf/modellevel/layerinfo', views.getMiddleResult),
+    path('api/tf/modellevel/snaphot', views.getLoss),
+    path('api/tf/getPbtxt', views.getPb),
+    path('api/ms/get_graph', views.get_graph)
 ]
