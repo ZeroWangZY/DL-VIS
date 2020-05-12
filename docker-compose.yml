@@ -1,0 +1,26 @@
+version: "3.1"
+
+services:
+  dl-vis-frontend:
+    image: "dl-vis-frontend:0.1"
+    working_dir: /DL_VIS
+    restart: always
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "6001:5000"
+    command: "serve build"
+  dl-vis-backend:
+    image: "dl-vis-backend:0.1"
+    working_dir: /usr/src/app
+    restart: always
+    ports:
+      - "6002:8000"
+    command: "python manage.py runserver 0.0.0.0:8000 --logdir logs"
+  web:
+    image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+    command: [nginx-debug, "-g", "daemon off;"]

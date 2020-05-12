@@ -1,0 +1,5 @@
+FROM node:10
+
+WORKDIR /DL_VIS
+COPY . /DL_VIS
+RUN npm install && npm install serve -g && npm run build

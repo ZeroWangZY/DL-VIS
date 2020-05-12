@@ -25,6 +25,12 @@
 3. 代码检查 & 格式化: `npm run lint:server`
 
 
+## 部署
+
+docker build .\front-end -t dl-vis-frontend:0.1  
+docker build .\back-end -t dl-vis-backend:0.1  
+docker-compose up  
+
 # 代码提交注意事项
 
 https://www.yuque.com/wulx3t/project/npp0cb
