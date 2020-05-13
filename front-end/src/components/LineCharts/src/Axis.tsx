@@ -29,6 +29,7 @@ export default class Axis extends Component<AxisProps,{}> {
     }
   }
   renderAxis () {
+    if(!this.props.scale)  return
     let s =this.props.scale
     const axis = this.getAxisOrient(this.props.orient)
       .ticks(this.props.tickNumber)

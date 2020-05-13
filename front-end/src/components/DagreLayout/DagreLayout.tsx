@@ -29,7 +29,7 @@ const DagreLayout: React.FC = () => {
                     width={1100}
                     showLegend={true}
                     showAxis={true}
-                    // isInteractive={true}
+                    isInteractive={true}
                     data={lineData}>
                 </LineChart>
             </div>

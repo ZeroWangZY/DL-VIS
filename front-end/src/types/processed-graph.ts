@@ -429,4 +429,41 @@ export class ProcessedGraphImp implements ProcessedGraph {
     }
     return displayedEdges;
   }
+
+  private findInnerGraphNodeId(sourceNodeId,targetNodeId){
+    let parent = this.nodeMap[targetNodeId].parent;
+    if (sourceNodeId.includes(targetNodeId)) {
+      return targetNodeId
+    }
+    while (parent && parent !== "___root___") {
+      if (sourceNodeId.includes(parent)) {
+        return parent
+      }
+      parent = this.nodeMap[parent].parent;
+    }
+    return null;
+  }
+  getInnerGraph(nodeId){
+    let nodes = []
+    let edges = [] 
+    if(this.nodeMap[nodeId] instanceof OperationNodeImp){
+        return nodeId
+    }
+    (this.nodeMap[nodeId] as GroupNode).children.forEach(nodeId => nodes.push(nodeId))
+    for (const edge of this.rawEdges) {
+      let source = this.findInnerGraphNodeId(nodes, edge.source);
+      let target = this.findInnerGraphNodeId(nodes, edge.target);
+      if(!source || !target ||source ===target){
+        continue
+      }
+      edges.push({
+        source,
+        target
+      })
+    }
+    return {
+      nodes,
+      edges
+    }
+  }
 }

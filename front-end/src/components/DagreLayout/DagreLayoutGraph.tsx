@@ -20,14 +20,9 @@ import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphIn
 import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData} from '../../store/layerLevel';
-import { ModifyLineData, LineChartType } from '../../types/layerLevel'
+import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
-// import { mockDataForRender } from '../../mock/mockDataForRender'
-import { mockDataForModelLevel } from '../../mock/mockDataForModelLevel'
 import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
-import { async } from 'q';
-
-let tmpId = "fc_layer" // 对应205行 todo
 
 // hidden edges连线颜色由source-target决定
 const colorMap = d3.scaleOrdinal().range( [
@@ -342,7 +337,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           type: nodes[nodeId].nodetype,
           expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
           showLineChart: (nodes[nodeId].nodetype === NodeType.LAYER && currentNotShowLineChartID.indexOf(nodeId) < 0) ? true : false,
-          LineData: (nodes[nodeId].nodetype === NodeType.LAYER) ? layerLineChartData[nodeId]: [],// 根据Id和迭代次数 找到折线图数据
+          LineData: (layerLineChartData[nodeId]) ? layerLineChartData[nodeId]: [],// 根据Id和迭代次数 找到折线图数据
           belongModule,
           moduleHoleFlag,
           moduleHoleType,// 模块是作为输入还是输出，控制module hole所在的y值
@@ -375,18 +370,17 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     return styles;
   }
   const getLayerInfo = async(nodes) => {
+    let _lineChartData = {}
     for (const nodeId in nodes) {
       if(nodes[nodeId].nodetype === NodeType.LAYER){
         let data = await fetchAndGetLayerInfo({
-          "STEP_FROM": iteration - 20,
-          "STEP_TO": iteration + 20,
-          "NODE_ARRAY": [`${nodeId}:0`]
-        })
-        let _lineChartData = {}
+          "STEP_FROM": iteration,
+          "STEP_TO": iteration + 20
+        },nodeId,graphForLayout)
         _lineChartData[nodeId] = data
-        setLayerLineChartData({...layerLineChartData,..._lineChartData})
       }
     }
+    setLayerLineChartData(_lineChartData)
   } 
   const generateEdgeStyles = () => {
     let start = Date.now();
@@ -706,10 +700,9 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     let node = selectedG.node();
     let nodeId = d3.select(node).attr("id");
     let lineData = await fetchAndGetLayerInfo({
-          "STEP_FROM": iteration - 20,
-          "STEP_TO": iteration + 20,
-          "NODE_ARRAY": [`${nodeId}:0`]
-        });
+          "STEP_FROM": iteration,
+          "STEP_TO": iteration + 100
+        },nodeId,graphForLayout);
     modifyData(ModifyLineData.UPDATE_Line,lineData)
     history.push("layer")
   } 

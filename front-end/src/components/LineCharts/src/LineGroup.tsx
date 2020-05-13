@@ -97,6 +97,7 @@ export default class LineGroup extends Component<LineChartProps, LineGroupState>
   render() {
     const { width, height, transform, showAxis, showLegend, onSubmit, isInteractive,data } = this.props;
     const { renderData, tooltipData, lineX, toolPosition, legendData } = this.state;
+    if(data.length < 1) return(<g/>)
     const lineGenerator = d3.line()
       .x(d => d[0])
       .y(d => d[1])

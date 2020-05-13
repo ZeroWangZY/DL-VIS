@@ -53,7 +53,7 @@ export const linearScale = (
   
     let minValue = values.min;
     let maxValue = values.max;
-    maxValue = axis === 'y' ? parseInt(maxValue * 1.2): maxValue;
+    maxValue = axis === 'y' ? parseFloat(maxValue * 1.2): maxValue;
  
     const scale = scaleLinear()
       .rangeRound(axis === 'x' ? [0, size] : [size, 0])

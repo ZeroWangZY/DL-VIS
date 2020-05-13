@@ -46,7 +46,7 @@ const LayerLevel: React.FC = () => {
             <div
              style={{
                 padding: '40px 0px'
-            }}>>
+            }}>
                 <ActivationChart activations={activations}/>
                 <TsneClusterGraph activations={tsneGraph}/>
             </div>

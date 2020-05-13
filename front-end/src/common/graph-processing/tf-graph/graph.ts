@@ -150,8 +150,9 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
     }
   }
   // return pGraph;
-
+  // console.log(pGraph)
   let hGraph = buildHierarchy(pGraph);
+  // console.log(hGraph)
   // logHierarchy(hGraph);
   buildModule(hGraph)
   return hGraph;
