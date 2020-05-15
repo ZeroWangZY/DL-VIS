@@ -8,7 +8,8 @@ import sqlite3
 import os
 from graph.data_access.loaders.data_loader import DataLoader
 from graph.data_access.common.enums import PluginNameEnum
-
+from graph.data_access.proto_files import anf_ir_pb2
+from google.protobuf import json_format
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 # print("summary path is: {}".format(SUMMARY_DIR))
@@ -84,3 +85,19 @@ def get_graph(request):
         }), content_type="application/json")
         response.status_code = 500
         return response
+
+def get_local_ms_graph(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        f = open("ms-graph/" + graph_name + ".pb", "rb")
+        model = anf_ir_pb2.ModelProto()
+        model.ParseFromString(f.read())
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": json.loads(json_format.MessageToJson(model.graph))
+        }), content_type="application/json")
+
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
