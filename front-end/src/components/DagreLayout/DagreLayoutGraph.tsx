@@ -276,6 +276,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     start = Date.now()
     graph.graph().nodesep = 50;
     graph.graph().ranksep = 100;
+    graph.graph().rankdir = "LR"
+    graph.graph().acyclicer = "greedy"
+    graph.graph().renker = "longest-path"
+    // graph.graph().align = "DL"
     dagre.layout(graph);
     // console.log('dagre.layout:', Date.now() - start, 'ms');
 

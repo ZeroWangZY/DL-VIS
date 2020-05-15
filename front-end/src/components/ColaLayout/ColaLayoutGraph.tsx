@@ -16,6 +16,7 @@ import {
   broadcastGraphChange,
 } from "../../store/useProcessedGraph";
 import { group } from "d3";
+import { Layout } from "./layout";
 
 const ColaLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
@@ -24,6 +25,8 @@ const ColaLayoutGraph: React.FC = () => {
   const [groups, setGroups] = useState([]);
   const [nodes, setNodes] = useState([]);
   const [transform, setTransform] = useState(null);
+  const [reRenderFlag, setReRenderFlag] = useState({});
+  const [colaInstance, setColaInstance] = useState(null);
   const svgRef = useRef();
   const outputRef = useRef();
 
@@ -108,6 +111,10 @@ const ColaLayoutGraph: React.FC = () => {
         width: Math.max(node.displayedName.length, 3) * 10,
         height: 50,
       };
+      let oldNode = nodes.find((node) => node.name === newNode.name)
+      if (oldNode){
+        newNode = Object.assign(oldNode, newNode)
+      }
       newNodes.push(newNode);
     }
     const grouppadding = 30;
@@ -152,25 +159,40 @@ const ColaLayoutGraph: React.FC = () => {
 
     console.log("start Cola layout...");
     let start = Date.now();
+    let colaLayout = new Layout();
+    setColaInstance(colaLayout);
+    colaLayout.on("tick", function () {
+      console.log("tick")
+      setNodes(graph.nodes);
+      setLinks(graph.links);
+      setGroups(graph.groups);
+      setGroupsObj(groupsObj);
+    });
 
-    let colaLayout = new cola.Layout()
+    colaLayout
       .size([700, 700])
-      .linkDistance(150)
+      .linkDistance(100)
       .avoidOverlaps(true)
       .nodes(graph.nodes)
       .links(graph.links)
       .groups(graph.groups)
-      .constraints(graph.constraints)
-      .groupCompactness(30)
-      .convergenceThreshold(1e-9)
       .flowLayout("y", 100)
-      .start(10, 10, 10);
+      .constraints(graph.constraints)
+      .groupCompactness(30);
+    // .convergenceThreshold(1e-9)
+    
+    colaLayout.start(0, 0, 0, 0, false);
+    setInterval(() => {
+      setReRenderFlag({});
+    }, 100);
+    // colaLayout.tick()
+    // .start();
 
-    console.log("cola.layout:", (Date.now() - start) / 1000, "s");
-    setNodes(graph.nodes);
-    setLinks(graph.links);
-    setGroups(graph.groups);
-    setGroupsObj(groupsObj);
+    // console.log("cola.layout:", (Date.now() - start) / 1000, "s");
+    // setNodes(graph.nodes);
+    // setLinks(graph.links);
+    // setGroups(graph.groups);
+    // setGroupsObj(groupsObj);
   };
 
   const generateNodeStyles = () => {
@@ -248,6 +270,15 @@ const ColaLayoutGraph: React.FC = () => {
     }
     return styles;
   };
+
+  useEffect(() => {
+    if (colaInstance === null) return;
+    colaInstance.tick();
+    // setNodes(colaInstance._nodes);
+    // setLinks(colaInstance._links);
+    // setGroups(colaInstance._groups);
+    // setGroupsObj(groupsObj);
+  }, [reRenderFlag]);
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
