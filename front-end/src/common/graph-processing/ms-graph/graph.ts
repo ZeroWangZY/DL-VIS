@@ -22,6 +22,8 @@ import {
 } from "../../../types/processed-graph";
 // import { wrapTaskWithTimeLogger } from "../utils";
 
+let emptyNodeName = []
+
 function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataNode {
   const outputs = rGraph.outputs;
   // const splitedScope = rNode.scope.split(SCOPE_DELIM)
@@ -56,7 +58,6 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataN
 function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   const pGraph = new ProcessedGraphImp();
   const rNodes = rGraph.node;
-  let inputNodeMap = new Map(); // key是node.name value是node的所有input节点 组成的set;  value的格式是：input.id+"_Input2_"+node.id
 
   let parameterNodeName = [], constValNodeName = [];
   for (let parameter of rGraph.parameters)
@@ -74,6 +75,7 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
     // 构建边 同时构建parameters和constVals节点
     const inputs = rNode.input || [];
     for (let input of inputs) {
+      if (input.name === "9220") continue;
       let newId = input.name;
       let parameterNode = parameterNodeName.indexOf(input.name) >= 0 ? true : false;
       let constValNode = constValNodeName.indexOf(input.name) >= 0 ? true : false;
@@ -174,13 +176,18 @@ export function buildHierarchy(rGraph: RawGraph, pGraph: ProcessedGraph, inputNo
         prevNode.children.add(curNodeName);
         curNode.parent = prevNode.id;
 
-        for (let input of inputs) { // 只会在i===len时调用循环，所以复杂度不是O(n^3) 对于它的输入建立层次
-          if (inputNodeName.indexOf(input.name) >= 0)
-            curNodeName = input.name + "_Input2_" + node.name
-          curNode = nodeMap[curNodeName];
-          prevNode.children.add(curNode.id);
-          curNode.parent = prevNode.id;
-        }
+        if (inputs !== undefined)
+          for (let input of inputs) { // 只会在i===len时调用循环，所以复杂度不是O(n^3) 对于它的输入建立层次
+            if (input.name === "9220") {
+              console.log(node)
+              continue;
+            }
+            if (inputNodeName.indexOf(input.name) >= 0)
+              curNodeName = input.name + "_Input2_" + node.name
+            curNode = nodeMap[curNodeName];
+            prevNode.children.add(curNode.id);
+            curNode.parent = prevNode.id;
+          }
 
         break;
       }
@@ -210,8 +217,29 @@ export function buildHierarchy(rGraph: RawGraph, pGraph: ProcessedGraph, inputNo
   return pGraph
 }
 
+function preProcessing(rGraph: RawGraph) {
+  // 1、去除node为空的节点
+  let nodes = rGraph.node;
+  let nodeNumber = nodes.length;
+  let numberToBeDeletedFromTail = 0
+
+  let indexToBeDeleted = [];
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    if (Object.keys(nodes[i]).length === 0) {
+      indexToBeDeleted.push(i);
+      continue;
+    }
+  }
+
+  for (let idx of indexToBeDeleted) {
+    nodes.splice(idx, 1)
+  }
+}
+
 export function buildMsGraph(rGraph: RawGraph): ProcessedGraph {
+  preProcessing(rGraph)
   let pGraph = _buildGraph(rGraph)
+
   return pGraph
   // return wrapTaskWithTimeLogger(_buildMsGraph)(rGraph);
 }

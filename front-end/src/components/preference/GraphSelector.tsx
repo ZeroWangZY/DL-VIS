@@ -64,10 +64,8 @@ export default function GraphSelector() {
   useEffect(() => {
     if (currentLayout !== LayoutType.DAGRE_FOR_MS) return; // MSGraph
 
-    //TODO: bert_finetune、mobilenetv2有问题
     fetchLocalMsGraph(msGraphMetadatas[currentMsGraphIndex].name).then(RawData => {
       let ParsedGraph = RawData.data.data; // 处理
-      console.log(ParsedGraph)
       const hGraph = buildMsGraph(ParsedGraph);
       setProcessedGraph(hGraph)
     })
@@ -95,9 +93,8 @@ export default function GraphSelector() {
   return (
     <div>
       <FormControl className={classes.formControl}>
-        {(currentLayout === LayoutType.DAGRE_FOR_MS || currentLayout === LayoutType.DAGRE_FOR_TF)
-          && <InputLabel id="graph-selector">current graph</InputLabel>}
-        {currentLayout === LayoutType.DAGRE_FOR_TF &&
+        <InputLabel id="graph-selector">current graph</InputLabel>
+        {(currentLayout === LayoutType.DAGRE_FOR_TF || currentLayout === LayoutType.TENSORBOARD) &&
           <Select
             labelId="graph-selector"
             value={currentTfGraphIndex}
@@ -120,7 +117,7 @@ export default function GraphSelector() {
           </Select>
         }
 
-        {currentLayout === LayoutType.DAGRE_FOR_TF &&
+        {(currentLayout === LayoutType.DAGRE_FOR_TF || currentLayout === LayoutType.TENSORBOARD) &&
           graphMetadatas.length > 0 && graphMetadatas[currentTfGraphIndex].description !== undefined ?
           <FormHelperText>description: {graphMetadatas[currentTfGraphIndex].description}</FormHelperText> :
           null}
