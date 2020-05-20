@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const URL_ROOT = '';
 
-export default function fireAjax(method, URL, graphName?, data?) {
+export default function fireAjax(method, URL, data?) {
   if (method === 'POST') {
     return axios
       .post(URL_ROOT + URL, data)
@@ -14,8 +14,7 @@ export default function fireAjax(method, URL, graphName?, data?) {
     return axios
       .get(URL_ROOT + URL, {
         params: {
-          data: data,
-          graph_name: graphName
+          ...data
         }
       })
       .then(({ data }) => ({ data: data }))
