@@ -5,10 +5,10 @@ let listeners = []
 let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: true,
   preprocessingPlugins: {
-    pruneByOutput: true,
-    replaceVariable: true,
-    pruneByDefaultPatterns: true,
-    renameVariable: true
+    pruneByOutput: false,
+    replaceVariable: false,
+    pruneByDefaultPatterns: false,
+    renameVariable: false
   },
   isHiddenInterModuleEdges: false,
   currentLayout: LayoutType.DAGRE_FOR_TF

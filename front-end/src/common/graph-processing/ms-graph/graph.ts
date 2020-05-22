@@ -19,10 +19,11 @@ import {
   END_PATTERNS,
   VARIABLE_PATTERNS,
   LAYER_PATTERNS,
+  NodeType,
 } from "../../../types/processed-graph";
 // import { wrapTaskWithTimeLogger } from "../utils";
 
-let emptyNodeName = []
+const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
 
 function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataNode {
   const outputs = rGraph.outputs;
@@ -54,6 +55,45 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataN
 //   key: string;
 //   value: Set<String>;
 // }
+
+function buildModule(hGraph: ProcessedGraph): void {
+  const nodeMap = hGraph.nodeMap;
+  for (const modulePattern of MODULE_PATTERN) {
+    if (nodeMap[modulePattern]) {
+      let module = nodeMap[modulePattern]
+      hGraph.modules.add(module.id)
+      module = module as GroupNode
+      module.isModule = true
+      let queue = [module.id]
+      while(queue.length > 0){
+        const nodeId = queue.shift()
+        const theNode = nodeMap[nodeId]
+        theNode.belongModule = module.id
+        if(theNode.type === NodeType.GROUP || theNode.type === NodeType.LAYER){
+          queue = queue.concat(Array.from((theNode as GroupNode).children))
+        }
+      }
+    }
+  }
+  for(const edge of hGraph.rawEdges) {
+    const sourceNode = nodeMap[edge.source]
+    const targetNode = nodeMap[edge.target]
+    if (sourceNode.belongModule !== null && targetNode.belongModule !== null && sourceNode.belongModule !== targetNode.belongModule){
+      sourceNode.outModuleConnection.add(targetNode.id)
+      targetNode.inModuleConnection.add(sourceNode.id)
+      let moduleEdge = hGraph.moduleEdges.find((moduleEdge => moduleEdge.source === sourceNode.belongModule && moduleEdge.target === targetNode.belongModule))
+      if (moduleEdge === undefined) {
+        hGraph.moduleEdges.push({
+          source: sourceNode.belongModule,
+          target: targetNode.belongModule,
+          width:1
+        })
+      } else {
+        moduleEdge.width += 1
+      }
+    }
+  }
+}
 
 function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   const pGraph = new ProcessedGraphImp();
@@ -128,6 +168,7 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
 
   let inputNodeName = [...parameterNodeName, ...constValNodeName];
   buildHierarchy(rGraph, pGraph, inputNodeName) // 构建层次
+  buildModule(pGraph)
 
   return pGraph;
 }

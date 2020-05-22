@@ -23,7 +23,7 @@ import {
 } from "../../../types/processed-graph";
 import { wrapTaskWithTimeLogger } from "../utils";
 
-const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum'])
+const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
 
 function testInputOutput(name: string): [number, string] {
   if (!name) {
