@@ -25,12 +25,14 @@ import { LineGroup } from '../LineCharts/index'
 import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
 
 // hidden edges连线颜色由source-target决定
-const colorMap = d3.scaleOrdinal().range([
-  // "#173f5f",
+const colorMap = d3.scaleOrdinal().range( [
   "#20639b",
   "#3CAEA3",
   "#f6d55c",
-  "#ed553b",
+  "#ed553b", 
+  "#173f5f",
+  "#ff7400",
+  "#86b32d"
 ]);
 const getColor = function (moduleId: string): string {
   let resColor = colorMap(moduleId) as string;
@@ -431,8 +433,9 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       const inModuleConnection = moduleConnection.hasOwnProperty(nodeId) ? Array.from(moduleConnection[nodeId]["in"]) : [];
       const outModuleConnection = moduleConnection.hasOwnProperty(nodeId) ? Array.from(moduleConnection[nodeId]["out"]) : [];
       // 小短线的位置配置
-      const nodeHoleInEdgeEndXArray = inModuleConnection.map((d, i) => nodes[nodeId].width * 0.2 * (i + 1));
-      const nodeHoleOutEdgeStartXArray = outModuleConnection.map((d, i) => nodes[nodeId].width * 0.2 * (i + 1));
+      const inModuleConnectionLength = inModuleConnection.length, outModuleConnectionLength = outModuleConnection.length;
+      const nodeHoleInEdgeEndXArray = inModuleConnection.map((d,i) => nodes[nodeId].width * 0.5 * (i+1) / (inModuleConnectionLength + 1));
+      const nodeHoleOutEdgeStartXArray = outModuleConnection.map((d,i) => nodes[nodeId].width * 0.5 * (i+1) / (outModuleConnectionLength + 1));
       const nodeHoleInEdgeStartX = nodes[nodeId].width * 0.4;
       const nodeHoleInEdgeEndY = -nodes[nodeId].height * 0.5;
       const nodeHoleInEdgeStartY = -nodes[nodeId].height * 1.5;
@@ -441,18 +444,19 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       const nodeHoleOutEdgeEndY = nodes[nodeId].height * 1.5;
 
       const belongModule = nodeMap[nodeId] ? nodeMap[nodeId].belongModule : null;
-
+      const nestedModuleForColor = (nodeMap[belongModule] && (nodeMap[belongModule] as GroupNode).parentModule) ?  (nodeMap[belongModule] as GroupNode).parentModule: belongModule;
       styles.push({
         key: nodeId,
         data: {
           class: nodes[nodeId].class,
-          id: nodeId.replace(/\//g, '-'), //把"/"换成"-"，因为querySelector的Id不能带/
+          id: nodeId.replace(/\//g, '-').replace(/\(|\)/g, ''), //把"/"换成"-"，括号删除，因为querySelector的Id不能带/
           label: nodes[nodeId].label,
           type: nodes[nodeId].nodetype,
           expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
           showLineChart: (nodes[nodeId].nodetype === NodeType.LAYER && currentNotShowLineChartID.indexOf(nodeId) < 0) ? true : false,
           LineData: (layerLineChartData[nodeId]) ? layerLineChartData[nodeId] : [],// 根据Id和迭代次数 找到折线图数据
           belongModule,
+          nestedModuleForColor,
           moduleHoleFlag,
           moduleHoleType,// 模块是作为输入还是输出，控制module hole所在的y值
           inModuleConnection,
@@ -529,7 +533,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       const { source, target, width } = edge;
       const sourceNode = nodes[source];
       const targetNode = nodes[target];
-      if (!sourceNode || !targetNode) break;
+      if (!sourceNode || !targetNode) continue;
 
       colorMapDomain.push(`${source}-${target}`)
       let sourceX: number = sourceNode.x + sourceNode.width * 0.5 - 10;
@@ -537,7 +541,12 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       let targetX: number = targetNode.x + targetNode.width * 0.5 - 10;
       let targetY: number = targetNode.y + ((targetNode.class.indexOf('cluster') > -1) ? -targetNode.height * 0.5 + 10 : 0);
 
-      let interPoint1 = { x: (sourceX + targetX) * 0.5 + 20, y: (sourceY + targetY) * 0.5 + 10 };
+      let interPoint1 = {x: (sourceX + targetX) * 0.5 + 20, y: (sourceY + targetY) * 0.5 + 10};
+
+      // 端点的椭圆需要旋转的角度
+      let tan = (targetY - sourceY) / (targetX - sourceX);
+      let ellipseRotateAngle = Math.round(Math.atan(tan) / (Math.PI / 180));
+
       styles.push({
         key: `${source}-${target}`,
         data: {
@@ -550,7 +559,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           startPointY: spring(sourceY),
           endPointX: spring(targetX),
           endPointY: spring(targetY),
-          width: spring(width)
+          width: spring(width),
+          ellipseRotateAngle
         }
       });
     }
@@ -867,12 +877,19 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }
 
 
+  // 根据hover的source和target判断是否显示这条隐藏的边
   const addEdgetoDisplay = (edgesToAdd: Array<ModuleEdge>, newHiddenEdges: Array<ModuleEdge>, source: string, target: string) => {
+    const { nodeMap } = graphForLayout;
     for (const edge of edgesToAdd) {
+      const edgeSourceNode = nodeMap[edge.source];
+      const edgeTargetNode = nodeMap[edge.target];
+
       // 过滤掉模块间的边 以及与其他模块的边
       if ((edge.source === source || edge.target === target)
         || (edge.source.indexOf(source) < 0 && edge.target.indexOf(target) < 0)
-        || (modulesId.has(edge.source) && modulesId.has(edge.target))) {
+        || (modulesId.has(edge.source) && modulesId.has(edge.target) && edgeSourceNode instanceof GroupNodeImp && !edgeSourceNode.parentModule && edgeTargetNode instanceof GroupNodeImp && !edgeTargetNode.parentModule)
+        || (edge.source === target && edgeTargetNode instanceof GroupNodeImp && edgeTargetNode.expanded) // 如果是已经展开的节点和其所在模块的连线 跳过
+        || (edge.target === source && edgeSourceNode instanceof GroupNodeImp && edgeSourceNode.expanded)) {
         continue;
       }
       // 去重
@@ -911,6 +928,22 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         edge["endPointX"] = targetNode.x + targetNode.width * 0.4;
         edge["endPointY"] = targetNode.y - targetNode.height * 1.5;
       }
+      // 中间的插值点 目前设置的是三个点：中点、四分之一点偏移、四分之三点偏移
+      let interPoints = [];
+      const xDiff = edge["endPointX"] - edge["startPointX"], yDiff = edge["endPointY"] - edge["startPointY"];
+      const [midX, midY]  = [(edge["startPointX"] + edge["endPointX"]) * 0.5, (edge["startPointY"] + edge["endPointY"]) * 0.5];
+      const [quarter1X, quarter1Y] = [
+        edge["startPointX"] + xDiff * 0.25,
+        edge["startPointY"] + yDiff * 0.25
+      ];
+      const [quarter2X, quarter2Y] = [
+        edge["startPointX"] + xDiff * 0.75,
+        edge["startPointY"] + yDiff * 0.75
+      ];
+      interPoints.push({x: quarter1X + xDiff * 0.2, y: quarter1Y});
+      interPoints.push({x: midX, y: midY});
+      interPoints.push({x: quarter2X - xDiff * 0.2, y: quarter2Y});
+      edge["interPoints"]= interPoints;
     }
   }
 
@@ -920,46 +953,122 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     const target = d3.select(e.target).attr("data-target");
     const { nodeMap } = graphForLayout;
     let sourceNode = nodeMap[source] as GroupNode, targetNode = nodeMap[target] as GroupNode;
-    // 如果两个module都没有展开 不做任何操作
+    
+    d3.selectAll("g.node").classed("hover-transparent", true);
+    d3.selectAll("g.edgePath").classed("hover-transparent", true);
+    d3.selectAll("g.moduleEdgePath").classed("hover-transparent", true);
+    // hover的连线不加透明度
+    d3.select(e.target.parentNode).classed("hover-transparent", false);
+    // 如果两个module都没有展开
     if (!sourceNode.expanded && !targetNode.expanded) {
-      return;
+      // 这两个module不加透明度
+      d3.select(`#${source.replace(/\//g, '-')}`).classed("hover-transparent", false);
+      d3.select(`#${target.replace(/\//g, '-')}`).classed("hover-transparent", false);
+    } else { // 有module展开了
+      const displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
+
+      let newHiddenEdges = [];
+      let connectedNodes = new Set();// 有相关连线的节点
+      displayedNodes.forEach(d => {
+        if (d in moduleConnection && (moduleConnection[d].in.has(source) || moduleConnection[d].out.has(target))) {
+          const inHiddenEdges = graphForLayout.getInHiddenEdges(d), outHiddenEdges = graphForLayout.getOutHiddenEdges(d);
+          // 根据hover的source和target过滤边
+          addEdgetoDisplay(inHiddenEdges, newHiddenEdges, source, target);
+          addEdgetoDisplay(outHiddenEdges, newHiddenEdges, source, target);
+        }
+        
+      })
+      // 获取相关节点
+      newHiddenEdges.forEach(edge => {
+        connectedNodes.add(edge.source);
+        connectedNodes.add(edge.target);
+      })
+      if (sourceNode.expanded) {
+        connectedNodes.delete(source);
+      } else {
+        connectedNodes.add(source)
+      }
+      if (targetNode.expanded) {
+        connectedNodes.delete(target);
+      } else {
+        connectedNodes.add(target)
+      }
+      // 相关的节点和边全部b不加透明度
+      connectedNodes.forEach((n: string) => {
+        const id = n.replace(/\//g, '-').replace(/\(|\)/g, '');
+        d3.select(`#${id}`).classed("hover-transparent", false);
+      })
+      // 获取线的坐标位置
+      getHiddenEdgesPos(newHiddenEdges);
+      setHiddenEdges(newHiddenEdges);
     }
-    const displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
-
-    let newHiddenEdges = [];
-    displayedNodes.forEach(d => {
-      const inHiddenEdges = graphForLayout.getInHiddenEdges(d), outHiddenEdges = graphForLayout.getOutHiddenEdges(d);
-      // console.log(d, source, target, inHiddenEdges, outHiddenEdges)
-
-      // 根据hover的source和target过滤边
-      addEdgetoDisplay(inHiddenEdges, newHiddenEdges, source, target);
-      addEdgetoDisplay(outHiddenEdges, newHiddenEdges, source, target);
-    })
-    // console.log(newHiddenEdges);
-    getHiddenEdgesPos(newHiddenEdges);
-    // console.log(source, target, newHiddenEdges);
-    setHiddenEdges(newHiddenEdges);
   }
 
   const handleHiddenEdgeMouseout = () => {
+    d3.selectAll("g.node").classed("hover-transparent", false);
+    d3.selectAll("g.edgePath").classed("hover-transparent", false);
+    d3.selectAll("g.moduleEdgePath").classed("hover-transparent", false);
     setHiddenEdges([]);
   }
 
   // hover附属于节点的小孔
   const handleNodeHoleMouseover = (e) => {
+    const { nodeMap } = graphForLayout;
     const nodeId = d3.select(e.target).attr("data-id");
     const nodeEdgeType = d3.select(e.target).attr("data-type");// hover的是in circle 还是out circle,分别对应边的target和source
 
     let newHiddenEdges = [];
 
+    d3.selectAll("g.node").classed("hover-transparent", true);
+    d3.selectAll("g.edgePath").classed("hover-transparent", true);
+    d3.selectAll("g.moduleEdgePath").classed("hover-transparent", true);
+    // hover的节点
+    d3.select(`#${nodeId.replace(/\//g, '-').replace(/\(|\)/g, '')}`).classed("hover-transparent", false);
+
     let allHiddenEdges = (nodeEdgeType === "source") ? graphForLayout.getOutHiddenEdges(nodeId) : graphForLayout.getInHiddenEdges(nodeId);
+    let connectedNodes = new Set(), displayedModuleEdge = new Set();
+    
     for (const edge of allHiddenEdges) {
-      // 过滤掉模块间的边 以及与其他模块的边
-      if (modulesId.has(edge.source) && modulesId.has(edge.target)) {
+      const sourceNode = nodeMap[edge.source], targetNode = nodeMap[edge.target];
+      // 过滤掉模块间的边
+      if (modulesId.has(edge.source) && modulesId.has(edge.target)
+        && sourceNode instanceof GroupNodeImp && !sourceNode.parentModule
+        && targetNode instanceof GroupNodeImp && !targetNode.parentModule) {
+        displayedModuleEdge.add(edge); // 相关的模块间的边不加透明度
         continue;
       }
       newHiddenEdges.push(Object.assign({}, edge));
     }
+
+    // 获取connectedNodes
+    newHiddenEdges.forEach((edge) => {
+      if (!modulesId.has(edge.source)) {
+        connectedNodes.add(edge.source.replace(/\//g, '-').replace(/\(|\)/g, ''));
+      }
+      if (!modulesId.has(edge.target)) {
+        connectedNodes.add(edge.target.replace(/\//g, '-').replace(/\(|\)/g, ''));
+      }
+    })
+
+    // 相关的节点和边全部b不加透明度
+    displayedModuleEdge.forEach((edge: RawEdge) => {
+      const sourceNode = nodeMap[edge.source] as GroupNode;
+      const targetNode = nodeMap[edge.target] as GroupNode;
+      const source = edge.source.replace(/\//g, '-').replace(/\(|\)/g, ''), target = edge.target.replace(/\//g, '-').replace(/\(|\)/g, '');
+      // 如果模块没有展开 则也不加透明度
+      if (!sourceNode.expanded) {
+        connectedNodes.add(source);
+      }
+      if (!targetNode.expanded) {
+        connectedNodes.add(target);
+      }
+      d3.select(`#${source}-${target}`).classed("hover-transparent", false);
+
+    })
+    connectedNodes.forEach((n: string) => {
+      d3.select(`#${n}`).classed("hover-transparent", false);
+    })
+
     getHiddenEdgesPos(newHiddenEdges);
     setHiddenEdges(newHiddenEdges);
   }
@@ -970,20 +1079,67 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     const nodeId = d3.select(e.target).attr("data-id");
     const nodeEdgeType = d3.select(e.target).attr("data-type");
     const connectedModule = d3.select(e.target).attr("data-connectedmodule");
-    const hoveredNode = nodeMap[nodeId];
+    let hoveredNode = nodeMap[nodeId];
+    let hoveredNodeRootModule = hoveredNode.belongModule;
+    if (hoveredNode.type === NodeType.GROUP || hoveredNode.type !== NodeType.LAYER) {
+      hoveredNode = hoveredNode as GroupNode;
+      if (hoveredNode.parentModule) {
+        hoveredNodeRootModule = hoveredNode.parentModule
+      }
+    }
+    d3.selectAll("g.node").classed("hover-transparent", true);
+    d3.selectAll("g.edgePath").classed("hover-transparent", true);
+    d3.selectAll("g.moduleEdgePath").classed("hover-transparent", true);
+    // hover的节点
+    d3.select(`#${nodeId.replace(/\//g, '-').replace(/\(|\)/g, '')}`).classed("hover-transparent", false);
+
     let newHiddenEdges = [];
+    let connectedNodes = new Set(), displayedModuleEdge = new Set();
 
     let allHiddenEdges = (nodeEdgeType === "source") ? graphForLayout.getOutHiddenEdges(nodeId) : graphForLayout.getInHiddenEdges(nodeId);
     let connectedModuleType = (nodeEdgeType === "source") ? "target" : "source";
     for (const edge of allHiddenEdges) {
-      // 过滤掉模块间的边 提取当前hover小短线的连接
       if ((modulesId.has(edge.source) && modulesId.has(edge.target))
-        || ((edge[nodeEdgeType] !== connectedModule && edge[connectedModuleType] !== hoveredNode.belongModule))) {
+        && (edge[connectedModuleType] === connectedModule)) {
+        displayedModuleEdge.add(edge);
+      }
+      const sourceNode = nodeMap[edge.source], targetNode = nodeMap[edge.target];
+      // 过滤掉模块间的边 提取当前hover小短线的连接
+      if ((modulesId.has(edge.source) && modulesId.has(edge.target) && sourceNode instanceof GroupNodeImp && !sourceNode.parentModule
+      && targetNode instanceof GroupNodeImp && !targetNode.parentModule)
+            || ((edge[nodeEdgeType] !== connectedModule && edge[connectedModuleType] !== hoveredNodeRootModule))) {
         continue;
       }
       newHiddenEdges.push(Object.assign({}, edge));
     }
-    // console.log(nodeEdgeType, connectedModule, newHiddenEdges)
+
+    // 获取connectedNodes
+    newHiddenEdges.forEach((edge) => {
+      if (!modulesId.has(edge.source)) {
+        connectedNodes.add(edge.source.replace(/\//g, '-').replace(/\(|\)/g, ''));
+      }
+      if (!modulesId.has(edge.target)) {
+        connectedNodes.add(edge.target.replace(/\//g, '-').replace(/\(|\)/g, ''));
+      }
+    })
+
+    // 相关的节点和边全部b不加透明度
+    displayedModuleEdge.forEach((edge: RawEdge) => {
+      const sourceNode = nodeMap[edge.source] as GroupNode;
+      const targetNode = nodeMap[edge.target] as GroupNode;
+      const source = edge.source.replace(/\//g, '-').replace(/\(|\)/g, ''), target = edge.target.replace(/\//g, '-').replace(/\(|\)/g, '');
+      // 如果模块没有展开 则也不加透明度
+      if (!sourceNode.expanded) {
+        connectedNodes.add(source);
+      }
+      if (!targetNode.expanded) {
+        connectedNodes.add(target);
+      }
+      d3.select(`#${source}-${target}`).classed("hover-transparent", false);
+    })
+    connectedNodes.forEach((n: string) => {
+      d3.select(`#${n}`).classed("hover-transparent", false);
+    })
     getHiddenEdgesPos(newHiddenEdges);
     setHiddenEdges(newHiddenEdges);
   }
@@ -1083,6 +1239,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                       return (
                         <g
                           className={`node ${d.data.class}`}
+                          data-belong_module={d.data.belongModule}
                           id={d.data.id}
                           key={d.key}
                           transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
@@ -1141,7 +1298,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                                   d.data.inInterPoint[i],
                                   { x: d.data.nodeHoleInEdgeEndXArray[i], y: d.style.nodeHoleInEdgeEndY }
                                 ])}
-                                stroke={getColor(`${nodeHole}-${d.data.belongModule}`)}
+                                stroke={getColor(`${nodeHole}-${d.data.nestedModuleForColor}`)}
                                 data-id={d.key}
                                 data-type={"target"}
                                 data-connectedmodule={nodeHole}
@@ -1168,7 +1325,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                                   d.data.outInterPoint[i],
                                   { x: d.style.nodeHoleOutEdgeEndX, y: d.style.nodeHoleOutEdgeEndY }
                                 ])}
-                                stroke={getColor(`${d.data.belongModule}-${nodeHole}`)}
+                                stroke={getColor(`${d.data.nestedModuleForColor}-${nodeHole}`)}
                                 data-id={d.key}
                                 data-type={"source"}
                                 data-connectedmodule={nodeHole}
@@ -1205,7 +1362,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                 {interpolatedStyles => (
                   <g className="moduleEdgePaths">
                     {interpolatedStyles.map((d, i) => (
-                      <g className="moduleEdgePath" key={d.key}>
+                      <g className="moduleEdgePath" key={d.key} id={`${d.data.source.replace(/\//g, '-').replace(/\(|\)/g, '')}-${d.data.target.replace(/\//g, '-').replace(/\(|\)/g, '')}`}>
                         <path
                           d={line.curve(d3.curveBasis)([
                             { x: d.style.startPointX, y: d.style.startPointY },
@@ -1217,7 +1374,28 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                           data-source={d.data.source}
                           data-target={d.data.target}
                           onMouseOver={(e) => handleModuleEdgeMouseover(e)}
-                          onMouseOut={handleHiddenEdgeMouseout}></path>
+                          onMouseOut={handleHiddenEdgeMouseout}
+                          ></path>
+                        <ellipse
+                          cx={d.style.startPointX}
+                          cy={d.style.startPointY}
+                          rx={Math.sqrt(d.style.width) / 4 - 0.2}
+                          ry={Math.sqrt(d.style.width) / 8}
+                          strokeWidth="0.4"
+                          stroke={getColor(`${d.data.source}-${d.data.target}`)}
+                          fill="#fff"
+                          transform={`rotate(${90 + d.style.ellipseRotateAngle}, ${d.style.startPointX}, ${d.style.startPointY})`}
+                        />
+                        <ellipse
+                          cx={d.style.endPointX}
+                          cy={d.style.endPointY}
+                          rx={Math.sqrt(d.style.width) / 4 - 0.2}
+                          ry={Math.sqrt(d.style.width) / 8}
+                          strokeWidth="0.4"
+                          stroke={getColor(`${d.data.source}-${d.data.target}`)}
+                          fill="#fff"
+                          transform={`rotate(${90 + d.style.ellipseRotateAngle}, ${d.style.endPointX}, ${d.style.endPointY})`}
+                        />
                       </g>
                     ))}
                   </g>
@@ -1225,7 +1403,14 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
               </TransitionMotion>}
               <g className="hiddenEdges">
                 {hiddenEdges.map((d) => (
-                  <line key={`${d.source}-${d.target}`} x1={d.startPointX} y1={d.startPointY} x2={d.endPointX} y2={d.endPointY}></line>
+                  <path
+                    key={`${d.source}-${d.target}`}
+                    d={line.curve(d3.curveBasis)([
+                      { x: d.startPointX, y: d.startPointY },
+                      ...d.interPoints,
+                      { x: d.endPointX, y: d.endPointY }
+                    ])}
+                  ></path>
                 ))}
               </g>
             </g>

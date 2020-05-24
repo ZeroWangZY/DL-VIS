@@ -241,6 +241,13 @@
   stroke-width: 2px;
 }
 
-.hiddenEdges line {
-  stroke: #ea7575;
+.hiddenEdges path {
+  fill: none;
+  stroke: #afafaf;
+  stroke-width: 2px;
+  stroke-opacity: 0.5;
+}
+
+.hover-transparent {
+  opacity: 0.4;
 }

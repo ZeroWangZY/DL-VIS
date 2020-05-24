@@ -57,6 +57,7 @@ export interface GroupNode extends BaseNode {
   children: Set<NodeId>;
   expanded: boolean;  // group是否被展开 
   isModule: boolean;
+  parentModule: NodeId; // 如果是位于module中的嵌套module
 }
 
 export interface LayerNode extends GroupNode {
@@ -130,12 +131,13 @@ export class GroupNodeImp implements GroupNode {
   expanded: boolean;  // group是否被展开
   visibility: boolean = true;
   isModule: boolean;
+  parentModule: NodeId;
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
 
-  constructor({ id, children, parent, opts = {}, isModule = false }:
-    { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef; isModule?: boolean }) {
+  constructor({ id, children, parent, opts = {}, isModule = false, parentModule = null }:
+    { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.GROUP;
@@ -143,6 +145,7 @@ export class GroupNodeImp implements GroupNode {
     this.children = children || new Set();
     this.expanded = false;
     this.isModule = isModule;
+    this.parentModule = parentModule;
     this.outModuleConnection = new Set()
     this.inModuleConnection = new Set()
   }
@@ -158,12 +161,13 @@ export class LayerNodeImp implements LayerNode {
   layerType: LayerType;
   visibility: boolean = true;
   isModule: boolean;
+  parentModule: NodeId;
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
 
-  constructor({ id, layerType, children, parent, opts = {}, isModule = false }:
-    { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef; isModule?: boolean }) {
+  constructor({ id, layerType, children, parent, opts = {}, isModule = false, parentModule = null }:
+    { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.LAYER;
@@ -172,6 +176,7 @@ export class LayerNodeImp implements LayerNode {
     this.expanded = false;
     this.layerType = layerType;
     this.isModule = isModule;
+    this.parentModule = parentModule;
     this.outModuleConnection = new Set()
     this.inModuleConnection = new Set()
   }
@@ -224,7 +229,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
       return new Set()
     }
     node = node as GroupNode
-    if (node.isModule) {
+    if (node.isModule && !node.parentModule) {
       return new Set()
     }
     if (node.inModuleConnection.size > 0) {
@@ -255,7 +260,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
       return new Set()
     }
     node = node as GroupNode
-    if (node.isModule) {
+    if (node.isModule && !node.parentModule) {
       return new Set()
     }
     if (node.outModuleConnection.size > 0) {
@@ -283,7 +288,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
 
     const node = this.nodeMap[nodeId];
     // 如果是group node或layer node 且 已展开 没有小短线
-    if (!("children" in node) || !node.expanded) {
+    if (!("children" in node) || !node.expanded && !node.isModule) {
       let inModuleConnection = this.getInModuleConnection(nodeId);
       let outModuleConnection = this.getOutModuleConnection(nodeId);
       inModuleConnection.forEach(d => {
@@ -308,6 +313,36 @@ export class ProcessedGraphImp implements ProcessedGraph {
         }
         displayedOutModuleConnection.add(targetModule)
       })
+    } else if (!node.expanded && node.parentModule) { // 如果是没有展开的 并且是嵌套的module节点,有小短线
+      let inModuleConnection = this.getInModuleConnection(nodeId);
+      let outModuleConnection = this.getOutModuleConnection(nodeId);
+      const nodeBelongModule = node.belongModule;
+      inModuleConnection.forEach(d => {
+        let targetNode = this.nodeMap[d];
+        let targetModule = targetNode.belongModule;
+        if (!targetModule) {
+          targetNode = targetNode as GroupNode;
+          if (targetNode.isModule) {
+            targetModule = d;
+          }
+        }
+        if (!this.isSameScope(nodeBelongModule, targetModule)) {
+          displayedInModuleConnection.add(targetModule);
+        }
+      })
+      outModuleConnection.forEach(d => {
+        let targetNode = this.nodeMap[d];
+        let targetModule = targetNode.belongModule;
+        if (!targetModule) {
+          targetNode = targetNode as GroupNode;
+          if (targetNode.isModule) {
+            targetModule = d;
+          }
+        }
+        if (!this.isSameScope(nodeBelongModule, targetModule)) {
+          displayedOutModuleConnection.add(targetModule)
+        }
+      })
     }
     return {
       in: displayedInModuleConnection,
@@ -325,12 +360,18 @@ export class ProcessedGraphImp implements ProcessedGraph {
       if (oldestUnexpandParent.belongModule !== inModuleNode.belongModule) {
         continue
       }
+      const curNodeParentModule = (this.nodeMap[currentNode.belongModule] as GroupNode).parentModule;
       if (!((oldestUnexpandParent.type === NodeType.GROUP || oldestUnexpandParent.type === NodeType.LAYER)
         && (oldestUnexpandParent as GroupNode).isModule)) { 
         this.insertModuleEdge(res, oldestUnexpandParent.id, inModuleNode.belongModule)
       }
-      this.insertModuleEdge(res, inModuleNode.belongModule, currentNode.belongModule)
-      this.insertModuleEdge(res, currentNode.belongModule, nodeId)
+      this.insertModuleEdge(res, inModuleNode.belongModule, curNodeParentModule? curNodeParentModule : currentNode.belongModule)
+      if (nodeId !== currentNode.belongModule) {
+        this.insertModuleEdge(res, currentNode.belongModule, nodeId)
+      } else if (curNodeParentModule) {
+        this.insertModuleEdge(res, curNodeParentModule, nodeId);
+      }
+      
     }
     return res
   }
@@ -344,8 +385,15 @@ export class ProcessedGraphImp implements ProcessedGraph {
       if (oldestUnexpandParent.belongModule !== outModuleNode.belongModule) {
         continue
       }
-      this.insertModuleEdge(res, nodeId, currentNode.belongModule)
-      this.insertModuleEdge(res, currentNode.belongModule, outModuleNode.belongModule)
+
+      const curNodeParentModule = (this.nodeMap[currentNode.belongModule] as GroupNode).parentModule;
+      if (nodeId !== currentNode.belongModule) {
+        this.insertModuleEdge(res, nodeId, currentNode.belongModule)
+      } else if (curNodeParentModule) {
+        this.insertModuleEdge(res, nodeId, curNodeParentModule);
+      }
+      
+      this.insertModuleEdge(res, curNodeParentModule ? curNodeParentModule : currentNode.belongModule, outModuleNode.belongModule)
       if (!((oldestUnexpandParent.type === NodeType.GROUP || oldestUnexpandParent.type === NodeType.LAYER)
         && (oldestUnexpandParent as GroupNode).isModule)) { 
         this.insertModuleEdge(res, outModuleNode.belongModule, oldestUnexpandParent.id)
@@ -382,7 +430,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
     let oldestUnexpandParent = targetNodeId
     let parent = this.nodeMap[oldestUnexpandParent].parent;
 
-    while (parent && parent !== "___root___") {
+    while (parent && parent !== ROOT_SCOPE) {
       if (!this.nodeMap[parent]["expanded"]) {
         oldestUnexpandParent = parent;
       }
@@ -391,10 +439,23 @@ export class ProcessedGraphImp implements ProcessedGraph {
     return oldestUnexpandParent;
   }
 
+  // 判断两个节点是否在同一个scope下
+  private isSameScope(nodeId1: NodeId, nodeId2: NodeId): boolean{
+    if (nodeId1 === nodeId2) return true;
+    const node1ScopeArray = nodeId1.split('/'), node2ScopeArray = nodeId2.split('/');
+    if (node1ScopeArray[0] === node2ScopeArray[0]) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private isInterModule(nodeId1: NodeId, nodeId2: NodeId): boolean {
-    return this.nodeMap[nodeId1].belongModule !== null
-      && this.nodeMap[nodeId2].belongModule !== null
-      && this.nodeMap[nodeId1].belongModule !== this.nodeMap[nodeId2].belongModule
+    const node1BelongModule = this.nodeMap[nodeId1].belongModule, node2BelongModule = this.nodeMap[nodeId2].belongModule;
+    if (!node1BelongModule || !node2BelongModule) return false;
+    const parent1 = this.nodeMap[node1BelongModule].parent, parent2 = this.nodeMap[node2BelongModule].parent;
+    return (node1BelongModule !== node2BelongModule && parent1 === parent2) //同一scope下同一层的不同模块间的边
+     || (node1BelongModule !== node2BelongModule && !this.isSameScope(nodeId1, nodeId2) && parent1 !== parent2) // 不同scope下的不同模块间的边
   }
 
   getDisplayedNodes(): NodeId[] {
