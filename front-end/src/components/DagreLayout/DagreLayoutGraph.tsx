@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType } from '../../types/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType} from '../../types/processed-graph'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -22,7 +22,7 @@ import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData } from '../../store/layerLevel';
 import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
-import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
+import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot' 
 
 // hidden edges连线颜色由source-target决定
 const colorMap = d3.scaleOrdinal().range( [
@@ -90,21 +90,43 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
   const toggleExpanded = id => {
     id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    let node = graphForLayout.nodeMap[id];
-    if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
-      return
-    }
-    node = node as GroupNode;
-    const currentExpanded = node.expanded;
-    modifyProcessedGraph(
-      ModificationType.MODIFY_NODE_ATTR,
-      {
-        nodeId: id,
-        modifyOptions: {
-          expanded: !currentExpanded
-        }
+    while(1){
+      let node = graphForLayout.nodeMap[id];
+      if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
+        return
       }
-    );
+
+      node = node as GroupNode;
+        const currentExpanded = node.expanded;
+        modifyProcessedGraph(
+          ModificationType.MODIFY_NODE_ATTR,
+          {
+            nodeId: id,
+            modifyOptions: {
+              expanded: !currentExpanded
+            }
+          }
+        );
+      var i = 0;
+      let childnodeId = id;
+      node.children.forEach(childId =>{
+        let childNode = graphForLayout.nodeMap[childId];
+        if (childNode.type == NodeType.GROUP){
+            i++;
+            childnodeId = childNode.id;
+        }
+        
+      })
+      if(i==1){
+        // let childnodeId=Array.from(node.children)[0];
+        id = childnodeId;
+
+      }
+      else break;
+    }
+    
+    
+   
 
     /**
      测了一下，动态地添加节点和边不会节省计算时间，dagre依然是把所有的节点和边重新计算一遍。
@@ -820,6 +842,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }
 
   const handleEnterLayer = async () => {
+    alert
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     let node = selectedG.node();
     let nodeId = d3.select(node).attr("id");
