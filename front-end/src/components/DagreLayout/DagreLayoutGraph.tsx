@@ -17,34 +17,20 @@ import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
 import { useHistory, useLocation } from "react-router-dom";
 import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphInfo';
-import { useProcessedGraph, modifyProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph';
+import { useProcessedGraph, modifyProcessedGraph } from '../../store/useProcessedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData } from '../../store/layerLevel';
 import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
-import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot' 
+import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
+import { generateNodeStyles, generateEdgeStyles, getColor, generateAcrossModuleEdgeStyles } from '../../common/style/graph';
 
-// hidden edges连线颜色由source-target决定
-const colorMap = d3.scaleOrdinal().range( [
-  "#20639b",
-  "#3CAEA3",
-  "#f6d55c",
-  "#ed553b", 
-  "#173f5f",
-  "#ff7400",
-  "#86b32d"
-]);
-const getColor = function (moduleId: string): string {
-  let resColor = colorMap(moduleId) as string;
-  return resColor;
-}
 
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
   let iteration = props.iteration
   const graphForLayout = useProcessedGraph();
   const modulesId = graphForLayout.modules;
   const { diagnosisMode, isHiddenInterModuleEdges } = useGlobalConfigurations();
-  const [graph, setGraph] = useState();
   const [edges, setEdges] = useState({});
   const [nodes, setNodes] = useState({});
   const [moduleConnection, setModuleConnection] = useState({});
@@ -124,79 +110,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       }
       else break;
     }
-    
-    
-   
-
-    /**
-     测了一下，动态地添加节点和边不会节省计算时间，dagre依然是把所有的节点和边重新计算一遍。
-     所以暂时把这一段注释掉了
-    */
-    // 如果展开孩子
-    // if (node.expanded) {
-    //   // 把孩子节点加入 指定parent
-    //   node.children.forEach(childId => {
-    //     let chileNode = graphForLayout.nodeMap[childId];
-    //     graph.setNode(childId, {
-    //       id: childId,
-    //       label: chileNode.displayedName,
-    //       shape: chileNode.type === NodeType.OPERTATION ? 'ellipse' : 'rect',
-    //       class: `nodetype-${chileNode.type}`,
-    //       // clusterLabelPos: 'top',
-    //       width: chileNode.displayedName.length * 10,
-    //       height: 50
-    //     });
-    //     graph.setParent(childId, id);
-    //   });
-
-    //   // 删去连在父节点的边
-    //   let inEdges = graph.inEdges(id), outEdges = graph.outEdges(id);
-    //   inEdges.forEach(inEdge => {
-    //     graph.removeEdge(inEdge)
-    //   });
-    //   outEdges.forEach(outEdge => {
-    //     graph.removeEdge(outEdge)
-    //   });
-
-    // } else {// 如果关上
-    //   // 删除子节点  应该循环删除所有 todo
-    //   node.children.forEach(childId => {
-    //     graph.removeNode(childId);// 子节点的边也自动删除了
-    //   });
-    //   // graph.removeNode(id);
-    //   // 重新获得父节点的大小
-    //   graph.setNode(id, {
-    //     id: id,
-    //     label: node.displayedName,
-    //     shape: node.type === NodeType.OPERTATION ? 'ellipse' : 'rect',
-    //     class: `nodetype-${node.type}`,
-    //     // clusterLabelPos: 'top',
-    //     width: node.displayedName.length * 10,
-    //     height: 50
-    //   });
-    // }
-    // // draw()
-    // const displayedEdges: Array<RawEdge> = graphForLayout.getDisplayedEdges(graph.nodes());
-    // for (const {source, target} of displayedEdges) {
-    //   // 如果之前没存在这条边 加进去
-    //   if(!graph.hasEdge(source, target)) {
-    //     graph.setEdge(source, target);
-    //   }
-    // }
-    // // 重新布局算位置
-    // dagre.layout(graph);
-    // let newNodes = {}, newEdges = {};
-    // graph.nodes().forEach(function(v) {
-    //   newNodes[v] = graph.node(v);
-    // });
-    // graph.edges().forEach(function(edge) {
-    //   newEdges[`${edge.v}-${edge.w}`] = graph.edge(edge);
-    // });
-    // newNodes[id].class = (node.expanded) ?  newNodes[id].class + " cluster" : newNodes[id].class.split("")[0];
-    // // 重新render
-    // setNodes(newNodes);
-    // setEdges(newEdges);
-    // setGraph(graph);
   }
 
   const draw = async () => {
@@ -296,17 +209,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       });
     }
 
-    // 配置module之间的边 让dagre布局时把这些边考虑进来 渲染时不画出来  to solve：展开时会报错
-    // if(isHiddenInterModuleEdges) {
-    //   for (const edge of moduleEdges) {
-    //     graph.setEdge(edge.source, edge.target, {
-    //       arrowheadStyle: 'fill: #333; stroke: #333;',
-    //       arrowhead: 'vee'
-    //     });
-    //   }
-    // }
-    // console.log('setNode and set Edge:', Date.now() - start, 'ms');
-
     start = Date.now()
     graph.graph().nodesep = 50;
     graph.graph().ranksep = 100;
@@ -325,93 +227,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       sourceNode.y = destNode.y;
     })
 
-    // // TODO
-    // // 1. 根据附属节点的个数，计算节点位置
-    // // 2. 调整节点的父节点的size: 根据"1" 计算出来的结果。重新设置size
-    // // 3. 调整label到节点的左侧
-
-    // parentScope.forEach((scope) => {
-    //   let nodeInfo = graph.node(scope) // 父节点
-    //   let childNode = nodeMap[scope as string]["children"]; // 子节点
-
-    //   let auxiliaryNodesMap = new Map(); // key是nodeId value是附属节点数组
-    //   childNode.forEach((nodeName) => {
-    //     let sourceAndTarget = nodeName.split("_Input2_");
-    //     if (sourceAndTarget.length === 2) { // [source, target]
-    //       if (auxiliaryNodesMap.has(sourceAndTarget[1])) {
-    //         auxiliaryNodesMap.get(sourceAndTarget[1]).push(nodeName)
-    //       } else {
-    //         auxiliaryNodesMap.set(sourceAndTarget[1], [nodeName])
-    //       }
-    //     }
-    //   })
-
-    //   // TODO : 更改auxiliaryNodesMap中所有的节点
-    //   let maxWidth = nodeInfo.width; // 最后改变nodeInfo.width
-    //   let nodeGap = 3; // 节点上下的距离
-    //   auxiliaryNodesMap.forEach((sources, target) => {// sources为数组
-    //     // 获取边：graph.edge(edgeObj) edgeObj:{v:" ", w:" "}
-    //     let nums = sources.length;
-    //     if (nums === 1) {
-    //       let sourceNode = graph.node(sources[0]);
-    //       let destNode = graph.node(target);
-    //       let edgeInfo = graph.edge({ v: sources[0], w: target })
-
-    //       sourceNode.y = destNode.y
-    //       sourceNode.x = destNode.x - destNode.width / 2 - 3 * auxiliaryNodesSize.width / 2;
-    //       edgeInfo.points = [ // 改变有向边
-    //         { x: sourceNode.x + auxiliaryNodesSize.width / 2, y: sourceNode.y },
-    //         { x: destNode.x - destNode.width / 2, y: destNode.y }
-    //       ]
-    //     } else if (nums % 2 === 0) { // 偶数
-    //       let sign = -1;
-    //       for (let i = 0; i < nums; i++) {
-    //         let sourceNode = graph.node(sources[i]);
-    //         let destNode = graph.node(target);
-    //         let edgeInfo = graph.edge({ v: sources[i], w: target })
-    //         let k = Math.floor(i / 2) + 1;
-    //         let x = destNode.x - destNode.width / 2 - 3 * sourceNode.width / 2;
-    //         //offset = (3+10) * k + 10*(k-1) (附属节点高为20，nodeGap为3)
-    //         let offset = (nodeGap + auxiliaryNodesSize.height / 2) * k + auxiliaryNodesSize.height / 2 * (k - 1)
-    //         offset *= sign;
-    //         sign *= -1;
-    //         let y = destNode.y + offset;
-
-    //         sourceNode.y = y;
-    //         sourceNode.x = x;
-    //         edgeInfo.points = [ // 改变有向边
-    //           { x: sourceNode.x + auxiliaryNodesSize.width / 2, y: sourceNode.y },
-    //           { x: destNode.x - destNode.width / 2, y: destNode.y }
-    //         ]
-    //       }
-    //     } else if (nums % 2 === 1) {
-    //       let sign = -1;
-    //       for (let i = 0; i < nums; i++) {
-    //         let sourceNode = graph.node(sources[i]);
-    //         let destNode = graph.node(target);
-    //         let edgeInfo = graph.edge({ v: sources[i], w: target })
-    //         let k = Math.floor((i + 1) / 2);
-    //         let x = destNode.x - destNode.width / 2 - 3 * sourceNode.width / 2;
-    //         //offset = (3+10) * k + 10*(k-1) (附属节点高为20，nodeGap为3)
-    //         let offset = (nodeGap + auxiliaryNodesSize.height / 2) * k + auxiliaryNodesSize.height / 2 * (k - 1)
-    //         offset *= sign;
-    //         sign *= -1;
-    //         if(i === 0) offset = 0;
-    //         let y = destNode.y + offset;
-
-    //         sourceNode.y = y;
-    //         sourceNode.x = x;
-    //         edgeInfo.points = [ // 改变有向边
-    //           { x: sourceNode.x + auxiliaryNodesSize.width / 2, y: sourceNode.y },
-    //           { x: destNode.x - destNode.width / 2, y: destNode.y }
-    //         ]
-    //       }
-    //     }
-    //   })
-    // })
-
-    // console.log('dagre.layout:', Date.now() - start, 'ms');
-
     let newNodes = {}, newEdges = {};
 
     start = Date.now()
@@ -428,87 +243,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     await getLayerInfo(newNodes);
     setNodes(newNodes);
     setEdges(newEdges);
-    setGraph(graph);
   }
 
-  const generateNodeStyles = () => {
-    const { moduleEdges, nodeMap } = graphForLayout;
-    let start = Date.now();
-    let styles = [];
-    for (const nodeId in nodes) {
-      const moduleHoleFlag = modulesId.has(nodeId);
-      let moduleHoleType = [];
-      // 有可能既是in又是Out
-      let inFlag = false, outFlag = false;
-      if (moduleHoleFlag) {
-        for (const edge of moduleEdges) {
-          if (edge.source === nodeId) {
-            outFlag = true;
-          } else if (edge.target === nodeId) {
-            inFlag = true;
-          }
-        }
-      }
-      if (inFlag) moduleHoleType.push("in");
-      if (outFlag) moduleHoleType.push("out");
-
-      const inModuleConnection = moduleConnection.hasOwnProperty(nodeId) ? Array.from(moduleConnection[nodeId]["in"]) : [];
-      const outModuleConnection = moduleConnection.hasOwnProperty(nodeId) ? Array.from(moduleConnection[nodeId]["out"]) : [];
-      // 小短线的位置配置
-      const inModuleConnectionLength = inModuleConnection.length, outModuleConnectionLength = outModuleConnection.length;
-      const nodeHoleInEdgeEndXArray = inModuleConnection.map((d,i) => nodes[nodeId].width * 0.5 * (i+1) / (inModuleConnectionLength + 1));
-      const nodeHoleOutEdgeStartXArray = outModuleConnection.map((d,i) => nodes[nodeId].width * 0.5 * (i+1) / (outModuleConnectionLength + 1));
-      const nodeHoleInEdgeStartX = nodes[nodeId].width * 0.4;
-      const nodeHoleInEdgeEndY = -nodes[nodeId].height * 0.5;
-      const nodeHoleInEdgeStartY = -nodes[nodeId].height * 1.5;
-      const nodeHoleOutEdgeStartY = nodes[nodeId].height * 0.5;
-      const nodeHoleOutEdgeEndX = nodes[nodeId].width * 0.4;
-      const nodeHoleOutEdgeEndY = nodes[nodeId].height * 1.5;
-
-      const belongModule = nodeMap[nodeId] ? nodeMap[nodeId].belongModule : null;
-      const nestedModuleForColor = (nodeMap[belongModule] && (nodeMap[belongModule] as GroupNode).parentModule) ?  (nodeMap[belongModule] as GroupNode).parentModule: belongModule;
-      styles.push({
-        key: nodeId,
-        data: {
-          class: nodes[nodeId].class,
-          id: nodeId.replace(/\//g, '-').replace(/\(|\)/g, ''), //把"/"换成"-"，括号删除，因为querySelector的Id不能带/
-          label: nodes[nodeId].label,
-          type: nodes[nodeId].nodetype,
-          expanded: (nodes[nodeId].nodetype === NodeType.LAYER) ? nodes[nodeId]["expanded"] : null,
-          showLineChart: (nodes[nodeId].nodetype === NodeType.LAYER && currentNotShowLineChartID.indexOf(nodeId) < 0) ? true : false,
-          LineData: (layerLineChartData[nodeId]) ? layerLineChartData[nodeId] : [],// 根据Id和迭代次数 找到折线图数据
-          belongModule,
-          nestedModuleForColor,
-          moduleHoleFlag,
-          moduleHoleType,// 模块是作为输入还是输出，控制module hole所在的y值
-          inModuleConnection,
-          outModuleConnection,
-          nodeHoleInEdgeEndXArray,
-          nodeHoleOutEdgeStartXArray,
-          // 中间插值的点
-          inInterPoint: nodeHoleInEdgeEndXArray.map(d => { return { x: (d + nodeHoleInEdgeStartX) * 0.5 - 5, y: (nodeHoleInEdgeEndY + nodeHoleInEdgeStartY) * 0.5 } }),
-          outInterPoint: nodeHoleOutEdgeStartXArray.map(d => { return { x: (d + nodeHoleOutEdgeEndX) * 0.5 - 5, y: (nodeHoleOutEdgeEndY + nodeHoleOutEdgeStartY) * 0.5 } })
-        },
-        style: {
-          gNodeTransX: spring(nodes[nodeId].x),
-          gNodeTransY: spring(nodes[nodeId].y),
-          rectHeight: spring(nodes[nodeId].height),
-          rectWidth: spring(nodes[nodeId].width),
-          ellipseX: spring(-nodes[nodeId].width / 2),
-          ellipseY: spring(-nodes[nodeId].height / 2),
-          // 指向节点的小短线
-          nodeHoleInEdgeStartX: spring(nodeHoleInEdgeStartX),
-          nodeHoleInEdgeStartY: spring(nodeHoleInEdgeStartY),
-          nodeHoleInEdgeEndY: spring(nodeHoleInEdgeEndY),
-          // 节点指出的小短线
-          nodeHoleOutEdgeStartY: spring(nodeHoleOutEdgeStartY),
-          nodeHoleOutEdgeEndX: spring(nodeHoleOutEdgeEndX),
-          nodeHoleOutEdgeEndY: spring(nodeHoleOutEdgeEndY),
-        }
-      })
-    }
-    return styles;
-  }
   const getLayerInfo = async (nodes) => {
     let _lineChartData = {}
     for (const nodeId in nodes) {
@@ -521,74 +257,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       }
     }
     setLayerLineChartData(_lineChartData)
-  }
-  const generateEdgeStyles = () => {
-    let start = Date.now();
-    let styles = [];
-    for (const edgeId in edges) {
-      const pointNum = edges[edgeId].points.length;
-      const startPoint = edges[edgeId].points[0];
-      const endPoint = edges[edgeId].points[pointNum - 1];
-      let restPoints = edges[edgeId].points.slice(1, pointNum - 1);
-      styles.push({
-        key: edgeId,
-        data: {
-          lineData: restPoints
-        },
-        style: {
-          startPointX: spring(startPoint.x),
-          startPointY: spring(startPoint.y),
-          endPointX: spring(endPoint.x),
-          endPointY: spring(endPoint.y),
-        }
-      });
-    }
-    // console.log('generateEdgeStyles:', Date.now() - start, 'ms');
-    return styles;
-  }
-
-  const generateAcrossModuleEdgeStyles = () => {
-    const { moduleEdges } = graphForLayout;
-    const colorMapDomain = [];
-    let styles = [];
-    for (const edge of moduleEdges) {
-      const { source, target, width } = edge;
-      const sourceNode = nodes[source];
-      const targetNode = nodes[target];
-      if (!sourceNode || !targetNode) continue;
-
-      colorMapDomain.push(`${source}-${target}`)
-      let sourceX: number = sourceNode.x + sourceNode.width * 0.5 - 10;
-      let sourceY: number = sourceNode.y + ((sourceNode.class.indexOf('cluster') > -1) ? sourceNode.height * 0.5 - 10 : 0);
-      let targetX: number = targetNode.x + targetNode.width * 0.5 - 10;
-      let targetY: number = targetNode.y + ((targetNode.class.indexOf('cluster') > -1) ? -targetNode.height * 0.5 + 10 : 0);
-
-      let interPoint1 = {x: (sourceX + targetX) * 0.5 + 20, y: (sourceY + targetY) * 0.5 + 10};
-
-      // 端点的椭圆需要旋转的角度
-      let tan = (targetY - sourceY) / (targetX - sourceX);
-      let ellipseRotateAngle = Math.round(Math.atan(tan) / (Math.PI / 180));
-
-      styles.push({
-        key: `${source}-${target}`,
-        data: {
-          interPoints: [interPoint1],
-          source,
-          target
-        },
-        style: {
-          startPointX: spring(sourceX),
-          startPointY: spring(sourceY),
-          endPointX: spring(targetX),
-          endPointY: spring(targetY),
-          width: spring(width),
-          ellipseRotateAngle
-        }
-      });
-    }
-
-    colorMap.domain(colorMapDomain);
-    return styles;
   }
 
   // 聚合多个节点
@@ -661,12 +329,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       // 折线图默认全部显示，不显示的节点Id存在数组里
       if (diagnosisMode && currentShowLineChart === false && currentNotShowLineChartID.indexOf(nodeId) < 0) {
         setCurrentNotShowLineChartID([...currentNotShowLineChartID, nodeId])
-        broadcastGraphChange();
       } else if (diagnosisMode && currentShowLineChart === true && currentNotShowLineChartID.indexOf(nodeId) >= 0) {
         let pos = currentNotShowLineChartID.indexOf(nodeId)
         currentNotShowLineChartID.splice(pos, 1)
         setCurrentNotShowLineChartID(currentNotShowLineChartID)
-        broadcastGraphChange();
       }
       if (oldNode.type !== currentNodetype) {// 修改了节点类型
         let opts = { displayedName: oldNode.displayedName };
@@ -1255,7 +921,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
               transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
             >
               {/* <g className='clusters'></g> */}
-              <TransitionMotion styles={generateNodeStyles()}>
+              <TransitionMotion styles={generateNodeStyles(graphForLayout, nodes, moduleConnection, layerLineChartData, currentNotShowLineChartID)}>
                 {interpolatedStyles => (
                   <g className='nodes' onContextMenu={(e) => handleRightClick(e)}>
                     {interpolatedStyles.map(d => {
@@ -1364,7 +1030,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                   </g>
                 )}
               </TransitionMotion>
-              <TransitionMotion styles={generateEdgeStyles()}>
+              <TransitionMotion styles={generateEdgeStyles(edges)}>
                 {interpolatedStyles => (
                   <g className='edgePaths'>
                     {interpolatedStyles.map(d => (
@@ -1381,7 +1047,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                   </g>
                 )}
               </TransitionMotion>
-              {isHiddenInterModuleEdges && <TransitionMotion styles={generateAcrossModuleEdgeStyles()}>
+              {isHiddenInterModuleEdges && <TransitionMotion styles={generateAcrossModuleEdgeStyles(graphForLayout, nodes)}>
                 {interpolatedStyles => (
                   <g className="moduleEdgePaths">
                     {interpolatedStyles.map((d, i) => (
