@@ -14,14 +14,27 @@ import {
   broadcastGraphChange,
 } from "../../store/useProcessedGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
+// const ELK = require("elkjs/lib/elk-api.js");
+
 window["ELK"] = ELK;
+let oldEleMap = {};
+let newEleMap = {};
+
+function restoreFromOldEleMap(newEle) {
+  let oldEle = oldEleMap[newEle.id];
+  if (oldEle) {
+    let { x, y, $H, sections} = oldEle;
+    newEle = Object.assign(newEle, { x, y, $H });
+  }
+  newEleMap[newEle.id] = newEle;
+}
+
 const ELKLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
   const [nodes, setNodes] = useState([]);
   const [links, setLinks] = useState([]);
   const [nodeStyles, setNodeStyles] = useState([]);
   const [linkStyles, setLinkStyles] = useState([]);
-  const [transform, setTransform] = useState(null);
   const svgRef = useRef();
   const outputRef = useRef();
 
@@ -140,6 +153,7 @@ const ELKLayoutGraph: React.FC = () => {
         arrowheadStyle: "fill: #333; stroke: #333;",
         arrowhead: "vee",
       };
+      restoreFromOldEleMap(newLink)
       newLinks.push(newLink);
     }
     let newNodes = [];
@@ -154,12 +168,15 @@ const ELKLayoutGraph: React.FC = () => {
     );
     let graph = {
       id: "root",
-      layoutOptions: { algorithm: "layered" },
+      
       children: newNodes,
       edges: newLinks,
     };
+    oldEleMap = newEleMap;
+    newEleMap = {};
+    console.log(JSON.stringify(graph));
     let layout;
-    const elk = new ELK();
+    const elk = new ELK({workerUrl: './elk-worker.min.js'});
     elk.knownLayoutOptions().then((ret) => {
       console.log("knownLayoutOptions: ", ret);
     });
@@ -174,6 +191,18 @@ const ELKLayoutGraph: React.FC = () => {
       .layout(graph, {
         logging: true,
         measureExecutionTime: true,
+        layoutOptions: {
+          algorithm: "layered",
+          "org.eclipse.elk.layered.nodePlacement.strategy": "INTERACTIVE",
+          // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
+          // "org.eclipse.elk.layered.mergeEdges": 'true'
+          "org.eclipse.elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+          // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
+          "org.eclipse.elk.interactive": true,
+          // "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN"   // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
+  
+          // "org.eclipse.elk.edgeRouting": "SPLINES"
+        },
       })
       .then((result) => {
         console.log(result);
@@ -262,6 +291,7 @@ const ELKLayoutGraph: React.FC = () => {
                   arrowheadStyle: "fill: #333; stroke: #333;",
                   arrowhead: "vee",
                 };
+                restoreFromOldEleMap(edge)
                 edges.push(edge);
               }
             });
@@ -277,6 +307,7 @@ const ELKLayoutGraph: React.FC = () => {
               arrowheadStyle: "fill: #333; stroke: #333;",
               arrowhead: "vee",
             };
+            restoreFromOldEleMap(edge)
             edges.push(edge);
           });
         }
@@ -290,6 +321,7 @@ const ELKLayoutGraph: React.FC = () => {
               arrowheadStyle: "fill: #333; stroke: #333;",
               arrowhead: "vee",
             };
+            restoreFromOldEleMap(edge)
             edges.push(edge);
           });
         }
@@ -297,6 +329,7 @@ const ELKLayoutGraph: React.FC = () => {
         newNode["children"] = children;
         newNode["edges"] = edges;
       }
+      restoreFromOldEleMap(newNode)
       newNodes.push(newNode);
     };
     for (let i = 0; i < displayedNodes.length; i++) {
@@ -428,15 +461,10 @@ const ELKLayoutGraph: React.FC = () => {
             ></path>
           </marker>
         </defs>
-        <g
-          className="output"
-          id="output-g"
-          ref={outputRef}
-          transform={transform}
-        >
+        <g className="output" id="output-g" ref={outputRef}>
           <TransitionMotion styles={nodeStyles}>
             {(interpolatedStyles) => (
-              <g className="nodes" key="nodes">
+              <g className="nodes">
                 {interpolatedStyles.map((d) => {
                   if (d.data.class === "dummy") {
                     return;
@@ -511,7 +539,7 @@ const ELKLayoutGraph: React.FC = () => {
           </TransitionMotion>
           <TransitionMotion styles={linkStyles}>
             {(interpolatedStyles) => (
-              <g className="edgePaths" key="links">
+              <g className="edgePaths">
                 {interpolatedStyles.map((d) => (
                   <g className="edgePath" key={d.key}>
                     <path
