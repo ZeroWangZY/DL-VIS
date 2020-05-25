@@ -8,11 +8,11 @@ import { TransitionMotion, spring } from 'react-motion';
 import * as d3 from 'd3';
 
 // hidden edges连线颜色由source-target决定
-const colorMap = d3.scaleOrdinal().range( [
+const colorMap = d3.scaleOrdinal().range([
   "#20639b",
   "#3CAEA3",
   "#f6d55c",
-  "#ed553b", 
+  "#ed553b",
   "#173f5f",
   "#ff7400",
   "#86b32d"
@@ -26,7 +26,7 @@ export const generateNodeStyles = (graphForLayout: ProcessedGraph, nodes, module
   const modulesId = graphForLayout.modules;
   const { moduleEdges, nodeMap } = graphForLayout;
   let start = Date.now();
-  let styles = [];
+  let styles = new Map();
   for (const nodeId in nodes) {
     const moduleHoleFlag = modulesId.has(nodeId);
     let moduleHoleType = [];
@@ -58,7 +58,7 @@ export const generateNodeStyles = (graphForLayout: ProcessedGraph, nodes, module
 
     const belongModule = nodeMap[nodeId] ? nodeMap[nodeId].belongModule : null;
 
-    styles.push({
+    styles.set(nodeId, {
       key: nodeId,
       data: {
         class: nodes[nodeId].class,
@@ -95,9 +95,45 @@ export const generateNodeStyles = (graphForLayout: ProcessedGraph, nodes, module
         nodeHoleOutEdgeEndX: spring(nodeHoleOutEdgeEndX),
         nodeHoleOutEdgeEndY: spring(nodeHoleOutEdgeEndY),
       }
-    })
+    });
   }
-  return styles;
+
+  return resortStyleArray(graphForLayout, styles); // 重新排序
+}
+
+const resortStyleArray = (graphForLayout: ProcessedGraph, styles: Map<string, any>) => {
+  const { nodeMap } = graphForLayout;
+
+  let newStyles = [];
+  let childrenOfRoot = [];
+
+  styles.forEach((val, key) => {
+    if (nodeMap[key] && nodeMap[key].parent === "___root___")
+      childrenOfRoot.push(key);
+  })
+
+  BFS(childrenOfRoot);
+  return newStyles;
+
+  function BFS(childrenOfRoot) {
+    let queue = [...childrenOfRoot];
+
+    while (queue.length !== 0) {
+      let front = queue.shift();
+
+      if (styles.has(front)) {
+        newStyles.push(styles.get(front))
+        styles.delete(front);
+      }
+
+      if (nodeMap[front] instanceof GroupNodeImp && (nodeMap[front] as GroupNodeImp).expanded === true) { // groupNode并且已经展开，将它的子节点全部放入队列
+        let node = (nodeMap[front] as GroupNodeImp)
+        node.children.forEach((id) => {
+          queue.push(id);
+        })
+      }
+    }
+  }
 }
 
 export const generateEdgeStyles = (edges) => {
