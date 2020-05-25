@@ -134,7 +134,7 @@ const ELKLayoutGraph: React.FC = () => {
         target = nodeMap[target].parent;
       }
       let newLink = {
-        id: `${edge.source}-${edge.target}`,
+        id: `__top__${edge.source}-${edge.target}`,
         sources: [source + "-out-port"],
         targets: [target + "-in-port"],
         arrowheadStyle: "fill: #333; stroke: #333;",
@@ -268,10 +268,10 @@ const ELKLayoutGraph: React.FC = () => {
           }
         });
         if (innerLeftLinkMap.hasOwnProperty(parentId)) {
-          innerLeftLinkMap[parentId].forEach((target) => {
-            console.log(parentId + "->" + target);
+          innerLeftLinkMap[parentId].forEach((target,i)=>{
+            // console.log(parentId + "->" + target);
             let edge = {
-              id: `${parentId}-${target}`,
+              id: `__${i}__${parentId}-${target}`,
               sources: [parentId + "-in-port"],
               targets: [target + "-in-port"],
               arrowheadStyle: "fill: #333; stroke: #333;",
@@ -281,10 +281,10 @@ const ELKLayoutGraph: React.FC = () => {
           });
         }
         if (innerRightLinkMap.hasOwnProperty(parentId)) {
-          innerRightLinkMap[parentId].forEach((source) => {
-            console.log(source + "->" + parentId);
+          innerRightLinkMap[parentId].forEach((source, i) => {
+            // console.log(source + "->" + parentId);
             let edge = {
-              id: `${source}-${parentId}`,
+              id: `__${i}__${source}-${parentId}`,
               sources: [source + "-out-port"],
               targets: [parentId + "-out-port"],
               arrowheadStyle: "fill: #333; stroke: #333;",
@@ -523,8 +523,13 @@ const ELKLayoutGraph: React.FC = () => {
                       markerEnd="url(#arrowhead)"
                       stroke="red"
                     ></path>
-                    {d.data.junctionPoints.map((point) => (
-                      <circle cx={point.x} cy={point.y} r={2} />
+                    {d.data.junctionPoints.map((point,i) => (
+                      <circle
+                        key={d.key+"_junkPoint_"+i}
+                        cx={point.x}
+                        cy={point.y}
+                        r={2}
+                      />
                     ))}
                   </g>
                 ))}
