@@ -11,7 +11,7 @@ let globalConfigurations: GlobalConfigurations = {
     renameVariable: false
   },
   isHiddenInterModuleEdges: false,
-  currentLayout: LayoutType.DAGRE_FOR_TF
+  currentLayout: LayoutType.ELK_FOR_TF,
 };
 
 const broadcast = () => {

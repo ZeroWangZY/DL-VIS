@@ -25,8 +25,9 @@ export default function LayoutSelector() {
     LayoutType.DAGRE_FOR_TF,
     LayoutType.TENSORBOARD,
     LayoutType.DAGRE_FOR_MS,
+    LayoutType.ELK_FOR_TF
   ]
-  const descriptions = ['tf图的dagre布局', 'TensorBoard布局', 'ms图的dagre布局']
+  const descriptions = ['tf图的dagre布局', 'TensorBoard布局', 'ms图的dagre布局', 'tf图的elk布局']
 
   const handleChange = (event: React.ChangeEvent<{ value: LayoutType }>) => {
     modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_CURRENT_LAYOUT, event.target.value);

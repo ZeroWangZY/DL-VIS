@@ -1,0 +1,58 @@
+#cola-svg {
+    width: 100%;
+    overflow: hidden;
+    user-select: none;
+}
+
+.node rect,
+ellipse {
+    fill: #fff;
+    stroke-width: 1px;
+    stroke: #808080;
+}
+
+.node rect.elk-label-container {
+    rx: 5;
+    ry: 5;
+}
+
+.nodeitem text {
+    cursor: auto;
+}
+
+
+/* .nodeitem-0 ellipse.label-container {
+    
+} */
+
+
+/* node type为data  */
+
+.nodeitem-3 rect.elk-label-container {
+    stroke: none;
+}
+
+.cluster rect {
+    fill: #eee;
+    fill-opacity: 0.6;
+    stroke-width: 1px;
+    stroke: #333;
+}
+
+.cluster .label {
+    font-style: italic;
+}
+
+.my-label text {
+    text-anchor: middle;
+    cursor: pointer;
+}
+
+.edgePath path {
+    stroke: #3F3F3F;
+    fill: none;
+}
+
+.behind-text {
+    stroke: none !important
+}

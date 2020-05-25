@@ -27,17 +27,18 @@ import PreprocessingPluginsSelector from './preference/PreprocessingPluginsSelec
 import LayoutSelector from './preference/LayoutSelector';
 import { useGlobalConfigurations } from '../store/global-configuration';
 import { LayoutType } from "../store/global-configuration.type";
+import ELKLayout from "./ELKLayout/ELKLayout";
 
 const drawerWidth = 360;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      display: 'flex',
-      height: '100vh'
+      display: "flex",
+      height: "100vh",
     },
     appBar: {
-      transition: theme.transitions.create(['margin', 'width'], {
+      transition: theme.transitions.create(["margin", "width"], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
       }),
@@ -45,7 +46,7 @@ const useStyles = makeStyles((theme: Theme) =>
     appBarShift: {
       width: `calc(100% - ${drawerWidth}px)`,
       marginLeft: drawerWidth,
-      transition: theme.transitions.create(['margin', 'width'], {
+      transition: theme.transitions.create(["margin", "width"], {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen,
       }),
@@ -54,7 +55,7 @@ const useStyles = makeStyles((theme: Theme) =>
       marginRight: theme.spacing(2),
     },
     hide: {
-      display: 'none',
+      display: "none",
     },
     drawer: {
       width: drawerWidth,
@@ -64,31 +65,30 @@ const useStyles = makeStyles((theme: Theme) =>
       width: drawerWidth,
     },
     drawerHeader: {
-      display: 'flex',
-      alignItems: 'center',
+      display: "flex",
+      alignItems: "center",
       padding: theme.spacing(0, 1),
       ...theme.mixins.toolbar,
-      justifyContent: 'flex-end',
+      justifyContent: "flex-end",
     },
     content: {
       flexGrow: 1,
       padding: theme.spacing(3),
-      transition: theme.transitions.create('margin', {
+      transition: theme.transitions.create("margin", {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
       }),
       marginLeft: -drawerWidth,
     },
     contentShift: {
-      transition: theme.transitions.create('margin', {
+      transition: theme.transitions.create("margin", {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen,
       }),
       marginLeft: 0,
     },
-  }),
+  })
 );
-
 
 const AppEntry: React.FC = () => {
   const classes = useStyles();
@@ -138,11 +138,15 @@ const AppEntry: React.FC = () => {
         }}
       >
         <div className={classes.drawerHeader}>
-          <Typography style={{ width: '100%' }} variant="h6" noWrap>
+          <Typography style={{ width: "100%" }} variant="h6" noWrap>
             Preference
           </Typography>
           <IconButton onClick={handleDrawerClose}>
-            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            {theme.direction === "ltr" ? (
+              <ChevronLeftIcon />
+            ) : (
+              <ChevronRightIcon />
+            )}
           </IconButton>
         </div>
         <Divider />
@@ -170,6 +174,7 @@ const AppEntry: React.FC = () => {
         {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
         {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
         {currentLayout === LayoutType.DAGRE_FOR_MS ? <DagreLayout /> : null}
+            {currentLayout === LayoutType.ELK_FOR_TF ? <ELKLayout /> : null}
         </Route>
         </Switch>
       </main>
