@@ -14,7 +14,8 @@ export enum LayoutType {
   DAGRE_FOR_TF,
   TENSORBOARD,
   DAGRE_FOR_MS,
-  ELK_FOR_TF
+  ELK_FOR_TF,
+  ELK_FOR_MS
 }
 
 export enum GlobalConfigurationsModificationType {

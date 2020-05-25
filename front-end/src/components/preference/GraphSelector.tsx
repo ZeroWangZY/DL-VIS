@@ -14,6 +14,7 @@ import { useGlobalConfigurations } from "../../store/global-configuration";
 import { LayoutType } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/tf-raw-graph";
 import { fetchGraphData, fetchLocalMsGraph } from "../../api";
+import { Layout } from "../ColaLayout/layout";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -38,8 +39,17 @@ export default function GraphSelector() {
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
 
-  // enum LayoutType {DAGRE_FOR_TF, TENSORBOARD, DAGRE_FOR_MS}
   const { preprocessingPlugins, currentLayout } = useGlobalConfigurations();
+
+  const isTfGraph =
+    currentLayout === LayoutType.DAGRE_FOR_TF ||
+    currentLayout === LayoutType.TENSORBOARD ||
+    currentLayout === LayoutType.ELK_FOR_TF;
+
+  const isMsGraph =
+    currentLayout === LayoutType.DAGRE_FOR_MS ||
+    currentLayout === LayoutType.ELK_FOR_MS;
+
   const handleTfGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
   ) => {
@@ -57,9 +67,6 @@ export default function GraphSelector() {
       .then((data) => {
         setGraphMetadatas(data);
       });
-  }, []);
-
-  useEffect(() => {
     fetch(process.env.PUBLIC_URL + "data/ms-graph-metadata.json")
       .then((res) => res.json())
       .then((data) => {
@@ -68,7 +75,11 @@ export default function GraphSelector() {
   }, []);
 
   useEffect(() => {
-    if (currentLayout !== LayoutType.DAGRE_FOR_MS) return; // MSGraph
+    if (
+      currentLayout !== LayoutType.DAGRE_FOR_MS &&
+      currentLayout !== LayoutType.ELK_FOR_MS
+    )
+      return; // MSGraph
 
     fetchLocalMsGraph(msGraphMetadatas[currentMsGraphIndex].name).then(
       (RawData) => {
@@ -113,9 +124,7 @@ export default function GraphSelector() {
     <div>
       <FormControl className={classes.formControl}>
         <InputLabel id="graph-selector">current graph</InputLabel>
-        {(currentLayout === LayoutType.DAGRE_FOR_TF ||
-          currentLayout === LayoutType.TENSORBOARD ||
-          currentLayout === LayoutType.ELK_FOR_TF) && (
+        {isTfGraph && (
           <Select
             labelId="graph-selector"
             value={currentTfGraphIndex}
@@ -128,7 +137,7 @@ export default function GraphSelector() {
             ))}
           </Select>
         )}
-        {currentLayout === LayoutType.DAGRE_FOR_MS && (
+        {isMsGraph && (
           <Select
             labelId="graph-selector"
             value={currentMsGraphIndex}
@@ -142,22 +151,20 @@ export default function GraphSelector() {
           </Select>
         )}
 
-        {(currentLayout === LayoutType.DAGRE_FOR_TF ||
-          currentLayout === LayoutType.TENSORBOARD ||
-          currentLayout === LayoutType.ELK_FOR_TF) &&
-        graphMetadatas.length > 0 &&
-        graphMetadatas[currentTfGraphIndex].description !== undefined ? (
-          <FormHelperText>
-            description: {graphMetadatas[currentTfGraphIndex].description}
-          </FormHelperText>
-        ) : null}
-        {currentLayout === LayoutType.DAGRE_FOR_MS &&
-        msGraphMetadatas.length > 0 &&
-        msGraphMetadatas[currentMsGraphIndex].description !== undefined ? (
-          <FormHelperText>
-            description: {msGraphMetadatas[currentMsGraphIndex].description}
-          </FormHelperText>
-        ) : null}
+        {isTfGraph &&
+          graphMetadatas.length > 0 &&
+          graphMetadatas[currentTfGraphIndex].description !== undefined && (
+            <FormHelperText>
+              description: {graphMetadatas[currentTfGraphIndex].description}
+            </FormHelperText>
+          )}
+        {isMsGraph &&
+          msGraphMetadatas.length > 0 &&
+          msGraphMetadatas[currentMsGraphIndex].description !== undefined && (
+            <FormHelperText>
+              description: {msGraphMetadatas[currentMsGraphIndex].description}
+            </FormHelperText>
+          )}
       </FormControl>
     </div>
   );
