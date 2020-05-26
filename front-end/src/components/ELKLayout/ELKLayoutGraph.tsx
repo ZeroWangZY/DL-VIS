@@ -14,11 +14,14 @@ import {
   broadcastGraphChange,
 } from "../../store/useProcessedGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
-// const ELK = require("elkjs/lib/elk-api.js");
+import { on } from "cluster";
 
+window["d3"] = d3;
 window["ELK"] = ELK;
 let oldEleMap = {};
 let newEleMap = {};
+
+const portMode = false
 
 function restoreFromOldEleMap(newEle) {
   let oldEle = oldEleMap[newEle.id];
@@ -61,7 +64,6 @@ const ELKLayoutGraph: React.FC = () => {
   };
 
   const draw = () => {
-    // setNodeStyles([])
     setLinkStyles([]);
     const { nodeMap } = graphForLayout;
     const displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
@@ -91,41 +93,40 @@ const ELKLayoutGraph: React.FC = () => {
       const edge = displayedEdges[i];
       let source = nodeMap[edge.source]["id"];
       let target = nodeMap[edge.target]["id"];
-      //以下解决跨层边的id匹配问题，id升级至公共父节点
-      let _source = source.split("/");
-      let _target = target.split("/");
       let __source = source,
         __target = target;
-      //子节点判断
-      if (_source.length > _target.length) {
-        __source = _source.slice(0, _target.length).join("/");
-        while (nodeMap[source].parent !== nodeMap[target].parent) {
-          // console.log(source + "-->" + target);
-          addLinkMap(innerRightLinkMap, nodeMap[source].parent, source);
-          source = nodeMap[source].parent;
+      if(portMode){
+        //以下解决跨层边的id匹配问题，id升级至公共父节点
+        let _source = source.split("/");
+        let _target = target.split("/");
+        //子节点判断
+        if (_source.length > _target.length) {
+          __source = _source.slice(0, _target.length).join("/");
+          while (nodeMap[source].parent !== nodeMap[target].parent) {
+            addLinkMap(innerRightLinkMap, nodeMap[source].parent, source);
+            source = nodeMap[source].parent;
+          }
+        } else if (_source.length < _target.length) {
+          __target = _target.slice(0, _source.length).join("/");
+          while (nodeMap[target].parent !== nodeMap[source].parent) {
+            addLinkMap(innerLeftLinkMap, nodeMap[target].parent, target);
+            target = nodeMap[target].parent;
+          }
+        } else {
+          if (nodeMap[source].parent !== nodeMap[target].parent) {
+            addLinkMap(innerRightLinkMap, nodeMap[source].parent, source);
+          }
+          if (nodeMap[target].parent !== nodeMap[source].parent) {
+            addLinkMap(innerLeftLinkMap, nodeMap[target].parent, target);
+          }
         }
-      } else if (_source.length < _target.length) {
-        __target = _target.slice(0, _source.length).join("/");
-        while (nodeMap[target].parent !== nodeMap[source].parent) {
-          // console.log(source + "-->" + target);
-          addLinkMap(innerLeftLinkMap, nodeMap[target].parent, target);
-          target = nodeMap[target].parent;
-        }
-      } else {
-        if (nodeMap[source].parent !== nodeMap[target].parent) {
-          // console.log(source + "-->" + target);
-          addLinkMap(innerRightLinkMap, nodeMap[source].parent, source);
-        }
-        if (nodeMap[target].parent !== nodeMap[source].parent) {
-          // console.log(source + "-->" + target);
-          addLinkMap(innerLeftLinkMap, nodeMap[target].parent, target);
+        //保证边的直接父节点相同
+        while (nodeMap[__source].parent !== nodeMap[__target].parent) {
+          __source = nodeMap[__source].parent;
+          __target = nodeMap[__target].parent;
         }
       }
-      //保证边的直接父节点相同
-      while (nodeMap[__source].parent !== nodeMap[__target].parent) {
-        __source = nodeMap[__source].parent;
-        __target = nodeMap[__target].parent;
-      }
+
 
       addLinkMap(linkMap, __source, __target);
 
@@ -139,17 +140,19 @@ const ELKLayoutGraph: React.FC = () => {
       ) {
         continue;
       }
-      //将边升级至顶层
-      while (nodeMap[source].parent !== "___root___") {
-        source = nodeMap[source].parent;
-      }
-      while (nodeMap[target].parent !== "___root___") {
-        target = nodeMap[target].parent;
+      if(portMode){
+        //将边升级至顶层
+        while (nodeMap[source].parent !== "___root___") {
+          source = nodeMap[source].parent;
+        }
+        while (nodeMap[target].parent !== "___root___") {
+          target = nodeMap[target].parent;
+        }
       }
       let newLink = {
-        id: `__top__${edge.source}-${edge.target}`,
-        sources: [source + "-out-port"],
-        targets: [target + "-in-port"],
+        id: `${edge.source}-${edge.target}`,
+        sources: [portMode? source + "-out-port":source],
+        targets: [portMode?target + "-in-port":target],
         arrowheadStyle: "fill: #333; stroke: #333;",
         arrowhead: "vee",
       };
@@ -168,24 +171,23 @@ const ELKLayoutGraph: React.FC = () => {
     );
     let graph = {
       id: "root",
-      
       children: newNodes,
       edges: newLinks,
     };
     oldEleMap = newEleMap;
     newEleMap = {};
-    console.log(JSON.stringify(graph));
+    // console.log(JSON.stringify(graph));
     let layout;
     const elk = new ELK({workerUrl: './elk-worker.min.js'});
     elk.knownLayoutOptions().then((ret) => {
       console.log("knownLayoutOptions: ", ret);
     });
-    elk.knownLayoutCategories().then((ret) => {
-      console.log("knownLayoutCategories: ", ret);
-    });
-    elk.knownLayoutAlgorithms().then((ret) => {
-      console.log("knownLayoutAlgorithms: ", ret);
-    });
+    // elk.knownLayoutCategories().then((ret) => {
+    //   console.log("knownLayoutCategories: ", ret);
+    // });
+    // elk.knownLayoutAlgorithms().then((ret) => {
+    //   console.log("knownLayoutAlgorithms: ", ret);
+    // });
 
     elk
       .layout(graph, {
@@ -195,11 +197,11 @@ const ELKLayoutGraph: React.FC = () => {
           algorithm: "layered",
           "org.eclipse.elk.layered.nodePlacement.strategy": "INTERACTIVE",
           // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
-          // "org.eclipse.elk.layered.mergeEdges": 'true'
+          // "org.eclipse.elk.layered.mergeEdges": 'true',
           "org.eclipse.elk.layered.crossingMinimization.strategy": "INTERACTIVE",
           // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
-          "org.eclipse.elk.interactive": true,
-          // "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN"   // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
+          "org.eclipse.elk.interactive": 'true',
+          "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN",   // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
   
           // "org.eclipse.elk.edgeRouting": "SPLINES"
         },
@@ -222,6 +224,7 @@ const ELKLayoutGraph: React.FC = () => {
         setLinkStyles(newLinkStyles);
       })
       .catch(console.error);
+
   };
   const addLinkMap = (linkMap, source, target) => {
     if (!linkMap.hasOwnProperty(source)) {
@@ -238,12 +241,12 @@ const ELKLayoutGraph: React.FC = () => {
     type: node.type,
     layoutOptions: {
       algorithm: "layered",
-      portConstraints: "FIXED_SIDE",
+      // portConstraints: "FIXED_SIDE",
     },
     expand: false,
     width: Math.max(node.displayedName.length, 3) * 10,
     height: 50,
-    ports: [
+    ports: portMode?[
       {
         id: node.id + "-in-port",
         properties: {
@@ -256,7 +259,7 @@ const ELKLayoutGraph: React.FC = () => {
           "port.side": "EAST",
         },
       },
-    ],
+    ]:[],
   });
   const processNodes = (
     nodeMap,
@@ -274,7 +277,7 @@ const ELKLayoutGraph: React.FC = () => {
         let edges = [];
         const parentId = nodeId;
         let subNodes = groups[parentId]["nodes"];
-        const nodeSet = new Set(subNodes);
+        // const nodeSet = new Set(subNodes);
         subNodes.forEach((id) => {
           const node = nodeMap[id];
           let child = generateNode(node);
@@ -282,48 +285,49 @@ const ELKLayoutGraph: React.FC = () => {
           const source = id;
           if (linkMap.hasOwnProperty(source)) {
             linkMap[source].forEach((target) => {
-              if (nodeSet.has(target)) {
-                //保证边在group内部
-                let edge = {
-                  id: `${source}-${target}`,
-                  sources: [source + "-out-port"],
-                  targets: [target + "-in-port"],
-                  arrowheadStyle: "fill: #333; stroke: #333;",
-                  arrowhead: "vee",
-                };
-                restoreFromOldEleMap(edge)
-                edges.push(edge);
-              }
+              // if (nodeSet.has(target)) {//保证边在group内部
+              let edge = {
+                id: `${source}-${target}`,
+                sources: [portMode?source + "-out-port":source],
+                targets: [portMode?target + "-in-port":target],
+                arrowheadStyle: "fill: #333; stroke: #333;",
+                arrowhead: "vee",
+              };
+              restoreFromOldEleMap(edge)
+              edges.push(edge);
+              // }
             });
           }
         });
-        if (innerLeftLinkMap.hasOwnProperty(parentId)) {
-          innerLeftLinkMap[parentId].forEach((target,i)=>{
-            // console.log(parentId + "->" + target);
-            let edge = {
-              id: `__${i}__${parentId}-${target}`,
-              sources: [parentId + "-in-port"],
-              targets: [target + "-in-port"],
-              arrowheadStyle: "fill: #333; stroke: #333;",
-              arrowhead: "vee",
-            };
-            restoreFromOldEleMap(edge)
-            edges.push(edge);
-          });
-        }
-        if (innerRightLinkMap.hasOwnProperty(parentId)) {
-          innerRightLinkMap[parentId].forEach((source, i) => {
-            // console.log(source + "->" + parentId);
-            let edge = {
-              id: `__${i}__${source}-${parentId}`,
-              sources: [source + "-out-port"],
-              targets: [parentId + "-out-port"],
-              arrowheadStyle: "fill: #333; stroke: #333;",
-              arrowhead: "vee",
-            };
-            restoreFromOldEleMap(edge)
-            edges.push(edge);
-          });
+        if(portMode){
+          if (innerLeftLinkMap.hasOwnProperty(parentId)) {
+            innerLeftLinkMap[parentId].forEach((target,i)=>{
+              // console.log(parentId + "->" + target);
+              let edge = {
+                id: `__${i}__${parentId}-${target}`,
+                sources: [parentId + "-in-port"],
+                targets: [target + "-in-port"],
+                arrowheadStyle: "fill: #333; stroke: #333;",
+                arrowhead: "vee",
+              };
+              restoreFromOldEleMap(edge)
+              edges.push(edge);
+            });
+          }
+          if (innerRightLinkMap.hasOwnProperty(parentId)) {
+            innerRightLinkMap[parentId].forEach((source, i) => {
+              // console.log(source + "->" + parentId);
+              let edge = {
+                id: `__${i}__${source}-${parentId}`,
+                sources: [source + "-out-port"],
+                targets: [parentId + "-out-port"],
+                arrowheadStyle: "fill: #333; stroke: #333;",
+                arrowhead: "vee",
+              };
+              restoreFromOldEleMap(edge)
+              edges.push(edge);
+            });
+          }
         }
         newNode["expand"] = true;
         newNode["children"] = children;
@@ -421,6 +425,57 @@ const ELKLayoutGraph: React.FC = () => {
     }
   };
 
+  useEffect(()=>{
+    //目前仅支持拖拽叶节点
+    d3.selectAll(".node").on(".drag", null);
+    let selectionNodes = d3.selectAll(".child-node");
+    if(selectionNodes.size()===0) return;
+    selectionNodes.call(d3.drag().on("start", dragStarted));
+
+    function dragStarted() {
+      let node = d3.select(this).classed("dragging", true);
+      console.log(node);
+      d3.event.on("drag", dragged).on("end", ended);
+
+      function dragged(d) {
+        node
+          .raise()
+          .attr("transform", `translate(${d3.event.x}, ${d3.event.y})`)
+      }
+
+      function ended() {
+        node.classed("dragging", false);
+        const nodeId = node.node().id;
+        let toEditNode = nodes
+        let id = ""
+        //todo:待优化，需要把节点的数组结构存一份obj结构的，不然要多次遍历
+        nodeId.split("/").forEach(name=>{
+          if (!name.endsWith(")")){
+            if (name.endsWith("+")) {
+              name = name.slice(0, name.length - 1);
+            }
+            id = id+name
+            let index = 0
+            for (let i = 0; i < toEditNode.length; i++){
+              if (toEditNode[i].id === id) {
+                index = i;
+                break;
+              }
+            }
+            toEditNode = toEditNode[index];
+            if (toEditNode.hasOwnProperty("children")){
+             toEditNode = toEditNode["children"];
+            }
+            id+="/"
+          }
+        })
+        toEditNode["x"] = d3.event.x
+        toEditNode["y"] = d3.event.y;
+        draw();
+      }
+    }
+  })
+
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     const outputG = d3.select(outputRef.current);
@@ -471,7 +526,7 @@ const ELKLayoutGraph: React.FC = () => {
                   }
                   return (
                     <g
-                      className={`node ${d.data.class}`}
+                      className={`node ${d.data.class} ${d.data.expand?'expanded-node':'child-node'}`}
                       id={d.data.id}
                       key={d.key}
                       transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
@@ -504,10 +559,10 @@ const ELKLayoutGraph: React.FC = () => {
                         {d.data.expand ? (
                           <rect
                             className="behind-text"
-                            width={Math.max(d.data.label.length, 3) * 10}
+                            width={Math.max(d.data.label.length, 3) * 9}
                             height={10}
                             transform={`translate(-${
-                              (Math.max(d.data.label.length, 3) * 10) / 2
+                              (Math.max(d.data.label.length, 3) * 9) / 2
                             }, -${d.style.rectHeight / 2 + 5})`}
                             fill="red"
                             stroke="none"
@@ -549,7 +604,6 @@ const ELKLayoutGraph: React.FC = () => {
                         { x: d.style.endPointX, y: d.style.endPointY },
                       ])}
                       markerEnd="url(#arrowhead)"
-                      stroke="red"
                     ></path>
                     {d.data.junctionPoints.map((point,i) => (
                       <circle

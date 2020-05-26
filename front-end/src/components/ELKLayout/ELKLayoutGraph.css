@@ -53,6 +53,11 @@ ellipse {
     fill: none;
 }
 
+.edgePath circle {
+    stroke: #3F3F3F;
+    fill: #3F3F3F;
+}
+
 .behind-text {
     stroke: none !important
 }
