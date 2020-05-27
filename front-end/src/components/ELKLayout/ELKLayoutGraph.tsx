@@ -63,7 +63,9 @@ const ELKLayoutGraph: React.FC = () => {
     broadcastGraphChange();
   };
 
-  const draw = () => {
+  const draw = (layoutOptions={networkSimplex:true}) => {
+    const {networkSimplex} = layoutOptions;
+    // setNodeStyles([]);
     setLinkStyles([]);
     const { nodeMap } = graphForLayout;
     const displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
@@ -195,14 +197,16 @@ const ELKLayoutGraph: React.FC = () => {
         measureExecutionTime: true,
         layoutOptions: {
           algorithm: "layered",
-          "org.eclipse.elk.layered.nodePlacement.strategy": "INTERACTIVE",
+          "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex?"NETWORK_SIMPLEX":"INTERACTIVE",
+          "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
           // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
           // "org.eclipse.elk.layered.mergeEdges": 'true',
-          "org.eclipse.elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+          "org.eclipse.elk.layered.crossingMinimization.strategy":
+            "LAYER_SWEEP",
           // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
-          "org.eclipse.elk.interactive": 'true',
-          "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN",   // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
-  
+          "org.eclipse.elk.interactive": "true",
+          "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
+
           // "org.eclipse.elk.edgeRouting": "SPLINES"
         },
       })
@@ -425,6 +429,24 @@ const ELKLayoutGraph: React.FC = () => {
     }
   };
 
+  const textSize = (text,fontSize="10px",fontFamily="Arial")=>{
+    //过河拆桥法计算字符串的显示长度
+    let span = document.createElement("span");
+    span.style.visibility = "hidden";
+    // span.style.fontSize = fontSize;
+    // span.style.fontFamily = fontFamily;
+    span.style.display = "inline-block";
+    document.body.appendChild(span);
+    if(typeof span.textContent != "undefined"){
+      span.textContent = text;
+    }else{
+      span.innerText = text;
+    }
+    let width = parseFloat(window.getComputedStyle(span).width);
+    document.body.removeChild(span);
+    return width;
+  }
+
   useEffect(()=>{
     //目前仅支持拖拽叶节点
     d3.selectAll(".node").on(".drag", null);
@@ -436,14 +458,26 @@ const ELKLayoutGraph: React.FC = () => {
       let node = d3.select(this).classed("dragging", true);
       console.log(node);
       d3.event.on("drag", dragged).on("end", ended);
-
+      const {x,y} = d3.event;
       function dragged(d) {
+        if (
+          Math.abs(d3.event.x - x) < 5 || 
+          Math.abs(d3.event.y - y) < 5
+        ) {
+          return;
+        }
         node
           .raise()
-          .attr("transform", `translate(${d3.event.x}, ${d3.event.y})`)
+          .attr("transform", `translate(${d3.event.x}, ${d3.event.y})`); 
       }
 
       function ended() {
+        if (
+          Math.abs(d3.event.x - x) < 5 ||
+          Math.abs(d3.event.y - y) < 5
+        ) {
+          return;
+        }
         node.classed("dragging", false);
         const nodeId = node.node().id;
         let toEditNode = nodes
@@ -471,7 +505,7 @@ const ELKLayoutGraph: React.FC = () => {
         })
         toEditNode["x"] = d3.event.x
         toEditNode["y"] = d3.event.y;
-        draw();
+        draw({networkSimplex:false});
       }
     }
   })
@@ -524,9 +558,18 @@ const ELKLayoutGraph: React.FC = () => {
                   if (d.data.class === "dummy") {
                     return;
                   }
+                  const textWidth =                               textSize(
+                                d.data.label +
+                                  (!d.data.expand &&
+                                  (d.data.type === NodeType.GROUP ||
+                                    d.data.type === NodeType.LAYER)
+                                    ? "+"
+                                    : ""))+2;
                   return (
                     <g
-                      className={`node ${d.data.class} ${d.data.expand?'expanded-node':'child-node'}`}
+                      className={`node ${d.data.class} ${
+                        d.data.expand ? "expanded-node" : "child-node"
+                      }`}
                       id={d.data.id}
                       key={d.key}
                       transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
@@ -546,6 +589,8 @@ const ELKLayoutGraph: React.FC = () => {
                           transform={`translate(-${d.style.rectWidth / 2}, -${
                             d.style.rectHeight / 2
                           })`}
+                          fillOpacity={d.data.expand ? 0 : 1}
+                          pointerEvents="visibleStroke"
                         ></rect>
                       )}
                       <g
@@ -559,11 +604,11 @@ const ELKLayoutGraph: React.FC = () => {
                         {d.data.expand ? (
                           <rect
                             className="behind-text"
-                            width={Math.max(d.data.label.length, 3) * 9}
+                            width={textWidth}
                             height={10}
-                            transform={`translate(-${
-                              (Math.max(d.data.label.length, 3) * 9) / 2
-                            }, -${d.style.rectHeight / 2 + 5})`}
+                            transform={`translate(-${textWidth/ 2}, -${
+                              d.style.rectHeight / 2 + 5
+                            })`}
                             fill="red"
                             stroke="none"
                           ></rect>
