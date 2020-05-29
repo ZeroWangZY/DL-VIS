@@ -38,6 +38,7 @@ const ELKLayoutGraph: React.FC = () => {
   const [links, setLinks] = useState([]);
   const [nodeStyles, setNodeStyles] = useState([]);
   const [linkStyles, setLinkStyles] = useState([]);
+  const [elkNodeMap, setElkNodeMap] = useState({});
   const svgRef = useRef();
   const outputRef = useRef();
 
@@ -95,12 +96,12 @@ const ELKLayoutGraph: React.FC = () => {
       const edge = displayedEdges[i];
       let source = nodeMap[edge.source]["id"];
       let target = nodeMap[edge.target]["id"];
-      let __source = source,
-        __target = target;
       if(portMode){
         //以下解决跨层边的id匹配问题，id升级至公共父节点
         let _source = source.split("/");
         let _target = target.split("/");
+        let __source = source,
+            __target = target;
         //子节点判断
         if (_source.length > _target.length) {
           __source = _source.slice(0, _target.length).join("/");
@@ -127,11 +128,8 @@ const ELKLayoutGraph: React.FC = () => {
           __source = nodeMap[__source].parent;
           __target = nodeMap[__target].parent;
         }
+        addLinkMap(linkMap, __source, __target);
       }
-
-
-      addLinkMap(linkMap, __source, __target);
-
       //reset成初始值，防止以上操作将其改变
       source = nodeMap[edge.source]["id"];
       target = nodeMap[edge.target]["id"];
@@ -140,6 +138,9 @@ const ELKLayoutGraph: React.FC = () => {
         nodeMap[edge.source].parent !== "___root___" &&
         nodeMap[edge.target].parent !== "___root___"
       ) {
+        if (!portMode){ 
+          addLinkMap(linkMap, source, target);
+        }
         continue;
       }
       if(portMode){
@@ -153,8 +154,8 @@ const ELKLayoutGraph: React.FC = () => {
       }
       let newLink = {
         id: `${edge.source}-${edge.target}`,
-        sources: [portMode? source + "-out-port":source],
-        targets: [portMode?target + "-in-port":target],
+        sources: [portMode ? source + "-out-port" : source],
+        targets: [portMode ? target + "-in-port" : target],
         arrowheadStyle: "fill: #333; stroke: #333;",
         arrowhead: "vee",
       };
@@ -171,6 +172,9 @@ const ELKLayoutGraph: React.FC = () => {
       displayedNodes,
       newNodes
     );
+    let newElkNodeMap = {}
+    generateElkNodeMap(newNodes, newElkNodeMap);
+    setElkNodeMap(newElkNodeMap);
     let graph = {
       id: "root",
       children: newNodes,
@@ -193,8 +197,8 @@ const ELKLayoutGraph: React.FC = () => {
 
     elk
       .layout(graph, {
-        logging: true,
-        measureExecutionTime: true,
+        // logging: true,
+        // measureExecutionTime: true,
         layoutOptions: {
           algorithm: "layered",
           "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex?"NETWORK_SIMPLEX":"INTERACTIVE",
@@ -281,7 +285,7 @@ const ELKLayoutGraph: React.FC = () => {
         let edges = [];
         const parentId = nodeId;
         let subNodes = groups[parentId]["nodes"];
-        // const nodeSet = new Set(subNodes);
+        const nodeSet = new Set(subNodes);
         subNodes.forEach((id) => {
           const node = nodeMap[id];
           let child = generateNode(node);
@@ -289,7 +293,6 @@ const ELKLayoutGraph: React.FC = () => {
           const source = id;
           if (linkMap.hasOwnProperty(source)) {
             linkMap[source].forEach((target) => {
-              // if (nodeSet.has(target)) {//保证边在group内部
               let edge = {
                 id: `${source}-${target}`,
                 sources: [portMode?source + "-out-port":source],
@@ -299,14 +302,12 @@ const ELKLayoutGraph: React.FC = () => {
               };
               restoreFromOldEleMap(edge)
               edges.push(edge);
-              // }
             });
           }
         });
         if(portMode){
           if (innerLeftLinkMap.hasOwnProperty(parentId)) {
             innerLeftLinkMap[parentId].forEach((target,i)=>{
-              // console.log(parentId + "->" + target);
               let edge = {
                 id: `__${i}__${parentId}-${target}`,
                 sources: [parentId + "-in-port"],
@@ -320,7 +321,6 @@ const ELKLayoutGraph: React.FC = () => {
           }
           if (innerRightLinkMap.hasOwnProperty(parentId)) {
             innerRightLinkMap[parentId].forEach((source, i) => {
-              // console.log(source + "->" + parentId);
               let edge = {
                 id: `__${i}__${source}-${parentId}`,
                 sources: [source + "-out-port"],
@@ -429,6 +429,17 @@ const ELKLayoutGraph: React.FC = () => {
     }
   };
 
+  const generateElkNodeMap = (elkNodeList, elkNodeMap) =>{
+    elkNodeList.forEach(node => {
+      if(node.hasOwnProperty("children")){
+        let subMap = {}
+        generateElkNodeMap(node["children"], subMap)
+        elkNodeMap[node.id] = subMap;
+      } else{
+        elkNodeMap[node.id] = node;
+      }
+    });
+  }
   const textSize = (text,fontSize="10px",fontFamily="Arial")=>{
     //过河拆桥法计算字符串的显示长度
     let span = document.createElement("span");
@@ -480,27 +491,19 @@ const ELKLayoutGraph: React.FC = () => {
         }
         node.classed("dragging", false);
         const nodeId = node.node().id;
-        let toEditNode = nodes
+        let toEditNode = elkNodeMap
         let id = ""
-        //todo:待优化，需要把节点的数组结构存一份obj结构的，不然要多次遍历
         nodeId.split("/").forEach(name=>{
           if (!name.endsWith(")")){
             if (name.endsWith("+")) {
               name = name.slice(0, name.length - 1);
             }
-            id = id+name
-            let index = 0
-            for (let i = 0; i < toEditNode.length; i++){
-              if (toEditNode[i].id === id) {
-                index = i;
-                break;
-              }
-            }
-            toEditNode = toEditNode[index];
+            id += name
+            toEditNode = toEditNode[id];
             if (toEditNode.hasOwnProperty("children")){
              toEditNode = toEditNode["children"];
             }
-            id+="/"
+            id += "/"
           }
         })
         toEditNode["x"] = d3.event.x
@@ -558,13 +561,13 @@ const ELKLayoutGraph: React.FC = () => {
                   if (d.data.class === "dummy") {
                     return;
                   }
-                  const textWidth =                               textSize(
-                                d.data.label +
-                                  (!d.data.expand &&
-                                  (d.data.type === NodeType.GROUP ||
-                                    d.data.type === NodeType.LAYER)
-                                    ? "+"
-                                    : ""))+2;
+                  const textWidth = textSize(
+                    d.data.label +
+                      (!d.data.expand &&
+                      (d.data.type === NodeType.GROUP ||
+                        d.data.type === NodeType.LAYER)
+                        ? "+"
+                        : ""))+2;
                   return (
                     <g
                       className={`node ${d.data.class} ${
