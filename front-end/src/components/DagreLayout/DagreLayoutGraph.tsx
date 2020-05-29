@@ -16,12 +16,13 @@ import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
 import { useHistory, useLocation } from "react-router-dom";
-import { modifyGraphInfo, setTransform, useTransform } from '../../store/graphInfo';
+import { modifyGraphInfo } from '../../store/graphInfo';
 import { useProcessedGraph, modifyProcessedGraph } from '../../store/useProcessedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData } from '../../store/layerLevel';
 import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
+import MiniMap from '../MiniMap/MiniMap';
 import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
 import { generateNodeStyles, generateEdgeStyles, getColor, generateAcrossModuleEdgeStyles } from '../../common/style/graph';
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard"
@@ -44,10 +45,15 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [selectedNodeId, setSelectedNodeId] = useState("");
   const [nodeAttribute, setNodeAttribute] = useState([]);
 
-  const transform = useTransform();
+  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  const handleChangeTransform = function (transform) {
+    if (transform === null || transform === undefined) return;
+    setTransform(transform);
+  }
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
+  const outputSVGRef = useRef();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [selectMode, setSelectMode] = useState(false);// 单选模式
@@ -887,18 +893,22 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     setHiddenEdges(newHiddenEdges);
   }
 
+  useEffect(() => { // rect拖动后，改变outputSVG的起始位置。
+    const svg = d3.select(svgRef.current);
+    svg.call(d3.zoom().transform, d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k))
+  }, [transform])
+
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     const outputG = d3.select(outputRef.current);
 
-    // console.log(transform)
-    // console.log(outputG.attr("transform"))
     let zoom = d3.zoom()
       .on('zoom', function () {
-        setTransform(TransformType.GRAPH_TRANSFORM, d3.event.transform)
         outputG.attr('transform', d3.event.transform);
       })
-
+      .on("end", () => { // TODO: 拖拽结束后，重置transform的位置，没有实时拖动minimap中的矩形框
+        setTransform(d3.event.transform);
+      })
     svg.call(zoom).on('dblclick.zoom', null);
 
     // 获得背景rect的高度
@@ -922,6 +932,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
     setBgRectHeight(svgHeight);
   }, [])
+
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
@@ -967,7 +978,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
             </marker>
           </defs>
           <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
-          <svg id="output-svg">
+          <svg id="output-svg" ref={outputSVGRef}>
             <g
               className='output'
               id="output-g"
@@ -975,7 +986,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
               transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
             >
               {/* <g className='clusters'></g> */}
-              <TransitionMotion styles={generateNodeStyles(graphForLayout, nodes, moduleConnection, layerLineChartData, currentNotShowLineChartID)}>
+              <TransitionMotion
+                styles={generateNodeStyles(graphForLayout, nodes, moduleConnection, layerLineChartData, currentNotShowLineChartID)}>
                 {interpolatedStyles => (
                   <g className='nodes' onContextMenu={(e) => handleRightClick(e)}>
                     {interpolatedStyles.map(d => {
@@ -1085,7 +1097,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                   </g>
                 )}
               </TransitionMotion>
-              <TransitionMotion styles={generateEdgeStyles(edges)}>
+              <TransitionMotion
+                styles={generateEdgeStyles(edges)}>
                 {interpolatedStyles => (
                   <g className='edgePaths'>
                     {interpolatedStyles.map(d => (
@@ -1162,6 +1175,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           <g id="gBrushHolder"></g>
         </g>
       </svg>
+
       <NodeInfoCard
         selectedNodeName={selectedNodeName}
         leafAndChildrenNum={leafAndChildrenNum}
@@ -1169,6 +1183,16 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         outputNodeName={outputNodeName}
         nodeAttribute={nodeAttribute} />
 
+      <div className="map-container">
+        <MiniMap
+          graph={svgRef.current}
+          outputG={outputRef.current}
+          outputSVG={outputSVGRef.current}
+          transform={transform}
+          handleChangeTransform={handleChangeTransform}
+        // outputSVG_Copy={(outputSVGRef.current) ? (outputSVGRef.current as any).cloneNode(true) : null}
+        />
+      </div>
       <Popover
         open={isPopoverOpen}
         anchorEl={anchorEl}

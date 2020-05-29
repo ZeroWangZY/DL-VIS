@@ -214,7 +214,11 @@
   fill: #5d83be;
   stroke: #333;
 }
-
+.minimap-container {
+  position: fixed;
+  bottom: 50px;
+  right: 50px;
+}
 
 .module-hole {
   fill: #fff;

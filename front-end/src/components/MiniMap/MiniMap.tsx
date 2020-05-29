@@ -1,20 +1,50 @@
 import React, { useState, useEffect, useRef } from "react";
-import { elModifyType, TransformType } from '../../types/mini-map'
-import { useGraphInfo, useTransform, setTransform, broadTransformChange } from '../../store/graphInfo';
 import * as d3 from 'd3';
 import './MiniMap.css'
 
 let fitK = 1;
+let iTime;
 
-const MiniMap: React.FC = () => {
-  const mapRef = useRef();
-  const graphInfo = useGraphInfo();
-  const transform = useTransform();
+// TODO: 传入的数据是motion过后的图，而不是motion中间的
+// TODO: zoom中拖动，矩形框移动
+interface Transform {
+  x: number;
+  y: number;
+  k: number;
+}
+interface Props {
+  graph: HTMLElement;
+  outputG: HTMLElement;
+  outputSVG: HTMLElement;
+  transform: Transform;
+  handleChangeTransform: { (transform: Transform): void };
+}
+
+const MiniMap: React.FC<Props> = (props: Props) => {
+  if (props.graph === undefined || props.graph === null) return (<div />); // 没有输入
+  const { graph, outputG, outputSVG, transform, handleChangeTransform } = props;
+
+  let outputSVGToDrawInCanvas = null;
+
   const rectRef = useRef();
-  let minimapSize = { width: 300, height: 180 }
-  let scale = 4; // minimap大小为原来svg图大小的四分之一
-  const viewpointCoord = { x: -transform.x * fitK / transform.k / scale, y: -transform.y * fitK / transform.k / scale };    // 矩形的初始坐标
+  const canvasRef = useRef();
+  const scale = 4; // minimap大小为原来svg图大小的四分之一
 
+  const mainSvgSize = {
+    width: d3.select(graph).node().getBoundingClientRect().width,
+    height: d3.select(graph).node().getBoundingClientRect().height
+  }; // mainSvg大小
+  const minimapSize = { width: mainSvgSize.width / scale, height: mainSvgSize.height / scale }
+
+  let viewpointCoord = { x: -transform.x * fitK / transform.k / scale, y: -transform.y * fitK / transform.k / scale };    // 矩形的初始坐标
+
+  // 由于output-G的大小可能大于mainsvg的大小。这个时候就需要将output-G按比例缩小，
+  // 使得它的大小不超过mainsvg，这样用canvas画图的时候就很方便了
+  // 比如mainsvg的大小是 [500,500]，outputSvg大小是：[200,1500]
+  // 此时，就要将outputsvg的大小缩小3倍, fitK = 1/3 之后outputSvg的大小为 [200/3,500];
+  // 再比如mainsvg的大小是[500,500],outputSvg大小是:[750,1500]
+  // 要保证outputSvg缩小后，mainSvg能装得下，fitK = 1/3 ,outputsvg之后的大小为[250,500]
+  // 而不应该 fitK = 500/750 = 2/3 ,之后outputSvg大小为[500,1000] 显然不正确。
   function ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight) {
     let fitK
     if (outputsvgWidth > svgWidth && outputsvgHeight > svgHeight) {
@@ -31,41 +61,18 @@ const MiniMap: React.FC = () => {
 
     return fitK
   }
+  const updateRect = (x, y) => { // 更新矩形框的位置
+    d3.select(rectRef.current).attr("transform", `translate(${x},${y}) scale(${1 / transform.k})`)
+  }
 
-  useEffect(() => {
-    if (graphInfo === null) return
-    const canvas: HTMLCanvasElement = mapRef.current;
-    // 获取此时svg元素真实的长宽
-    const svgWidth = document.getElementById("dagre-svg").getBoundingClientRect().width;
-    const svgHeight = document.getElementById("dagre-svg").getBoundingClientRect().height;
-    const outputsvgWidth = document.getElementById("output-svg").getBoundingClientRect().width / transform.k;
-    const outputsvgHeight = document.getElementById("output-svg").getBoundingClientRect().height / transform.k; //未缩放之前的大小
-    // console.log(outputsvgWidth, outputsvgHeight);
-    // console.log(svgWidth, svgHeight)
+  const drawInCanvas = function (outputSVG_Copy, fitK) {
+    if (outputSVG_Copy === null) return;
 
-    minimapSize.width = svgWidth / scale;
-    minimapSize.height = svgHeight / scale;
+    const canvas: HTMLCanvasElement = canvasRef.current;
+    let context = canvas.getContext('2d');
+    context.clearRect(0, 0, minimapSize.width, minimapSize.height); // 清空canvas画布
 
-    if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth) {
-      fitK = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
-    } else
-      fitK = 1;
-
-    if (fitK === 1)
-      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-        .attr('width', minimapSize.width)
-        .attr("height", minimapSize.height)
-    else {
-      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-        .attr('width', minimapSize.width * fitK)
-        .attr("height", minimapSize.height * fitK)
-
-    }
-    d3.select(mapRef.current)
-      .attr('width', minimapSize.width)
-      .attr("height", minimapSize.height)
-
-    let stylesText = '';
+    let stylesText = ''; // copy所有的样式
     for (let k = 0; k < document.styleSheets.length; k++) {
       try {
         let cssRules = (document.styleSheets[k] as any).cssRules ||
@@ -82,24 +89,20 @@ const MiniMap: React.FC = () => {
         }
       }
     }
-    let svgStyle = d3.select(graphInfo).append('style');
-    svgStyle.text(stylesText);
 
-    // if (fitK !== 1) {
-    //     console.log(newoutputsvgWidth,newoutputsvgHeight)
-    //     d3.select(graphInfo).select("g.output").attr("width", `${newoutputsvgWidth}`)
-    //     d3.select(graphInfo).select("g.output").attr("height", `${newoutputsvgHeight}`)
-    //     console.log(d3.select(graphInfo).select("g.output").attr("transform"))
-    // }
-    d3.select(graphInfo).attr("width", `${svgWidth}`) // 原来样式中的长宽为百分比，现在为它附上真实的长宽
-    d3.select(graphInfo).attr("height", `${svgHeight}`)
+    d3.select(outputSVG_Copy as HTMLElement).attr("width", `${mainSvgSize.width}`) // 原来样式中的长宽为百分比，现在为它附上真实的长宽
+    d3.select(outputSVG_Copy as HTMLElement).attr("height", `${mainSvgSize.height}`);
 
     // 改变要画的图的transform
-    d3.select(graphInfo).select("g.output").attr("transform", `translate(0,0) scale(${fitK})`)
-    let svgXml = (new XMLSerializer()).serializeToString(graphInfo)
+    d3.select(outputSVG_Copy as HTMLElement)
+      .select("g.output")
+      .attr("transform", `translate(0,0) scale(${fitK})`)
+
+    let svgStyle = d3.select(outputSVG_Copy as HTMLElement).append('style').text(stylesText);
+
+    let svgXml = (new XMLSerializer()).serializeToString(outputSVG_Copy)
     svgStyle.remove();
 
-    let context = canvas.getContext('2d');
     let image = new Image();
 
     let DOMURL: any = self.URL || self;
@@ -109,28 +112,60 @@ const MiniMap: React.FC = () => {
       context.drawImage(image, 0, 0, minimapSize.width, minimapSize.height);
     }
     image.src = url
-  }, [graphInfo]);
-
-  const dragmove = (d) => {
-    viewpointCoord.x = d3.event.x;  //d3.event.x y表示小矩形左上角的位置
-    viewpointCoord.y = d3.event.y;
-    updateRect()    // 同时改变矩形位置
-
-    // 更新svg图的位置
-    d3.select("g.output").attr("transform", `translate(${-viewpointCoord.x * transform.k * scale / fitK},${-viewpointCoord.y * transform.k * scale / fitK}) scale(${transform.k})`)   // 设置大小范围
-  };
-  const updateRect = () => {
-    d3.select(rectRef.current).attr("transform", `translate(${viewpointCoord.x},${viewpointCoord.y}) scale(${1 / transform.k})`) // 设置小矩形大小
   }
 
-  const dragend = (d) => { // 拖拽结束，设置transform
-    setTransform(TransformType.MAP_TRANSFORM, { x: -viewpointCoord.x * scale / fitK, y: -viewpointCoord.y * scale / fitK, k: transform.k })
-    broadTransformChange();
-  }
   useEffect(() => {
+    if (outputSVG === null) return;
+    const svgWidth = mainSvgSize.width;
+    const svgHeight = mainSvgSize.height;
+    const outputsvgWidth = d3.select(outputSVG).node().getBoundingClientRect().width / transform.k;
+    const outputsvgHeight = d3.select(outputSVG).node().getBoundingClientRect().height / transform.k; //未缩放之前的大小
+
+    if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth)
+      fitK = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
+    else
+      fitK = 1;
+
+    if (fitK === 1)
+      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+        .attr('width', minimapSize.width)
+        .attr("height", minimapSize.height)
+    else {
+      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+        .attr('width', minimapSize.width * fitK)
+        .attr("height", minimapSize.height * fitK)
+    }
+
+    clearTimeout(iTime);
+    iTime = setTimeout(() => {
+      outputSVGToDrawInCanvas = outputSVG.cloneNode(true);
+      drawInCanvas(outputSVGToDrawInCanvas, fitK);
+    }, 500);
+  })
+
+  //-------------------------以下是拖动矩形框-->改变output图的位置------------------------------------
+  useEffect(() => {
+    const dragmove = () => {
+      viewpointCoord.x = d3.event.x;  //d3.event.x y表示小矩形左上角的位置
+      viewpointCoord.y = d3.event.y;
+      updateRect(viewpointCoord.x, viewpointCoord.y)    // 同时改变矩形位置
+
+      // 更新svg图的位置
+      d3.select(outputG).attr("transform",
+        `translate(${-d3.event.x * transform.k * scale / fitK},${-d3.event.y * transform.k * scale / fitK}) scale(${transform.k})`
+      )
+    };
+    const dragend = () => { // 拖拽结束，设置transform
+      handleChangeTransform({ x: -viewpointCoord.x * transform.k * scale / fitK, y: -viewpointCoord.y * transform.k * scale / fitK, k: transform.k })
+      // setViewpointCoord({ x: d3.event.x, y: d3.event.y })
+    }
+
     let drag = d3.drag().subject(Object).on('drag', dragmove).on("end", dragend);
+
+    // TODO: 每次transform改变都会重新绑定drag时间，是否会导致堆栈过多？！
     d3.select(rectRef.current).datum(viewpointCoord as any).call(drag);
-  });
+  }, [transform])
+
   return (
     <div className={'mini-map'}>
       <svg>
@@ -151,7 +186,7 @@ const MiniMap: React.FC = () => {
           />
         </g>
       </svg>
-      <canvas ref={mapRef} width={minimapSize.width} height={minimapSize.height} />
+      <canvas ref={canvasRef} width={minimapSize.width} height={minimapSize.height} />
     </div>
   );
 }

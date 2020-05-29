@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./DagreLayout.css";
 import DagreLayoutGraph from "./DagreLayoutGraph"
 import MiniMap from '../MiniMap/MiniMap';
@@ -24,6 +24,13 @@ const DagreLayout: React.FC = () => {
                     isInteractive={true}
                     data={lineData}>
                 </LineChart>
+            </div> */}
+            {/* <div className="map-container">
+                <MiniMap
+                    graph={document.getElementById("dagre-svg")}
+                    outputG={document.getElementById("output-g")}
+                    outputSVG={document.getElementById("output-svg")}
+                />
             </div> */}
             {/* <div className="map-container">
                 <MiniMap/>
