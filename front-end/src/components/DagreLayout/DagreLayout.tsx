@@ -1,28 +1,20 @@
 import React, { useState,useEffect } from "react";
 import "./DagreLayout.css";
 import DagreLayoutGraph from "./DagreLayoutGraph"
-import { LineChart } from '../LineCharts/index'
 import MiniMap from '../MiniMap/MiniMap';
-import { fetchAndComputeSnaphot } from '../../common/model-level/snaphot'
+
 
 const DagreLayout: React.FC = () => {
-    const [lineData, setLineData] = useState([]);
     const [iteration, setIteration] = useState(0)
     let handleSubmitIteration = function (iteration: number) {
         setIteration(iteration);
     }
-    useEffect(() => {
-        fetchAndComputeSnaphot()
-        .then(data => {
-            setLineData(data)
-        })
-    },[])
     return (
         <div className="container">
             <div className="dagre-container">
                 <DagreLayoutGraph iteration={iteration} />
             </div>
-            <div className="lineChart-container">
+            {/* <div className="lineChart-container">
                 <LineChart
                     onSubmit={handleSubmitIteration.bind(this)}
                     height={120}
@@ -32,7 +24,7 @@ const DagreLayout: React.FC = () => {
                     isInteractive={true}
                     data={lineData}>
                 </LineChart>
-            </div>
+            </div> */}
             {/* <div className="map-container">
                 <MiniMap/>
             </div> */}

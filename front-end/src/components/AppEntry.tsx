@@ -19,6 +19,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import DagreLayout from "./DagreLayout/DagreLayout";
 import LaylerLevel from "./LaylerLevel/LaylerLevel";
+import Snaphot from './Snaphot/Snaphot'
 import NodeSelector from './preference/NodeSelector'
 import TensorBoardGraph from './tensorboard/Graph'
 import GraphSelector from './preference/GraphSelector';
@@ -171,10 +172,14 @@ const AppEntry: React.FC = () => {
             <LaylerLevel />
         </Route>
         <Route path="/">
-        {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
-        {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
-        {currentLayout === LayoutType.DAGRE_FOR_MS ? <DagreLayout /> : null}
+        {/* snaphot视图300px 上面64px */}
+        <div style={{ height: 'calc(100% - 364px)' }}>
+            {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
+            {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
+            {currentLayout === LayoutType.DAGRE_FOR_MS ? <DagreLayout /> : null}
             {currentLayout === LayoutType.ELK_FOR_TF ? <ELKLayout /> : null}
+        </div>
+        <Snaphot/>
         </Route>
         </Switch>
       </main>
