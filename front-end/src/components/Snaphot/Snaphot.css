@@ -3,3 +3,11 @@
     width: 100%;
     /* background-color: brown */
 }
+.area {
+    clip-path: url(#clip);
+}
+.zoom {
+    cursor: move;
+    fill: none;
+    pointer-events: all;
+}

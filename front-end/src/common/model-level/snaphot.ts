@@ -3,13 +3,13 @@ import { GroupNodeImp, LayerNodeImp } from '../../types/processed-graph'
 
 export const fetchAndComputeSnaphot = async () => {
     let data = await fetchSnaphot()
-    let line = data.data.map(d => {
+    let line = data.data.slice(0,1000).map(d => {
         return{
             x: d.STEP,
             y: d.TRAIN_LOSS
         }
     })
-    return [{ id: 'snapshot', data: line, color: '#9ecae1' }]
+    return { id: 'snapshot', data: line, color: '#9ecae1' }
 }
 
 export const fetchAndGetLayerInfo = async (params, nodeId, graphData) => {
