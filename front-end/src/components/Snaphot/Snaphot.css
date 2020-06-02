@@ -7,7 +7,7 @@
     clip-path: url(#clip);
 }
 .zoom {
-    cursor: move;
+    /* cursor: move; */
     fill: none;
-    pointer-events: all;
+    pointer-events: all
 }

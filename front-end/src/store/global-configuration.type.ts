@@ -8,6 +8,7 @@ export interface GlobalConfigurations {
   },
   isHiddenInterModuleEdges: boolean;
   shouldOptimizeProcessedGraph: boolean;
+  currentStep: number;
   currentLayout: LayoutType
 }
 
@@ -23,5 +24,6 @@ export enum GlobalConfigurationsModificationType {
   TOGGLE_PREPROCESSING_PLUGIN,
   SET_CURRENT_LAYOUT,
   TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES,
-  TOGGLE_PROCESSED_GRAPH_OPTIMIZER
+  TOGGLE_PROCESSED_GRAPH_OPTIMIZER,
+  SET_CURRENT_SEPT
 }

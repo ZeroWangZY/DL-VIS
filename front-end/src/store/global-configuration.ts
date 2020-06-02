@@ -13,6 +13,7 @@ let globalConfigurations: GlobalConfigurations = {
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
   currentLayout: LayoutType.ELK_FOR_TF,
+  currentStep: null
 };
 
 const broadcast = () => {
@@ -57,6 +58,12 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
         { shouldOptimizeProcessedGraph: !globalConfigurations.shouldOptimizeProcessedGraph }
       )
       break;
+    case GlobalConfigurationsModificationType.SET_CURRENT_SEPT:
+    globalConfigurations = Object.assign(
+      {},
+      globalConfigurations,
+      { currentStep: payload }
+    )
     default:
       break;
   }

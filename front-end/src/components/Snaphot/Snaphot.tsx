@@ -4,6 +4,8 @@ import * as d3 from 'd3';
 import './Snaphot.css'
 import { fetchAndComputeSnaphot } from '../../common/model-level/snaphot'
 import { computeXYScales }from '../LineCharts/src/computed'
+import {  modifyGlobalConfigurations } from '../../store/global-configuration';
+import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 interface Point {
     x: number,
     y: number
@@ -15,6 +17,7 @@ const Snaphot: React.FC = () => {
     const svgHeight = 300
     // const [svgHeight, setSvgHeight] = useState(0);
     // const [svgWidth, setSvgWidth] = useState(0);
+    const [clickNumber, setClickNumber] = useState(null);
     const margin = {top: 20, right: 20, bottom: 110, left: 40}
     const margin2 = {top: 230, right: 20, bottom: 30, left: 40}
     const width = svgWidth - margin.left - margin.right
@@ -38,32 +41,12 @@ const Snaphot: React.FC = () => {
             let focus =  d3.select(svgRef.current).select("g.focus")
             focus.select(".area").attr("d", lineGenerator);
             focus.select(".axis--x").call(d3.axisBottom(focusData.xScale));
-            d3.select(svgRef.current).select(".zoom").call(zoom.transform, d3.zoomIdentity
-                .scale(width / (s[1] - s[0]))
-                .translate(-s[0], 0));
-    }
 
-    const zoomed = ()=> {
-        // console.log('zoom')
-        if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
-        var t = d3.event.transform;
-        focusData.xScale.domain(t.rescaleX(contextData.xScale).domain());
-        let focus =  d3.select(svgRef.current).select("g.focus")
-        let context =  d3.select(svgRef.current).select("g.context")
-        focus.select(".area").attr("d", lineGenerator);
-        focus.select(".axis--x").call(d3.axisBottom(focusData.xScale));
-        context.select(".brush").call(brush.move, focusData.xScale.range().map(t.invertX, t));
     }
 
     const brush = d3.brushX()
     .extent([[0, 0], [width, height2]])
     .on("brush end", brushed);
-
-    const zoom = d3.zoom()
-    .scaleExtent([1, Infinity])
-    .translateExtent([[0, 0], [width, height]])
-    .extent([[0, 0], [width, height]])
-    .on("zoom", zoomed);
 
     useEffect(() => {
         // const svgNode = d3.select('.lineChart-container').node() as HTMLElement;
@@ -111,7 +94,23 @@ const Snaphot: React.FC = () => {
                 .attr('fill','none')
                 .attr('stroke',data.color)
 
-        d3.select(svgRef.current).select("rect.zoom").call(zoom)
+        d3.select(svgRef.current).select("rect.zoom")
+            .on("mousemove", function () {
+            let mouseX = d3.mouse((this as any) as SVGSVGElement)[0]
+            let x = focusData.xScale.invert(mouseX)
+            const bisect = d3.bisector((d: any) => d.x).left;
+            //拿第一组数据查询
+            let _index = bisect(data.data, x, 1)
+            let index = x - data.data[_index - 1].x > data.data[_index].x - x ? _index : _index - 1
+            let clickNumber = data.data[index].x
+            setClickNumber(focusData.xScale(clickNumber))
+            })
+            .on("mouseleave", function () {
+                setClickNumber(null)
+            })
+            .on("onclick", function () {
+                modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_CURRENT_SEPT, focusData.xScale.invert(clickNumber));
+            })
     }
 
     return (
@@ -119,6 +118,10 @@ const Snaphot: React.FC = () => {
         <svg style={{ height: '100%', width: '100%' }} ref={svgRef}>
             <defs><clipPath id={'clip'}><rect width={width} height={height}/></clipPath></defs>
             <g className="focus" transform={`translate(${margin.left},${margin.top})`}>
+            {clickNumber && <line x1={clickNumber} x2={clickNumber} y1={height} y2={15} style={{
+                stroke: 'grey',
+                strokeWidth: 1
+                }} />}
             </g>
             <g className="context" transform={`translate(${margin2.left},${margin2.top})`}>
             </g>
