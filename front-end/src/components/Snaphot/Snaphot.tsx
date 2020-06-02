@@ -5,12 +5,12 @@ import { fetchAndComputeSnaphot } from '../../common/model-level/snaphot'
 
 const Snaphot: React.FC = () => {
     const [lineData, setLineData] = useState([]);
-    useEffect(() => {
-        fetchAndComputeSnaphot()
-        .then(data => {
-            setLineData(data)
-        })
-    })
+    // useEffect(() => {
+    //     fetchAndComputeSnaphot()
+    //     .then(data => {
+    //         setLineData(data)
+    //     })
+    // })
     return (
         <div className="lineChart-container">
         </div>
