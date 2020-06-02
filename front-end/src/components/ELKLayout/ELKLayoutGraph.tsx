@@ -286,8 +286,12 @@ const ELKLayoutGraph: React.FC = () => {
         let subNodes = groups[parentId]["nodes"];
         subNodes.forEach((id) => {
           const node = nodeMap[id];
-          const inPort = nodeLinkMap[id].source.length > maxPort;
-          const outPort = nodeLinkMap[id].target.length > maxPort;
+          let inPort = false,
+            outPort = false;
+          if (id in nodeLinkMap) {
+            inPort = nodeLinkMap[id].source.length > 10;
+            outPort = nodeLinkMap[id].target.length > 10;
+          } 
           let child = generateNode(node, inPort, outPort);
           processChildren(id, child, children);
           const source = id;
