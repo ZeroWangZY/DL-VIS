@@ -14,7 +14,7 @@ import { useGlobalConfigurations } from "../../store/global-configuration";
 import { LayoutType } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/tf-raw-graph";
 import { fetchGraphData, fetchLocalMsGraph } from "../../api";
-import ProcessedGraphOptimizer from '../../common/graph-processing/processedGraphOptimizer';
+import ProcessedGraphOptimizer from '../../common/graph-processing/processed-graph-optimizer';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
