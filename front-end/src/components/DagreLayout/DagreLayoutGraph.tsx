@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType} from '../../types/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType } from '../../types/processed-graph'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -24,6 +24,8 @@ import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
 import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
 import { generateNodeStyles, generateEdgeStyles, getColor, generateAcrossModuleEdgeStyles } from '../../common/style/graph';
+import NodeInfoCard from "../NodeInfoCard/NodeInfoCard"
+
 
 
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
@@ -35,6 +37,12 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const [nodes, setNodes] = useState({});
   const [moduleConnection, setModuleConnection] = useState({});
   const [hiddenEdges, setHiddenEdges] = useState([]);
+  const [outputNodeName, setOutputNodeName] = useState([]);
+  const [inputNodeName, setInputNodeName] = useState([]);
+  const [selectedNodeName, setSelectedNodeName] = useState("");
+  const [leafAndChildrenNum, setLeafAndChildrenNum] = useState([]);
+  const [selectedNodeId, setSelectedNodeId] = useState("");
+  const [nodeAttribute, setNodeAttribute] = useState([]);
 
   const transform = useTransform();
   const history = useHistory();
@@ -74,36 +82,77 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     .x(d => getX(d))
     .y(d => getY(d));
 
+  const showInfoCard = id => {
+    let GraphId = id;
+    id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
+    let nodeMap = graphForLayout.nodeMap
+    let node = nodeMap[id];
+
+    if (node.type !== NodeType.GROUP && node.type !== NodeType.OPERTATION) { // TODO: 目前只考虑ms图
+      return;
+    }
+
+    if (node.type === NodeType.GROUP) {
+      let splitName = GraphId.split("-")
+      setSelectedNodeName(splitName[splitName.length - 1]);
+      d3.select(".info-card.root").classed("selected", true);
+      if (selectedNodeId.length !== 0) { // 已有选中节点
+        d3.select("#node_" + selectedNodeId).select(".label-container").classed("focus", false);
+      }
+      d3.select("#node_" + GraphId).select(".label-container").classed("focus", true)
+      setSelectedNodeId(GraphId)
+
+      setLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
+      setOutputNodeName(Array.from((node as GroupNode).outputNode));
+      setInputNodeName(Array.from((node as GroupNode).inputNode));
+      setNodeAttribute([]);
+    }
+    if (node.type === NodeType.OPERTATION) {
+      let splitName = GraphId.split("-")
+      setSelectedNodeName(splitName[splitName.length - 1]);
+      if (selectedNodeId.length !== 0) { // 已有选中节点
+        d3.select("#node_" + selectedNodeId).select(".label-container").classed("focus", false);
+      }
+      d3.select("#node_" + GraphId).select(".label-container").classed("focus", true)
+      setSelectedNodeId(GraphId);
+
+      setLeafAndChildrenNum([0, 0]);
+      setNodeAttribute((node as OperationNodeImp).attributes);
+      setOutputNodeName(Array.from((node as OperationNodeImp).outputNode));
+      setInputNodeName(Array.from((node as OperationNodeImp).inputNode));
+    }
+  }
+
   const toggleExpanded = id => {
     id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    while(1){
+    while (1) {
       let node = graphForLayout.nodeMap[id];
       if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
         return
       }
 
       node = node as GroupNode;
-        const currentExpanded = node.expanded;
-        modifyProcessedGraph(
-          ModificationType.MODIFY_NODE_ATTR,
-          {
-            nodeId: id,
-            modifyOptions: {
-              expanded: !currentExpanded
-            }
+      const currentExpanded = node.expanded;
+      modifyProcessedGraph(
+        ModificationType.MODIFY_NODE_ATTR,
+        {
+          nodeId: id,
+          modifyOptions: {
+            expanded: !currentExpanded
           }
-        );
+        }
+      );
       var i = 0;
       let childnodeId = id;
-      node.children.forEach(childId =>{
+      node.children.forEach(childId => {
         let childNode = graphForLayout.nodeMap[childId];
-        if (childNode.type == NodeType.GROUP){
-            i++;
-            childnodeId = childNode.id;
+        if (childNode.type == NodeType.GROUP) {
+          i++;
+          childnodeId = childNode.id;
         }
-        
+
       })
-      if(i==1){
+      if (i == 1) {
         // let childnodeId=Array.from(node.children)[0];
         id = childnodeId;
 
@@ -452,6 +501,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     node = d3.select(".nodes").selectAll(".node");
     node.classed("selected", false);
     node.classed("previouslySelected", false);
+    d3.select(".info-card.root").classed("selected", false);
+    if (selectedNodeId.length !== 0) { // 已有选中节点
+      d3.select("#node_" + selectedNodeId).select(".label-container").classed("focus", false);
+      setSelectedNodeId("")
+    }
   }
 
   // 按住shift后单击选择
@@ -620,7 +674,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       // 中间的插值点 目前设置的是三个点：中点、四分之一点偏移、四分之三点偏移
       let interPoints = [];
       const xDiff = edge["endPointX"] - edge["startPointX"], yDiff = edge["endPointY"] - edge["startPointY"];
-      const [midX, midY]  = [(edge["startPointX"] + edge["endPointX"]) * 0.5, (edge["startPointY"] + edge["endPointY"]) * 0.5];
+      const [midX, midY] = [(edge["startPointX"] + edge["endPointX"]) * 0.5, (edge["startPointY"] + edge["endPointY"]) * 0.5];
       const [quarter1X, quarter1Y] = [
         edge["startPointX"] + xDiff * 0.25,
         edge["startPointY"] + yDiff * 0.25
@@ -629,10 +683,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         edge["startPointX"] + xDiff * 0.75,
         edge["startPointY"] + yDiff * 0.75
       ];
-      interPoints.push({x: quarter1X + xDiff * 0.2, y: quarter1Y});
-      interPoints.push({x: midX, y: midY});
-      interPoints.push({x: quarter2X - xDiff * 0.2, y: quarter2Y});
-      edge["interPoints"]= interPoints;
+      interPoints.push({ x: quarter1X + xDiff * 0.2, y: quarter1Y });
+      interPoints.push({ x: midX, y: midY });
+      interPoints.push({ x: quarter2X - xDiff * 0.2, y: quarter2Y });
+      edge["interPoints"] = interPoints;
     }
   }
 
@@ -642,7 +696,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     const target = d3.select(e.target).attr("data-target");
     const { nodeMap } = graphForLayout;
     let sourceNode = nodeMap[source] as GroupNode, targetNode = nodeMap[target] as GroupNode;
-    
+
     d3.selectAll("g.node").classed("hover-transparent", true);
     d3.selectAll("g.edgePath").classed("hover-transparent", true);
     d3.selectAll("g.moduleEdgePath").classed("hover-transparent", true);
@@ -665,7 +719,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           addEdgetoDisplay(inHiddenEdges, newHiddenEdges, source, target);
           addEdgetoDisplay(outHiddenEdges, newHiddenEdges, source, target);
         }
-        
+
       })
       // 获取相关节点
       newHiddenEdges.forEach(edge => {
@@ -716,7 +770,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
     let allHiddenEdges = (nodeEdgeType === "source") ? graphForLayout.getOutHiddenEdges(nodeId) : graphForLayout.getInHiddenEdges(nodeId);
     let connectedNodes = new Set(), displayedModuleEdge = new Set();
-    
+
     for (const edge of allHiddenEdges) {
       const sourceNode = nodeMap[edge.source], targetNode = nodeMap[edge.target];
       // 过滤掉模块间的边
@@ -795,8 +849,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       const sourceNode = nodeMap[edge.source], targetNode = nodeMap[edge.target];
       // 过滤掉模块间的边 提取当前hover小短线的连接
       if ((modulesId.has(edge.source) && modulesId.has(edge.target) && sourceNode instanceof GroupNodeImp && !sourceNode.parentModule
-      && targetNode instanceof GroupNodeImp && !targetNode.parentModule)
-            || ((edge[nodeEdgeType] !== connectedModule && edge[connectedModuleType] !== hoveredNodeRootModule))) {
+        && targetNode instanceof GroupNodeImp && !targetNode.parentModule)
+        || ((edge[nodeEdgeType] !== connectedModule && edge[connectedModuleType] !== hoveredNodeRootModule))) {
         continue;
       }
       newHiddenEdges.push(Object.assign({}, edge));
@@ -929,10 +983,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                         <g
                           className={`node ${d.data.class}`}
                           data-belong_module={d.data.belongModule}
-                          id={d.data.id}
+                          id={"node_" + d.data.id}
                           key={d.key}
                           transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
-                          onClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
+                          onClick={() => selectMode ? handleNodeSelect(d.data.id) : showInfoCard(d.data.id)}
+                          onDoubleClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
                           {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
                           <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
                             {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && diagnosisMode ?
@@ -1064,7 +1119,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                           data-target={d.data.target}
                           onMouseOver={(e) => handleModuleEdgeMouseover(e)}
                           onMouseOut={handleHiddenEdgeMouseout}
-                          ></path>
+                        ></path>
                         <ellipse
                           cx={d.style.startPointX}
                           cy={d.style.startPointY}
@@ -1107,6 +1162,13 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           <g id="gBrushHolder"></g>
         </g>
       </svg>
+      <NodeInfoCard
+        selectedNodeName={selectedNodeName}
+        leafAndChildrenNum={leafAndChildrenNum}
+        inputNodeName={inputNodeName}
+        outputNodeName={outputNodeName}
+        nodeAttribute={nodeAttribute} />
+
       <Popover
         open={isPopoverOpen}
         anchorEl={anchorEl}
@@ -1268,7 +1330,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           </CardContent>
         </Card>
       </Popover>
-    </div>
+    </div >
   );
 }
 

@@ -25,6 +25,11 @@
   ry: 10;
 }
 
+.node .label-container.focus{
+  stroke-width: 3px;
+  stroke:blue;
+}
+
 .node-label text {
   fill: #333;
   text-anchor: middle;

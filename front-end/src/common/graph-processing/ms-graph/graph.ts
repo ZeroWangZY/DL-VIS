@@ -24,16 +24,16 @@ import {
 // import { wrapTaskWithTimeLogger } from "../utils";
 
 const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
+// import { wrapTaskWithTimeLogger } from "../utils";
+
+let emptyNodeName = []
 
 function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataNode {
   const outputs = rGraph.outputs;
-  // const splitedScope = rNode.scope.split(SCOPE_DELIM)
-  // const displayedName = splitedScope[splitedScope.length - 1]
   const displayedName = rNode.opType + rNode.name
 
   for (let outputsNode of outputs) {  // output节点
     if (outputsNode.name === rNode.name) {
-      // console.log(rNode.name)
       return new DataNodeImp({
         id: rNode.name,
         dataType: DataType.OUTPUT,
@@ -43,7 +43,17 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataN
   }
 
   //DONE: Operation节点
+  let attributes = [];
+  if (rNode.attribute) { // 如果attribute存在
+    for (let attr of rNode.attribute) { // 遍历数组
+      let attribute = { name: "", value: "" };
+      attribute.name = attr.name;
+      attribute.value = JSON.stringify(attr.value);
+      attributes.push(attribute)
+    }
+  }
   return new OperationNodeImp({
+    attributes,
     id: rNode.name,
     op: rNode.opType,
     auxiliary: new Set([]),
@@ -51,10 +61,7 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataN
   });
 }
 
-// interface InputNodeMap {
-//   key: string;
-//   value: Set<String>;
-// }
+let inputInfo = new Set(); // 包含所有的input信息
 
 function buildModule(hGraph: ProcessedGraph): void {
   const nodeMap = hGraph.nodeMap;
@@ -65,20 +72,20 @@ function buildModule(hGraph: ProcessedGraph): void {
       module = module as GroupNode
       module.isModule = true
       let queue = [module.id]
-      while(queue.length > 0){
+      while (queue.length > 0) {
         const nodeId = queue.shift()
         const theNode = nodeMap[nodeId]
         theNode.belongModule = module.id
-        if(theNode.type === NodeType.GROUP || theNode.type === NodeType.LAYER){
+        if (theNode.type === NodeType.GROUP || theNode.type === NodeType.LAYER) {
           queue = queue.concat(Array.from((theNode as GroupNode).children))
         }
       }
     }
   }
-  for(const edge of hGraph.rawEdges) {
+  for (const edge of hGraph.rawEdges) {
     const sourceNode = nodeMap[edge.source]
     const targetNode = nodeMap[edge.target]
-    if (sourceNode.belongModule !== null && targetNode.belongModule !== null && sourceNode.belongModule !== targetNode.belongModule){
+    if (sourceNode.belongModule !== null && targetNode.belongModule !== null && sourceNode.belongModule !== targetNode.belongModule) {
       sourceNode.outModuleConnection.add(targetNode.id)
       targetNode.inModuleConnection.add(sourceNode.id)
       let moduleEdge = hGraph.moduleEdges.find((moduleEdge => moduleEdge.source === sourceNode.belongModule && moduleEdge.target === targetNode.belongModule))
@@ -86,7 +93,7 @@ function buildModule(hGraph: ProcessedGraph): void {
         hGraph.moduleEdges.push({
           source: sourceNode.belongModule,
           target: targetNode.belongModule,
-          width:1
+          width: 1
         })
       } else {
         moduleEdge.width += 1
@@ -120,6 +127,9 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
       let parameterNode = parameterNodeName.indexOf(input.name) >= 0 ? true : false;
       let constValNode = constValNodeName.indexOf(input.name) >= 0 ? true : false;
 
+      if (!parameterNode && !constValNode)
+        inputInfo.add(input.name + "_Input2_" + rNode.name)
+
       if (parameterNode || constValNode) {
         const displayedName = input.name
         newId = input.name + "_Input2_" + rNode.name; // 新的Id
@@ -142,7 +152,6 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
         })
     }
   }
-  console.log(rGraph)
 
   // //input节点
   // for (let parameter of rGraph.parameters) {
@@ -170,7 +179,97 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   buildHierarchy(rGraph, pGraph, inputNodeName) // 构建层次
   buildModule(pGraph)
 
+  // 建立层次结束后，重新处理GroupNode，增加属性
+  processGroupNode(pGraph);
+  processOperationNode(rGraph, pGraph);
+
+  // console.log(rGraph);
+  // console.log(pGraph);
   return pGraph;
+}
+
+function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph) {
+  const nodeMap = pGraph.nodeMap;
+
+  for (let node of rGraph.node) { // 对于所有的operationNode
+    let nodeName = node.name;
+    for (let input of node.input) {
+      let inputNodeName = input.name;
+      if (nodeMap[inputNodeName + "_Input2_" + nodeName] instanceof DataNodeImp
+        && (nodeMap[inputNodeName + "_Input2_" + nodeName] as DataNodeImp).dataType === DataType.CONST) {
+        // 附属节点，不加入pGraph的inputNode
+        continue;
+      }
+      // 不是附属节点，则将inputNodeName加入pGraph的inputNode中
+      if (nodeMap[nodeName] instanceof OperationNodeImp) {
+        let displayedName = inputNodeName;
+        if (nodeMap[inputNodeName] instanceof OperationNodeImp)
+          displayedName = (nodeMap[inputNodeName] as OperationNodeImp).displayedName;
+        (nodeMap[nodeName] as OperationNodeImp).inputNode.add(displayedName);
+      }
+
+      // 同时处理一下output
+      if (nodeMap[inputNodeName] instanceof OperationNodeImp) {
+        let displayedName = nodeMap[nodeName].displayedName;
+        (nodeMap[inputNodeName] as OperationNodeImp).outputNode.add(displayedName);
+      }
+    }
+  }
+}
+
+function processGroupNode(pGraph: ProcessedGraph) {
+  const nodeMap = pGraph.nodeMap;
+  let nodeIds = Object.keys(nodeMap);
+  let leafOperationNodeCount = 0;
+  let childOperationNode = new Set(); // 内部的
+  for (let nodeId of nodeIds) {
+    let node = nodeMap[nodeId];
+    if (!(node instanceof GroupNodeImp)) continue;
+
+    leafOperationNodeCount = 0;
+    childOperationNode.clear()
+    countNodeNumInSubGraph(nodeId);
+    (node as GroupNode).leafOperationNodeCount = leafOperationNodeCount
+
+    let operationChildrenCount = (node as GroupNode).children.size;; // children个数
+    (node as GroupNode).children.forEach((id) => { // 统计children节点个数
+      let subNode = nodeMap[id];
+      if (subNode.type === NodeType.DATA && ((subNode as DataNode).dataType === DataType.CONST || (subNode as DataNode).dataType === DataType.OUTPUT)) { // 附属节点
+        --operationChildrenCount; // 减去附属节点
+        return;
+      }
+    });
+    (node as GroupNode).operationChildrenCount = operationChildrenCount;
+
+    // 处理group节点的输入输出
+    (node as GroupNode).inputNode = new Set();
+    (node as GroupNode).outputNode = new Set();
+    inputInfo.forEach((info) => {
+      let [source, target] = (info as string).split("_Input2_");
+      if (childOperationNode.has(source) && !childOperationNode.has(target)) // 则为外部输入节点
+        (node as GroupNode).outputNode.add(nodeMap[target].displayedName);
+      if (childOperationNode.has(target) && !childOperationNode.has(source)) { // 则为外部输出节点
+        (node as GroupNode).inputNode.add(nodeMap[source].displayedName);
+      }
+    })
+  }
+
+  function countNodeNumInSubGraph(id) { // 深度遍历nodeMap[id]的子节点。记录所有叶子节点OperationNode的个数
+    let subNode = nodeMap[id];
+    if (subNode.type === NodeType.OPERTATION ||
+      (subNode.type === NodeType.DATA && (subNode as DataNode).dataType !== DataType.CONST && (subNode as DataNode).dataType !== DataType.OUTPUT)) {
+      leafOperationNodeCount++;
+      return;
+    } else if (subNode.type === NodeType.GROUP) {
+      (subNode as GroupNode).children.forEach((id1) => {
+        if (nodeMap[id1] instanceof OperationNodeImp && nodeMap[id1].parent !== subNode.parent) { // 严格子节点
+          childOperationNode.add(id1);
+        }
+        countNodeNumInSubGraph(id1)
+      })
+    }
+    return;
+  }
 }
 
 function genParentScope(name: string): string[] {

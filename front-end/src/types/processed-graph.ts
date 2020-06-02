@@ -48,9 +48,17 @@ export interface BaseNode {
   inModuleConnection: Set<NodeId>;
 }
 
+export interface Attribute {
+  name: string;
+  value: string;
+}
+
 export interface OperationNode extends BaseNode {
   operationType: string;
+  attributes?: Attribute[];
   auxiliary?: Set<NodeId>;
+  inputNode?: Set<NodeId>;
+  outputNode?: Set<NodeId>;
 }
 
 export interface GroupNode extends BaseNode {
@@ -58,6 +66,10 @@ export interface GroupNode extends BaseNode {
   expanded: boolean;  // group是否被展开 
   isModule: boolean;
   parentModule: NodeId; // 如果是位于module中的嵌套module
+  operationChildrenCount?: Number;
+  leafOperationNodeCount?: Number;
+  inputNode?: Set<NodeId>;
+  outputNode?: Set<NodeId>;
 }
 
 export interface LayerNode extends GroupNode {
@@ -109,8 +121,11 @@ export class OperationNodeImp implements OperationNode {
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
   auxiliary?: Set<NodeId>;
+  attributes?: Attribute[];
+  inputNode?: Set<NodeId>;
+  outputNode?: Set<NodeId>;
 
-  constructor({ id, auxiliary, op, opts = {} }: { id: string; auxiliary?: Set<NodeId>; op: string; opts?: OptionsDef }) {
+  constructor({ id, auxiliary, attributes, inputNode, outputNode, op, opts = {} }: { id: string; auxiliary?: Set<NodeId>; inputNode?: Set<NodeId>; attributes?: Attribute[]; outputNode?: Set<NodeId>; op: string; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.OPERTATION;
@@ -119,6 +134,9 @@ export class OperationNodeImp implements OperationNode {
     this.outModuleConnection = new Set()
     this.inModuleConnection = new Set()
     this.auxiliary = auxiliary || new Set();
+    this.attributes = attributes || [];
+    this.inputNode = inputNode || new Set();
+    this.outputNode = outputNode || new Set();
   }
 }
 
@@ -135,6 +153,10 @@ export class GroupNodeImp implements GroupNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
+  operationChildrenCount?: Number;
+  leafOperationNodeCount?: Number;
+  inputNode?: Set<NodeId>;
+  outputNode?: Set<NodeId>;
 
   constructor({ id, children, parent, opts = {}, isModule = false, parentModule = null }:
     { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
@@ -362,16 +384,16 @@ export class ProcessedGraphImp implements ProcessedGraph {
       }
       const curNodeParentModule = (this.nodeMap[currentNode.belongModule] as GroupNode).parentModule;
       if (!((oldestUnexpandParent.type === NodeType.GROUP || oldestUnexpandParent.type === NodeType.LAYER)
-        && (oldestUnexpandParent as GroupNode).isModule)) { 
+        && (oldestUnexpandParent as GroupNode).isModule)) {
         this.insertModuleEdge(res, oldestUnexpandParent.id, inModuleNode.belongModule)
       }
-      this.insertModuleEdge(res, inModuleNode.belongModule, curNodeParentModule? curNodeParentModule : currentNode.belongModule)
+      this.insertModuleEdge(res, inModuleNode.belongModule, curNodeParentModule ? curNodeParentModule : currentNode.belongModule)
       if (nodeId !== currentNode.belongModule) {
         this.insertModuleEdge(res, currentNode.belongModule, nodeId)
       } else if (curNodeParentModule) {
         this.insertModuleEdge(res, curNodeParentModule, nodeId);
       }
-      
+
     }
     return res
   }
@@ -392,17 +414,17 @@ export class ProcessedGraphImp implements ProcessedGraph {
       } else if (curNodeParentModule) {
         this.insertModuleEdge(res, nodeId, curNodeParentModule);
       }
-      
+
       this.insertModuleEdge(res, curNodeParentModule ? curNodeParentModule : currentNode.belongModule, outModuleNode.belongModule)
       if (!((oldestUnexpandParent.type === NodeType.GROUP || oldestUnexpandParent.type === NodeType.LAYER)
-        && (oldestUnexpandParent as GroupNode).isModule)) { 
+        && (oldestUnexpandParent as GroupNode).isModule)) {
         this.insertModuleEdge(res, outModuleNode.belongModule, oldestUnexpandParent.id)
       }
     }
     return res
   }
 
-  private insertModuleEdge(moduleEdges: ModuleEdge[], source: NodeId, target: NodeId){
+  private insertModuleEdge(moduleEdges: ModuleEdge[], source: NodeId, target: NodeId) {
     let tempModuleEdge = moduleEdges.find(me => me.source === source && me.target === target)
     if (tempModuleEdge === undefined) {
       moduleEdges.push({ source, target, width: 1 })
@@ -440,7 +462,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
   }
 
   // 判断两个节点是否在同一个scope下
-  private isSameScope(nodeId1: NodeId, nodeId2: NodeId): boolean{
+  private isSameScope(nodeId1: NodeId, nodeId2: NodeId): boolean {
     if (nodeId1 === nodeId2) return true;
     const node1ScopeArray = nodeId1.split('/'), node2ScopeArray = nodeId2.split('/');
     if (node1ScopeArray[0] === node2ScopeArray[0]) {
@@ -455,7 +477,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
     if (!node1BelongModule || !node2BelongModule) return false;
     const parent1 = this.nodeMap[node1BelongModule].parent, parent2 = this.nodeMap[node2BelongModule].parent;
     return (node1BelongModule !== node2BelongModule && parent1 === parent2) //同一scope下同一层的不同模块间的边
-     || (node1BelongModule !== node2BelongModule && !this.isSameScope(nodeId1, nodeId2) && parent1 !== parent2) // 不同scope下的不同模块间的边
+      || (node1BelongModule !== node2BelongModule && !this.isSameScope(nodeId1, nodeId2) && parent1 !== parent2) // 不同scope下的不同模块间的边
   }
 
   getDisplayedNodes(): NodeId[] {
@@ -494,7 +516,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
     return displayedEdges;
   }
 
-  private findInnerGraphNodeId(sourceNodeId,targetNodeId){
+  private findInnerGraphNodeId(sourceNodeId, targetNodeId) {
     let parent = this.nodeMap[targetNodeId].parent;
     if (sourceNodeId.includes(targetNodeId)) {
       return targetNodeId
@@ -507,17 +529,17 @@ export class ProcessedGraphImp implements ProcessedGraph {
     }
     return null;
   }
-  getInnerGraph(nodeId){
+  getInnerGraph(nodeId) {
     let nodes = []
-    let edges = [] 
-    if(this.nodeMap[nodeId] instanceof OperationNodeImp){
-        return nodeId
+    let edges = []
+    if (this.nodeMap[nodeId] instanceof OperationNodeImp) {
+      return nodeId
     }
     (this.nodeMap[nodeId] as GroupNode).children.forEach(nodeId => nodes.push(nodeId))
     for (const edge of this.rawEdges) {
       let source = this.findInnerGraphNodeId(nodes, edge.source);
       let target = this.findInnerGraphNodeId(nodes, edge.target);
-      if(!source || !target ||source ===target){
+      if (!source || !target || source === target) {
         continue
       }
       edges.push({
