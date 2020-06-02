@@ -14,6 +14,7 @@ import { useGlobalConfigurations } from "../../store/global-configuration";
 import { LayoutType } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/tf-raw-graph";
 import { fetchGraphData, fetchLocalMsGraph } from "../../api";
+import ProcessedGraphOptimizer from '../../common/graph-processing/processedGraphOptimizer';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -39,7 +40,7 @@ export default function GraphSelector() {
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
 
   // enum LayoutType {DAGRE_FOR_TF, TENSORBOARD, DAGRE_FOR_MS}
-  const { preprocessingPlugins, currentLayout } = useGlobalConfigurations();
+  const { preprocessingPlugins, currentLayout, shouldOptimizeProcessedGraph } = useGlobalConfigurations();
   const handleTfGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
   ) => {
@@ -100,6 +101,10 @@ export default function GraphSelector() {
       })
       .then(async (graph) => {
         const hGraph = await buildGraph(graph);
+        if (shouldOptimizeProcessedGraph) {
+          const layoutOptimizer = new ProcessedGraphOptimizer();
+          layoutOptimizer.optimize(hGraph);
+        }
         setProcessedGraph(hGraph);
       });
   }, [
@@ -108,6 +113,7 @@ export default function GraphSelector() {
     preprocessingPlugins,
     currentLayout,
   ]);
+        
 
   return (
     <div>

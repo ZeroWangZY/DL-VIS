@@ -31,13 +31,16 @@ const descriptions = {
 
 export default function PreprocessingPluginsSelector() {
   const classes = useStyles();
-  const { preprocessingPlugins, isHiddenInterModuleEdges } = useGlobalConfigurations()
+  const { preprocessingPlugins, isHiddenInterModuleEdges, shouldOptimizeProcessedGraph } = useGlobalConfigurations()
   const handleChange = (key) => () => {
     modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_PREPROCESSING_PLUGIN,
       key)
   };
   const toggleIsHiddenInterModuleEdges = () => {
     modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES)
+  }
+  const toggleisLayoutOptimized = () => {
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_IS_AGGRE_OPTIMIZED)
   }
 
   return (
@@ -55,6 +58,10 @@ export default function PreprocessingPluginsSelector() {
         <FormControlLabel
           control={<Switch checked={isHiddenInterModuleEdges} onChange={toggleIsHiddenInterModuleEdges} />}
           label={'挖孔式边绑定'}
+        />
+        <FormControlLabel
+          control={<Switch checked={shouldOptimizeProcessedGraph} onChange={toggleisLayoutOptimized} />}
+          label={'图处理优化'}
         />
       </div>
     </div>

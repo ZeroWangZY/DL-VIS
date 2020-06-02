@@ -11,6 +11,7 @@ let globalConfigurations: GlobalConfigurations = {
     renameVariable: false
   },
   isHiddenInterModuleEdges: false,
+  shouldOptimizeProcessedGraph: false,
   currentLayout: LayoutType.ELK_FOR_TF,
 };
 
@@ -47,6 +48,13 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
         {},
         globalConfigurations,
         { isHiddenInterModuleEdges: !globalConfigurations.isHiddenInterModuleEdges }
+      )
+      break;
+    case GlobalConfigurationsModificationType.TOGGLE_IS_AGGRE_OPTIMIZED:
+      globalConfigurations = Object.assign(
+        {},
+        globalConfigurations,
+        { isLayoutOptimized: !globalConfigurations.shouldOptimizeProcessedGraph }
       )
       break;
     default:
