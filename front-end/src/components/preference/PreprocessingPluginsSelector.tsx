@@ -39,8 +39,8 @@ export default function PreprocessingPluginsSelector() {
   const toggleIsHiddenInterModuleEdges = () => {
     modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES)
   }
-  const toggleisLayoutOptimized = () => {
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_IS_AGGRE_OPTIMIZED)
+  const toggleProcessedGraphOptimizer = () => {
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_PROCESSED_GRAPH_OPTIMIZER)
   }
 
   return (
@@ -60,7 +60,7 @@ export default function PreprocessingPluginsSelector() {
           label={'挖孔式边绑定'}
         />
         <FormControlLabel
-          control={<Switch checked={shouldOptimizeProcessedGraph} onChange={toggleisLayoutOptimized} />}
+          control={<Switch checked={shouldOptimizeProcessedGraph} onChange={toggleProcessedGraphOptimizer} />}
           label={'图处理优化'}
         />
       </div>

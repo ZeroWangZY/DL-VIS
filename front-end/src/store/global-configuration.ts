@@ -50,11 +50,11 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
         { isHiddenInterModuleEdges: !globalConfigurations.isHiddenInterModuleEdges }
       )
       break;
-    case GlobalConfigurationsModificationType.TOGGLE_IS_AGGRE_OPTIMIZED:
+    case GlobalConfigurationsModificationType.TOGGLE_PROCESSED_GRAPH_OPTIMIZER:
       globalConfigurations = Object.assign(
         {},
         globalConfigurations,
-        { isLayoutOptimized: !globalConfigurations.shouldOptimizeProcessedGraph }
+        { shouldOptimizeProcessedGraph: !globalConfigurations.shouldOptimizeProcessedGraph }
       )
       break;
     default:

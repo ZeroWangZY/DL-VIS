@@ -75,6 +75,10 @@ export default function GraphSelector() {
       (RawData) => {
         let ParsedGraph = RawData.data.data; // 处理
         const hGraph = buildMsGraph(ParsedGraph);
+        if (shouldOptimizeProcessedGraph) {
+          const processedGraphOptimizer = new ProcessedGraphOptimizer();
+          processedGraphOptimizer.optimize(hGraph);
+        }
         setProcessedGraph(hGraph);
       }
     );
@@ -102,8 +106,8 @@ export default function GraphSelector() {
       .then(async (graph) => {
         const hGraph = await buildGraph(graph);
         if (shouldOptimizeProcessedGraph) {
-          const layoutOptimizer = new ProcessedGraphOptimizer();
-          layoutOptimizer.optimize(hGraph);
+          const processedGraphOptimizer = new ProcessedGraphOptimizer();
+          processedGraphOptimizer.optimize(hGraph);
         }
         setProcessedGraph(hGraph);
       });
