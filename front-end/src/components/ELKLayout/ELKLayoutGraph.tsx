@@ -15,18 +15,24 @@ import {
 } from "../../store/useProcessedGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { on } from "cluster";
+import {
+  LayoutOptions,
+  generateNode,
+  generateNodeStyles,
+  generateEdgeStyles,
+} from "../../common/style/elkGraph";
 
 window["d3"] = d3;
 window["ELK"] = ELK;
 let oldEleMap = {};
 let newEleMap = {};
 
-const portMode = false
-
+const portMode = false;
+const maxPort = 10;
 function restoreFromOldEleMap(newEle) {
   let oldEle = oldEleMap[newEle.id];
   if (oldEle) {
-    let { x, y, $H, sections} = oldEle;
+    let { x, y, $H, sections } = oldEle;
     newEle = Object.assign(newEle, { x, y, $H });
   }
   newEleMap[newEle.id] = newEle;
@@ -64,15 +70,31 @@ const ELKLayoutGraph: React.FC = () => {
     broadcastGraphChange();
   };
 
-  const draw = (layoutOptions={networkSimplex:true}) => {
-    const {networkSimplex} = layoutOptions;
+  const draw = (layoutOptions: LayoutOptions = { networkSimplex: true }) => {
+    console.clear();
+    const { networkSimplex } = layoutOptions;
     // setNodeStyles([]);
     setLinkStyles([]);
     const { nodeMap } = graphForLayout;
-    const displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
+    let displayedNodes: Array<string> = graphForLayout.getDisplayedNodes();
+    displayedNodes = [...new Set(displayedNodes)];
     const displayedEdges: Array<RawEdge> = graphForLayout.getDisplayedEdges(
       displayedNodes
     );
+
+    let nodeLinkMap = {}
+    displayedEdges.forEach(edge=>{
+      if(edge.source in nodeLinkMap){
+        nodeLinkMap[edge.source]["target"].push(edge.target);
+      } else {
+        nodeLinkMap[edge.source] = { source: [], target: [edge.target] };
+      }
+      if (edge.target in nodeLinkMap) {
+        nodeLinkMap[edge.target]["source"].push(edge.source);
+      } else {
+        nodeLinkMap[edge.target] = { source: [edge.source], target: [] };
+      }
+    })
 
     let groups = {};
     let groupsNum = 0;
@@ -96,12 +118,12 @@ const ELKLayoutGraph: React.FC = () => {
       const edge = displayedEdges[i];
       let source = nodeMap[edge.source]["id"];
       let target = nodeMap[edge.target]["id"];
-      if(portMode){
+      if (portMode) {
         //以下解决跨层边的id匹配问题，id升级至公共父节点
         let _source = source.split("/");
         let _target = target.split("/");
         let __source = source,
-            __target = target;
+          __target = target;
         //子节点判断
         if (_source.length > _target.length) {
           __source = _source.slice(0, _target.length).join("/");
@@ -138,12 +160,12 @@ const ELKLayoutGraph: React.FC = () => {
         nodeMap[edge.source].parent !== "___root___" &&
         nodeMap[edge.target].parent !== "___root___"
       ) {
-        if (!portMode){ 
+        if (!portMode) {
           addLinkMap(linkMap, source, target);
         }
         continue;
       }
-      if(portMode){
+      if (portMode) {
         //将边升级至顶层
         while (nodeMap[source].parent !== "___root___") {
           source = nodeMap[source].parent;
@@ -152,27 +174,30 @@ const ELKLayoutGraph: React.FC = () => {
           target = nodeMap[target].parent;
         }
       }
+      const inPort = nodeLinkMap[target].source.length > maxPort;
+      const outPort = nodeLinkMap[source].target.length > maxPort;
       let newLink = {
         id: `${edge.source}-${edge.target}`,
-        sources: [portMode ? source + "-out-port" : source],
-        targets: [portMode ? target + "-in-port" : target],
+        sources: [outPort ? source + "-out-port" : source],
+        targets: [inPort ? target + "-in-port" : target],
         arrowheadStyle: "fill: #333; stroke: #333;",
         arrowhead: "vee",
       };
-      restoreFromOldEleMap(newLink)
+      restoreFromOldEleMap(newLink);
       newLinks.push(newLink);
     }
     let newNodes = [];
     newNodes = processNodes(
       nodeMap,
       linkMap,
+      nodeLinkMap,
       innerLeftLinkMap,
       innerRightLinkMap,
       groups,
       displayedNodes,
       newNodes
     );
-    let newElkNodeMap = {}
+    let newElkNodeMap = {};
     generateElkNodeMap(newNodes, newElkNodeMap);
     setElkNodeMap(newElkNodeMap);
     let graph = {
@@ -184,10 +209,10 @@ const ELKLayoutGraph: React.FC = () => {
     newEleMap = {};
     // console.log(JSON.stringify(graph));
     let layout;
-    const elk = new ELK({workerUrl: './elk-worker.min.js'});
-    elk.knownLayoutOptions().then((ret) => {
-      console.log("knownLayoutOptions: ", ret);
-    });
+    const elk = new ELK({ workerUrl: "./elk-worker.min.js" });
+    // elk.knownLayoutOptions().then((ret) => {
+    //   console.log("knownLayoutOptions: ", ret);
+    // });
     // elk.knownLayoutCategories().then((ret) => {
     //   console.log("knownLayoutCategories: ", ret);
     // });
@@ -201,7 +226,9 @@ const ELKLayoutGraph: React.FC = () => {
         // measureExecutionTime: true,
         layoutOptions: {
           algorithm: "layered",
-          "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex?"NETWORK_SIMPLEX":"INTERACTIVE",
+          "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
+            ? "NETWORK_SIMPLEX"
+            : "INTERACTIVE",
           "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
           // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
           // "org.eclipse.elk.layered.mergeEdges": 'true',
@@ -214,13 +241,13 @@ const ELKLayoutGraph: React.FC = () => {
           // "org.eclipse.elk.edgeRouting": "SPLINES"
         },
       })
-      .then((result) => {
-        console.log(result);
-        layout = result;
+      .then((layout) => {
+        console.log(layout);
         setNodes(layout.children);
         setLinks(layout.edges);
         let newNodeStyles = [];
         let newLinkStyles = [];
+        //{x:0, y:0}: offset初始值
         generateEdgeStyles(layout.edges, { x: 0, y: 0 }, newLinkStyles);
         generateNodeStyles(
           layout.children,
@@ -232,7 +259,6 @@ const ELKLayoutGraph: React.FC = () => {
         setLinkStyles(newLinkStyles);
       })
       .catch(console.error);
-
   };
   const addLinkMap = (linkMap, source, target) => {
     if (!linkMap.hasOwnProperty(source)) {
@@ -241,37 +267,10 @@ const ELKLayoutGraph: React.FC = () => {
       linkMap[source].push(target);
     }
   };
-  const generateNode = (node) => ({
-    id: node.id,
-    label: node.displayedName,
-    shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
-    class: `nodeitem-${node.type}`,
-    type: node.type,
-    layoutOptions: {
-      algorithm: "layered",
-      // portConstraints: "FIXED_SIDE",
-    },
-    expand: false,
-    width: Math.max(node.displayedName.length, 3) * 10,
-    height: 50,
-    ports: portMode?[
-      {
-        id: node.id + "-in-port",
-        properties: {
-          "port.side": "WEST",
-        },
-      },
-      {
-        id: node.id + "-out-port",
-        layoutOptions: {
-          "port.side": "EAST",
-        },
-      },
-    ]:[],
-  });
   const processNodes = (
     nodeMap,
     linkMap,
+    nodeLinkMap,
     innerLeftLinkMap,
     innerRightLinkMap,
     groups,
@@ -285,29 +284,32 @@ const ELKLayoutGraph: React.FC = () => {
         let edges = [];
         const parentId = nodeId;
         let subNodes = groups[parentId]["nodes"];
-        const nodeSet = new Set(subNodes);
         subNodes.forEach((id) => {
           const node = nodeMap[id];
-          let child = generateNode(node);
+          const inPort = nodeLinkMap[id].source.length > maxPort;
+          const outPort = nodeLinkMap[id].target.length > maxPort;
+          let child = generateNode(node, inPort, outPort);
           processChildren(id, child, children);
           const source = id;
           if (linkMap.hasOwnProperty(source)) {
             linkMap[source].forEach((target) => {
+              const inPort = nodeLinkMap[target].source.length > maxPort;
+              const outPort = nodeLinkMap[source].target.length > maxPort;
               let edge = {
                 id: `${source}-${target}`,
-                sources: [portMode?source + "-out-port":source],
-                targets: [portMode?target + "-in-port":target],
+                sources: [outPort ? source + "-out-port" : source],
+                targets: [inPort ? target + "-in-port" : target],
                 arrowheadStyle: "fill: #333; stroke: #333;",
                 arrowhead: "vee",
               };
-              restoreFromOldEleMap(edge)
+              restoreFromOldEleMap(edge);
               edges.push(edge);
             });
           }
         });
-        if(portMode){
+        if (portMode) {
           if (innerLeftLinkMap.hasOwnProperty(parentId)) {
-            innerLeftLinkMap[parentId].forEach((target,i)=>{
+            innerLeftLinkMap[parentId].forEach((target, i) => {
               let edge = {
                 id: `__${i}__${parentId}-${target}`,
                 sources: [parentId + "-in-port"],
@@ -315,7 +317,7 @@ const ELKLayoutGraph: React.FC = () => {
                 arrowheadStyle: "fill: #333; stroke: #333;",
                 arrowhead: "vee",
               };
-              restoreFromOldEleMap(edge)
+              restoreFromOldEleMap(edge);
               edges.push(edge);
             });
           }
@@ -328,7 +330,7 @@ const ELKLayoutGraph: React.FC = () => {
                 arrowheadStyle: "fill: #333; stroke: #333;",
                 arrowhead: "vee",
               };
-              restoreFromOldEleMap(edge)
+              restoreFromOldEleMap(edge);
               edges.push(edge);
             });
           }
@@ -337,7 +339,7 @@ const ELKLayoutGraph: React.FC = () => {
         newNode["children"] = children;
         newNode["edges"] = edges;
       }
-      restoreFromOldEleMap(newNode)
+      restoreFromOldEleMap(newNode);
       newNodes.push(newNode);
     };
     for (let i = 0; i < displayedNodes.length; i++) {
@@ -347,100 +349,29 @@ const ELKLayoutGraph: React.FC = () => {
       if (node.parent !== "___root___") {
         continue;
       }
-      let newNode = generateNode(node);
+      let inPort = false, outPort = false
+      if(nodeId in nodeLinkMap){
+        inPort = nodeLinkMap[nodeId].source.length > 10;
+        outPort = nodeLinkMap[nodeId].target.length > 10;
+      } 
+      let newNode = generateNode(node, inPort, outPort);
       processChildren(nodeId, newNode, newNodes);
     }
     return newNodes;
   };
 
-  const generateNodeStyles = (nodes, ofs, nodeStyles, linkStyles) => {
-    for (const node of nodes) {
-      nodeStyles.push({
-        key: node.id,
-        data: node.hasOwnProperty("label")
-          ? {
-              class: node.class,
-              type: node.type,
-              id: node.id,
-              label: node.label,
-              expand: node.expand,
-            }
-          : {
-              class: "dummy",
-              type: "dummy",
-              id: node.id,
-              label: node.id,
-              expand: node.expand,
-            },
-        style: {
-          gNodeTransX: spring(ofs.x + node.x + node.width / 2),
-          gNodeTransY: spring(ofs.y + node.y + node.height / 2),
-          rectWidth: spring(node.width),
-          rectHeight: spring(node.height),
-          ellipseX: spring(node.width / 2),
-          ellipseY: spring(node.height / 2),
-        },
-      });
+  const generateElkNodeMap = (elkNodeList, elkNodeMap) => {
+    elkNodeList.forEach((node) => {
       if (node.hasOwnProperty("children")) {
-        generateEdgeStyles(
-          node["edges"],
-          { x: ofs.x + node.x, y: ofs.y + node.y },
-          linkStyles
-        );
-        generateNodeStyles(
-          node["children"],
-          { x: ofs.x + node.x, y: ofs.y + node.y },
-          nodeStyles,
-          linkStyles
-        );
-      }
-    }
-  };
-
-  const generateEdgeStyles = (links, ofs, styles) => {
-    for (const link of links) {
-      const { startPoint, endPoint, bendPoints } = link.sections[0];
-      const { junctionPoints } = link;
-      styles.push({
-        key: link.id,
-        data: {
-          lineData:
-            bendPoints === undefined
-              ? []
-              : bendPoints.map((point) => ({
-                  x: ofs.x + point.x,
-                  y: ofs.y + point.y,
-                })),
-          junctionPoints:
-            junctionPoints === undefined
-              ? []
-              : junctionPoints.map((point) => ({
-                  x: ofs.x + point.x,
-                  y: ofs.y + point.y,
-                })),
-        },
-        style: {
-          startPointX: spring(ofs.x + startPoint.x),
-          startPointY: spring(ofs.y + startPoint.y),
-          endPointX: spring(ofs.x + endPoint.x),
-          endPointY: spring(ofs.y + endPoint.y),
-        },
-      });
-    }
-  };
-
-  const generateElkNodeMap = (elkNodeList, elkNodeMap) =>{
-    elkNodeList.forEach(node => {
-      if(node.hasOwnProperty("children")){
-        let subMap = {}
-        generateElkNodeMap(node["children"], subMap)
+        let subMap = {};
+        generateElkNodeMap(node["children"], subMap);
         elkNodeMap[node.id] = subMap;
-      } else{
+      } else {
         elkNodeMap[node.id] = node;
       }
     });
-  }
-  const textSize = (text,fontSize="10px",fontFamily="Arial")=>{
+  };
+  const textSize = (text, fontSize = "10px", fontFamily = "Arial") => {
     //过河拆桥法计算字符串的显示长度
     let span = document.createElement("span");
     span.style.visibility = "hidden";
@@ -448,70 +379,60 @@ const ELKLayoutGraph: React.FC = () => {
     // span.style.fontFamily = fontFamily;
     span.style.display = "inline-block";
     document.body.appendChild(span);
-    if(typeof span.textContent != "undefined"){
+    if (typeof span.textContent != "undefined") {
       span.textContent = text;
-    }else{
+    } else {
       span.innerText = text;
     }
     let width = parseFloat(window.getComputedStyle(span).width);
     document.body.removeChild(span);
     return width;
-  }
+  };
 
-  useEffect(()=>{
+  useEffect(() => {
     //目前仅支持拖拽叶节点
     d3.selectAll(".node").on(".drag", null);
     let selectionNodes = d3.selectAll(".child-node");
-    if(selectionNodes.size()===0) return;
+    if (selectionNodes.size() === 0) return;
     selectionNodes.call(d3.drag().on("start", dragStarted));
 
     function dragStarted() {
       let node = d3.select(this).classed("dragging", true);
-      console.log(node);
       d3.event.on("drag", dragged).on("end", ended);
-      const {x,y} = d3.event;
+      const { x, y } = d3.event;
       function dragged(d) {
-        if (
-          Math.abs(d3.event.x - x) < 5 || 
-          Math.abs(d3.event.y - y) < 5
-        ) {
+        if (Math.abs(d3.event.x - x) < 5 || Math.abs(d3.event.y - y) < 5) {
           return;
         }
         node
           .raise()
-          .attr("transform", `translate(${d3.event.x}, ${d3.event.y})`); 
+          .attr("transform", `translate(${d3.event.x}, ${d3.event.y})`);
       }
 
       function ended() {
-        if (
-          Math.abs(d3.event.x - x) < 5 ||
-          Math.abs(d3.event.y - y) < 5
-        ) {
+        if (Math.abs(d3.event.x - x) < 5 || Math.abs(d3.event.y - y) < 5) {
           return;
         }
         node.classed("dragging", false);
-        const nodeId = node.node().id;
-        let toEditNode = elkNodeMap
-        let id = ""
-        nodeId.split("/").forEach(name=>{
-          if (!name.endsWith(")")){
-            if (name.endsWith("+")) {
-              name = name.slice(0, name.length - 1);
+
+        //id: node.parent+"-"+node.id
+        const [nodeParent, nodeID] = node.node().id.split("-");
+        let toEditNode = elkNodeMap;
+        if (nodeParent !== "___root___") {
+          nodeParent.split("/").forEach((parent) => {
+            toEditNode = toEditNode[parent];
+            if (toEditNode.hasOwnProperty("children")) {
+              toEditNode = toEditNode["children"];
             }
-            id += name
-            toEditNode = toEditNode[id];
-            if (toEditNode.hasOwnProperty("children")){
-             toEditNode = toEditNode["children"];
-            }
-            id += "/"
-          }
-        })
-        toEditNode["x"] = d3.event.x
+          });
+        }
+        toEditNode = toEditNode[nodeID];
+        toEditNode["x"] = d3.event.x;
         toEditNode["y"] = d3.event.y;
-        draw({networkSimplex:false});
+        draw({ networkSimplex: false });
       }
     }
-  })
+  });
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -533,8 +454,8 @@ const ELKLayoutGraph: React.FC = () => {
   }, [graphForLayout]);
 
   return (
-    <div id="cola-graph" style={{ height: "100%" }}>
-      <svg id="cola-svg" ref={svgRef} style={{ height: "100%" }}>
+    <div id="elk-graph" style={{ height: "100%" }}>
+      <svg id="elk-svg" ref={svgRef} style={{ height: "100%" }}>
         <defs>
           <marker
             id="arrowhead"
@@ -561,19 +482,21 @@ const ELKLayoutGraph: React.FC = () => {
                   if (d.data.class === "dummy") {
                     return;
                   }
-                  const textWidth = textSize(
-                    d.data.label +
-                      (!d.data.expand &&
-                      (d.data.type === NodeType.GROUP ||
-                        d.data.type === NodeType.LAYER)
-                        ? "+"
-                        : ""))+2;
+                  const textWidth =
+                    textSize(
+                      d.data.label +
+                        (!d.data.expand &&
+                        (d.data.type === NodeType.GROUP ||
+                          d.data.type === NodeType.LAYER)
+                          ? "+"
+                          : "")
+                    ) + 2;
                   return (
                     <g
                       className={`node ${d.data.class} ${
                         d.data.expand ? "expanded-node" : "child-node"
                       }`}
-                      id={d.data.id}
+                      id={d.data.parent + "-" + d.data.id}
                       key={d.key}
                       transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                       onClick={() => toggleExpanded(d.data.id)}
@@ -609,7 +532,7 @@ const ELKLayoutGraph: React.FC = () => {
                             className="behind-text"
                             width={textWidth}
                             height={10}
-                            transform={`translate(-${textWidth/ 2}, -${
+                            transform={`translate(-${textWidth / 2}, -${
                               d.style.rectHeight / 2 + 5
                             })`}
                             fill="red"
@@ -653,9 +576,9 @@ const ELKLayoutGraph: React.FC = () => {
                       ])}
                       markerEnd="url(#arrowhead)"
                     ></path>
-                    {d.data.junctionPoints.map((point,i) => (
+                    {d.data.junctionPoints.map((point, i) => (
                       <circle
-                        key={d.key+"_junkPoint_"+i}
+                        key={d.key + "_junkPoint_" + i}
                         cx={point.x}
                         cy={point.y}
                         r={2}

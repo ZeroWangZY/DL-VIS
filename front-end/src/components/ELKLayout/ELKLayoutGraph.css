@@ -1,4 +1,4 @@
-#cola-svg {
+#elk-svg {
     width: 100%;
     overflow: hidden;
     user-select: none;
@@ -28,9 +28,10 @@ ellipse {
 
 /* node type为data  */
 
-.nodeitem-3 rect.elk-label-container {
+
+/* .nodeitem-3 rect.elk-label-container {
     stroke: none;
-}
+} */
 
 .cluster rect {
     fill: #eee;
