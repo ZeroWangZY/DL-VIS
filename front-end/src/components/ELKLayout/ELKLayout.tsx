@@ -4,7 +4,7 @@ import ELKLayoutGraph from "./ELKLayoutGraph";
 
 const ELKLayout: React.FC = () => {
   return (
-    <div className="cola-container">
+    <div className="elk-container">
       <ELKLayoutGraph />
     </div>
   );

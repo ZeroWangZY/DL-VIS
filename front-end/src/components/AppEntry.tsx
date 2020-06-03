@@ -1,32 +1,32 @@
-import React from 'react';
+import React from "react";
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import clsx from "clsx";
 import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  Link
-} from "react-router-dom";
-import clsx from 'clsx';
-import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
-import Drawer from '@material-ui/core/Drawer';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
-import IconButton from '@material-ui/core/IconButton';
-import SettingsIcon from '@material-ui/icons/Settings';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+  makeStyles,
+  useTheme,
+  Theme,
+  createStyles,
+} from "@material-ui/core/styles";
+import Drawer from "@material-ui/core/Drawer";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import AppBar from "@material-ui/core/AppBar";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
+import Divider from "@material-ui/core/Divider";
+import IconButton from "@material-ui/core/IconButton";
+import SettingsIcon from "@material-ui/icons/Settings";
+import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import DagreLayout from "./DagreLayout/DagreLayout";
 import LaylerLevel from "./LaylerLevel/LaylerLevel";
-import Snaphot from './Snaphot/Snaphot'
-import NodeSelector from './preference/NodeSelector'
-import TensorBoardGraph from './tensorboard/Graph'
-import GraphSelector from './preference/GraphSelector';
-import Diagnosis from './preference/Diagnosis';
-import PreprocessingPluginsSelector from './preference/PreprocessingPluginsSelector'
-import LayoutSelector from './preference/LayoutSelector';
-import { useGlobalConfigurations } from '../store/global-configuration';
+import Snaphot from "./Snaphot/Snaphot";
+import NodeSelector from "./preference/NodeSelector";
+import TensorBoardGraph from "./tensorboard/Graph";
+import GraphSelector from "./preference/GraphSelector";
+import Diagnosis from "./preference/Diagnosis";
+import PreprocessingPluginsSelector from "./preference/PreprocessingPluginsSelector";
+import LayoutSelector from "./preference/LayoutSelector";
+import { useGlobalConfigurations } from "../store/global-configuration";
 import { LayoutType } from "../store/global-configuration.type";
 import ELKLayout from "./ELKLayout/ELKLayout";
 
@@ -95,7 +95,7 @@ const AppEntry: React.FC = () => {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = React.useState(true);
-  const { currentLayout } = useGlobalConfigurations()
+  const { currentLayout } = useGlobalConfigurations();
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -106,84 +106,86 @@ const AppEntry: React.FC = () => {
 
   return (
     <Router>
-    <div className={classes.root}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        className={clsx(classes.appBar, {
-          [classes.appBarShift]: open,
-        })}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            className={clsx(classes.menuButton, open && classes.hide)}
-          >
-            <SettingsIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap>
-            葫芦娃的项目
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        className={classes.drawer}
-        variant="persistent"
-        anchor="left"
-        open={open}
-        classes={{
-          paper: classes.drawerPaper,
-        }}
-      >
-        <div className={classes.drawerHeader}>
-          <Typography style={{ width: "100%" }} variant="h6" noWrap>
-            Preference
-          </Typography>
-          <IconButton onClick={handleDrawerClose}>
-            {theme.direction === "ltr" ? (
-              <ChevronLeftIcon />
-            ) : (
-              <ChevronRightIcon />
-            )}
-          </IconButton>
-        </div>
-        <Divider />
-        <LayoutSelector />
-        <Divider />
-        <GraphSelector />
-        <Divider />
-        <PreprocessingPluginsSelector />
-        <Divider />
-        <NodeSelector />
-        <Divider />
-        <Diagnosis />
-      </Drawer>
-      <main
-        className={clsx(classes.content, {
-          [classes.contentShift]: open,
-        })}
-      >
-        <div className={classes.drawerHeader} />
-        <Switch>
-        <Route path="/layer">
-            <LaylerLevel />
-        </Route>
-        <Route path="/">
-        {/* snaphot视图300px 上面64px */}
-        <div style={{ height: 'calc(100% - 364px)' }}>
-            {currentLayout === LayoutType.DAGRE_FOR_TF ? <DagreLayout /> : null}
-            {currentLayout === LayoutType.TENSORBOARD ? <TensorBoardGraph /> : null}
-            {currentLayout === LayoutType.DAGRE_FOR_MS ? <DagreLayout /> : null}
-            {currentLayout === LayoutType.ELK_FOR_TF ? <ELKLayout /> : null}
-        </div>
-        <Snaphot/>
-        </Route>
-        </Switch>
-      </main>
-    </div>
+      <div className={classes.root}>
+        <CssBaseline />
+        <AppBar
+          position="fixed"
+          className={clsx(classes.appBar, {
+            [classes.appBarShift]: open,
+          })}
+        >
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              className={clsx(classes.menuButton, open && classes.hide)}
+            >
+              <SettingsIcon />
+            </IconButton>
+            <Typography variant="h6" noWrap>
+              葫芦娃的项目
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          className={classes.drawer}
+          variant="persistent"
+          anchor="left"
+          open={open}
+          classes={{
+            paper: classes.drawerPaper,
+          }}
+        >
+          <div className={classes.drawerHeader}>
+            <Typography style={{ width: "100%" }} variant="h6" noWrap>
+              Preference
+            </Typography>
+            <IconButton onClick={handleDrawerClose}>
+              {theme.direction === "ltr" ? (
+                <ChevronLeftIcon />
+              ) : (
+                <ChevronRightIcon />
+              )}
+            </IconButton>
+          </div>
+          <Divider />
+          <LayoutSelector />
+          <Divider />
+          <GraphSelector />
+          <Divider />
+          <PreprocessingPluginsSelector />
+          <Divider />
+          <NodeSelector />
+          <Divider />
+          <Diagnosis />
+        </Drawer>
+        <main
+          className={clsx(classes.content, {
+            [classes.contentShift]: open,
+          })}
+        >
+          <div className={classes.drawerHeader} />
+          <Switch>
+            <Route path="/layer">
+              <LaylerLevel />
+            </Route>
+            <Route path="/">
+              <div style={{ height: "calc(100% - 364px)" }}>
+                {currentLayout === LayoutType.DAGRE_FOR_TF && <DagreLayout />}
+                {currentLayout === LayoutType.TENSORBOARD && (
+                  <TensorBoardGraph />
+                )}
+                {currentLayout === LayoutType.DAGRE_FOR_MS && <DagreLayout />}
+                {currentLayout === LayoutType.ELK_FOR_TF && <ELKLayout />}
+                {currentLayout === LayoutType.ELK_FOR_MS && <ELKLayout />}
+              </div>
+              <Snaphot />
+            </Route>
+          </Switch>
+        </main>
+      </div>
     </Router>
   );
 };

@@ -922,7 +922,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     gBrushHolder = d3.select("#gBrushHolder");
     d3.select('body').on('keydown', keydown);
     d3.select('body').on('keyup', keyup);
-    brushMode = false;
+    brushMode = false; 
     gBrush = null;
     brush = d3.brush()
       .extent([[0, 0], [svgWidth, svgHeight]])
