@@ -169,7 +169,7 @@ export const generateAcrossModuleEdgeStyles = (graphForLayout, nodes) => {
     const { source, target, width } = edge;
     const sourceNode = nodes[source];
     const targetNode = nodes[target];
-    if (!sourceNode || !targetNode) break;
+    if (!sourceNode || !targetNode) continue;
 
     colorMapDomain.push(`${source}-${target}`)
     let sourceX: number = sourceNode.x + sourceNode.width * 0.5 - 10;
