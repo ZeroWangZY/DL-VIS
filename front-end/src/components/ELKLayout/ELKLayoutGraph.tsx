@@ -559,7 +559,7 @@ const ELKLayoutGraph: React.FC = () => {
                         ) : (
                           <text
                             dominantBaseline={
-                              d.data.expand ? "hanging" : "middle"
+                              "middle"
                             }
                             y={
                               d.data.expand
