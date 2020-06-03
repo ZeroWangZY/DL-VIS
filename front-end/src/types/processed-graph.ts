@@ -46,6 +46,8 @@ export interface BaseNode {
   belongModule: NodeId | null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
+  inputNode: Set<NodeId>;
+  outputNode: Set<NodeId>;
 }
 
 export interface Attribute {
@@ -55,10 +57,8 @@ export interface Attribute {
 
 export interface OperationNode extends BaseNode {
   operationType: string;
-  attributes?: Attribute[];
-  auxiliary?: Set<NodeId>;
-  inputNode?: Set<NodeId>;
-  outputNode?: Set<NodeId>;
+  attributes: Attribute[];
+  auxiliary: Set<NodeId>;
 }
 
 export interface GroupNode extends BaseNode {
@@ -66,10 +66,8 @@ export interface GroupNode extends BaseNode {
   expanded: boolean;  // group是否被展开 
   isModule: boolean;
   parentModule: NodeId; // 如果是位于module中的嵌套module
-  operationChildrenCount?: Number;
-  leafOperationNodeCount?: Number;
-  inputNode?: Set<NodeId>;
-  outputNode?: Set<NodeId>;
+  operationChildrenCount: Number;
+  leafOperationNodeCount: Number;
 }
 
 export interface LayerNode extends GroupNode {
@@ -78,6 +76,7 @@ export interface LayerNode extends GroupNode {
 
 export interface DataNode extends BaseNode {
   dataType: DataType;
+  typeAttibute: Attribute;
 }
 
 export type NodeDef = OperationNode | GroupNode | LayerNode | DataNode
@@ -120,12 +119,12 @@ export class OperationNodeImp implements OperationNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
-  auxiliary?: Set<NodeId>;
-  attributes?: Attribute[];
-  inputNode?: Set<NodeId>;
-  outputNode?: Set<NodeId>;
+  auxiliary: Set<NodeId>;
+  attributes: Attribute[];
+  inputNode: Set<NodeId>;
+  outputNode: Set<NodeId>;
 
-  constructor({ id, auxiliary, attributes, inputNode, outputNode, op, opts = {} }: { id: string; auxiliary?: Set<NodeId>; inputNode?: Set<NodeId>; attributes?: Attribute[]; outputNode?: Set<NodeId>; op: string; opts?: OptionsDef }) {
+  constructor({ id, attributes, op, opts = {} }: { id: string; attributes?: Attribute[]; op: string; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.OPERTATION;
@@ -133,10 +132,10 @@ export class OperationNodeImp implements OperationNode {
     this.operationType = op;
     this.outModuleConnection = new Set()
     this.inModuleConnection = new Set()
-    this.auxiliary = auxiliary || new Set();
+    this.auxiliary = new Set();
     this.attributes = attributes || [];
-    this.inputNode = inputNode || new Set();
-    this.outputNode = outputNode || new Set();
+    this.inputNode = new Set();
+    this.outputNode = new Set();
   }
 }
 
@@ -153,10 +152,10 @@ export class GroupNodeImp implements GroupNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
-  operationChildrenCount?: Number;
-  leafOperationNodeCount?: Number;
-  inputNode?: Set<NodeId>;
-  outputNode?: Set<NodeId>;
+  operationChildrenCount: Number;
+  leafOperationNodeCount: Number;
+  inputNode: Set<NodeId>;
+  outputNode: Set<NodeId>;
 
   constructor({ id, children, parent, opts = {}, isModule = false, parentModule = null }:
     { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
@@ -168,8 +167,10 @@ export class GroupNodeImp implements GroupNode {
     this.expanded = false;
     this.isModule = isModule;
     this.parentModule = parentModule;
-    this.outModuleConnection = new Set()
-    this.inModuleConnection = new Set()
+    this.outModuleConnection = new Set();
+    this.inModuleConnection = new Set();
+    this.inputNode = new Set();
+    this.outputNode = new Set();
   }
 }
 
@@ -187,6 +188,10 @@ export class LayerNodeImp implements LayerNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
+  operationChildrenCount: Number;
+  leafOperationNodeCount: Number;
+  inputNode: Set<NodeId>;
+  outputNode: Set<NodeId>;
 
   constructor({ id, layerType, children, parent, opts = {}, isModule = false, parentModule = null }:
     { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
@@ -199,8 +204,10 @@ export class LayerNodeImp implements LayerNode {
     this.layerType = layerType;
     this.isModule = isModule;
     this.parentModule = parentModule;
-    this.outModuleConnection = new Set()
-    this.inModuleConnection = new Set()
+    this.outModuleConnection = new Set();
+    this.inModuleConnection = new Set();
+    this.inputNode = new Set();
+    this.outputNode = new Set();
   }
 }
 
@@ -214,6 +221,9 @@ export class DataNodeImp implements DataNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
+  inputNode: Set<NodeId>;
+  outputNode: Set<NodeId>;
+  typeAttibute: Attribute;
 
   constructor({ id, dataType, opts = {} }: { id: string; dataType: DataType; opts?: OptionsDef }) {
     this.id = id;
@@ -221,8 +231,10 @@ export class DataNodeImp implements DataNode {
     this.type = NodeType.DATA;
     this.parent = "";
     this.dataType = dataType;
-    this.outModuleConnection = new Set()
-    this.inModuleConnection = new Set()
+    this.outModuleConnection = new Set();
+    this.inModuleConnection = new Set();
+    this.inputNode = new Set();
+    this.outputNode = new Set();
   }
 }
 

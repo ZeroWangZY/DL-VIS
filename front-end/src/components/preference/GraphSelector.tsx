@@ -127,7 +127,7 @@ export default function GraphSelector() {
     preprocessingPlugins,
     currentLayout,
   ]);
-        
+
 
   return (
     <div>
