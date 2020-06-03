@@ -16,6 +16,7 @@ import {
 import ELK from "elkjs/lib/elk.bundled.js";
 import { on } from "cluster";
 import {
+  NodeLinkMap,
   LayoutOptions,
   generateNode,
   generateNodeStyles,
@@ -82,7 +83,7 @@ const ELKLayoutGraph: React.FC = () => {
       displayedNodes
     );
 
-    let nodeLinkMap = {};
+    let nodeLinkMap: NodeLinkMap = {};
     displayedEdges.forEach((edge) => {
       if (edge.source in nodeLinkMap) {
         nodeLinkMap[edge.source]["target"].push(edge.target);
@@ -96,32 +97,33 @@ const ELKLayoutGraph: React.FC = () => {
       }
     });
 
+    //group存储每个节点的子节点（可见）
     let groups = {};
-    let groupsNum = 0;
     displayedNodes.forEach((nodeId, i) => {
       const node = nodeMap[nodeId];
       if (node.parent !== "___root___") {
         if (!groups.hasOwnProperty(node.parent)) {
           groups[node.parent] = {};
           groups[node.parent]["nodes"] = [nodeId];
-          groups[node.parent]["index"] = groupsNum++;
         } else {
           groups[node.parent]["nodes"].push(nodeId);
         }
       }
     });
-    let newLinks = [];
-    let linkMap = {}; //{sourceID:[target0,target1,...],...}
-    let innerLeftLinkMap = {}; //links that are in the inner left side
-    let innerRightLinkMap = {}; //links that are in the inner right side
+
+    let newLinks = [],
+      linkMap = {}, //{sourceID:[target0,target1,...],...}
+      innerLeftLinkMap = {}, //links that are in the inner left side
+      innerRightLinkMap = {}; //links that are in the inner right side
+
     for (let i = 0; i < displayedEdges.length; i++) {
       const edge = displayedEdges[i];
       let source = nodeMap[edge.source]["id"];
       let target = nodeMap[edge.target]["id"];
       if (portMode) {
         //以下解决跨层边的id匹配问题，id升级至公共父节点
-        let _source = source.split("/");
-        let _target = target.split("/");
+        let _source = source.split("/"),
+          _target = target.split("/");
         let __source = source,
           __target = target;
         //子节点判断
@@ -186,6 +188,7 @@ const ELKLayoutGraph: React.FC = () => {
       restoreFromOldEleMap(newLink);
       newLinks.push(newLink);
     }
+
     let newNodes = [];
     newNodes = processNodes(
       nodeMap,
@@ -197,18 +200,14 @@ const ELKLayoutGraph: React.FC = () => {
       displayedNodes,
       newNodes
     );
+
+    //将node数组建立索引，加速drag的查询
     let newElkNodeMap = {};
     generateElkNodeMap(newNodes, newElkNodeMap);
     setElkNodeMap(newElkNodeMap);
-    let graph = {
-      id: "root",
-      children: newNodes,
-      edges: newLinks,
-    };
+
     oldEleMap = newEleMap;
     newEleMap = {};
-    // console.log(JSON.stringify(graph));
-    let layout;
     const elk = new ELK({ workerUrl: "./elk-worker.min.js" });
     // elk.knownLayoutOptions().then((ret) => {
     //   console.log("knownLayoutOptions: ", ret);
@@ -221,45 +220,47 @@ const ELKLayoutGraph: React.FC = () => {
     // });
 
     elk
-      .layout(graph, {
-        // logging: true,
-        // measureExecutionTime: true,
-        layoutOptions: {
-          algorithm: "layered",
-          "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
-            ? "NETWORK_SIMPLEX"
-            : "INTERACTIVE",
-          "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
-          // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
-          // "org.eclipse.elk.layered.mergeEdges": 'true',
-          "org.eclipse.elk.layered.crossingMinimization.strategy":
-            "LAYER_SWEEP",
-          // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
-          "org.eclipse.elk.interactive": "true",
-          "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
+      .layout(
+        {
+          id: "root",
+          children: newNodes,
+          edges: newLinks,
+        }, //input_graph
+        {
+          // logging: true,
+          // measureExecutionTime: true,
+          layoutOptions: {
+            algorithm: "layered",
+            "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
+              ? "NETWORK_SIMPLEX"
+              : "INTERACTIVE",
+            "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
+            // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
+            // "org.eclipse.elk.layered.mergeEdges": 'true',
+            "org.eclipse.elk.layered.crossingMinimization.strategy":
+              "LAYER_SWEEP",
+            // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
+            "org.eclipse.elk.interactive": "true",
+            "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
 
-          // "org.eclipse.elk.edgeRouting": "SPLINES"
-        },
-      })
-      .then((layout) => {
-        console.log(layout);
-        setNodes(layout.children);
-        setLinks(layout.edges);
+            // "org.eclipse.elk.edgeRouting": "SPLINES"
+          },
+        }
+      )
+      .then((graphLayout) => {
+        // graphLayout: output_graph with pos
+        setNodes(graphLayout.children);
+        setLinks(graphLayout.edges);
         let newNodeStyles = [];
         let newLinkStyles = [];
-        //{x:0, y:0}: offset初始值
-        generateEdgeStyles(layout.edges, { x: 0, y: 0 }, newLinkStyles);
-        generateNodeStyles(
-          layout.children,
-          { x: 0, y: 0 },
-          newNodeStyles,
-          newLinkStyles
-        );
+        generateEdgeStyles(graphLayout.edges, newLinkStyles);
+        generateNodeStyles(graphLayout.children, newNodeStyles, newLinkStyles);
         setNodeStyles(newNodeStyles);
         setLinkStyles(newLinkStyles);
       })
       .catch(console.error);
   };
+
   const addLinkMap = (linkMap, source, target) => {
     if (!linkMap.hasOwnProperty(source)) {
       linkMap[source] = [target];
@@ -267,6 +268,36 @@ const ELKLayoutGraph: React.FC = () => {
       linkMap[source].push(target);
     }
   };
+
+  const generateElkNodeMap = (elkNodeList, elkNodeMap) => {
+    elkNodeList.forEach((node) => {
+      if (node.hasOwnProperty("children")) {
+        let subMap = {};
+        generateElkNodeMap(node["children"], subMap);
+        elkNodeMap[node.id] = subMap;
+      } else {
+        elkNodeMap[node.id] = node;
+      }
+    });
+  };
+  const textSize = (text, fontSize = "10px", fontFamily = "Arial") => {
+    //过河拆桥法计算字符串的显示长度
+    let span = document.createElement("span");
+    span.style.visibility = "hidden";
+    // span.style.fontSize = fontSize;
+    // span.style.fontFamily = fontFamily;
+    span.style.display = "inline-block";
+    document.body.appendChild(span);
+    if (typeof span.textContent != "undefined") {
+      span.textContent = text;
+    } else {
+      span.innerText = text;
+    }
+    let width = parseFloat(window.getComputedStyle(span).width);
+    document.body.removeChild(span);
+    return width;
+  };
+
   const processNodes = (
     nodeMap,
     linkMap,
@@ -365,35 +396,6 @@ const ELKLayoutGraph: React.FC = () => {
     return newNodes;
   };
 
-  const generateElkNodeMap = (elkNodeList, elkNodeMap) => {
-    elkNodeList.forEach((node) => {
-      if (node.hasOwnProperty("children")) {
-        let subMap = {};
-        generateElkNodeMap(node["children"], subMap);
-        elkNodeMap[node.id] = subMap;
-      } else {
-        elkNodeMap[node.id] = node;
-      }
-    });
-  };
-  const textSize = (text, fontSize = "10px", fontFamily = "Arial") => {
-    //过河拆桥法计算字符串的显示长度
-    let span = document.createElement("span");
-    span.style.visibility = "hidden";
-    // span.style.fontSize = fontSize;
-    // span.style.fontFamily = fontFamily;
-    span.style.display = "inline-block";
-    document.body.appendChild(span);
-    if (typeof span.textContent != "undefined") {
-      span.textContent = text;
-    } else {
-      span.innerText = text;
-    }
-    let width = parseFloat(window.getComputedStyle(span).width);
-    document.body.removeChild(span);
-    return width;
-  };
-
   useEffect(() => {
     //目前仅支持拖拽叶节点
     d3.selectAll(".node").on(".drag", null);
@@ -426,7 +428,10 @@ const ELKLayoutGraph: React.FC = () => {
         if (nodeParent !== "___root___") {
           nodeParent.split("/").forEach((parent) => {
             toEditNode = toEditNode[parent];
-            if (toEditNode.hasOwnProperty("children")) {
+            if (toEditNode === undefined) {
+              draw();
+              return;
+            } else if (toEditNode.hasOwnProperty("children")) {
               toEditNode = toEditNode["children"];
             }
           });
@@ -544,7 +549,6 @@ const ELKLayoutGraph: React.FC = () => {
                             transform={`translate(-${textWidth / 2}, -${
                               d.style.rectHeight / 2 + 5
                             })`}
-                            fill="red"
                             stroke="none"
                           ></rect>
                         ) : null}
@@ -558,12 +562,10 @@ const ELKLayoutGraph: React.FC = () => {
                           </text>
                         ) : (
                           <text
-                            dominantBaseline={
-                              "middle"
-                            }
+                            dominantBaseline={"middle"}
                             y={
                               d.data.expand
-                                ? `${-d.style.rectHeight / 2}`
+                                ? `${-d.style.rectHeight / 2 + 2}`
                                 : null
                             }
                           >

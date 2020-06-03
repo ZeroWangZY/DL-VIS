@@ -13,6 +13,15 @@ interface Style {
   style: any;
 }
 
+interface nodeIO {
+  source: Array<string>;
+  target: Array<string>;
+}
+//每个key为nodeID,value表示节点的soource数组和target数组
+export interface NodeLinkMap {
+  [propName: string]: nodeIO;
+}
+
 export interface LayoutOptions {
   networkSimplex: boolean;
 }
@@ -51,18 +60,59 @@ export const generateNode = (
       // portConstraints: "FIXED_SIDE",
     },
     expand: false,
-    width: node.type === NodeType.OPERTATION ? 30 : Math.max(node.displayedName.length, 3) * 10 + 8,
+    width:
+      node.type === NodeType.OPERTATION
+        ? 30
+        : Math.max(node.displayedName.length, 3) * 10 + 8,
     height: node.type === NodeType.OPERTATION ? 20 : 40,
     ports: ports,
-    
   };
 };
 
+//直接线性遍历给定的边数组，将对应的每条边的样式添加到已有样式数组
+//Todo:后续根据边的连接情况增加样式可能需要传入新的参数
+export const generateEdgeStyles = (
+  links: Array<any>,
+  styles: Array<Style>,
+  ofs: Offset = { x: 0, y: 0 }
+) => {
+  for (const link of links) {
+    const { startPoint, endPoint, bendPoints } = link.sections[0];
+    const { junctionPoints } = link;
+    styles.push({
+      key: link.id,
+      data: {
+        lineData:
+          bendPoints === undefined
+            ? []
+            : bendPoints.map((point) => ({
+                x: ofs.x + point.x,
+                y: ofs.y + point.y,
+              })),
+        junctionPoints:
+          junctionPoints === undefined
+            ? []
+            : junctionPoints.map((point) => ({
+                x: ofs.x + point.x,
+                y: ofs.y + point.y,
+              })),
+      },
+      style: {
+        startPointX: spring(ofs.x + startPoint.x),
+        startPointY: spring(ofs.y + startPoint.y),
+        endPointX: spring(ofs.x + endPoint.x),
+        endPointY: spring(ofs.y + endPoint.y),
+      },
+    });
+  }
+};
+
+//递归遍历给定的elk子节点的树，生成包含的所有点的样式以及内部边的样式
 export const generateNodeStyles = (
   nodes: Array<any>,
-  ofs: Offset,
   nodeStyles: Array<Style>,
-  linkStyles: Array<Style>
+  linkStyles: Array<Style>,
+  ofs: Offset = { x: 0, y: 0 }
 ) => {
   for (const node of nodes) {
     nodeStyles.push({
@@ -94,53 +144,15 @@ export const generateNodeStyles = (
       },
     });
     if (node.hasOwnProperty("children")) {
-      generateEdgeStyles(
-        node["edges"],
-        { x: ofs.x + node.x, y: ofs.y + node.y },
-        linkStyles
-      );
-      generateNodeStyles(
-        node["children"],
-        { x: ofs.x + node.x, y: ofs.y + node.y },
-        nodeStyles,
-        linkStyles
-      );
+      //有"children"属性<=>有"edge"属性
+      generateEdgeStyles(node["edges"], linkStyles, {
+        x: ofs.x + node.x,
+        y: ofs.y + node.y,
+      });
+      generateNodeStyles(node["children"], nodeStyles, linkStyles, {
+        x: ofs.x + node.x,
+        y: ofs.y + node.y,
+      });
     }
-  }
-};
-
-export const generateEdgeStyles = (
-  links: Array<any>,
-  ofs: Offset,
-  styles: Array<Style>
-) => {
-  for (const link of links) {
-    const { startPoint, endPoint, bendPoints } = link.sections[0];
-    const { junctionPoints } = link;
-    styles.push({
-      key: link.id,
-      data: {
-        lineData:
-          bendPoints === undefined
-            ? []
-            : bendPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
-        junctionPoints:
-          junctionPoints === undefined
-            ? []
-            : junctionPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
-      },
-      style: {
-        startPointX: spring(ofs.x + startPoint.x),
-        startPointY: spring(ofs.y + startPoint.y),
-        endPointX: spring(ofs.x + endPoint.x),
-        endPointY: spring(ofs.y + endPoint.y),
-      },
-    });
   }
 };
