@@ -16,7 +16,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
 import { useHistory, useLocation } from "react-router-dom";
-import { modifyGraphInfo } from '../../store/graphInfo';
 import { useProcessedGraph, modifyProcessedGraph } from '../../store/useProcessedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData } from '../../store/layerLevel';
@@ -944,10 +943,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
-    setTimeout(function () {
-      // setTransformData(new transformImp())
-      modifyGraphInfo(elModifyType.UPDATE_NODE)
-    }, 1000);
   }, [graphForLayout, isHiddenInterModuleEdges]);
 
   const getLabelContainer = (nodeId, nodeClass, width, height) => {
