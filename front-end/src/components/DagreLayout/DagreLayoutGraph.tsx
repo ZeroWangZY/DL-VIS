@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType } from '../../common/graph-processing/stage2/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -16,7 +16,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
 import { useHistory, useLocation } from "react-router-dom";
-import { useProcessedGraph, modifyProcessedGraph } from '../../store/useProcessedGraph';
+import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData } from '../../store/layerLevel';
 import { ModifyLineData } from '../../types/layerLevel'
@@ -149,7 +149,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       node = node as GroupNode;
       const currentExpanded = node.expanded;
       modifyProcessedGraph(
-        ModificationType.MODIFY_NODE_ATTR,
+        ProcessedGraphModificationType.MODIFY_NODE_ATTR,
         {
           nodeId: id,
           modifyOptions: {
@@ -355,7 +355,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         alert("Aggregation can only be applied at the same level!");
       } else {
         modifyProcessedGraph(
-          ModificationType.NEW_NODE,
+          ProcessedGraphModificationType.NEW_NODE,
           {
             newNodeIdInfo: {
               id: groupName,
@@ -374,7 +374,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
       modifyProcessedGraph(
-        ModificationType.DELETE_NODE,
+        ProcessedGraphModificationType.DELETE_NODE,
         {
           nodeId
         }
@@ -402,7 +402,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         let opts = { displayedName: oldNode.displayedName };
         if (currentNodetype === NodeType.GROUP) {
           modifyProcessedGraph(
-            ModificationType.MODIFY_NODE_TYPE,
+            ProcessedGraphModificationType.MODIFY_NODE_TYPE,
             {
               nodeId: oldNode.id,
               modifyOptions: {
@@ -415,7 +415,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           )
         } else if (currentNodetype === NodeType.LAYER) {
           modifyProcessedGraph(
-            ModificationType.MODIFY_NODE_TYPE,
+            ProcessedGraphModificationType.MODIFY_NODE_TYPE,
             {
               nodeId: oldNode.id,
               modifyOptions: {
@@ -430,7 +430,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         }
       } else if (oldNode.type === NodeType.LAYER && (oldNode as LayerNode).layerType !== currentLayertype) {
         modifyProcessedGraph(
-          ModificationType.MODIFY_NODE_ATTR,
+          ProcessedGraphModificationType.MODIFY_NODE_ATTR,
           {
             nodeId: oldNode.id,
             modifyOptions: {

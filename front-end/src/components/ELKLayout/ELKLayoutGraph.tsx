@@ -12,7 +12,7 @@ import { TransitionMotion, spring } from "react-motion";
 import {
   useProcessedGraph,
   broadcastGraphChange,
-} from "../../store/useProcessedGraph";
+} from "../../store/processedGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { on } from "cluster";
 import {

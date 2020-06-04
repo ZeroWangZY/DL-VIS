@@ -5,7 +5,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import { setProcessedGraph } from "../../store/useProcessedGraph";
+import { setProcessedGraph } from "../../store/processedGraph";
 import { fetchAndParseGraphData } from "../../common/graph-processing/stage1/parser.tf";
 import { RawGraphOptimizer } from "../../common/graph-processing/stage1/raw-graph-optimizer.tf";
 import { buildGraph } from "../../common/graph-processing/stage2/build-graph.tf";
@@ -15,7 +15,6 @@ import { LayoutType } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/tf-raw-graph";
 import { fetchGraphData, fetchLocalMsGraph } from "../../api";
 import ProcessedGraphOptimizer from '../../common/graph-processing/stage2/processed-graph-optimizer';
-import { Layout } from "../ColaLayout/layout";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

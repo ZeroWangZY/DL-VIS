@@ -8,7 +8,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
 import { GroupNode, NodeId, NodeType } from '../../common/graph-processing/stage2/processed-graph';
-import { useProcessedGraph, broadcastGraphChange } from '../../store/useProcessedGraph'
+import { useProcessedGraph, broadcastGraphChange } from '../../store/processedGraph'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

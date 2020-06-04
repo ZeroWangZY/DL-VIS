@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react'
-import { ProcessedGraph, ProcessedGraphImp, OptionsDef, ModificationType, GroupNode, LayerNode, LayerNodeImp, GroupNodeImp } from '../common/graph-processing/stage2/processed-graph'
+import { ProcessedGraph, ProcessedGraphImp, OptionsDef, GroupNode, LayerNode, LayerNodeImp, GroupNodeImp } from '../common/graph-processing/stage2/processed-graph'
+
+export enum ProcessedGraphModificationType {
+  MODIFY_NODE_ATTR,
+  MODIFY_NODE_TYPE,
+  NEW_NODE,
+  DELETE_NODE
+}
 
 let listeners = []
 let processedGraph: ProcessedGraph = new ProcessedGraphImp()
@@ -16,10 +23,10 @@ export const setProcessedGraph = (newProcessedGraph: ProcessedGraph) => {
   broadcastGraphChange()
 }
 
-export const modifyProcessedGraph = (operation: ModificationType, opts: OptionsDef) => {
+export const modifyProcessedGraph = (operation: ProcessedGraphModificationType, opts: OptionsDef) => {
   let parentNode, nodeId, modifyOptions;
   switch (operation) {
-    case ModificationType.MODIFY_NODE_ATTR:
+    case ProcessedGraphModificationType.MODIFY_NODE_ATTR:
       nodeId = opts.nodeId;
       modifyOptions = opts.modifyOptions;
       let node = processedGraph.nodeMap[nodeId] as GroupNode;
@@ -27,7 +34,7 @@ export const modifyProcessedGraph = (operation: ModificationType, opts: OptionsD
         node[option] = modifyOptions[option];
       }
       break;
-    case ModificationType.MODIFY_NODE_TYPE:
+    case ProcessedGraphModificationType.MODIFY_NODE_TYPE:
       nodeId = opts.nodeId;
       modifyOptions = opts.modifyOptions;
       let newNode;
@@ -38,7 +45,7 @@ export const modifyProcessedGraph = (operation: ModificationType, opts: OptionsD
       }
       processedGraph.nodeMap[nodeId] = newNode;
       break;
-    case ModificationType.NEW_NODE:
+    case ProcessedGraphModificationType.NEW_NODE:
       const { newNodeIdInfo } = opts;
       const { id, children, parent } = newNodeIdInfo;
       // 通过聚合得到的新节点
@@ -58,7 +65,7 @@ export const modifyProcessedGraph = (operation: ModificationType, opts: OptionsD
         processedGraph.nodeMap[childId].parent = id;// 更新所有选中节点的parent
       }
       break;
-    case ModificationType.DELETE_NODE:
+    case ProcessedGraphModificationType.DELETE_NODE:
       nodeId = opts.nodeId;
       let nodeToDelete = processedGraph.nodeMap[nodeId] as GroupNode | LayerNode;// 要删除的节点
 

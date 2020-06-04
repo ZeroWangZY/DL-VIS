@@ -12,13 +12,6 @@ export interface OptionsDef {
   [key: string]: any;
 }
 
-export enum ModificationType {
-  MODIFY_NODE_ATTR,
-  MODIFY_NODE_TYPE,
-  NEW_NODE,
-  DELETE_NODE
-}
-
 export const SCOPE_DELIM = "/";
 
 export const ROOT_SCOPE = "___root___";
