@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
-import { ProcessedGraph, ProcessedGraphImp, OptionsDef, GroupNode, LayerNode, LayerNodeImp, GroupNodeImp } from '../common/graph-processing/stage2/processed-graph'
+import { ProcessedGraph, ProcessedGraphImp, OptionsDef, GroupNode, LayerNode, LayerNodeImp, GroupNodeImp, NodeType } from '../common/graph-processing/stage2/processed-graph'
 
 export enum ProcessedGraphModificationType {
   MODIFY_NODE_ATTR,
   MODIFY_NODE_TYPE,
   NEW_NODE,
-  DELETE_NODE
+  DELETE_NODE,
+  TOGGLE_EXPANDED
 }
 
 let listeners = []
 let processedGraph: ProcessedGraph = new ProcessedGraphImp()
 // 广播变化, 让使用了该hook的组件重新渲染
-export const broadcastGraphChange = () => {
+const broadcastGraphChange = () => {
   processedGraph = Object.assign(new ProcessedGraphImp(), processedGraph)
   listeners.forEach(listener => {
     listener(processedGraph)
@@ -26,6 +27,44 @@ export const setProcessedGraph = (newProcessedGraph: ProcessedGraph) => {
 export const modifyProcessedGraph = (operation: ProcessedGraphModificationType, opts: OptionsDef) => {
   let parentNode, nodeId, modifyOptions;
   switch (operation) {
+    case ProcessedGraphModificationType.TOGGLE_EXPANDED:
+      nodeId = opts.nodeId
+      nodeId = nodeId.replace(/-/g, '/'); //还原为nodemap中存的id格式
+      while (1) {
+        let node = processedGraph.nodeMap[nodeId];
+        if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
+          return
+        }
+
+        node = node as GroupNode;
+        const currentExpanded = node.expanded;
+        modifyProcessedGraph(
+          ProcessedGraphModificationType.MODIFY_NODE_ATTR,
+          {
+            nodeId: nodeId,
+            modifyOptions: {
+              expanded: !currentExpanded
+            }
+          }
+        );
+        var i = 0;
+        let childnodeId = nodeId;
+        node.children.forEach(childId => {
+          let childNode = processedGraph.nodeMap[childId];
+          if (childNode.type == NodeType.GROUP) {
+            i++;
+            childnodeId = childNode.id;
+          }
+
+        })
+        if (i == 1) {
+          // let childnodeId=Array.from(node.children)[0];
+          nodeId = childnodeId;
+
+        }
+        else break;
+      }
+      break;
     case ProcessedGraphModificationType.MODIFY_NODE_ATTR:
       nodeId = opts.nodeId;
       modifyOptions = opts.modifyOptions;

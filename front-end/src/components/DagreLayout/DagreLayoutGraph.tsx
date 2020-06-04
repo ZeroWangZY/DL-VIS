@@ -139,41 +139,9 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }
 
   const toggleExpanded = id => {
-    id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    while (1) {
-      let node = graphForLayout.nodeMap[id];
-      if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
-        return
-      }
-
-      node = node as GroupNode;
-      const currentExpanded = node.expanded;
-      modifyProcessedGraph(
-        ProcessedGraphModificationType.MODIFY_NODE_ATTR,
-        {
-          nodeId: id,
-          modifyOptions: {
-            expanded: !currentExpanded
-          }
-        }
-      );
-      var i = 0;
-      let childnodeId = id;
-      node.children.forEach(childId => {
-        let childNode = graphForLayout.nodeMap[childId];
-        if (childNode.type == NodeType.GROUP) {
-          i++;
-          childnodeId = childNode.id;
-        }
-
-      })
-      if (i == 1) {
-        // let childnodeId=Array.from(node.children)[0];
-        id = childnodeId;
-
-      }
-      else break;
-    }
+    modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
+      nodeId: id,
+    });
   }
 
   const draw = async () => {
