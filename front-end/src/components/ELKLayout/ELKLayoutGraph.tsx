@@ -498,6 +498,9 @@ const ELKLayoutGraph: React.FC = () => {
                           ? "+"
                           : "")
                     ) + 2;
+                  //考虑到d3.select的语法限制，需要将id中的'/'替换为'-'
+                  const selectContent = `.edgePaths .id_${d.data.id.split("/")
+                    .join("-")} path`;
                   return (
                     <g
                       className={`node ${d.data.class} ${
@@ -508,13 +511,13 @@ const ELKLayoutGraph: React.FC = () => {
                       transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                       onClick={() => toggleExpanded(d.data.id)}
                       onMouseOver={() => {
-                        d3.selectAll(`.edgePaths .${d.data.id} path`)
+                        d3.selectAll(selectContent)
                           .transition()
                           .style("stroke", "#7F0723")
                           .style("stroke-width", "4");
                       }}
                       onMouseOut={() => {
-                        d3.selectAll(`.edgePaths .${d.data.id} path`)
+                        d3.selectAll(selectContent)
                           .transition()
                           .style("stroke", "#3F3F3F")
                           .style("stroke-width", "1");
@@ -597,7 +600,7 @@ const ELKLayoutGraph: React.FC = () => {
               <g className="edgePaths">
                 {interpolatedStyles.map((d) => (
                   <g
-                    className={"edgePath " + d.key.split("-").join(" ")}
+                    className={"edgePath " + d.key.split("-").map(name=>"id_"+name.split('/').join('-')).join(" ")}
                     key={d.key}
                   >
                     <path
