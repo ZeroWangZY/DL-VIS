@@ -3,7 +3,7 @@ import { LineChartType ,LineChartImp,ModifyLineData } from '../types/layerLevel'
 let lineChartData:LineChartType[] = []
 let lineListeners = []
 
-export const broadLineChange = () => {
+const broadLineChange = () => {
     lineChartData =  [...lineChartData]
     lineListeners.forEach(listener => {
       listener(lineChartData)
