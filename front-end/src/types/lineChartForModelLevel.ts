@@ -1,4 +1,4 @@
-import {RawEdge, NodeId, OperationNode, GroupNode, LayerNode, DataNode} from "./processed-graph";
+import {RawEdge, NodeId, OperationNode, GroupNode, LayerNode, DataNode} from "../common/graph-processing/stage2/processed-graph";
 
 export interface Points {
   iteration: number; // 横坐标

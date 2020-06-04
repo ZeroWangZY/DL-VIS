@@ -6,15 +6,15 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import { setProcessedGraph } from "../../store/useProcessedGraph";
-import { fetchAndParseGraphData } from "../../common/graph-processing/tf-graph/parser";
-import { SimplifierImp } from "../../common/graph-processing/tf-graph/simplifier";
-import { buildGraph } from "../../common/graph-processing/tf-graph/graph";
-import { buildMsGraph } from "../../common/graph-processing/ms-graph/graph";
+import { fetchAndParseGraphData } from "../../common/graph-processing/stage1/parser.tf";
+import { RawGraphOptimizer } from "../../common/graph-processing/stage1/raw-graph-optimizer.tf";
+import { buildGraph } from "../../common/graph-processing/stage2/build-graph.tf";
+import { buildMsGraph } from "../../common/graph-processing/stage2/build-graph.ms";
 import { useGlobalConfigurations } from "../../store/global-configuration";
 import { LayoutType } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/tf-raw-graph";
 import { fetchGraphData, fetchLocalMsGraph } from "../../api";
-import ProcessedGraphOptimizer from '../../common/graph-processing/processed-graph-optimizer';
+import ProcessedGraphOptimizer from '../../common/graph-processing/stage2/processed-graph-optimizer';
 import { Layout } from "../ColaLayout/layout";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -106,7 +106,7 @@ export default function GraphSelector() {
       null
     )
       .then((graph) => {
-        const simplifier = new SimplifierImp(preprocessingPlugins);
+        const simplifier = new RawGraphOptimizer(preprocessingPlugins);
         return simplifier.withTracker()(graph);
       })
       .then((graph) => {

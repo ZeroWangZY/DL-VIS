@@ -1,4 +1,4 @@
-import { ProcessedGraph, GroupNode } from "../../types/processed-graph";
+import { ProcessedGraph, GroupNode } from "./processed-graph";
 
 const aggreOptimization = (hGraph: ProcessedGraph): void => {//更改无意义边跨越节点的命名空间以简化视图
   //寻找

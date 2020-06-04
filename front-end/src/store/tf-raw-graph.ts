@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { RawGraph } from '../common/graph-processing/tf-graph/parser'
+import { RawGraph } from '../common/graph-processing/stage1/raw-graph.tf.type'
 
 let listeners = []
 let tfRawGraph: RawGraph = null

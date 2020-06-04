@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType } from '../../types/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType } from '../../common/graph-processing/stage2/processed-graph'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';

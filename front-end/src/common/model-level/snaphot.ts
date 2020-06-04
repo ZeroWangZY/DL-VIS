@@ -1,5 +1,5 @@
 import  { fetchSnaphot,fetchLayerInfo } from '../../api/modelLevel'
-import { GroupNodeImp, LayerNodeImp } from '../../types/processed-graph'
+import { GroupNodeImp, LayerNodeImp } from '../graph-processing/stage2/processed-graph'
 
 export const fetchAndComputeSnaphot = async () => {
     let data = await fetchSnaphot()

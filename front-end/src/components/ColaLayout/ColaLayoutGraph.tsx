@@ -6,7 +6,7 @@ import {
   RawEdge,
   NodeId,
   GroupNode,
-} from "../../types/processed-graph";
+} from "../../common/graph-processing/stage2/processed-graph";
 import * as setCola from "./setCola";
 import * as cola from "webcola";
 import * as d3 from "d3";

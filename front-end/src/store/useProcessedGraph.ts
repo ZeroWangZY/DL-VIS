@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ProcessedGraph, ProcessedGraphImp, OptionsDef, ModificationType, GroupNode, LayerNode, LayerNodeImp, GroupNodeImp } from '../types/processed-graph'
+import { ProcessedGraph, ProcessedGraphImp, OptionsDef, ModificationType, GroupNode, LayerNode, LayerNodeImp, GroupNodeImp } from '../common/graph-processing/stage2/processed-graph'
 
 let listeners = []
 let processedGraph: ProcessedGraph = new ProcessedGraphImp()

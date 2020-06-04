@@ -1,5 +1,5 @@
 // 这里开始从pb(即RawGraph)构建数据结构
-import { RawGraph, RawNode } from "./parser";
+import { RawGraph, RawNode } from "../stage1/raw-graph.ms.type";
 import {
   NodeDef,
   AbstractNode,
@@ -20,7 +20,7 @@ import {
   VARIABLE_PATTERNS,
   LAYER_PATTERNS,
   NodeType,
-} from "../../../types/processed-graph";
+} from "./processed-graph";
 // import { wrapTaskWithTimeLogger } from "../utils";
 
 const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])

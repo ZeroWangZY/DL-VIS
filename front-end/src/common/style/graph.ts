@@ -1,9 +1,9 @@
-import { ProcessedGraph } from "../../types/processed-graph";
+import { ProcessedGraph } from "../graph-processing/stage2/processed-graph";
 import {
   NodeType, LayerType, DataType, RawEdge, GroupNode,
   LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode,
   OperationNodeImp
-} from '../../types/processed-graph'
+} from '../graph-processing/stage2/processed-graph'
 import { TransitionMotion, spring } from 'react-motion';
 import * as d3 from 'd3';
 
