@@ -29,7 +29,7 @@ let oldEleMap = {};
 let newEleMap = {};
 
 const portMode = false;
-const maxPort = 10;
+const maxPort = 5;
 function restoreFromOldEleMap(newEle) {
   let oldEle = oldEleMap[newEle.id];
   if (oldEle) {
@@ -41,8 +41,6 @@ function restoreFromOldEleMap(newEle) {
 
 const ELKLayoutGraph: React.FC = () => {
   const graphForLayout = useProcessedGraph();
-  const [nodes, setNodes] = useState([]);
-  const [links, setLinks] = useState([]);
   const [nodeStyles, setNodeStyles] = useState([]);
   const [linkStyles, setLinkStyles] = useState([]);
   const [elkNodeMap, setElkNodeMap] = useState({});
@@ -96,6 +94,7 @@ const ELKLayoutGraph: React.FC = () => {
         nodeLinkMap[edge.target] = { source: [edge.source], target: [] };
       }
     });
+    console.log(nodeLinkMap);
 
     //group存储每个节点的子节点（可见）
     let groups = {};
@@ -249,8 +248,6 @@ const ELKLayoutGraph: React.FC = () => {
       )
       .then((graphLayout) => {
         // graphLayout: output_graph with pos
-        setNodes(graphLayout.children);
-        setLinks(graphLayout.edges);
         let newNodeStyles = [];
         let newLinkStyles = [];
         generateEdgeStyles(graphLayout.edges, newLinkStyles);
@@ -320,8 +317,8 @@ const ELKLayoutGraph: React.FC = () => {
           let inPort = false,
             outPort = false;
           if (id in nodeLinkMap) {
-            inPort = nodeLinkMap[id].source.length > 10;
-            outPort = nodeLinkMap[id].target.length > 10;
+            inPort = nodeLinkMap[id].source.length > maxPort;
+            outPort = nodeLinkMap[id].target.length > maxPort;
           }
           let child = generateNode(node, inPort, outPort);
           processChildren(id, child, children);
@@ -387,8 +384,8 @@ const ELKLayoutGraph: React.FC = () => {
       let inPort = false,
         outPort = false;
       if (nodeId in nodeLinkMap) {
-        inPort = nodeLinkMap[nodeId].source.length > 10;
-        outPort = nodeLinkMap[nodeId].target.length > 10;
+        inPort = nodeLinkMap[nodeId].source.length > maxPort;
+        outPort = nodeLinkMap[nodeId].target.length > maxPort;
       }
       let newNode = generateNode(node, inPort, outPort);
       processChildren(nodeId, newNode, newNodes);
@@ -510,6 +507,18 @@ const ELKLayoutGraph: React.FC = () => {
                       key={d.key}
                       transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                       onClick={() => toggleExpanded(d.data.id)}
+                      onMouseOver={() => {
+                        d3.selectAll(`.edgePaths .${d.data.id} path`)
+                          .transition()
+                          .style("stroke", "#7F0723")
+                          .style("stroke-width", "4");
+                      }}
+                      onMouseOut={() => {
+                        d3.selectAll(`.edgePaths .${d.data.id} path`)
+                          .transition()
+                          .style("stroke", "#3F3F3F")
+                          .style("stroke-width", "1");
+                      }}
                     >
                       {d.data.class === "nodeitem-0" ? (
                         <ellipse
@@ -587,7 +596,10 @@ const ELKLayoutGraph: React.FC = () => {
             {(interpolatedStyles) => (
               <g className="edgePaths">
                 {interpolatedStyles.map((d) => (
-                  <g className="edgePath" key={d.key}>
+                  <g
+                    className={"edgePath " + d.key.split("-").join(" ")}
+                    key={d.key}
+                  >
                     <path
                       d={line([
                         { x: d.style.startPointX, y: d.style.startPointY },

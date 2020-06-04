@@ -48,6 +48,9 @@ export const generateNode = (
       },
     });
   }
+  if(node.id==="conv1_1"){
+      console.log(inPort,outPort)
+  }
   return {
     id: node.id,
     parent: node.parent,
@@ -57,7 +60,7 @@ export const generateNode = (
     type: node.type,
     layoutOptions: {
       algorithm: "layered",
-      // portConstraints: "FIXED_SIDE",
+    //   portConstraints: "FIXED_SIDE",
     },
     expand: false,
     width:
