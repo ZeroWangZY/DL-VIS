@@ -87,8 +87,10 @@ export interface ModuleEdge extends RawEdge {
   width: number; // 表示两个模块间的连线个数
 }
 
+export type NodeMap = { [nodeId: string]: NodeDef }
+
 export interface ProcessedGraph {
-  nodeMap: { [nodeId: string]: NodeDef };
+  nodeMap: NodeMap;
   rootNode: GroupNode;
   rawEdges: RawEdge[];  // 原始的所有边
   moduleEdges: ModuleEdge[];

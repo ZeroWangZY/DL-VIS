@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useGlobalConfigurations } from "../../store/global-configuration";
 import { buildMsGraph } from "../../common/graph-processing/stage2/build-graph.ms";
 import { useMsRawGraph } from "../../store/rawGraph.ms";
-import { setProcessedGraph } from "../../store/processedGraph";
+import { setProcessedGraph, useProcessedGraph } from "../../store/processedGraph";
 import ProcessedGraphOptimizer from "../../common/graph-processing/stage2/processed-graph-optimizer";
 import { useTfRawGraph } from "../../store/rawGraph.tf";
 import { buildGraph } from "../../common/graph-processing/stage2/build-graph.tf";
+import { produceVisGraph } from "../../common/graph-processing/stage3/produce-vis-graph";
+import { setVisGraph } from "../../store/visGraph";
 
 export default function useGraphPipeline() {
 
-  const { preprocessingPlugins, currentLayout, shouldOptimizeProcessedGraph } = useGlobalConfigurations();
+  const { shouldOptimizeProcessedGraph } = useGlobalConfigurations();
   const msRawGraph = useMsRawGraph()
   const tfRawGraph = useTfRawGraph()
+  const processedGraph = useProcessedGraph()
 
   // MsRawGraph --> ProcessedGraph
   useEffect(() => {
@@ -42,7 +45,15 @@ export default function useGraphPipeline() {
     
   }, [tfRawGraph, shouldOptimizeProcessedGraph]);
 
-  // TODO: ProcessedGraph --> VisGraph
+  useEffect(() => {
+    if (!processedGraph) return
+
+    const vGraph = produceVisGraph(processedGraph)
+    console.log(vGraph)
+    setVisGraph(vGraph)
+    
+  }, [processedGraph]);
+
 
   // TODO: VisGraph --> LayoutGraph
 

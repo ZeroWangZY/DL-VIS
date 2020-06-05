@@ -1,14 +1,29 @@
-import { RawEdge, NodeDef, GroupNode, NodeId } from "../stage2/processed-graph";
+import { NodeDef, GroupNode, NodeId, NodeMap } from "../stage2/processed-graph";
 
-export interface VisNodes {
+export interface VisEdge {
   source: NodeId;
   target: NodeId;
-  weight: number;
+  count: number; // 聚合间的一条边可能又多条RawGraph组成
 }
 
 export interface VisGraph {
-  nodeMap: { [nodeId: string]: NodeDef };
+  nodeMap: NodeMap;
   rootNode: GroupNode;
-  visEdges: RawEdge[];  // 原始的所有边
-  visNodes: VisNodes[];
+  visEdges: VisEdge[];
+  visNodes: NodeId[];
+}
+
+export class VisGraphImp implements VisGraph {
+  nodeMap: NodeMap;
+  rootNode: GroupNode;
+  visEdges: VisEdge[];
+  visNodes: NodeId[];
+
+  constructor(nodeMap: NodeMap,
+    rootNode: GroupNode, visEdges: VisEdge[], visNodes: NodeId[]) {
+      this.nodeMap = nodeMap
+      this.rootNode = rootNode
+      this.visEdges = visEdges
+      this.visNodes = visNodes
+  }
 }
