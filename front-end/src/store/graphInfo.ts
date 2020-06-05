@@ -11,6 +11,7 @@ export const broadGraphChange = () => {
       listener(graphInfo)
     });
 } 
+
 export const useGraphInfo = () => {
     const [el, newListener] = useState(graphInfo)
     useEffect(() => {
@@ -21,6 +22,7 @@ export const useGraphInfo = () => {
     }, [])
     return el
 }
+
 export const modifyGraphInfo = (action: elModifyType) => {
   switch (action) {
     case elModifyType.UPDATE_NODE:
@@ -30,14 +32,13 @@ export const modifyGraphInfo = (action: elModifyType) => {
   broadGraphChange()
 }
 
-
-
 export const broadTransformChange = () => {
   transform = Object.assign(new transformImp(), transform)
   transListeners.forEach(listener => {
     listener(transform)
   });
 } 
+
 export const useTransform = () => {
   const [transformData, newListener] = useState(transform)
   useEffect(() => {

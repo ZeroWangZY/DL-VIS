@@ -48,9 +48,6 @@ export const generateNode = (
       },
     });
   }
-  if(node.id==="conv1_1"){
-      console.log(inPort,outPort)
-  }
   return {
     id: node.id,
     parent: node.parent,

@@ -514,7 +514,7 @@ const ELKLayoutGraph: React.FC = () => {
                         d3.selectAll(selectContent)
                           .transition()
                           .style("stroke", "#7F0723")
-                          .style("stroke-width", "4");
+                          .style("stroke-width", "3");
                       }}
                       onMouseOut={() => {
                         d3.selectAll(selectContent)
