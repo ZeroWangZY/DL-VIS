@@ -1,6 +1,6 @@
-import { RawNode, RawGraph } from './parser';
+import { RawNode, RawGraph } from './raw-graph.tf.type';
 import { wrapTaskWithTimeLogger } from "../utils";
-import { SCOPE_DELIM } from '../../../types/processed-graph';
+import { SCOPE_DELIM } from '../stage2/processed-graph';
 
 
 enum PatternType {
@@ -39,10 +39,6 @@ const VariableSuffix = [
   "Assign",
   "read",
 ];
-
-function deepcopy(graph: RawGraph): RawGraph {
-  return JSON.parse(JSON.stringify(graph)) as RawGraph;
-}
 
 const cleanName = function(name: string): string {
   name = name.replace(/^\^/, "");
@@ -296,7 +292,7 @@ function buildDict(nodes: RawNode[]): Record<string, RawNode> {
 }
 
 
-export class SimplifierImp {
+export class RawGraphOptimizer {
   // TODO
   nodeMiddlewares: NodeMiddleware[];
   graphMiddlewares: GraphMiddleware[];
@@ -347,7 +343,7 @@ export class SimplifierImp {
     this.graphMiddlewares.push(middleware);
   }
 
-  simplify(graph: RawGraph): RawGraph {
+  optimize(graph: RawGraph): RawGraph {
     const { node: nodes } = graph;
     const { nodeMiddlewares, graphMiddlewares } = this;
     let nodesToDelete: Set<number> = new Set();
@@ -377,7 +373,7 @@ export class SimplifierImp {
 
   withTracker() {
     return (graph: RawGraph): Promise<RawGraph> => {
-      return wrapTaskWithTimeLogger(this.simplify).call(this, graph);
+      return wrapTaskWithTimeLogger(this.optimize).call(this, graph);
     };
   }
 

@@ -5,17 +5,14 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import { setProcessedGraph } from "../../store/useProcessedGraph";
-import { fetchAndParseGraphData } from "../../common/graph-processing/tf-graph/parser";
-import { SimplifierImp } from "../../common/graph-processing/tf-graph/simplifier";
-import { buildGraph } from "../../common/graph-processing/tf-graph/graph";
-import { buildMsGraph } from "../../common/graph-processing/ms-graph/graph";
+import { fetchAndParseGraphData } from "../../common/graph-processing/stage1/parser.tf";
+import { RawGraphOptimizer } from "../../common/graph-processing/stage1/raw-graph-optimizer.tf";
 import { useGlobalConfigurations } from "../../store/global-configuration";
 import { LayoutType } from "../../store/global-configuration.type";
-import { setTfRawGraph } from "../../store/tf-raw-graph";
-import { fetchGraphData, fetchLocalMsGraph } from "../../api";
-import ProcessedGraphOptimizer from '../../common/graph-processing/processed-graph-optimizer';
-import { Layout } from "../ColaLayout/layout";
+import { setTfRawGraph } from "../../store/rawGraph.tf";
+import { fetchLocalMsGraph } from "../../api";
+import { setMsRawGraph } from "../../store/rawGraph.ms";
+import useGraphPipeline from "../GraphPipeline/GraphPipeline";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -39,8 +36,10 @@ export default function GraphSelector() {
   const [msGraphMetadatas, setMsGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
+  useGraphPipeline();
 
-  const { preprocessingPlugins, currentLayout, shouldOptimizeProcessedGraph } = useGlobalConfigurations();
+  const { preprocessingPlugins, currentLayout } = useGlobalConfigurations();
+
   const isTfGraph =
     currentLayout === LayoutType.DAGRE_FOR_TF ||
     currentLayout === LayoutType.TENSORBOARD ||
@@ -75,51 +74,30 @@ export default function GraphSelector() {
   }, []);
 
   useEffect(() => {
-    if (
-      currentLayout !== LayoutType.DAGRE_FOR_MS &&
-      currentLayout !== LayoutType.ELK_FOR_MS
-    )
-      return; // MSGraph
-
+    if (!isMsGraph) return; // MSGraph
     fetchLocalMsGraph(msGraphMetadatas[currentMsGraphIndex].name).then(
       (RawData) => {
-        let ParsedGraph = RawData.data.data; // 处理
-        const hGraph = buildMsGraph(ParsedGraph);
-        if (shouldOptimizeProcessedGraph) {
-          const processedGraphOptimizer = new ProcessedGraphOptimizer();
-          processedGraphOptimizer.optimize(hGraph);
-        }
-        setProcessedGraph(hGraph);
+        let parsedGraph = RawData.data.data; // 处理
+        setMsRawGraph(parsedGraph);
       }
     );
   }, [currentMsGraphIndex, currentLayout]);
 
   useEffect(() => {
-    if (
-      currentLayout !== LayoutType.DAGRE_FOR_TF &&
-      currentLayout !== LayoutType.ELK_FOR_TF
-    )
-      return; // TFGraph
+    if (!isTfGraph) return; // TFGraph
+
     if (graphMetadatas.length < 1) return;
     fetchAndParseGraphData(
       process.env.PUBLIC_URL + graphMetadatas[currentTfGraphIndex].url,
       null
     )
       .then((graph) => {
-        const simplifier = new SimplifierImp(preprocessingPlugins);
-        return simplifier.withTracker()(graph);
+        const rawGraphoptimizer = new RawGraphOptimizer(preprocessingPlugins);
+        return rawGraphoptimizer.withTracker()(graph);
       })
       .then((graph) => {
         setTfRawGraph(graph);
         return graph;
-      })
-      .then(async (graph) => {
-        const hGraph = await buildGraph(graph);
-        if (shouldOptimizeProcessedGraph) {
-          const processedGraphOptimizer = new ProcessedGraphOptimizer();
-          processedGraphOptimizer.optimize(hGraph);
-        }
-        setProcessedGraph(hGraph);
       });
   }, [
     currentTfGraphIndex,
@@ -127,7 +105,6 @@ export default function GraphSelector() {
     preprocessingPlugins,
     currentLayout,
   ]);
-        
 
   return (
     <div>

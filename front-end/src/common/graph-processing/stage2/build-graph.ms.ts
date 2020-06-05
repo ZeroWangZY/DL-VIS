@@ -1,5 +1,5 @@
 // 这里开始从pb(即RawGraph)构建数据结构
-import { RawGraph, RawNode } from "./parser";
+import { RawGraph, RawNode } from "../stage1/raw-graph.ms.type";
 import {
   NodeDef,
   AbstractNode,
@@ -20,7 +20,7 @@ import {
   VARIABLE_PATTERNS,
   LAYER_PATTERNS,
   NodeType,
-} from "../../../types/processed-graph";
+} from "./processed-graph";
 // import { wrapTaskWithTimeLogger } from "../utils";
 
 const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
@@ -51,7 +51,6 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph, outputNodeName: Set<st
     attributes,
     id: rNode.name,
     op: rNode.opType,
-    auxiliary: new Set([]),
     opts: { displayedName },
   });
 }
@@ -101,7 +100,8 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   const pGraph = new ProcessedGraphImp();
   const rNodes = rGraph.node;
 
-  let parameterNodeName = new Set(), constValNodeName = new Set();
+  let parameterNodeName: Set<string> = new Set();
+  let constValNodeName: Set<string> = new Set();
   for (let parameter of rGraph.parameters)
     parameterNodeName.add(parameter.name)
   for (let constVal of rGraph.constVals)
@@ -181,27 +181,58 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
 
   let inputNodeName = [...Array.from(parameterNodeName) as string[], ...Array.from(constValNodeName) as string[]];
   buildHierarchy(rGraph, pGraph, inputNodeName, outputNodeName) // 构建层次
-  console.log(pGraph)
   buildModule(pGraph)
 
-  // 建立层次结束后，重新处理GroupNode，增加属性
-  processGroupNode(pGraph);
-  processOperationNode(rGraph, pGraph, outputNodeName);
 
+  processGroupNode(pGraph);  // 建立层次结束后，重新处理GroupNode，增加属性
+  processOperationNode(rGraph, pGraph, outputNodeName);  // 建立层次结束后，重新处理OperationNode，增加属性
+  processDataNode(rGraph, pGraph, parameterNodeName, constValNodeName);
   // console.log(rGraph);
   // console.log(pGraph);
   return pGraph;
 }
 
-function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph,outputNodeName: Set<string>) {
-  console.log(rGraph);
+// 对所有的DataNode中的 dataType为PARAMETER和CONST的节点，进行处理
+// TODO: DataNode中 dataType 为output的节点 稍后 处理
+function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNodeName: Set<string>, constValNodeName: Set<string>) {
+  const nodeMap = pGraph.nodeMap;
+  const parameters = rGraph.parameters;//数组每一维的结构： {name: "xxx", type: {dataType: "DT_TENSOR", tensorType: "xxxxxx"}};
+  const parametersMap = new Map();
+  for (let parameter of parameters) {
+    let attribute = { name: "", value: "" }; // attribute的结构{name: string;value: string;}
+    if (parameter.type) {
+      attribute.name = parameter.type.dataType;
+      attribute.value = JSON.stringify(parameter.type.tensorType);
+    }
+    parametersMap.set(parameter.name, attribute);
+  }
+
+  const newNodeNames = Object.keys(nodeMap);
+  for (let newNodeName of newNodeNames) {
+    let splitName = newNodeName.split("_Input2_");
+    if (splitName.length !== 2) continue;
+
+    if (parameterNodeName.has(splitName[0])) { // 处理nodeMap[newNodeName]
+      // 比如：data_Input2_1; 
+      (nodeMap[newNodeName] as DataNodeImp).outputNode.add(nodeMap[splitName[1]].displayedName); // 输出
+
+      (nodeMap[newNodeName] as DataNodeImp).typeAttibute = parametersMap.get(splitName[0]); // parameter的type属性
+    }
+    else if (constValNodeName.has(splitName[0])) {
+      // 比如：cst1_Input2_1; 
+      (nodeMap[newNodeName] as DataNodeImp).outputNode.add(nodeMap[splitName[1]].displayedName); // 输出
+    }
+  }
+}
+
+function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph, outputNodeName: Set<string>) {
   const nodeMap = pGraph.nodeMap;
 
   for (let node of rGraph.node) { // 对于所有的operationNode
     let nodeName = node.name;
-    if(outputNodeName.has(nodeName)) continue;
-    if(node.input === undefined) continue;
-    
+    if (outputNodeName.has(nodeName)) continue;
+    if (node.input === undefined) continue;
+
     for (let input of node.input) {
       let inputNodeName = input.name;
       if (nodeMap[inputNodeName + "_Input2_" + nodeName] instanceof DataNodeImp

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
-import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge, ModificationType } from '../../types/processed-graph'
+import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from './LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
@@ -16,8 +16,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { TransitionMotion, spring } from 'react-motion';
 import { useHistory, useLocation } from "react-router-dom";
-import { modifyGraphInfo } from '../../store/graphInfo';
-import { useProcessedGraph, modifyProcessedGraph } from '../../store/useProcessedGraph';
+import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
 import { modifyData } from '../../store/layerLevel';
 import { ModifyLineData } from '../../types/layerLevel'
@@ -94,18 +93,18 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     let nodeMap = graphForLayout.nodeMap
     let node = nodeMap[id];
 
-    if (node.type !== NodeType.GROUP && node.type !== NodeType.OPERTATION) { // TODO: 目前只考虑ms图
+    // TODO: 目前只考虑ms图
+    if (node.type === NodeType.LAYER || (node.type === NodeType.DATA && (node as DataNodeImp).dataType === DataType.OUTPUT)) {
       return;
     }
 
     if (node.type === NodeType.GROUP) {
       let splitName = GraphId.split("-")
+
+      // selectedNodeName  与     selectedNodeId 分别是：
+      // Default/hello/hi                  hi
+      //   cst1_Input2_3                   3
       setSelectedNodeName(splitName[splitName.length - 1]);
-      d3.select(".info-card.root").classed("selected", true);
-      if (selectedNodeId.length !== 0) { // 已有选中节点
-        d3.select("#node_" + selectedNodeId).select(".label-container").classed("focus", false);
-      }
-      d3.select("#node_" + GraphId).select(".label-container").classed("focus", true)
       setSelectedNodeId(GraphId)
 
       setLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
@@ -116,10 +115,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     if (node.type === NodeType.OPERTATION) {
       let splitName = GraphId.split("-")
       setSelectedNodeName(splitName[splitName.length - 1]);
-      if (selectedNodeId.length !== 0) { // 已有选中节点
-        d3.select("#node_" + selectedNodeId).select(".label-container").classed("focus", false);
-      }
-      d3.select("#node_" + GraphId).select(".label-container").classed("focus", true)
       setSelectedNodeId(GraphId);
 
       setLeafAndChildrenNum([0, 0]);
@@ -127,44 +122,26 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       setOutputNodeName(Array.from((node as OperationNodeImp).outputNode));
       setInputNodeName(Array.from((node as OperationNodeImp).inputNode));
     }
+
+    if (node.type === NodeType.DATA) {
+      //GraphId是 data_Input2_1 或者 cst1_Input2_1 格式
+      let splitName = GraphId.split("_Input2_")
+      setSelectedNodeName(splitName[0]);
+      setSelectedNodeId(GraphId);
+
+      setLeafAndChildrenNum([0, 0]);
+      if ((node as DataNodeImp).dataType === DataType.PARAMETER)
+        setNodeAttribute([(node as DataNodeImp).typeAttibute]);
+      else setNodeAttribute([]);
+      setOutputNodeName(Array.from((node as DataNodeImp).outputNode));
+      setInputNodeName(Array.from((node as DataNodeImp).inputNode));
+    }
   }
 
   const toggleExpanded = id => {
-    id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    while (1) {
-      let node = graphForLayout.nodeMap[id];
-      if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
-        return
-      }
-
-      node = node as GroupNode;
-      const currentExpanded = node.expanded;
-      modifyProcessedGraph(
-        ModificationType.MODIFY_NODE_ATTR,
-        {
-          nodeId: id,
-          modifyOptions: {
-            expanded: !currentExpanded
-          }
-        }
-      );
-      var i = 0;
-      let childnodeId = id;
-      node.children.forEach(childId => {
-        let childNode = graphForLayout.nodeMap[childId];
-        if (childNode.type == NodeType.GROUP) {
-          i++;
-          childnodeId = childNode.id;
-        }
-
-      })
-      if (i == 1) {
-        // let childnodeId=Array.from(node.children)[0];
-        id = childnodeId;
-
-      }
-      else break;
-    }
+    modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
+      nodeId: id,
+    });
   }
 
   const draw = async () => {
@@ -346,7 +323,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         alert("Aggregation can only be applied at the same level!");
       } else {
         modifyProcessedGraph(
-          ModificationType.NEW_NODE,
+          ProcessedGraphModificationType.NEW_NODE,
           {
             newNodeIdInfo: {
               id: groupName,
@@ -365,7 +342,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
       modifyProcessedGraph(
-        ModificationType.DELETE_NODE,
+        ProcessedGraphModificationType.DELETE_NODE,
         {
           nodeId
         }
@@ -393,7 +370,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         let opts = { displayedName: oldNode.displayedName };
         if (currentNodetype === NodeType.GROUP) {
           modifyProcessedGraph(
-            ModificationType.MODIFY_NODE_TYPE,
+            ProcessedGraphModificationType.MODIFY_NODE_TYPE,
             {
               nodeId: oldNode.id,
               modifyOptions: {
@@ -406,7 +383,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           )
         } else if (currentNodetype === NodeType.LAYER) {
           modifyProcessedGraph(
-            ModificationType.MODIFY_NODE_TYPE,
+            ProcessedGraphModificationType.MODIFY_NODE_TYPE,
             {
               nodeId: oldNode.id,
               modifyOptions: {
@@ -421,7 +398,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         }
       } else if (oldNode.type === NodeType.LAYER && (oldNode as LayerNode).layerType !== currentLayertype) {
         modifyProcessedGraph(
-          ModificationType.MODIFY_NODE_ATTR,
+          ProcessedGraphModificationType.MODIFY_NODE_ATTR,
           {
             nodeId: oldNode.id,
             modifyOptions: {
@@ -452,6 +429,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         clickNode = selectedG.node();
       }
       let nodeId = d3.select(clickNode).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      // if(nodeId.startsWith("node_")) nodeId = nodeId.split("node_")[1];
       let node = graphForLayout.nodeMap[nodeId];
       if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
         alert("Node type modification and ungroup operation can only be applied to group node or layer node!");
@@ -507,11 +485,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     node = d3.select(".nodes").selectAll(".node");
     node.classed("selected", false);
     node.classed("previouslySelected", false);
-    d3.select(".info-card.root").classed("selected", false);
-    if (selectedNodeId.length !== 0) { // 已有选中节点
-      d3.select("#node_" + selectedNodeId).select(".label-container").classed("focus", false);
-      setSelectedNodeId("")
-    }
+    setSelectedNodeName("");
+    setSelectedNodeId("");
   }
 
   // 按住shift后单击选择
@@ -922,7 +897,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     gBrushHolder = d3.select("#gBrushHolder");
     d3.select('body').on('keydown', keydown);
     d3.select('body').on('keyup', keyup);
-    brushMode = false; 
+    brushMode = false;
     gBrush = null;
     brush = d3.brush()
       .extent([[0, 0], [svgWidth, svgHeight]])
@@ -936,13 +911,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   useEffect(() => {
     if (graphForLayout === null || !Object.keys(graphForLayout.nodeMap).length) return;
     draw();
-    setTimeout(function () {
-      // setTransformData(new transformImp())
-      modifyGraphInfo(elModifyType.UPDATE_NODE)
-    }, 1000);
   }, [graphForLayout, isHiddenInterModuleEdges]);
 
-  const getLabelContainer = (nodeClass, width, height) => {
+  const getLabelContainer = (nodeId, nodeClass, width, height) => {
+    let focus = selectedNodeName !== "" && nodeId === selectedNodeId; 
     if (nodeClass.indexOf(`layertype-${LayerType.FC}`) > -1) {
       return (<FCLayerNode width={width} height={height} />);
     } else if (nodeClass.indexOf(`layertype-${LayerType.CONV}`) > -1) {
@@ -954,7 +926,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     } else {
       return (
         <g className="label">
-          <rect className='label-container'
+          <rect className={focus ? 'label-container focus' : "label-container"}
             width={width}
             height={height}
             transform={`translate(-${width / 2}, -${height / 2})`}
@@ -995,12 +967,12 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                         <g
                           className={`node ${d.data.class}`}
                           data-belong_module={d.data.belongModule}
-                          id={"node_" + d.data.id}
+                          id={d.data.id}
                           key={d.key}
                           transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                           onClick={() => selectMode ? handleNodeSelect(d.data.id) : showInfoCard(d.data.id)}
                           onDoubleClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
-                          {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
+                          {getLabelContainer(d.data.id, d.data.class, d.style.rectWidth, d.style.rectHeight)}
                           <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
                             {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && diagnosisMode ?
                               <g className="LineChartInNode" >
@@ -1183,7 +1155,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         outputNodeName={outputNodeName}
         nodeAttribute={nodeAttribute} />
 
-      <div className="map-container">
+      <div className="minimap-container">
         <MiniMap
           graph={svgRef.current}
           outputG={outputRef.current}

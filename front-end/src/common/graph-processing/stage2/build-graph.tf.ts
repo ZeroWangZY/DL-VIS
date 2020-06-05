@@ -1,5 +1,5 @@
 // 这里开始从pb(即RawGraph)构建数据结构
-import { RawGraph, RawNode } from "./parser";
+import { RawGraph, RawNode } from "../stage1/raw-graph.tf.type";
 import {
   NodeDef,
   AbstractNode,
@@ -22,7 +22,7 @@ import {
   NodeType,
   NodeId,
   ROOT_SCOPE
-} from "../../../types/processed-graph";
+} from "./processed-graph";
 import { wrapTaskWithTimeLogger } from "../utils";
 
 const MODULE_EDGE_NUMBER_THRESHOLD = 20; // 判断module的门槛

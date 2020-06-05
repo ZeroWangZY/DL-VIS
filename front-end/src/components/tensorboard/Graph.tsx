@@ -4,7 +4,7 @@ import GraphScene from "./GraphScene";
 import { build as graphBuild, SlimGraph } from "../../common/tensorboard/graph";
 import { build as hierarchyBuild } from '../../common/tensorboard/hierarchy'
 import { build as renderBuild, RenderGraphInfo } from '../../common/tensorboard/render'
-import { useTfRawGraph } from "../../store/tf-raw-graph";
+import { useTfRawGraph } from "../../store/rawGraph.tf";
 
 const Graph: React.FC = () => {
   const tfRawGraph = useTfRawGraph()

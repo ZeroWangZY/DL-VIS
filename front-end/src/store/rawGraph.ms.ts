@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react'
-import { RawGraph } from '../common/graph-processing/tf-graph/parser'
+import { RawGraph } from '../common/graph-processing/stage1/raw-graph.ms.type'
 
 let listeners = []
-let tfRawGraph: RawGraph = null
+let msRawGraph: RawGraph = null
+
 // 广播变化, 让使用了该hook的组件重新渲染
 const broadcastGraphChange = () => {
   listeners.forEach(listener => {
-    listener(tfRawGraph)
+    listener(msRawGraph)
   });
 }
 
-export const setTfRawGraph = (newRawGraph: RawGraph) => {
-  tfRawGraph = newRawGraph
+export const setMsRawGraph = (newRawGraph: RawGraph) => {
+  msRawGraph = newRawGraph
   broadcastGraphChange()
 }
 
-export const useTfRawGraph = () => {
-  const [graph, newListener] = useState(tfRawGraph)
+export const useMsRawGraph = () => {
+  const [graph, newListener] = useState(msRawGraph)
 
   useEffect(() => {
     listeners.push(newListener)

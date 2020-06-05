@@ -1,4 +1,4 @@
-import { BaseNode, NodeType } from "../../types/processed-graph";
+import { BaseNode, NodeType } from "../graph-processing/stage2/processed-graph";
 import { spring } from "react-motion";
 import { AnyARecord } from "dns";
 

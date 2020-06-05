@@ -1,17 +1,6 @@
 import { wrapTaskWithTimeLogger } from "../utils";
 import { conditionalExpression } from "@babel/types";
-
-export interface RawNode {
-  name: string;
-  op: string;
-  attr: Record<string, any>[];
-  input: string[];
-}
-
-export interface RawGraph {
-  node: RawNode[];
-  versions: Record<string, any>;
-}
+import { RawGraph } from "./raw-graph.tf.type";
 
 const GRAPH_REPEATED_FIELDS: { [attrPath: string]: boolean } = {
   'library.function': true,

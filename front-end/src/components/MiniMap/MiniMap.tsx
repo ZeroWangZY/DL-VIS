@@ -116,28 +116,28 @@ const MiniMap: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     if (outputSVG === null) return;
-    const svgWidth = mainSvgSize.width;
-    const svgHeight = mainSvgSize.height;
-    const outputsvgWidth = d3.select(outputSVG).node().getBoundingClientRect().width / transform.k;
-    const outputsvgHeight = d3.select(outputSVG).node().getBoundingClientRect().height / transform.k; //未缩放之前的大小
-
-    if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth)
-      fitK = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
-    else
-      fitK = 1;
-
-    if (fitK === 1)
-      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-        .attr('width', minimapSize.width)
-        .attr("height", minimapSize.height)
-    else {
-      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-        .attr('width', minimapSize.width * fitK)
-        .attr("height", minimapSize.height * fitK)
-    }
 
     clearTimeout(iTime);
-    iTime = setTimeout(() => {
+    iTime = setTimeout(() => { // 用来保证仅在最后一次调用时延时画图
+      const svgWidth = mainSvgSize.width;
+      const svgHeight = mainSvgSize.height;
+      const outputsvgWidth = d3.select(outputSVG).node().getBoundingClientRect().width / transform.k;
+      const outputsvgHeight = d3.select(outputSVG).node().getBoundingClientRect().height / transform.k; //未缩放之前的大小
+
+      if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth)
+        fitK = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
+      else
+        fitK = 1;
+
+      if (fitK === 1)
+        d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+          .attr('width', minimapSize.width)
+          .attr("height", minimapSize.height)
+      else {
+        d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+          .attr('width', minimapSize.width * fitK)
+          .attr("height", minimapSize.height * fitK)
+      }
       outputSVGToDrawInCanvas = outputSVG.cloneNode(true);
       drawInCanvas(outputSVGToDrawInCanvas, fitK);
     }, 500);

@@ -216,8 +216,8 @@
 }
 .minimap-container {
   position: fixed;
-  bottom: 50px;
-  right: 50px;
+  bottom: 320px;
+  right: 30px;
 }
 
 .module-hole {

@@ -26,8 +26,3 @@ export interface RawGraph {
   outputs: Record<string, any>[];
   parameters: Record<string, any>[];
 }
-
-// export const fetchAndParseMsGraphData = (rawGraph: RawGraph): RawGraph => {
-//   console.log(rawGraph)
-//   return rawGraph
-// }

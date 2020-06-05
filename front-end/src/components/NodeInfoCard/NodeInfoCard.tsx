@@ -34,11 +34,12 @@ const NodeInfoCard: React.FC<{ selectedNodeName: string, leafAndChildrenNum: str
     const outputNodeName = props.outputNodeName;
     const nodeAttribute = props.nodeAttribute;
 
+    // console.log(selectedNodeName)
     const classes = useStyles();
 
     return (
       <div className={'info-card'}>
-        <Card className="info-card root"
+        <Card className={selectedNodeName === "" ? "info-card root" : "info-card root selected"}
           style={{
             top: 100,
             right: 30,

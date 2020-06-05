@@ -6,13 +6,14 @@ import {
   RawEdge,
   NodeId,
   GroupNode,
-} from "../../types/processed-graph";
+} from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import { TransitionMotion, spring } from "react-motion";
 import {
   useProcessedGraph,
-  broadcastGraphChange,
-} from "../../store/useProcessedGraph";
+  modifyProcessedGraph,
+  ProcessedGraphModificationType,
+} from "../../store/processedGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { on } from "cluster";
 import {
@@ -60,13 +61,9 @@ const ELKLayoutGraph: React.FC = () => {
     .y((d) => getY(d));
 
   const toggleExpanded = (id) => {
-    let node = graphForLayout.nodeMap[id];
-    if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
-      return;
-    }
-    node = node as GroupNode;
-    node.expanded = !node.expanded;
-    broadcastGraphChange();
+    modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
+      nodeId: id,
+    });
   };
 
   const draw = (layoutOptions: LayoutOptions = { networkSimplex: true }) => {
