@@ -101,12 +101,11 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
     if (node.type === NodeType.GROUP) {
       let splitName = GraphId.split("-")
+
+      // selectedNodeName  与     selectedNodeId 分别是：
+      // Default/hello/hi                  hi
+      //   cst1_Input2_3                   3
       setSelectedNodeName(splitName[splitName.length - 1]);
-      d3.select(".info-card.root").classed("selected", true);
-      if (selectedNodeId.length !== 0) { // 已有选中节点
-        d3.select("#" + selectedNodeId).select(".label-container").classed("focus", false);
-      }
-      d3.select("#" + GraphId).select(".label-container").classed("focus", true)
       setSelectedNodeId(GraphId)
 
       setLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
@@ -117,10 +116,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     if (node.type === NodeType.OPERTATION) {
       let splitName = GraphId.split("-")
       setSelectedNodeName(splitName[splitName.length - 1]);
-      if (selectedNodeId.length !== 0) { // 已有选中节点
-        d3.select("#" + selectedNodeId).select(".label-container").classed("focus", false);
-      }
-      d3.select("#" + GraphId).select(".label-container").classed("focus", true)
       setSelectedNodeId(GraphId);
 
       setLeafAndChildrenNum([0, 0]);
@@ -133,10 +128,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       //GraphId是 data_Input2_1 或者 cst1_Input2_1 格式
       let splitName = GraphId.split("_Input2_")
       setSelectedNodeName(splitName[0]);
-      if (selectedNodeId.length !== 0) { // 已有选中节点
-        d3.select("#" + selectedNodeId).select(".label-container").classed("focus", false);
-      }
-      d3.select("#" + GraphId).select(".label-container").classed("focus", true)
       setSelectedNodeId(GraphId);
 
       setLeafAndChildrenNum([0, 0]);
@@ -527,11 +518,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     node = d3.select(".nodes").selectAll(".node");
     node.classed("selected", false);
     node.classed("previouslySelected", false);
-    d3.select(".info-card.root").classed("selected", false);
-    if (selectedNodeId.length !== 0) { // 已有选中节点
-      d3.select("#" + selectedNodeId).select(".label-container").classed("focus", false);
-      setSelectedNodeId("")
-    }
+    setSelectedNodeName("");
+    setSelectedNodeId("");
   }
 
   // 按住shift后单击选择
@@ -942,7 +930,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     gBrushHolder = d3.select("#gBrushHolder");
     d3.select('body').on('keydown', keydown);
     d3.select('body').on('keyup', keyup);
-    brushMode = false; 
+    brushMode = false;
     gBrush = null;
     brush = d3.brush()
       .extent([[0, 0], [svgWidth, svgHeight]])
@@ -962,7 +950,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     }, 1000);
   }, [graphForLayout, isHiddenInterModuleEdges]);
 
-  const getLabelContainer = (nodeClass, width, height) => {
+  const getLabelContainer = (nodeId, nodeClass, width, height) => {
+    let focus = selectedNodeName !== "" && nodeId === selectedNodeId; 
     if (nodeClass.indexOf(`layertype-${LayerType.FC}`) > -1) {
       return (<FCLayerNode width={width} height={height} />);
     } else if (nodeClass.indexOf(`layertype-${LayerType.CONV}`) > -1) {
@@ -974,7 +963,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     } else {
       return (
         <g className="label">
-          <rect className='label-container'
+          <rect className={focus ? 'label-container focus' : "label-container"}
             width={width}
             height={height}
             transform={`translate(-${width / 2}, -${height / 2})`}
@@ -1020,7 +1009,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
                           transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                           onClick={() => selectMode ? handleNodeSelect(d.data.id) : showInfoCard(d.data.id)}
                           onDoubleClick={() => selectMode ? handleNodeSelect(d.data.id) : toggleExpanded(d.data.id)}>
-                          {getLabelContainer(d.data.class, d.style.rectWidth, d.style.rectHeight)}
+                          {getLabelContainer(d.data.id, d.data.class, d.style.rectWidth, d.style.rectHeight)}
                           <g className={`node-label`} transform={(d.data.class.indexOf('cluster') > -1) ? `translate(0,-${d.style.rectHeight / 2})` : null}>
                             {(d.data.type === NodeType.LAYER && d.data.expanded === false) && d.data.showLineChart && diagnosisMode ?
                               <g className="LineChartInNode" >
