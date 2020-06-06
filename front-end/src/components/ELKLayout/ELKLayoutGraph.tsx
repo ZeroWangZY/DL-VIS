@@ -14,6 +14,7 @@ import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
+import { useVisGraph } from "../../store/visGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { on } from "cluster";
 import {
@@ -41,6 +42,8 @@ function restoreFromOldEleMap(newEle) {
 }
 
 const ELKLayoutGraph: React.FC = () => {
+  const test = useVisGraph();
+  console.log(test);
   const graphForLayout = useProcessedGraph();
   const [nodeStyles, setNodeStyles] = useState([]);
   const [linkStyles, setLinkStyles] = useState([]);
@@ -67,7 +70,7 @@ const ELKLayoutGraph: React.FC = () => {
   };
 
   const draw = (layoutOptions: LayoutOptions = { networkSimplex: true }) => {
-    console.clear();
+    // console.clear();
     const { networkSimplex } = layoutOptions;
     // setNodeStyles([]);
     setLinkStyles([]);

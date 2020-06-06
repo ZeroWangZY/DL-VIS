@@ -7,7 +7,12 @@ import ProcessedGraphOptimizer from "../../common/graph-processing/stage2/proces
 import { useTfRawGraph } from "../../store/rawGraph.tf";
 import { buildGraph } from "../../common/graph-processing/stage2/build-graph.tf";
 import { produceVisGraph } from "../../common/graph-processing/stage3/produce-vis-graph";
+import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
+import { produceStyledGraph } from "../../common/graph-processing/stage5/produce-styled-graph";
 import { setVisGraph } from "../../store/visGraph";
+import { setLayoutGraph } from "../../store/layoutGraph";
+import { setStyledGraph } from "../../store/styledGraph";
+
 
 export default function useGraphPipeline() {
 
@@ -56,8 +61,21 @@ export default function useGraphPipeline() {
 
 
   // TODO: VisGraph --> LayoutGraph
+  useEffect(() => {
+    if (!visGraph) return;
+
+    const lGraph = produceLayoutGraph(processedGraph);
+    console.log(lGraph);
+    setLayoutGraph(lGraph);
+  }, [visGraph]);
 
   // TODO: LayoutGraph --> StyledGraph
+  useEffect(() => {
+    if (!layoutGraph) return;
 
+    const lGraph = produceStyledGraph(processedGraph);
+    console.log(lGraph);
+    setStyledGraph(lGraph);
+  }, [layoutGraph]);
 
 }
