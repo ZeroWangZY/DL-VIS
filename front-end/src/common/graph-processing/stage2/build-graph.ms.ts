@@ -26,16 +26,8 @@ import {
 const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
 // import { wrapTaskWithTimeLogger } from "../utils";
 
-function buildBasicNode(rNode: RawNode, rGraph: RawGraph, outputNodeName: Set<string>): OperationNode | DataNode {
+function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataNode {
   const displayedName = rNode.opType + rNode.name
-
-  if (outputNodeName.has(rNode.name)) {
-    return new DataNodeImp({
-      id: rNode.name,
-      dataType: DataType.OUTPUT,
-      opts: { displayedName },
-    });
-  }
 
   //DONE: Operation节点
   let attributes = [];
@@ -54,8 +46,6 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph, outputNodeName: Set<st
     opts: { displayedName },
   });
 }
-
-let inputInfo = new Set(); // 包含所有的input信息
 
 function buildModule(hGraph: ProcessedGraph): void {
   const nodeMap = hGraph.nodeMap;
@@ -96,7 +86,7 @@ function buildModule(hGraph: ProcessedGraph): void {
   }
 }
 
-function _buildGraph(rGraph: RawGraph): ProcessedGraph {
+function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
   const pGraph = new ProcessedGraphImp();
   const rNodes = rGraph.node;
 
@@ -107,14 +97,8 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   for (let constVal of rGraph.constVals)
     constValNodeName.add(constVal.key)
 
-  let outputNodeName: Set<string> = new Set();
-  for (let outputsNode of rGraph.outputs) {
-    outputNodeName.add(outputsNode.name as string);
-  }
-
-
   for (let rNode of rNodes) { // 遍历每个node
-    let pNode = buildBasicNode(rNode, rGraph, outputNodeName);
+    let pNode = buildBasicNode(rNode, rGraph);
     pGraph.nodeMap[pNode.id] = pNode;
 
     // 将scope中的-全部换成_, 防止在DagreLayout中冲突
@@ -157,43 +141,20 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
     }
   }
 
-  // //input节点
-  // for (let parameter of rGraph.parameters) {
-  //   const displayedName = parameter.name
-  //   const pNode = new DataNodeImp({
-  //     id: parameter.name,
-  //     dataType: DataType.INPUT,
-  //     opts: { displayedName },
-  //   });
-  //   pGraph.nodeMap[pNode.id] = pNode;
-  // }
-
-  // //variable节点
-  // for (let constVal of rGraph.constVals) {
-  //   const displayedName = constVal.key
-  //   const pNode = new DataNodeImp({
-  //     id: constVal.key,
-  //     dataType: DataType.VARIABLE,
-  //     opts: { displayedName },
-  //   })
-  //   pGraph.nodeMap[pNode.id] = pNode;
-  // }
-
   let inputNodeName = [...Array.from(parameterNodeName) as string[], ...Array.from(constValNodeName) as string[]];
-  buildHierarchy(rGraph, pGraph, inputNodeName, outputNodeName) // 构建层次
+  buildHierarchy(rGraph, pGraph, inputNodeName) // 构建层次
   buildModule(pGraph)
 
-
-  processGroupNode(pGraph);  // 建立层次结束后，重新处理GroupNode，增加属性
-  processOperationNode(rGraph, pGraph, outputNodeName);  // 建立层次结束后，重新处理OperationNode，增加属性
-  processDataNode(rGraph, pGraph, parameterNodeName, constValNodeName);
   // console.log(rGraph);
   // console.log(pGraph);
+  processGroupNode(pGraph, inputInfo);  // 建立层次结束后，重新处理GroupNode，增加属性
+  processOperationNode(rGraph, pGraph);  // 建立层次结束后，重新处理OperationNode，增加属性
+  processDataNode(rGraph, pGraph, parameterNodeName, constValNodeName);
+
   return pGraph;
 }
 
 // 对所有的DataNode中的 dataType为PARAMETER和CONST的节点，进行处理
-// TODO: DataNode中 dataType 为output的节点 稍后 处理
 function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNodeName: Set<string>, constValNodeName: Set<string>) {
   const nodeMap = pGraph.nodeMap;
   const parameters = rGraph.parameters;//数组每一维的结构： {name: "xxx", type: {dataType: "DT_TENSOR", tensorType: "xxxxxx"}};
@@ -225,12 +186,11 @@ function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNode
   }
 }
 
-function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph, outputNodeName: Set<string>) {
+function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph) {
   const nodeMap = pGraph.nodeMap;
 
   for (let node of rGraph.node) { // 对于所有的operationNode
     let nodeName = node.name;
-    if (outputNodeName.has(nodeName)) continue;
     if (node.input === undefined) continue;
 
     for (let input of node.input) {
@@ -257,7 +217,7 @@ function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph, outputNo
   }
 }
 
-function processGroupNode(pGraph: ProcessedGraph) {
+function processGroupNode(pGraph: ProcessedGraph, inputInfo: Set<string>) {
   const nodeMap = pGraph.nodeMap;
   let nodeIds = Object.keys(nodeMap);
   let leafOperationNodeCount = 0;
@@ -286,8 +246,9 @@ function processGroupNode(pGraph: ProcessedGraph) {
     (node as GroupNode).outputNode = new Set();
     inputInfo.forEach((info) => {
       let [source, target] = (info as string).split("_Input2_");
-      if (childOperationNode.has(source) && !childOperationNode.has(target)) // 则为外部输入节点
+      if (childOperationNode.has(source) && !childOperationNode.has(target)) { // 则为外部输入节点
         (node as GroupNode).outputNode.add(nodeMap[target].displayedName);
+      }
       if (childOperationNode.has(target) && !childOperationNode.has(source)) { // 则为外部输出节点
         (node as GroupNode).inputNode.add(nodeMap[source].displayedName);
       }
@@ -340,12 +301,12 @@ function buildAbstractNode(name: string): AbstractNode {
   });
 }
 
-export function buildHierarchy(rGraph: RawGraph, pGraph: ProcessedGraph, inputNodeName: string[], outputNodeName: Set<string>): ProcessedGraph {
+export function buildHierarchy(rGraph: RawGraph, pGraph: ProcessedGraph, inputNodeName: string[]): ProcessedGraph {
   const nodeMap = pGraph.nodeMap;
   const nodes = rGraph.node;
 
   for (let node of nodes) { // 根据scope建立层次
-    if (outputNodeName.has(node.name)) continue; // output节点在循环外面单独处理
+    // if (outputNodeName.has(node.name)) continue; // output节点在循环外面单独处理
 
     let prevNode: AbstractNode = pGraph.rootNode;
     const parentScope = genParentScope(node.scope);
@@ -383,20 +344,6 @@ export function buildHierarchy(rGraph: RawGraph, pGraph: ProcessedGraph, inputNo
     }
   }
 
-  // TODO: output节点也有parameters和const value
-  const outputs = rGraph.outputs; // 单独处理输出节点
-  for (let outputsNode of outputs) {  // output节点
-    let name = outputsNode.name
-    if (nodeMap[name] instanceof DataNodeImp) {
-      let prevNode: AbstractNode = pGraph.rootNode;
-      const curNode = nodeMap[name]
-      nodeMap[name] = curNode;
-      prevNode.children.add(name);
-      curNode.parent = prevNode.id;
-      prevNode = curNode as AbstractNode;
-    }
-  }
-
   return pGraph
 }
 
@@ -418,8 +365,10 @@ function preProcessing(rGraph: RawGraph) {
 }
 
 export function buildMsGraph(rGraph: RawGraph): ProcessedGraph {
-  preProcessing(rGraph)
-  let pGraph = _buildGraph(rGraph)
+  preProcessing(rGraph);
+
+  let inputInfo: Set<string> = new Set(); // 包含所有的input信息
+  let pGraph = _buildGraph(rGraph, inputInfo);
 
   return pGraph
   // return wrapTaskWithTimeLogger(_buildMsGraph)(rGraph);

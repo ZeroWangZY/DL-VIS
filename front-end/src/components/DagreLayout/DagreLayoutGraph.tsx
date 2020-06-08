@@ -94,7 +94,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     let node = nodeMap[id];
 
     // TODO: 目前只考虑ms图
-    if (node.type === NodeType.LAYER || (node.type === NodeType.DATA && (node as DataNodeImp).dataType === DataType.OUTPUT)) {
+    if (node.type === NodeType.LAYER) {
       return;
     }
 

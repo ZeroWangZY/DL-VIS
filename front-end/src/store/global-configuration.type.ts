@@ -1,5 +1,6 @@
 export interface GlobalConfigurations {
   diagnosisMode: boolean;
+  conceptualGraphMode: boolean;
   preprocessingPlugins: { // 图处理里时应用哪些处理方式
     pruneByOutput: boolean,
     replaceVariable: boolean,
@@ -23,6 +24,7 @@ export enum LayoutType {
 
 export enum GlobalConfigurationsModificationType {
   TOGGLE_DIAGNOSIS_MODE,
+  TOGGLE_CONCEPTUALGRAPH_MODE,
   TOGGLE_PREPROCESSING_PLUGIN,
   SET_CURRENT_LAYOUT,
   TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES,

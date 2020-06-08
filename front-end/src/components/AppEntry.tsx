@@ -24,6 +24,7 @@ import NodeSelector from "./preference/NodeSelector";
 import TensorBoardGraph from "./tensorboard/Graph";
 import GraphSelector from "./preference/GraphSelector";
 import Diagnosis from "./preference/Diagnosis";
+import ConceptualGraphMode from "./preference/ConceptualGraphMode"
 import PreprocessingPluginsSelector from "./preference/PreprocessingPluginsSelector";
 import LayoutSelector from "./preference/LayoutSelector";
 import { useGlobalConfigurations } from "../store/global-configuration";
@@ -160,6 +161,7 @@ const AppEntry: React.FC = () => {
           <NodeSelector />
           <Divider />
           <Diagnosis />
+          <ConceptualGraphMode />
         </Drawer>
         <main
           className={clsx(classes.content, {

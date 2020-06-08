@@ -4,6 +4,7 @@ import { GlobalConfigurations, LayoutType, GlobalConfigurationsModificationType 
 let listeners = []
 let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: true,
+  conceptualGraphMode: false,
   preprocessingPlugins: {
     pruneByOutput: false,
     replaceVariable: false,
@@ -30,6 +31,14 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
         {},
         globalConfigurations,
         { diagnosisMode: !globalConfigurations.diagnosisMode }
+      )
+      break;
+
+    case GlobalConfigurationsModificationType.TOGGLE_CONCEPTUALGRAPH_MODE:
+      globalConfigurations = Object.assign(
+        {},
+        globalConfigurations,
+        { conceptualGraphMode: !globalConfigurations.conceptualGraphMode }
       )
       break;
 
