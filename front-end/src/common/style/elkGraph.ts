@@ -17,6 +17,7 @@ interface nodeIO {
   source: Array<string>;
   target: Array<string>;
 }
+
 //每个key为nodeID,value表示节点的soource数组和target数组
 export interface NodeLinkMap {
   [propName: string]: nodeIO;

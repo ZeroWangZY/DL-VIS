@@ -9,9 +9,9 @@ import { buildGraph } from "../../common/graph-processing/stage2/build-graph.tf"
 import { produceVisGraph } from "../../common/graph-processing/stage3/produce-vis-graph";
 import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
 import { produceStyledGraph } from "../../common/graph-processing/stage5/produce-styled-graph";
-import { setVisGraph } from "../../store/visGraph";
-import { setLayoutGraph } from "../../store/layoutGraph";
-import { setStyledGraph } from "../../store/styledGraph";
+import { setVisGraph, useVisGraph } from "../../store/visGraph";
+import { setLayoutGraph, useLayoutGraph } from "../../store/layoutGraph";
+import { setStyledGraph, useStyledGraph } from "../../store/styledGraph";
 
 
 export default function useGraphPipeline() {
@@ -20,6 +20,9 @@ export default function useGraphPipeline() {
   const msRawGraph = useMsRawGraph()
   const tfRawGraph = useTfRawGraph()
   const processedGraph = useProcessedGraph()
+  const visGraph = useVisGraph()
+  const layoutGraph = useLayoutGraph()
+  const styledGraph = useStyledGraph()
 
   // MsRawGraph --> ProcessedGraph
   useEffect(() => {
@@ -50,6 +53,7 @@ export default function useGraphPipeline() {
     
   }, [tfRawGraph, shouldOptimizeProcessedGraph]);
 
+  // ProcessedGraph --> VisGraph
   useEffect(() => {
     if (!processedGraph) return
 
@@ -59,23 +63,25 @@ export default function useGraphPipeline() {
     
   }, [processedGraph]);
 
-
-  // TODO: VisGraph --> LayoutGraph
+  // VisGraph --> layoutGraph
   useEffect(() => {
     if (!visGraph) return;
 
-    const lGraph = produceLayoutGraph(processedGraph);
-    console.log(lGraph);
-    setLayoutGraph(lGraph);
+    const lGraph = produceLayoutGraph(visGraph);
+    lGraph.then(result=>{
+      console.log(result);
+      setLayoutGraph(result);
+    })
+
   }, [visGraph]);
 
-  // TODO: LayoutGraph --> StyledGraph
+  // layoutGraph --> StyledGraph
   useEffect(() => {
     if (!layoutGraph) return;
 
-    const lGraph = produceStyledGraph(processedGraph);
-    console.log(lGraph);
-    setStyledGraph(lGraph);
+    const sGraph = produceStyledGraph(layoutGraph);
+    console.log(sGraph);
+    setStyledGraph(sGraph);
   }, [layoutGraph]);
 
 }
