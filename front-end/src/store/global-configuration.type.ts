@@ -7,6 +7,7 @@ export interface GlobalConfigurations {
     renameVariable: boolean
   },
   isHiddenInterModuleEdges: boolean;
+  shouldMergeEdge: boolean;
   shouldOptimizeProcessedGraph: boolean;
   currentStep: number;
   currentLayout: LayoutType
@@ -25,6 +26,7 @@ export enum GlobalConfigurationsModificationType {
   TOGGLE_PREPROCESSING_PLUGIN,
   SET_CURRENT_LAYOUT,
   TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES,
+  TOGGLE_SHOULD_MERGE_EDGE,
   TOGGLE_PROCESSED_GRAPH_OPTIMIZER,
   SET_CURRENT_SEPT
 }

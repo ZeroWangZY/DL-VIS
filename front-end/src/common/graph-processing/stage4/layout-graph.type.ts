@@ -1,7 +1,8 @@
 import { ElkNode, ElkPort, ElkEdge } from "elkjs/lib/elk.bundled.js";
 
 export interface LayoutOptions {
-  networkSimplex: boolean;
+  networkSimplex?: boolean;
+  mergeEdge?: boolean;
 }
 type LayoutGraph = void | ElkNode
 export { LayoutGraph };

@@ -12,7 +12,7 @@ let newEleMap = {};
 
 export async function produceLayoutGraph(
   visGraph: VisGraph,
-  layoutOptions: LayoutOptions = { networkSimplex: true }
+  layoutOptions: LayoutOptions = { networkSimplex: true, mergeEdge: false }
 ): Promise<void | ElkNode> {
   const { nodeMap, visNodes, visEdges } = visGraph;
 
@@ -158,7 +158,7 @@ async function generateLayout(children, edges, layoutOptions: LayoutOptions) {
             : "INTERACTIVE",
           "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
           // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
-          // "org.eclipse.elk.layered.mergeEdges": 'true',
+          "org.eclipse.elk.layered.mergeEdges": layoutOptions.mergeEdge.toString(),
           "org.eclipse.elk.layered.crossingMinimization.strategy":
             "LAYER_SWEEP",
           // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",

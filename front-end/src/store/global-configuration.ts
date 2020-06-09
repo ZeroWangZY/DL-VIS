@@ -12,6 +12,7 @@ let globalConfigurations: GlobalConfigurations = {
   },
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
+  shouldMergeEdge: false,
   currentLayout: LayoutType.ELK_FOR_TF,
   currentStep: null
 };
@@ -58,12 +59,20 @@ export const modifyGlobalConfigurations = (operation: GlobalConfigurationsModifi
         { shouldOptimizeProcessedGraph: !globalConfigurations.shouldOptimizeProcessedGraph }
       )
       break;
+    case GlobalConfigurationsModificationType.TOGGLE_SHOULD_MERGE_EDGE:
+      globalConfigurations = Object.assign(
+        {},
+        globalConfigurations,
+        { shouldMergeEdge: !globalConfigurations.shouldMergeEdge }
+      )
+      break;
     case GlobalConfigurationsModificationType.SET_CURRENT_SEPT:
-    globalConfigurations = Object.assign(
-      {},
-      globalConfigurations,
-      { currentStep: payload }
-    )
+      globalConfigurations = Object.assign(
+        {},
+        globalConfigurations,
+        { currentStep: payload }
+      )
+      break;
     default:
       break;
   }
