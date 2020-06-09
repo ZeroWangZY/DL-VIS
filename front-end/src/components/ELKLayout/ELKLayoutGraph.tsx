@@ -1,47 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./ELKLayoutGraph.css";
-import {
-  NodeType,
-  ProcessedGraph,
-  RawEdge,
-  NodeId,
-  GroupNode,
-} from "../../common/graph-processing/stage2/processed-graph";
+import { NodeType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import { TransitionMotion, spring } from "react-motion";
 import {
-  useProcessedGraph,
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
-import { useVisGraph } from "../../store/visGraph";
 import { useLayoutGraph } from "../../store/layoutGraph";
-import { useStyledGraph } from "../../store/styledGraph"
+import { useStyledGraph } from "../../store/styledGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
-import { on } from "cluster";
-import {
-  NodeLinkMap,
-  LayoutOptions,
-  generateNode,
-  generateNodeStyles,
-  generateEdgeStyles,
-} from "../../common/style/elkGraph";
 
 window["d3"] = d3;
 window["ELK"] = ELK;
-let oldEleMap = {};
-let newEleMap = {};
-
-const portMode = false;
-const maxPort = 5;
-function restoreFromOldEleMap(newEle) {
-  let oldEle = oldEleMap[newEle.id];
-  if (oldEle) {
-    let { x, y, $H, sections } = oldEle;
-    newEle = Object.assign(newEle, { x, y, $H });
-  }
-  newEleMap[newEle.id] = newEle;
-}
 
 const ELKLayoutGraph: React.FC = () => {
   const layoutGraph = useLayoutGraph();
@@ -50,7 +21,7 @@ const ELKLayoutGraph: React.FC = () => {
   const svgRef = useRef();
   const outputRef = useRef();
   const elkNodeMap = [];
-  
+
   //for drag usage
   const generateElkNodeMap = (elkNodeList, elkNodeMap) => {
     elkNodeList.forEach((node) => {
@@ -64,8 +35,8 @@ const ELKLayoutGraph: React.FC = () => {
     });
   };
 
-  const lGraph = layoutGraph as any
-  if (lGraph && 'children' in lGraph) {
+  const lGraph = layoutGraph as any;
+  if (lGraph && "children" in lGraph) {
     generateElkNodeMap(lGraph.children, elkNodeMap);
   }
 
@@ -85,24 +56,6 @@ const ELKLayoutGraph: React.FC = () => {
     modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
       nodeId: id,
     });
-  };
-
-  const textSize = (text: string, fontSize = "10px", fontFamily = "Arial") => {
-    //过河拆桥法计算字符串的显示长度
-    let span = document.createElement("span");
-    span.style.visibility = "hidden";
-    // span.style.fontSize = fontSize;
-    // span.style.fontFamily = fontFamily;
-    span.style.display = "inline-block";
-    document.body.appendChild(span);
-    if (typeof span.textContent != "undefined") {
-      span.textContent = text;
-    } else {
-      span.innerText = text;
-    }
-    let width = parseFloat(window.getComputedStyle(span).width);
-    document.body.removeChild(span);
-    return width;
   };
 
   useEffect(() => {
@@ -196,15 +149,7 @@ const ELKLayoutGraph: React.FC = () => {
                   if (d.data.class === "dummy") {
                     return;
                   }
-                  const textWidth =
-                    textSize(
-                      d.data.label +
-                        (!d.data.expand &&
-                        (d.data.type === NodeType.GROUP ||
-                          d.data.type === NodeType.LAYER)
-                          ? "+"
-                          : "")
-                    ) + 2;
+
                   //考虑到d3.select的语法限制，需要将id中的'/'替换为'-'
                   const selectContent = `.edgePaths .id_${d.data.id
                     .split("/")
@@ -264,9 +209,9 @@ const ELKLayoutGraph: React.FC = () => {
                         {d.data.expand ? (
                           <rect
                             className="behind-text"
-                            width={textWidth}
+                            width={d.data.textWidth}
                             height={10}
-                            transform={`translate(-${textWidth / 2}, -${
+                            transform={`translate(-${d.data.textWidth / 2}, -${
                               d.style.rectHeight / 2 + 5
                             })`}
                             stroke="none"

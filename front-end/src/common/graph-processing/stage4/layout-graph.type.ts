@@ -1,9 +1,5 @@
 import { ElkNode, ElkPort, ElkEdge } from "elkjs/lib/elk.bundled.js";
 
-import { NodeDef, GroupNode, NodeId, NodeMap } from "../stage2/processed-graph";
-
-import { VisGraph, VisEdge, VisGraphImp } from "../stage3/vis-graph.type";
-
 export interface LayoutOptions {
   networkSimplex: boolean;
 }

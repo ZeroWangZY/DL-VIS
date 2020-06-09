@@ -6,6 +6,7 @@ import {
   StyledGraphImp,
 } from "../stage5/styled-graph.type";
 import { spring } from "react-motion";
+import { NodeType } from "../stage2/processed-graph";
 
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
@@ -36,16 +37,16 @@ export const generateEdgeStyles = (
           bendPoints === undefined
             ? []
             : bendPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
+              x: ofs.x + point.x,
+              y: ofs.y + point.y,
+            })),
         junctionPoints:
           junctionPoints === undefined
             ? []
             : junctionPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
+              x: ofs.x + point.x,
+              y: ofs.y + point.y,
+            })),
       },
       style: {
         startPointX: spring(ofs.x + startPoint.x),
@@ -69,21 +70,29 @@ export const generateNodeStyles = (
       key: node.id,
       data: node.hasOwnProperty("label")
         ? {
-            class: node.class,
-            type: node.type,
-            id: node.id,
-            parent: node.parent,
-            label: node.label,
-            expand: node.expand,
-          }
+          class: node.class,
+          type: node.type,
+          id: node.id,
+          parent: node.parent,
+          label: node.label,
+          expand: node.expand,
+          textWidth: textSize(
+            node.label +
+            (!node.expand &&
+              (node.type === NodeType.GROUP ||
+                node.type === NodeType.LAYER)
+              ? "+"
+              : "")
+          ) + 2
+        }
         : {
-            class: "dummy",
-            type: "dummy",
-            id: node.id,
-            parent: node.parent,
-            label: node.id,
-            expand: node.expand,
-          },
+          class: "dummy",
+          type: "dummy",
+          id: node.id,
+          parent: node.parent,
+          label: node.id,
+          expand: node.expand,
+        },
       style: {
         gNodeTransX: spring(ofs.x + node.x + node.width / 2),
         gNodeTransY: spring(ofs.y + node.y + node.height / 2),
@@ -105,4 +114,22 @@ export const generateNodeStyles = (
       });
     }
   }
+};
+
+const textSize = (text: string, fontSize = "10px", fontFamily = "Arial") => {
+  //过河拆桥法计算字符串的显示长度
+  let span = document.createElement("span");
+  span.style.visibility = "hidden";
+  // span.style.fontSize = fontSize;
+  // span.style.fontFamily = fontFamily;
+  span.style.display = "inline-block";
+  document.body.appendChild(span);
+  if (typeof span.textContent != "undefined") {
+    span.textContent = text;
+  } else {
+    span.innerText = text;
+  }
+  let width = parseFloat(window.getComputedStyle(span).width);
+  document.body.removeChild(span);
+  return width;
 };
