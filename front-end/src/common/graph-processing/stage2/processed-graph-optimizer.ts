@@ -1,4 +1,4 @@
-import { ProcessedGraph, GroupNode } from "./processed-graph";
+import { ProcessedGraph, GroupNode, NodeType, OperationNode, LayerNodeImp, LayerType } from "./processed-graph";
 
 const aggreOptimization = (hGraph: ProcessedGraph): void => {//更改无意义边跨越节点的命名空间以简化视图
   //寻找
@@ -76,12 +76,48 @@ const aggreOptimization = (hGraph: ProcessedGraph): void => {//更改无意义�
   });
 }
 
+const layerRecognition = (hGraph: ProcessedGraph): void => {
+  const { nodeMap } = hGraph
+  for (let node of Object.values(nodeMap).filter(node => node.type === NodeType.GROUP)) {
+    node = node as GroupNode
+    if (node.leafOperationNodeCount <= 6) {
+      for (let childNodeId of node.children) {
+        const childNode = nodeMap[childNodeId]
+        if (childNode.type === NodeType.OPERTATION) {
+          if ((childNode as OperationNode).operationType === "Conv2D") {
+            const newNode = new LayerNodeImp({
+              id: node.id, layerType: LayerType.CONV,
+              children: node.children, parent: node.parent,
+              opts: { displayedName: node.displayedName },
+              isModule: node.isModule, parentModule: node.parentModule
+            })
+            nodeMap[node.id] = newNode
+            break
+          }
+          else if ((childNode as OperationNode).operationType === "MatMul") {
+            const newNode = new LayerNodeImp({
+              id: node.id, layerType: LayerType.FC,
+              children: node.children, parent: node.parent,
+              opts: { displayedName: node.displayedName },
+              isModule: node.isModule, parentModule: node.parentModule
+            })
+            nodeMap[node.id] = newNode
+            break
+          }
+        }
+      }
+    }
+  }
+
+}
+
 export default class ProcessedGraphOptimizer {
   processedGraphOptimizers = [];
 
   constructor() {
     this.processedGraphOptimizers = [
-      aggreOptimization
+      aggreOptimization,
+      layerRecognition
     ];
   }
 

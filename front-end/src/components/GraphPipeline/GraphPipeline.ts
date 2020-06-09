@@ -63,7 +63,6 @@ export default function useGraphPipeline() {
     if (!processedGraph) return
 
     const vGraph = produceVisGraph(processedGraph)
-    console.log(vGraph)
     setVisGraph(vGraph)
 
   }, [processedGraph]);
@@ -74,7 +73,6 @@ export default function useGraphPipeline() {
 
     const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, mergeEdge: shouldMergeEdge });
     lGraph.then(result => {
-      console.log(result);
       setLayoutGraph(result);
     })
 
@@ -85,7 +83,6 @@ export default function useGraphPipeline() {
     if (!layoutGraph) return;
 
     const sGraph = produceStyledGraph(layoutGraph);
-    console.log(sGraph);
     setStyledGraph(sGraph);
   }, [layoutGraph]);
 

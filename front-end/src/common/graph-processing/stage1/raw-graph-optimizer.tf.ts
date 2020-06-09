@@ -299,7 +299,6 @@ export class RawGraphOptimizer {
   
   constructor(preprocessingPlugins) {
     // TODO
-    console.log("preprocing plugisns", preprocessingPlugins)
     if(preprocessingPlugins === null) {
       this.nodeMiddlewares = [
         pruneByDefaultPatterns,

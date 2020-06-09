@@ -347,7 +347,6 @@ function buildModule(hGraph: ProcessedGraph): void {
       }
     }
   }
-  console.log(hGraph.moduleEdges, hGraph.modules)
 }
 
 
