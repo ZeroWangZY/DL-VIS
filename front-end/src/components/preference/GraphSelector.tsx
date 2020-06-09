@@ -7,7 +7,7 @@ import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import { fetchAndParseGraphData } from "../../common/graph-processing/stage1/parser.tf";
 import { RawGraphOptimizer } from "../../common/graph-processing/stage1/raw-graph-optimizer.tf";
-import msRawGraphOptimizer from "../../common/graph-processing/stage1/raw-graph-optimizer.ms";
+import MsRawGraphOptimizer from "../../common/graph-processing/stage1/raw-graph-optimizer.ms";
 import { useGlobalConfigurations } from "../../store/global-configuration";
 import { LayoutType } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/rawGraph.tf";
@@ -39,7 +39,11 @@ export default function GraphSelector() {
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   useGraphPipeline();
 
-  const { preprocessingPlugins, currentLayout, conceptualGraphMode } = useGlobalConfigurations();
+  const {
+    preprocessingPlugins,
+    currentLayout,
+    conceptualGraphMode,
+  } = useGlobalConfigurations();
 
   const isTfGraph =
     currentLayout === LayoutType.DAGRE_FOR_TF ||
@@ -80,7 +84,7 @@ export default function GraphSelector() {
       (RawData) => {
         let parsedGraph = RawData.data.data; // 处理
         if (conceptualGraphMode) {
-          const msGraphOptimizer = new msRawGraphOptimizer();
+          const msGraphOptimizer = new MsRawGraphOptimizer();
           msGraphOptimizer.optimize(parsedGraph);
         }
 

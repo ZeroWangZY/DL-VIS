@@ -1,13 +1,15 @@
-import { RawNode, RawGraph } from "./raw-graph.ms.type"
+import { RawNode, RawGraph } from "./raw-graph.ms.type";
 
 const conceptualGraphOptimization = (newRawGraph: RawGraph): void => {
   // mobilenetv2 只保留输出为 RawNode.name === "211"节点 的子图
   // alexnets 只保留输出为RawNode.name === "23"节点 的子图
-  if (newRawGraph.name === "455_454_403_352_construct") // alexnets
+  if (newRawGraph.name === "455_454_403_352_construct")
+    // alexnets
     pruneByOutput(newRawGraph, "23");
-  else if (newRawGraph.name === "7217_7215_7213_5169_2585_1_construct") //mobilenetv2
+  else if (newRawGraph.name === "7217_7215_7213_5169_2585_1_construct")
+    //mobilenetv2
     pruneByOutput(newRawGraph, "211");
-}
+};
 
 const pruneByOutput = (newRawGraph: RawGraph, outputNodeName: string) => {
   let NameIndexMap: Map<string, number> = new Map(); // key:节点name  value: 在RawGraph.node数组中的下标
@@ -17,16 +19,26 @@ const pruneByOutput = (newRawGraph: RawGraph, outputNodeName: string) => {
   }
 
   let indexOfNodesToBeKept = [];
-  findIndexOfNodesToBeKept(nodes, indexOfNodesToBeKept, NameIndexMap, outputNodeName);
+  findIndexOfNodesToBeKept(
+    nodes,
+    indexOfNodesToBeKept,
+    NameIndexMap,
+    outputNodeName
+  );
 
   let newNodes: RawNode[] = [];
   for (let idx of indexOfNodesToBeKept) {
     newNodes.push(nodes[idx]);
   }
   newRawGraph.node = newNodes;
-}
+};
 
-const findIndexOfNodesToBeKept = (nodes: RawNode[], indexOfNodesToBeKept: number[], NameIndexMap: Map<string, number>, outputNodeName: string) => {
+const findIndexOfNodesToBeKept = (
+  nodes: RawNode[],
+  indexOfNodesToBeKept: number[],
+  NameIndexMap: Map<string, number>,
+  outputNodeName: string
+) => {
   // nodes[NameIndexMap]
   let nodeIndex = NameIndexMap.get(outputNodeName);
   indexOfNodesToBeKept.push(nodeIndex);
@@ -38,52 +50,59 @@ const findIndexOfNodesToBeKept = (nodes: RawNode[], indexOfNodesToBeKept: number
   for (let input of inputs) {
     let inputNodeName = input.name;
     if (NameIndexMap.has(inputNodeName)) {
-      findIndexOfNodesToBeKept(nodes, indexOfNodesToBeKept, NameIndexMap, inputNodeName);
+      findIndexOfNodesToBeKept(
+        nodes,
+        indexOfNodesToBeKept,
+        NameIndexMap,
+        inputNodeName
+      );
       NameIndexMap.delete(inputNodeName); // 防止重复
     }
   }
-}
+};
 
 // 发现ms图中有大量tuple_getitem算子，且意义不大，此方法用于去除这些算子
 function pruneTupleGetItem(rawGraph: RawGraph): void {
-  const targetsMap: { [source: string]: RawNode[] } = _buildTargetsMap(rawGraph)
-  const { node } = rawGraph
+  const targetsMap: { [source: string]: RawNode[] } = _buildTargetsMap(
+    rawGraph
+  );
+  const { node } = rawGraph;
   for (let i = 0; i < node.length; i++) {
     if (node[i].opType === "tuple_getitem") {
       for (const target of targetsMap[node[i].name]) {
         // 删除tuple_getitem算子的target节点关于tuple_getitem的input
         for (let j = 0; j < target.input.length; j++) {
-          const inputOfTarget = target.input[j]
+          const inputOfTarget = target.input[j];
           if (inputOfTarget.name === node[i].name) {
-            target.input.splice(j, 1)
-            j--
+            target.input.splice(j, 1);
+            j--;
           }
         }
         // 在tuple_getitem算子的target节点中增加tuple_getitem算子input
         for (const input of node[i].input) {
-          target.input.push(input)
+          target.input.push(input);
         }
       }
-      node.splice(i, 1)
-      i--
+      node.splice(i, 1);
+      i--;
     }
   }
 }
 
 function _buildTargetsMap(rawGraph: RawGraph): { [id: string]: any } {
-  const resDict: { [source: string]: RawNode[] } = {}
-  const { node } = rawGraph
+  const resDict: { [source: string]: RawNode[] } = {};
+  const { node } = rawGraph;
   for (const n of node) {
-    if (!n.input) continue
+    if (!n.input) continue;
     for (const source of n.input) {
       if (resDict[source.name]) {
-        resDict[source.name].push(n)
+        resDict[source.name].push(n);
       } else {
-        resDict[source.name] = [n]
+        resDict[source.name] = [n];
       }
     }
   }
-  return resDict
+  return resDict;
 }
 
 export default class msRawGraphOptimizer {
