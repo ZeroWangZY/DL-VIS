@@ -2,7 +2,13 @@ import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 
 import { BaseNode, NodeType } from "../stage2/processed-graph";
 import { VisGraph } from "../stage3/vis-graph.type";
-import { LayoutOptions } from "./layout-graph.type";
+import {
+  ElkNodeMap,
+  LayoutNode,
+  LayoutOptions,
+  LayoutGraph,
+  LayoutGraphImp,
+} from "./layout-graph.type";
 
 //Todo: move to store
 const portMode = false;
@@ -12,8 +18,8 @@ let newEleMap = {};
 
 export async function produceLayoutGraph(
   visGraph: VisGraph,
-  layoutOptions: LayoutOptions = { networkSimplex: true, mergeEdge: false }
-): Promise<void | ElkNode> {
+  layoutOptions: LayoutOptions = { networkSimplex: true }
+): Promise<LayoutGraph> {
   const { nodeMap, visNodes, visEdges } = visGraph;
 
   //group存储每个节点的子节点（可见）
@@ -120,59 +126,62 @@ export async function produceLayoutGraph(
   );
 
   //将node数组建立索引，加速drag的查询
-  let newElkNodeMap = {};
+  let newElkNodeMap: ElkNodeMap = {};
   generateElkNodeMap(newNodes, newElkNodeMap);
 
   oldEleMap = newEleMap;
   newEleMap = {};
-  // elk.knownLayoutOptions().then((ret) => {
-  //   console.log("knownLayoutOptions: ", ret);
-  // });
-  // elk.knownLayoutCategories().then((ret) => {
-  //   console.log("knownLayoutCategories: ", ret);
-  // });
-  // elk.knownLayoutAlgorithms().then((ret) => {
-  //   console.log("knownLayoutAlgorithms: ", ret);
-  // });
 
-  return generateLayout(newNodes, newLinks, layoutOptions);
+  return generateLayout(newNodes, newLinks, newElkNodeMap, layoutOptions);
 }
 
-async function generateLayout(children, edges, layoutOptions: LayoutOptions) {
-  const { networkSimplex } = layoutOptions;
+async function generateLayout(
+  children,
+  edges,
+  elkNodeMap,
+  layoutOptions: LayoutOptions
+): Promise<LayoutGraph> {
+  const { networkSimplex, mergeEdge } = layoutOptions;
   const elk = new ELK({ workerUrl: "./elk-worker.min.js" });
-  return elk
-    .layout(
-      {
-        id: "root",
-        children: children,
-        edges: edges,
-      }, //input_graph
-      {
-        // logging: true,
-        // measureExecutionTime: true,
-        layoutOptions: {
-          algorithm: "layered",
-          "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
-            ? "NETWORK_SIMPLEX"
-            : "INTERACTIVE",
-          "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
-          // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
-          "org.eclipse.elk.layered.mergeEdges": layoutOptions.mergeEdge.toString(),
-          "org.eclipse.elk.layered.crossingMinimization.strategy":
-            "LAYER_SWEEP",
-          // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
-          "org.eclipse.elk.interactive": "true",
-          "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
-
-          // "org.eclipse.elk.edgeRouting": "SPLINES"
-        },
-      }
-    )
-    .catch(console.error);
+  let elkLayout: Promise<ElkNode> = elk.layout(
+    {
+      id: "root",
+      children: children,
+      edges: edges,
+    }, //input_graph
+    {
+      // logging: true,
+      // measureExecutionTime: true,
+      layoutOptions: {
+        algorithm: "layered",
+        "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
+          ? "NETWORK_SIMPLEX"
+          : "INTERACTIVE",
+        "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
+        // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
+        "org.eclipse.elk.layered.mergeEdges": mergeEdge.toString(),
+        "org.eclipse.elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+        // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
+        "org.eclipse.elk.interactive": "true",
+        "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
+        // "org.eclipse.elk.edgeRouting": "SPLINES"
+      },
+    }
+  );
+  let layoutGraph: Promise<LayoutGraph> = elkLayout.then((result) => {
+    if (isElkNode(result)) {
+      const { id, children, ports, edges } = result;
+      return new LayoutGraphImp(id, children, ports, edges, elkNodeMap);
+    }
+  });
+  return layoutGraph;
 }
 
-function addLinkMap(linkMap, source, target) {
+function isElkNode(object: void | ElkNode): object is ElkNode {
+  return (object as ElkNode).children !== undefined;
+}
+
+function addLinkMap(linkMap, source, target): void {
   if (!linkMap.hasOwnProperty(source)) {
     linkMap[source] = [target];
   } else {
@@ -180,7 +189,7 @@ function addLinkMap(linkMap, source, target) {
   }
 }
 
-function generateElkNodeMap(elkNodeList, elkNodeMap) {
+function generateElkNodeMap(elkNodeList, elkNodeMap): void {
   elkNodeList.forEach((node) => {
     if (node.hasOwnProperty("children")) {
       let subMap = {};
@@ -192,10 +201,10 @@ function generateElkNodeMap(elkNodeList, elkNodeMap) {
   });
 }
 
-function restoreFromOldEleMap(newEle) {
+function restoreFromOldEleMap(newEle): void {
   let oldEle = oldEleMap[newEle.id];
   if (oldEle) {
-    let { x, y, $H, sections } = oldEle;
+    let { x, y, $H } = oldEle;
     newEle = Object.assign(newEle, { x, y, $H });
   }
   newEleMap[newEle.id] = newEle;
@@ -205,7 +214,7 @@ export const generateNode = (
   node: BaseNode,
   inPort: boolean,
   outPort: boolean
-) => {
+): LayoutNode => {
   let ports = [];
   if (inPort) {
     ports.push({
@@ -252,8 +261,8 @@ function processNodes(
   groups,
   displayedNodes,
   newNodes
-) {
-  const processChildren = (nodeId, newNode, newNodes) => {
+): Array<LayoutNode> {
+  const processChildren = (nodeId, newNode, newNodes): void => {
     if (groups.hasOwnProperty(nodeId)) {
       //为group节点注入子节点及边
       let children = [];

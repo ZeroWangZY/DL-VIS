@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import "./ELKLayoutGraph.css";
 import { NodeType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
-import { TransitionMotion, spring } from "react-motion";
+import { TransitionMotion } from "react-motion";
 import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
@@ -17,33 +17,18 @@ window["ELK"] = ELK;
 const ELKLayoutGraph: React.FC = () => {
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
-  console.log(styledGraph);
+  // console.log(styledGraph);
   const svgRef = useRef();
   const outputRef = useRef();
-  const elkNodeMap = [];
-
-  //for drag usage
-  const generateElkNodeMap = (elkNodeList, elkNodeMap) => {
-    elkNodeList.forEach((node) => {
-      if (node.hasOwnProperty("children")) {
-        let subMap = {};
-        generateElkNodeMap(node["children"], subMap);
-        elkNodeMap[node.id] = subMap;
-      } else {
-        elkNodeMap[node.id] = node;
-      }
-    });
-  };
-
-  const lGraph = layoutGraph as any;
-  if (lGraph && "children" in lGraph) {
-    generateElkNodeMap(lGraph.children, elkNodeMap);
+  let elkNodeMap = {};
+  if (layoutGraph) {
+    elkNodeMap = layoutGraph.elkNodeMap;
   }
 
-  const getX = (d) => {
+  const getX = (d): number => {
     return d.x;
   };
-  const getY = (d) => {
+  const getY = (d): number => {
     return d.y;
   };
   // 根据points计算path的data
@@ -52,7 +37,7 @@ const ELKLayoutGraph: React.FC = () => {
     .x((d) => getX(d))
     .y((d) => getY(d));
 
-  const toggleExpanded = (id) => {
+  const toggleExpanded = (id): void => {
     modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
       nodeId: id,
     });
@@ -62,14 +47,17 @@ const ELKLayoutGraph: React.FC = () => {
     //目前仅支持拖拽叶节点
     d3.selectAll(".node").on(".drag", null);
     let selectionNodes = d3.selectAll(".child-node");
+
+    console.log(svgRef.current);
+    console.log(selectionNodes.size());
     if (selectionNodes.size() === 0) return;
     selectionNodes.call(d3.drag().on("start", dragStarted));
 
-    function dragStarted() {
+    function dragStarted(): void {
       let node = d3.select(this).classed("dragging", true);
       d3.event.on("drag", dragged).on("end", ended);
       const { x, y } = d3.event;
-      function dragged(d) {
+      function dragged(): void {
         if (Math.abs(d3.event.x - x) < 5 || Math.abs(d3.event.y - y) < 5) {
           return;
         }
