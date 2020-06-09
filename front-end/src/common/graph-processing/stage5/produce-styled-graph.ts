@@ -1,74 +1,23 @@
-import { BaseNode, NodeType } from "../graph-processing/stage2/processed-graph";
+import { LayoutGraph, LayoutGraphImp } from "../stage4/layout-graph.type";
+import {
+  Style,
+  Offset,
+  StyledGraph,
+  StyledGraphImp,
+} from "../stage5/styled-graph.type";
 import { spring } from "react-motion";
-import { AnyARecord } from "dns";
 
-interface Offset {
-  x: number;
-  y: number;
-}
-
-interface Style {
-  key: string;
-  data: any;
-  style: any;
-}
-
-interface nodeIO {
-  source: Array<string>;
-  target: Array<string>;
-}
-
-//每个key为nodeID,value表示节点的soource数组和target数组
-export interface NodeLinkMap {
-  [propName: string]: nodeIO;
-}
-
-export interface LayoutOptions {
-  networkSimplex: boolean;
-}
-
-export const generateNode = (
-  node: BaseNode,
-  inPort: boolean,
-  outPort: boolean
-) => {
-  let ports = [];
-  if (inPort) {
-    ports.push({
-      id: node.id + "-in-port",
-      properties: {
-        "port.side": "WEST",
-      },
-    });
+export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
+  let newNodeStyles = [];
+  let newLinkStyles = [];
+  // layoutGraph可能为void
+  const lGraph = layoutGraph as any
+  if (lGraph && 'children' in lGraph) {
+    generateEdgeStyles(lGraph.edges, newLinkStyles);
+    generateNodeStyles(lGraph.children, newNodeStyles, newLinkStyles);
   }
-  if (outPort) {
-    ports.push({
-      id: node.id + "-out-port",
-      layoutOptions: {
-        "port.side": "EAST",
-      },
-    });
-  }
-  return {
-    id: node.id,
-    parent: node.parent,
-    label: node.displayedName,
-    shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
-    class: `nodeitem-${node.type}`,
-    type: node.type,
-    layoutOptions: {
-      algorithm: "layered",
-    //   portConstraints: "FIXED_SIDE",
-    },
-    expand: false,
-    width:
-      node.type === NodeType.OPERTATION
-        ? 30
-        : Math.max(node.displayedName.length, 3) * 10 + 8,
-    height: node.type === NodeType.OPERTATION ? 20 : 40,
-    ports: ports,
-  };
-};
+  return new StyledGraphImp(newNodeStyles, newLinkStyles);
+}
 
 //直接线性遍历给定的边数组，将对应的每条边的样式添加到已有样式数组
 //Todo:后续根据边的连接情况增加样式可能需要传入新的参数

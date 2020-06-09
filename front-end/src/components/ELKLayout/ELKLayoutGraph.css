@@ -21,15 +21,16 @@ ellipse {
 }
 
 rect.behind-text {
-    opacity: 0;
+    opacity: 1;
 }
 
 .node rect.elk-label-container.expanded {
     fill: #b2b2b2;
     fill-opacity: 0.2;
     stroke-width: 1px;
-    stroke:#c7c7c7;
+    stroke: #c7c7c7;
 }
+
 
 /* .nodeitem-0 ellipse.label-container {
     
@@ -61,6 +62,7 @@ rect.behind-text {
 
 .edgePath path {
     stroke: #3F3F3F;
+    stroke-width: 1;
     fill: none;
 }
 
