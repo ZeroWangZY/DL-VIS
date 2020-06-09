@@ -12,11 +12,12 @@ import { produceStyledGraph } from "../../common/graph-processing/stage5/produce
 import { setVisGraph, useVisGraph } from "../../store/visGraph";
 import { setLayoutGraph, useLayoutGraph } from "../../store/layoutGraph";
 import { setStyledGraph, useStyledGraph } from "../../store/styledGraph";
+import { LayoutType } from "../../store/global-configuration.type";
 
 
 export default function useGraphPipeline() {
 
-  const { shouldOptimizeProcessedGraph } = useGlobalConfigurations();
+  const { shouldOptimizeProcessedGraph, currentLayout } = useGlobalConfigurations();
   const msRawGraph = useMsRawGraph()
   const tfRawGraph = useTfRawGraph()
   const processedGraph = useProcessedGraph()
@@ -24,34 +25,38 @@ export default function useGraphPipeline() {
   const layoutGraph = useLayoutGraph()
   const styledGraph = useStyledGraph()
 
-  // MsRawGraph --> ProcessedGraph
+  const isTfGraph =
+    currentLayout === LayoutType.DAGRE_FOR_TF ||
+    currentLayout === LayoutType.TENSORBOARD ||
+    currentLayout === LayoutType.ELK_FOR_TF;
+
+  const isMsGraph =
+    currentLayout === LayoutType.DAGRE_FOR_MS ||
+    currentLayout === LayoutType.ELK_FOR_MS;
+
+
+  // RawGraph --> ProcessedGraph
   useEffect(() => {
-    if (!msRawGraph) return
-
-    console.log("start: MsRawGraph --> ProcessedGraph")
-    const hGraph = buildMsGraph(msRawGraph);
-    if (shouldOptimizeProcessedGraph) {
-      const processedGraphOptimizer = new ProcessedGraphOptimizer();
-      processedGraphOptimizer.optimize(hGraph);
-    }
-    setProcessedGraph(hGraph);
-    console.log("end: MsRawGraph --> ProcessedGraph")
-
-  }, [msRawGraph, shouldOptimizeProcessedGraph]);
-
-  // TfRawGraph --> ProcessedGraph
-  useEffect(() => {
-    if (!tfRawGraph) return
-
-    buildGraph(tfRawGraph).then(pGraph => {
+    if (isMsGraph && msRawGraph) {
+      const hGraph = buildMsGraph(msRawGraph);
       if (shouldOptimizeProcessedGraph) {
         const processedGraphOptimizer = new ProcessedGraphOptimizer();
-        processedGraphOptimizer.optimize(pGraph);
+        processedGraphOptimizer.optimize(hGraph);
       }
-      setProcessedGraph(pGraph);
-    })
-    
-  }, [tfRawGraph, shouldOptimizeProcessedGraph]);
+      setProcessedGraph(hGraph);
+    }
+
+    if (isTfGraph && tfRawGraph) {
+      buildGraph(tfRawGraph).then(pGraph => {
+        if (shouldOptimizeProcessedGraph) {
+          const processedGraphOptimizer = new ProcessedGraphOptimizer();
+          processedGraphOptimizer.optimize(pGraph);
+        }
+        setProcessedGraph(pGraph);
+      })
+    }
+  }, [msRawGraph, tfRawGraph, shouldOptimizeProcessedGraph]);
+
 
   // ProcessedGraph --> VisGraph
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function useGraphPipeline() {
     const vGraph = produceVisGraph(processedGraph)
     console.log(vGraph)
     setVisGraph(vGraph)
-    
+
   }, [processedGraph]);
 
   // VisGraph --> layoutGraph
@@ -68,7 +73,7 @@ export default function useGraphPipeline() {
     if (!visGraph) return;
 
     const lGraph = produceLayoutGraph(visGraph);
-    lGraph.then(result=>{
+    lGraph.then(result => {
       console.log(result);
       setLayoutGraph(result);
     })
