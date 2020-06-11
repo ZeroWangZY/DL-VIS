@@ -118,14 +118,10 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
       if (!parameterNode && !constValNode)
         inputInfo.add(input.name + "_Input2_" + rNode.name)
 
-      if (parameterNode || constValNode) {
+      if (parameterNode) {
         const displayedName = input.name
         newId = input.name + "_Input2_" + rNode.name; // 新的Id
-        // if(pGraph.nodeMap[rNode.name] instanceof OperationNode)
-        let auxiliary = (pGraph.nodeMap[rNode.name] as OperationNode).auxiliary
-        if (constValNode)
-          auxiliary.add(newId) // 附属节点
-        let dataType = parameterNode ? DataType.PARAMETER : DataType.CONST;
+        let dataType = DataType.PARAMETER;
         const pNode = new DataNodeImp({
           id: newId,
           dataType: dataType,
@@ -133,6 +129,13 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
         });
         pGraph.nodeMap[pNode.id] = pNode;
       }
+
+      if (constValNode) {
+        newId = input.name + "_Input2_" + rNode.name; // 新的Id
+        let auxiliary = (pGraph.nodeMap[rNode.name] as OperationNode).auxiliary
+        auxiliary.add(newId) // 附属节点
+      }
+
       if (!constValNode)
         pGraph.rawEdges.push({
           source: newId,
@@ -141,7 +144,7 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
     }
   }
 
-  let inputNodeName = [...Array.from(parameterNodeName) as string[], ...Array.from(constValNodeName) as string[]];
+  let inputNodeName = [...Array.from(parameterNodeName) as string[]];
   buildHierarchy(rGraph, pGraph, inputNodeName) // 构建层次
   buildModule(pGraph)
 

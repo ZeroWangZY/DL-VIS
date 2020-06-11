@@ -113,8 +113,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       setNodeAttribute([]);
     }
     if (node.type === NodeType.OPERTATION) {
-      let splitName = GraphId.split("-")
-      setSelectedNodeName(splitName[splitName.length - 1]);
+      setSelectedNodeName(nodeMap[GraphId].displayedName);
       setSelectedNodeId(GraphId);
 
       setLeafAndChildrenNum([0, 0]);
@@ -194,11 +193,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         if (node.dataType === DataType.INPUT || node.dataType === DataType.OUTPUT || node.dataType === DataType.PARAMETER) {
           width = 10;
           height = 10;
-        } else if (node.dataType === DataType.CONST) {
-          className += " auxiliary";
-          parentScope.add(node.parent)
-          width = auxiliaryNodesSize.width;
-          height = auxiliaryNodesSize.height;
         } else {
           width = 30;
           height = 10;
@@ -246,18 +240,18 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     graph.graph().ranksep = 100;
     dagre.layout(graph);
 
-    nodeWithauxiliary.forEach((tmpNodeName: string) => {
-      let auxi = (nodeMap[tmpNodeName] as OperationNode).auxiliary;
-      let auxiArr = [];
-      auxi.forEach((val) => { auxiArr.push(val) });
+    // nodeWithauxiliary.forEach((tmpNodeName: string) => {
+    //   let auxi = (nodeMap[tmpNodeName] as OperationNode).auxiliary;
+    //   let auxiArr = [];
+    //   auxi.forEach((val) => { auxiArr.push(val) });
 
-      // TODO: 目前只考虑了一个附属节点的情况
-      let sourceNode = graph.node(auxiArr[0]);
-      let destNode = graph.node(tmpNodeName);
+    //   // TODO: 目前只考虑了一个附属节点的情况
+    //   let sourceNode = graph.node(auxiArr[0]);
+    //   let destNode = graph.node(tmpNodeName);
 
-      sourceNode.x = destNode.x - destNode.width / 2;
-      sourceNode.y = destNode.y;
-    })
+    //   sourceNode.x = destNode.x - destNode.width / 2;
+    //   sourceNode.y = destNode.y;
+    // })
 
     let newNodes = {}, newEdges = {};
 
@@ -914,7 +908,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }, [graphForLayout, isHiddenInterModuleEdges]);
 
   const getLabelContainer = (nodeId, nodeClass, width, height) => {
-    let focus = selectedNodeName !== "" && nodeId === selectedNodeId; 
+    let focus = selectedNodeName !== "" && nodeId === selectedNodeId;
     if (nodeClass.indexOf(`layertype-${LayerType.FC}`) > -1) {
       return (<FCLayerNode width={width} height={height} />);
     } else if (nodeClass.indexOf(`layertype-${LayerType.CONV}`) > -1) {
@@ -1158,8 +1152,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       <div className="minimap-container">
         <MiniMap
           graph={svgRef.current}
-          outputG={outputRef.current}
           outputSVG={outputSVGRef.current}
+          outputG={outputRef.current}
           transform={transform}
           handleChangeTransform={handleChangeTransform}
         // outputSVG_Copy={(outputSVGRef.current) ? (outputSVGRef.current as any).cloneNode(true) : null}

@@ -30,6 +30,10 @@ rect.behind-text {
     stroke-width: 1px;
     stroke: #c7c7c7;
 }
+.node .elk-label-container.focus{
+    stroke-width: 3px;
+    stroke:blue;
+}
 
 
 /* .nodeitem-0 ellipse.label-container {
