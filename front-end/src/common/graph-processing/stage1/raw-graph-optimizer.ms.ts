@@ -44,12 +44,55 @@ const findIndexOfNodesToBeKept = (nodes: RawNode[], indexOfNodesToBeKept: number
   }
 }
 
+// 发现ms图中有大量tuple_getitem算子，且意义不大，此方法用于去除这些算子
+function pruneTupleGetItem(rawGraph: RawGraph): void {
+  const targetsMap: { [source: string]: RawNode[] } = _buildTargetsMap(rawGraph)
+  const { node } = rawGraph
+  for (let i = 0; i < node.length; i++) {
+    if (node[i].opType === "tuple_getitem") {
+      for (const target of targetsMap[node[i].name]) {
+        // 删除tuple_getitem算子的target节点关于tuple_getitem的input
+        for (let j = 0; j < target.input.length; j++) {
+          const inputOfTarget = target.input[j]
+          if (inputOfTarget.name === node[i].name) {
+            target.input.splice(j, 1)
+            j--
+          }
+        }
+        // 在tuple_getitem算子的target节点中增加tuple_getitem算子input
+        for (const input of node[i].input) {
+          target.input.push(input)
+        }
+      }
+      node.splice(i, 1)
+      i--
+    }
+  }
+}
+
+function _buildTargetsMap(rawGraph: RawGraph): { [id: string]: any } {
+  const resDict: { [source: string]: RawNode[] } = {}
+  const { node } = rawGraph
+  for (const n of node) {
+    if (!n.input) continue
+    for (const source of n.input) {
+      if (resDict[source.name]) {
+        resDict[source.name].push(n)
+      } else {
+        resDict[source.name] = [n]
+      }
+    }
+  }
+  return resDict
+}
+
 export default class msRawGraphOptimizer {
   msRawGraphOptimizers = [];
 
   constructor() {
     this.msRawGraphOptimizers = [
       conceptualGraphOptimization,
+      pruneTupleGetItem,
     ];
   }
 

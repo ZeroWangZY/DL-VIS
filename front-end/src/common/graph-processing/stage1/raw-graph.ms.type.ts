@@ -5,7 +5,7 @@ export interface RawNode {
   input: Record<string, any>[];
   name: string;
   opType: string;
-  outputType: OutputType
+  outputType: OutputType;
   scope: string;
 }
 

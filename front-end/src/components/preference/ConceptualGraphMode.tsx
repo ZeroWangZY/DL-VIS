@@ -39,7 +39,7 @@ export default function ConceptualGraphMode() {
       >
         <FormControlLabel
           control={<Switch checked={conceptualGraphMode} onChange={handleChange} />}
-          label={"conceptual graph mode"}
+          label={"概念图模式"}
         />
       </div>
     </div>
