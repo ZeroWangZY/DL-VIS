@@ -17,9 +17,12 @@ const ELKLayoutGraph: React.FC = () => {
   const outputRef = useRef();
   const outputSVGRef = useRef();
 
+  const [bgRectHeight, setBgRectHeight] = useState(0);
+
   const [outputNodeName, setOutputNodeName] = useState([]);
   const [inputNodeName, setInputNodeName] = useState([]);
   const [selectedNodeName, setSelectedNodeName] = useState("");
+  const [selectedNodeId, setSelectedNodeId] = useState("");
   const [leafAndChildrenNum, setLeafAndChildrenNum] = useState([]);
   const [nodeAttribute, setNodeAttribute] = useState([]);
 
@@ -32,6 +35,9 @@ const ELKLayoutGraph: React.FC = () => {
   const handleChangeSelectedNodeName = function (name: string): void {
     setSelectedNodeName(name);
   }
+  const handleChangeSelectedNodeId = function (name: string): void {
+    setSelectedNodeId(name);
+  }
   const handleChangeLeafAndChildrenNum = function (num: Number[]): void {
     setLeafAndChildrenNum(num);
   }
@@ -43,6 +49,11 @@ const ELKLayoutGraph: React.FC = () => {
   const handleChangeTransform = function (transform) {
     if (transform === null || transform === undefined) return;
     setTransform(transform);
+  }
+
+  // 点击空白处取消所有选择
+  const handleBgClick = () => {
+    setSelectedNodeId("");
   }
 
 
@@ -58,6 +69,13 @@ const ELKLayoutGraph: React.FC = () => {
         setTransform(d3.event.transform);
       })
     svg.call(zoom).on('dblclick.zoom', null);
+
+     // 获得背景rect的高度
+     const svgNode = svg.node() as HTMLElement;
+     const svgWidth = svgNode.clientWidth;
+     const svgHeight = svgNode.clientHeight;
+     
+     setBgRectHeight(svgHeight);
   }, []);
 
   return (
@@ -81,14 +99,18 @@ const ELKLayoutGraph: React.FC = () => {
             ></path>
           </marker>
         </defs>
+        <rect className="bg-rect" width="100%" height={bgRectHeight} onClick={() => handleBgClick()}></rect>
+
         <svg id="output-svg" ref={outputSVGRef}>
           <g className="output" id="output-g" ref={outputRef}>
             <ELKLayoutNode
               handleChangeOutputNodeName={handleChangeOutputNodeName}
               handleChangeInputNodeName={handleChangeInputNodeName}
               handleChangeSelectedNodeName={handleChangeSelectedNodeName}
+              handleChangeSelectedNodeId={handleChangeSelectedNodeId}
               handleChangeLeafAndChildrenNum={handleChangeLeafAndChildrenNum}
               handleChangeNodeAttribute={handleChangeNodeAttribute}
+              selectedNodeId={selectedNodeId}
             />
             <ELKLayoutEdge />
           </g>

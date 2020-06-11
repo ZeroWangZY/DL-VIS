@@ -14,8 +14,10 @@ interface Props {
   handleChangeOutputNodeName: { (name: string[]): void }
   handleChangeInputNodeName: { (name: string[]): void }
   handleChangeSelectedNodeName: { (name: string): void }
+  handleChangeSelectedNodeId: { (name: string): void }
   handleChangeLeafAndChildrenNum: { (num: Number[]): void }
   handleChangeNodeAttribute: { (attr: Attribute[]): void }
+  selectedNodeId: string
 }
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
@@ -24,11 +26,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     handleChangeInputNodeName,
     handleChangeSelectedNodeName,
     handleChangeLeafAndChildrenNum,
-    handleChangeNodeAttribute } = props;
+    handleChangeNodeAttribute,
+    handleChangeSelectedNodeId,
+    selectedNodeId } = props;
   const styledGraph = useStyledGraph();
   const layoutGraph = useLayoutGraph();
   const graphForLayout = useProcessedGraph();
-  const [selectedNodeId, setSelectedNodeId] = useState("");
+  // const [selectedNodeId, handleChangeSelectedNodeId] = useState("");
 
   const showInfoCard = id => {
     let GraphId = id;
@@ -45,7 +49,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       let splitName = GraphId.split("/")
 
       handleChangeSelectedNodeName(splitName[splitName.length - 1]);
-      setSelectedNodeId(GraphId)
+      handleChangeSelectedNodeId(GraphId)
 
       handleChangeLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
       handleChangeOutputNodeName(Array.from((node as GroupNode).outputNode));
@@ -54,7 +58,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
     if (node.type === NodeType.OPERTATION) {
       handleChangeSelectedNodeName(nodeMap[GraphId].displayedName);
-      setSelectedNodeId(GraphId);
+      handleChangeSelectedNodeId(GraphId);
 
       handleChangeLeafAndChildrenNum([0, 0]);
       handleChangeNodeAttribute((node as OperationNodeImp).attributes);
@@ -66,7 +70,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       //GraphId是 data_Input2_1 或者 cst1_Input2_1 格式
       let splitName = GraphId.split("_Input2_")
       handleChangeSelectedNodeName(splitName[0]);
-      setSelectedNodeId(GraphId);
+      handleChangeSelectedNodeId(GraphId);
 
       handleChangeLeafAndChildrenNum([0, 0]);
       if ((node as DataNodeImp).dataType === DataType.PARAMETER)
