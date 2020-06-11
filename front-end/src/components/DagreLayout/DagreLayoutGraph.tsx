@@ -88,8 +88,12 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     .y(d => getY(d));
 
   const showInfoCard = id => {
-    let GraphId = id;
+    let graphId = id;
+
+    // 比如：graphId是 Default-network_WithLossCell-_loss_fn_CrossEntropyLoss
+    // 应该将它转为 id: Default/network_WithLossCell/_loss_fn_CrossEntropyLoss
     id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
+
     let nodeMap = graphForLayout.nodeMap
     let node = nodeMap[id];
 
@@ -99,13 +103,13 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     }
 
     if (node.type === NodeType.GROUP) {
-      let splitName = GraphId.split("-")
+      let splitName = graphId.split("-")
 
-      // selectedNodeName  与     selectedNodeId 分别是：
+      // selectedNodeId  与     selectedNodeName 分别是：
       // Default/hello/hi                  hi
       //   cst1_Input2_3                   3
       setSelectedNodeName(splitName[splitName.length - 1]);
-      setSelectedNodeId(GraphId)
+      setSelectedNodeId(graphId)
 
       setLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
       setOutputNodeName(Array.from((node as GroupNode).outputNode));
@@ -113,8 +117,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       setNodeAttribute([]);
     }
     if (node.type === NodeType.OPERTATION) {
-      setSelectedNodeName(nodeMap[GraphId].displayedName);
-      setSelectedNodeId(GraphId);
+      setSelectedNodeName(nodeMap[graphId].displayedName);
+      setSelectedNodeId(graphId);
 
       setLeafAndChildrenNum([0, 0]);
       setNodeAttribute((node as OperationNodeImp).attributes);
@@ -123,10 +127,8 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
     }
 
     if (node.type === NodeType.DATA) {
-      //GraphId是 data_Input2_1 或者 cst1_Input2_1 格式
-      let splitName = GraphId.split("_Input2_")
-      setSelectedNodeName(splitName[0]);
-      setSelectedNodeId(GraphId);
+      setSelectedNodeName(nodeMap[graphId].displayedName);
+      setSelectedNodeId(graphId);
 
       setLeafAndChildrenNum([0, 0]);
       if ((node as DataNodeImp).dataType === DataType.PARAMETER)

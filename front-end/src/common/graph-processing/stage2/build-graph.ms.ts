@@ -115,9 +115,6 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
       if (!parameterNode && !constValNode)
         inputInfo.add(input.name + "_Input2_" + rNode.name)
 
-      if (!parameterNode && !constValNode)
-        inputInfo.add(input.name + "_Input2_" + rNode.name)
-
       if (parameterNode) {
         const displayedName = input.name
         newId = input.name + "_Input2_" + rNode.name; // 新的Id
@@ -131,9 +128,8 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
       }
 
       if (constValNode) {
-        newId = input.name + "_Input2_" + rNode.name; // 新的Id
         let auxiliary = (pGraph.nodeMap[rNode.name] as OperationNode).auxiliary
-        auxiliary.add(newId) // 附属节点
+        auxiliary.add(input.name) // 附属节点
       }
 
       if (!constValNode)
@@ -179,12 +175,7 @@ function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNode
     if (parameterNodeName.has(splitName[0])) { // 处理nodeMap[newNodeName]
       // 比如：data_Input2_1; 
       (nodeMap[newNodeName] as DataNodeImp).outputNode.add(nodeMap[splitName[1]].displayedName); // 输出
-
       (nodeMap[newNodeName] as DataNodeImp).typeAttibute = parametersMap.get(splitName[0]); // parameter的type属性
-    }
-    else if (constValNodeName.has(splitName[0])) {
-      // 比如：cst1_Input2_1; 
-      (nodeMap[newNodeName] as DataNodeImp).outputNode.add(nodeMap[splitName[1]].displayedName); // 输出
     }
   }
 }
@@ -198,11 +189,6 @@ function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph) {
 
     for (let input of node.input) {
       let inputNodeName = input.name;
-      if (nodeMap[inputNodeName + "_Input2_" + nodeName] instanceof DataNodeImp
-        && (nodeMap[inputNodeName + "_Input2_" + nodeName] as DataNodeImp).dataType === DataType.CONST) {
-        // 附属节点，不加入pGraph的inputNode
-        continue;
-      }
       // 不是附属节点，则将inputNodeName加入pGraph的inputNode中
       if (nodeMap[nodeName] instanceof OperationNodeImp) {
         let displayedName = inputNodeName;

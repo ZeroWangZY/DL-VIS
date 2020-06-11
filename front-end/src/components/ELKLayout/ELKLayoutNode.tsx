@@ -35,7 +35,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   // const [selectedNodeId, handleChangeSelectedNodeId] = useState("");
 
   const showInfoCard = id => {
-    let GraphId = id;
+    let graphId = id;
     id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
     let nodeMap = graphForLayout.nodeMap
     let node = nodeMap[id];
@@ -46,10 +46,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
 
     if (node.type === NodeType.GROUP) {
-      let splitName = GraphId.split("/")
+      let splitName = graphId.split("/")
 
       handleChangeSelectedNodeName(splitName[splitName.length - 1]);
-      handleChangeSelectedNodeId(GraphId)
+      handleChangeSelectedNodeId(graphId)
 
       handleChangeLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
       handleChangeOutputNodeName(Array.from((node as GroupNode).outputNode));
@@ -57,8 +57,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       handleChangeNodeAttribute([]);
     }
     if (node.type === NodeType.OPERTATION) {
-      handleChangeSelectedNodeName(nodeMap[GraphId].displayedName);
-      handleChangeSelectedNodeId(GraphId);
+      handleChangeSelectedNodeName(nodeMap[graphId].displayedName);
+      handleChangeSelectedNodeId(graphId);
 
       handleChangeLeafAndChildrenNum([0, 0]);
       handleChangeNodeAttribute((node as OperationNodeImp).attributes);
@@ -67,10 +67,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
 
     if (node.type === NodeType.DATA) {
-      //GraphId是 data_Input2_1 或者 cst1_Input2_1 格式
-      let splitName = GraphId.split("_Input2_")
-      handleChangeSelectedNodeName(splitName[0]);
-      handleChangeSelectedNodeId(GraphId);
+      handleChangeSelectedNodeName(nodeMap[graphId].displayedName);
+      handleChangeSelectedNodeId(graphId);
 
       handleChangeLeafAndChildrenNum([0, 0]);
       if ((node as DataNodeImp).dataType === DataType.PARAMETER)
