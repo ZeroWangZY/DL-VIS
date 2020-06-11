@@ -10,7 +10,6 @@ import {
   LayoutGraphImp,
 } from "./layout-graph.type";
 
-//Todo: move to store
 const portMode = false;
 const maxPort = 5;
 let oldEleMap = {};
@@ -189,7 +188,16 @@ function addLinkMap(linkMap, source, target): void {
   }
 }
 
-function generateElkNodeMap(elkNodeList, elkNodeMap): void {
+function restoreFromOldEleMap(newEle): void {
+  let oldEle = oldEleMap[newEle.id];
+  if (oldEle) {
+    let { x, y, $H } = oldEle;
+    newEle = Object.assign(newEle, { x, y, $H });
+  }
+  newEleMap[newEle.id] = newEle;
+}
+
+export function generateElkNodeMap(elkNodeList, elkNodeMap): void {
   elkNodeList.forEach((node) => {
     if (node.hasOwnProperty("children")) {
       let subMap = {};
@@ -201,14 +209,17 @@ function generateElkNodeMap(elkNodeList, elkNodeMap): void {
   });
 }
 
-function restoreFromOldEleMap(newEle): void {
-  let oldEle = oldEleMap[newEle.id];
-  if (oldEle) {
-    let { x, y, $H } = oldEle;
-    newEle = Object.assign(newEle, { x, y, $H });
-  }
-  newEleMap[newEle.id] = newEle;
-}
+// export function generateElkNodesList(elkNodeMap, elkNodeList): void {
+//   for (let key in elkNodeMap) {
+//     if ("id" in elkNodeMap[key]) {
+//       let subList = [];
+//       generateElkNodesList(elkNodeMap[key]["id"], subList);
+//       elkNodeList.push(subList);
+//     } else {
+//       elkNodeList.push(elkNodeMap[key]);
+//     }
+//   }
+// }
 
 export const generateNode = (
   node: BaseNode,

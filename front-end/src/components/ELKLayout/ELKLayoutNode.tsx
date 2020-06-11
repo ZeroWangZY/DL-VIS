@@ -1,13 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TransitionMotion } from "react-motion";
+import { useVisGraph } from "../../store/visGraph";
 import { useStyledGraph } from "../../store/styledGraph";
-import { useLayoutGraph } from "../../store/layoutGraph";
+import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
 import { NodeType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
+
+import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
+import { useGlobalConfigurations } from "../../store/global-configuration";
 
 interface Props {
   setSelectedNodeId: { (nodeId: string): void };
@@ -16,8 +20,10 @@ interface Props {
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const { setSelectedNodeId, selectedNodeId } = props;
-  const styledGraph = useStyledGraph();
+  const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
+  const styledGraph = useStyledGraph();
+  const { shouldMergeEdge } = useGlobalConfigurations();
 
   const handleClick = (id) => {
     let nodeId = id.replace(/-/g, "/");
@@ -33,10 +39,22 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       nodeId: id,
     });
   };
+
+  const editLayoutGraph = (): void => {
+    const lGraph = produceLayoutGraph(visGraph, {
+      networkSimplex: false,
+      mergeEdge: shouldMergeEdge,
+    });
+    lGraph.then((result) => {
+      setLayoutGraph(result);
+    });
+  };
+
   useEffect(() => {
     //目前仅支持拖拽叶节点
-    d3.selectAll(".node").on(".drag", null);
-    let selectionNodes = d3.selectAll(".child-node");
+    d3.selectAll("g .node").on(".drag", null);
+    let selectionNodes = d3.selectAll("g .child-node");
+    console.log(selectionNodes);
     if (selectionNodes.size() === 0) return;
     selectionNodes.call(d3.drag().on("start", dragStarted));
 
@@ -66,7 +84,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           nodeParent.split("/").forEach((parent) => {
             toEditNode = toEditNode[parent];
             if (toEditNode === undefined) {
-              // draw();
+              editLayoutGraph();
               return;
             } else if (toEditNode.hasOwnProperty("children")) {
               toEditNode = toEditNode["children"];
@@ -76,9 +94,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         toEditNode = toEditNode[nodeID];
         toEditNode["x"] = d3.event.x;
         toEditNode["y"] = d3.event.y;
-        // draw({ networkSimplex: false });
-
-        //Todo: 把store里的networkSimplex设为false
+        editLayoutGraph();
       }
     }
   });
