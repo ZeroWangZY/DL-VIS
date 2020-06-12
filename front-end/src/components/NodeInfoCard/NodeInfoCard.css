@@ -4,14 +4,15 @@
   right: 30px;
 }
 
-.info-card.root.selected{
-  opacity: 0.9;
-}
 
-.info-card.root{
-  opacity: 0;
+.info-card.root {
+  opacity: 0.9;
   position: fixed;
-  overflow-y: scroll
+  overflow-y: scroll;
+  top: 100px;
+  right: 30px;
+  width: 350px;
+  max-height: 200px;
 }
 
 .Grid {

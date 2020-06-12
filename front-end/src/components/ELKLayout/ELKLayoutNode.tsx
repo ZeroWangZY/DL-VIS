@@ -2,83 +2,27 @@ import React, { useEffect, useRef, useState } from "react";
 import { TransitionMotion } from "react-motion";
 import { useStyledGraph } from "../../store/styledGraph";
 import { useLayoutGraph } from "../../store/layoutGraph";
-import { NodeType, Attribute, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
+import { NodeType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
-  useProcessedGraph
 } from "../../store/processedGraph";
 
 interface Props {
-  handleChangeOutputNodeName: { (name: string[]): void }
-  handleChangeInputNodeName: { (name: string[]): void }
-  handleChangeSelectedNodeName: { (name: string): void }
-  handleChangeSelectedNodeId: { (name: string): void }
-  handleChangeLeafAndChildrenNum: { (num: Number[]): void }
-  handleChangeNodeAttribute: { (attr: Attribute[]): void }
-  selectedNodeId: string
+  setSelectedNodeId: { (nodeId: string): void };
+  selectedNodeId: string | null;
 }
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
-  const {
-    handleChangeOutputNodeName,
-    handleChangeInputNodeName,
-    handleChangeSelectedNodeName,
-    handleChangeLeafAndChildrenNum,
-    handleChangeNodeAttribute,
-    handleChangeSelectedNodeId,
-    selectedNodeId } = props;
+  const { setSelectedNodeId, selectedNodeId } = props;
   const styledGraph = useStyledGraph();
   const layoutGraph = useLayoutGraph();
-  const graphForLayout = useProcessedGraph();
-  // const [selectedNodeId, handleChangeSelectedNodeId] = useState("");
 
-  const showInfoCard = id => {
-    let graphId = id;
-    id = id.replace(/-/g, '/'); //还原为nodemap中存的id格式
-    let nodeMap = graphForLayout.nodeMap
-    let node = nodeMap[id];
-
-    // TODO: 目前只考虑ms图
-    if (node.type === NodeType.LAYER) {
-      return;
-    }
-
-    if (node.type === NodeType.GROUP) {
-      let splitName = graphId.split("/")
-
-      handleChangeSelectedNodeName(splitName[splitName.length - 1]);
-      handleChangeSelectedNodeId(graphId)
-
-      handleChangeLeafAndChildrenNum([(node as GroupNode).leafOperationNodeCount, (node as GroupNode).operationChildrenCount])
-      handleChangeOutputNodeName(Array.from((node as GroupNode).outputNode));
-      handleChangeInputNodeName(Array.from((node as GroupNode).inputNode));
-      handleChangeNodeAttribute([]);
-    }
-    if (node.type === NodeType.OPERTATION) {
-      handleChangeSelectedNodeName(nodeMap[graphId].displayedName);
-      handleChangeSelectedNodeId(graphId);
-
-      handleChangeLeafAndChildrenNum([0, 0]);
-      handleChangeNodeAttribute((node as OperationNodeImp).attributes);
-      handleChangeOutputNodeName(Array.from((node as OperationNodeImp).outputNode));
-      handleChangeInputNodeName(Array.from((node as OperationNodeImp).inputNode));
-    }
-
-    if (node.type === NodeType.DATA) {
-      handleChangeSelectedNodeName(nodeMap[graphId].displayedName);
-      handleChangeSelectedNodeId(graphId);
-
-      handleChangeLeafAndChildrenNum([0, 0]);
-      if ((node as DataNodeImp).dataType === DataType.PARAMETER)
-        handleChangeNodeAttribute([(node as DataNodeImp).typeAttibute]);
-      else handleChangeNodeAttribute([]);
-      handleChangeOutputNodeName(Array.from((node as DataNodeImp).outputNode));
-      handleChangeInputNodeName(Array.from((node as DataNodeImp).inputNode));
-    }
-  }
-
+  const handleClick = (id) => {
+    let nodeId = id.replace(/-/g, "/");
+    setSelectedNodeId(nodeId);
+  };
 
   let elkNodeMap = {};
   if (layoutGraph) {
@@ -157,11 +101,11 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               <g
                 className={`node ${d.data.class} ${
                   d.data.expand ? "expanded-node" : "child-node"
-                  }`}
+                }`}
                 id={d.data.parent + "-" + d.data.id}
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
-                onClick={() => showInfoCard(d.data.id)}
+                onClick={() => handleClick(d.data.id)}
                 onDoubleClick={() => toggleExpanded(d.data.id)}
                 onMouseOver={() => {
                   d3.selectAll(selectContent)
@@ -187,17 +131,21 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                     ry={d.style.ellipseY}
                   ></ellipse>
                 ) : (
-                    <rect
-                      className={(d.data.id === selectedNodeId) ? "elk-label-container focus" : "elk-label-container"}
-                      width={d.style.rectWidth}
-                      height={d.style.rectHeight}
-                      transform={`translate(-${d.style.rectWidth / 2}, -${
-                        d.style.rectHeight / 2
-                        })`}
-                      fillOpacity={d.data.expand ? 0 : 1}
-                      pointerEvents="visibleStroke"
-                    ></rect>
-                  )}
+                  <rect
+                    className={
+                      d.data.id === selectedNodeId
+                        ? "elk-label-container focus"
+                        : "elk-label-container"
+                    }
+                    width={d.style.rectWidth}
+                    height={d.style.rectHeight}
+                    transform={`translate(-${d.style.rectWidth / 2}, -${
+                      d.style.rectHeight / 2
+                    })`}
+                    fillOpacity={d.data.expand ? 0 : 1}
+                    pointerEvents="visibleStroke"
+                  ></rect>
+                )}
                 <g
                   className="my-label"
                   transform={
@@ -213,7 +161,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       height={10}
                       transform={`translate(-${d.data.textWidth / 2}, -${
                         d.style.rectHeight / 2 + 5
-                        })`}
+                      })`}
                       stroke="none"
                     ></rect>
                   ) : null}
@@ -226,21 +174,19 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       {d.data.label}
                     </text>
                   ) : (
-                      <text
-                        dominantBaseline={"middle"}
-                        y={
-                          d.data.expand
-                            ? `${-d.style.rectHeight / 2 + 2}`
-                            : null
-                        }
-                      >
-                        {d.data.label}
-                        {!d.data.expand &&
-                          (d.data.type === NodeType.GROUP ||
-                            d.data.type === NodeType.LAYER) &&
-                          "+"}
-                      </text>
-                    )}
+                    <text
+                      dominantBaseline={"middle"}
+                      y={
+                        d.data.expand ? `${-d.style.rectHeight / 2 + 2}` : null
+                      }
+                    >
+                      {d.data.label}
+                      {!d.data.expand &&
+                        (d.data.type === NodeType.GROUP ||
+                          d.data.type === NodeType.LAYER) &&
+                        "+"}
+                    </text>
+                  )}
                 </g>
               </g>
             );
@@ -248,7 +194,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         </g>
       )}
     </TransitionMotion>
-  )
-}
+  );
+};
 
 export default ELKLayoutNode;
