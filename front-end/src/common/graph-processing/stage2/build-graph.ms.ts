@@ -128,10 +128,17 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
       }
 
       if (constValNode) {
+        const displayedName = input.name;
         let auxiliary = (pGraph.nodeMap[rNode.name] as OperationNode).auxiliary
         auxiliary.add(input.name) // 附属节点
-      }
 
+        const pNode = new DataNodeImp({
+          id: input.name,
+          dataType: DataType.CONST,
+          opts: { displayedName },
+        });
+        pGraph.nodeMap[pNode.id] = pNode;
+      }
       if (!constValNode)
         pGraph.rawEdges.push({
           source: newId,
@@ -148,13 +155,13 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
   // console.log(pGraph);
   processGroupNode(pGraph, inputInfo);  // 建立层次结束后，重新处理GroupNode，增加属性
   processOperationNode(rGraph, pGraph);  // 建立层次结束后，重新处理OperationNode，增加属性
-  processDataNode(rGraph, pGraph, parameterNodeName, constValNodeName);
+  processDataNode(rGraph, pGraph, parameterNodeName);
 
   return pGraph;
 }
 
 // 对所有的DataNode中的 dataType为PARAMETER和CONST的节点，进行处理
-function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNodeName: Set<string>, constValNodeName: Set<string>) {
+function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNodeName: Set<string>) {
   const nodeMap = pGraph.nodeMap;
   const parameters = rGraph.parameters;//数组每一维的结构： {name: "xxx", type: {dataType: "DT_TENSOR", tensorType: "xxxxxx"}};
   const parametersMap = new Map();
@@ -189,6 +196,10 @@ function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph) {
 
     for (let input of node.input) {
       let inputNodeName = input.name;
+      if ((nodeMap[inputNodeName] instanceof DataNodeImp) &&
+        (nodeMap[inputNodeName] as DataNodeImp).dataType === DataType.CONST)
+        continue;
+        
       // 不是附属节点，则将inputNodeName加入pGraph的inputNode中
       if (nodeMap[nodeName] instanceof OperationNodeImp) {
         let displayedName = inputNodeName;
