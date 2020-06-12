@@ -33,6 +33,7 @@ export const generateEdgeStyles = (
     styles.push({
       key: link.id,
       data: {
+        id4Style: link.id4Style,
         lineData:
           bendPoints === undefined
             ? []
@@ -73,6 +74,7 @@ export const generateNodeStyles = (
             class: node.class,
             type: node.type,
             id: node.id,
+            id4Style: node.id4Style,
             parent: node.parent,
             label: node.label,
             expand: node.expand,
@@ -89,6 +91,7 @@ export const generateNodeStyles = (
             class: "dummy",
             type: "dummy",
             id: node.id,
+            id4Style: node.id4Style,
             parent: node.parent,
             label: node.id,
             expand: node.expand,

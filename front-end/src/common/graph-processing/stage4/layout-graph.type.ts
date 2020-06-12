@@ -16,6 +16,7 @@ export interface LayoutOptions {
 }
 
 export interface LayoutNode extends ElkNode {
+  id4Style?: string; //仅供后续styleGraph使用，包含了层次信息
   parent?: string;
   label?: string;
   shape?: string;
@@ -25,6 +26,7 @@ export interface LayoutNode extends ElkNode {
 }
 
 export interface LayoutEdge extends ElkEdge {
+  id4Style?: string; //仅供后续styleGraph使用，包含了source和node的层次信息
   sources?: string[];
   targets?: string[];
   sections?: ElkEdgeSection[];

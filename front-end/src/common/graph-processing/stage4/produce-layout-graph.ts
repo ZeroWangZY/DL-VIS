@@ -14,27 +14,31 @@ const portMode = false;
 const maxPort = 5;
 let oldEleMap = {};
 let newEleMap = {};
-
+let layoutNodeIdMap = { root: "" }; //format: ...-parent-originalNodeId
 export async function produceLayoutGraph(
   visGraph: VisGraph,
   layoutOptions: LayoutOptions = { networkSimplex: true }
 ): Promise<LayoutGraph> {
   const { nodeMap, visNodes, visEdges } = visGraph;
-
   //group存储每个节点的子节点（可见）
-  let groups = {};
+  let groups = { root: new Set() };
+  layoutNodeIdMap = { root: "" }; //format: ...-parent-originalNodeId
   visNodes.forEach((nodeId) => {
+    layoutNodeIdMap[nodeId] = nodeId; //初始化
     const node = nodeMap[nodeId];
     if (node.parent !== "___root___") {
       if (!groups.hasOwnProperty(node.parent)) {
-        groups[node.parent] = {};
-        groups[node.parent]["nodes"] = [nodeId];
+        groups[node.parent] = new Set([nodeId]);
       } else {
-        groups[node.parent]["nodes"].push(nodeId);
+        groups[node.parent].add(nodeId);
       }
+    } else {
+      groups["root"].add(nodeId);
     }
   });
 
+  generateLayoutNodeIdFromGroups(layoutNodeIdMap, groups);
+  console.log(layoutNodeIdMap);
   let newLinks = [],
     linkMap = {}, //{sourceID:[target0,target1,...],...}
     innerLeftLinkMap = {}, //links that are in the inner left side
@@ -104,6 +108,9 @@ export async function produceLayoutGraph(
     const outPort = nodeMap[source].outputNode.size > maxPort;
     let newLink = {
       id: `${edge.source}-${edge.target}`,
+      id4Style: `${layoutNodeIdMap[edge.source]}->${
+        layoutNodeIdMap[edge.target]
+      }`,
       sources: [outPort ? source + "-out-port" : source],
       targets: [inPort ? target + "-in-port" : target],
       arrowheadStyle: "fill: #333; stroke: #333;",
@@ -130,7 +137,6 @@ export async function produceLayoutGraph(
 
   oldEleMap = newEleMap;
   newEleMap = {};
-
   return generateLayout(newNodes, newLinks, newElkNodeMap, layoutOptions);
 }
 
@@ -209,17 +215,22 @@ export function generateElkNodeMap(elkNodeList, elkNodeMap): void {
   });
 }
 
-// export function generateElkNodesList(elkNodeMap, elkNodeList): void {
-//   for (let key in elkNodeMap) {
-//     if ("id" in elkNodeMap[key]) {
-//       let subList = [];
-//       generateElkNodesList(elkNodeMap[key]["id"], subList);
-//       elkNodeList.push(subList);
-//     } else {
-//       elkNodeList.push(elkNodeMap[key]);
-//     }
-//   }
-// }
+function generateLayoutNodeIdFromGroups(
+  layoutNodeIdMap: any,
+  groups: any
+): void {
+  function addMap(id, parentId = "") {
+    if (parentId.length > 0) {
+      layoutNodeIdMap[id] = parentId + "-" + layoutNodeIdMap[id];
+    }
+    if (groups.hasOwnProperty(id)) {
+      for (let child of groups[id]) {
+        addMap(child, parentId + layoutNodeIdMap[id]);
+      }
+    }
+  }
+  addMap("root");
+}
 
 export const generateNode = (
   node: BaseNode,
@@ -245,6 +256,7 @@ export const generateNode = (
   }
   return {
     id: node.id,
+    id4Style: layoutNodeIdMap[node.id],
     parent: node.parent,
     label: node.displayedName,
     shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
@@ -278,9 +290,9 @@ function processNodes(
       //为group节点注入子节点及边
       let children = [];
       let edges = [];
-      const parentId = nodeId;
-      let subNodes = groups[parentId]["nodes"];
-      subNodes.forEach((id) => {
+      let parentId = nodeId;
+      let subNodes = groups[parentId];
+      for (let id of subNodes) {
         const node = nodeMap[id];
         let inPort = false,
           outPort = false;
@@ -288,13 +300,14 @@ function processNodes(
         outPort = nodeMap[id].outputNode.size > maxPort;
         let child = generateNode(node, inPort, outPort);
         processChildren(id, child, children);
-        const source = id;
+        let source = id;
         if (linkMap.hasOwnProperty(source)) {
           linkMap[source].forEach((target) => {
             const inPort = nodeMap[target].inputNode.size > maxPort;
             const outPort = nodeMap[source].outputNode.size > maxPort;
             let edge = {
               id: `${source}-${target}`,
+              id4Style: `${layoutNodeIdMap[source]}->${layoutNodeIdMap[target]}`,
               sources: [outPort ? source + "-out-port" : source],
               targets: [inPort ? target + "-in-port" : target],
               arrowheadStyle: "fill: #333; stroke: #333;",
@@ -304,12 +317,13 @@ function processNodes(
             edges.push(edge);
           });
         }
-      });
+      }
       if (portMode) {
         if (innerLeftLinkMap.hasOwnProperty(parentId)) {
           innerLeftLinkMap[parentId].forEach((target, i) => {
             let edge = {
               id: `__${i}__${parentId}-${target}`,
+              id4Style: `__${i}__${layoutNodeIdMap[parentId]}->${layoutNodeIdMap[target]}`,
               sources: [parentId + "-in-port"],
               targets: [target + "-in-port"],
               arrowheadStyle: "fill: #333; stroke: #333;",
@@ -323,6 +337,7 @@ function processNodes(
           innerRightLinkMap[parentId].forEach((source, i) => {
             let edge = {
               id: `__${i}__${source}-${parentId}`,
+              id4Style: `__${i}__${layoutNodeIdMap[source]}-${layoutNodeIdMap[parentId]}`,
               sources: [source + "-out-port"],
               targets: [parentId + "-out-port"],
               arrowheadStyle: "fill: #333; stroke: #333;",
@@ -340,6 +355,7 @@ function processNodes(
     restoreFromOldEleMap(newNode);
     newNodes.push(newNode);
   };
+
   for (let i = 0; i < displayedNodes.length; i++) {
     const nodeId = displayedNodes[i];
     const node = nodeMap[nodeId];

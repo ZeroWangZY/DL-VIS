@@ -76,22 +76,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           return;
         }
         node.classed("dragging", false);
-
-        //id: node.parent+"-"+node.id
-        const [nodeParent, nodeID] = node.node().id.split("-");
         let toEditNode = elkNodeMap;
-        if (nodeParent !== "___root___") {
-          nodeParent.split("/").forEach((parent) => {
-            toEditNode = toEditNode[parent];
-            if (toEditNode === undefined) {
-              editLayoutGraph();
-              return;
-            } else if (toEditNode.hasOwnProperty("children")) {
-              toEditNode = toEditNode["children"];
-            }
-          });
-        }
-        toEditNode = toEditNode[nodeID];
+
+        const nodeId = node.node().id;
+
+        nodeId.split("-").forEach((id) => {
+          toEditNode = toEditNode[id];
+        });
         toEditNode["x"] = d3.event.x;
         toEditNode["y"] = d3.event.y;
         editLayoutGraph();
@@ -109,16 +100,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               return;
             }
 
-            //考虑到d3.select的语法限制，需要将id中的'/'替换为'-'
-            const selectContent = `.edgePaths .id_${d.data.id
-              .split("/")
-              .join("-")} path`;
+            const selectContent = `.${d.data.id4Style} path`;
             return (
               <g
                 className={`node ${d.data.class} ${
                   d.data.expand ? "expanded-node" : "child-node"
                 }`}
-                id={d.data.parent + "-" + d.data.id}
+                id={d.data.id4Style}
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onClick={() => handleClick(d.data.id)}
