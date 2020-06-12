@@ -35,6 +35,9 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
   const selectedNode = nodeMap[selectedNodeId];
   const classes = useStyles();
 
+  const getDisplayedName = (nodeId) => {
+    return nodeMap[nodeId].displayedName;
+  };
   return (
     <div className={"info-card"}>
       <Card className={"info-card root"}>
@@ -105,9 +108,11 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
           <Typography className={classes.title}>
             {"Inputs: (" + `${selectedNode.inputNode.size}` + ")"}
           </Typography>
-          {Array.from(selectedNode.outputNode).map((d, i) => (
+          {Array.from(selectedNode.inputNode).map((d, i) => (
             <Typography className={classes.content} key={i}>
-              {(d as string).length <= 25 ? d : d.slice(0, 25) + "..."}
+              {getDisplayedName(d).length <= 25
+                ? getDisplayedName(d)
+                : getDisplayedName(d).slice(0, 25) + "..."}
             </Typography>
           ))}
           <Typography className={classes.title}>
@@ -115,7 +120,9 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
           </Typography>
           {Array.from(selectedNode.outputNode).map((d, i) => (
             <Typography className={classes.content} key={i}>
-              {(d as string).length <= 25 ? d : d.slice(0, 25) + "..."}
+              {getDisplayedName(d).length <= 25
+                ? getDisplayedName(d)
+                : getDisplayedName(d).slice(0, 25) + "..."}
             </Typography>
           ))}
         </CardContent>

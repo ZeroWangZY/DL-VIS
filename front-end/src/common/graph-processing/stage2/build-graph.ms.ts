@@ -1,30 +1,21 @@
 // 这里开始从pb(即RawGraph)构建数据结构
 import { RawGraph, RawNode } from "../stage1/raw-graph.ms.type";
 import {
-  NodeDef,
   AbstractNode,
-  LayerType,
   OperationNode,
   GroupNode,
-  LayerNode,
   DataNode,
   DataType,
   ProcessedGraph,
   OperationNodeImp,
   GroupNodeImp,
   DataNodeImp,
-  LayerNodeImp,
   ProcessedGraphImp,
   SCOPE_DELIM,
-  END_PATTERNS,
-  VARIABLE_PATTERNS,
-  LAYER_PATTERNS,
   NodeType,
 } from "./processed-graph";
-// import { wrapTaskWithTimeLogger } from "../utils";
 
 const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
-// import { wrapTaskWithTimeLogger } from "../utils";
 
 function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataNode {
   const displayedName = rNode.opType + rNode.name
@@ -109,8 +100,8 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
     for (let input of inputs) {
       if (input.name === "9220") continue;
       let newId = input.name;
-      let parameterNode = parameterNodeName.has(input.name) ? true : false;
-      let constValNode = constValNodeName.has(input.name) ? true : false;
+      let parameterNode = parameterNodeName.has(input.name)
+      let constValNode = constValNodeName.has(input.name)
 
       if (!parameterNode && !constValNode)
         inputInfo.add(input.name + "_Input2_" + rNode.name)
@@ -119,31 +110,34 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
         const displayedName = input.name
         newId = input.name + "_Input2_" + rNode.name; // 新的Id
         let dataType = DataType.PARAMETER;
-        const pNode = new DataNodeImp({
+        const dataNode = new DataNodeImp({
           id: newId,
           dataType: dataType,
           opts: { displayedName },
         });
-        pGraph.nodeMap[pNode.id] = pNode;
+        pGraph.nodeMap[dataNode.id] = dataNode;
       }
 
       if (constValNode) {
         const displayedName = input.name;
-        let auxiliary = (pGraph.nodeMap[rNode.name] as OperationNode).auxiliary
-        auxiliary.add(input.name) // 附属节点
-
-        const pNode = new DataNodeImp({
+        
+        const dataNode = new DataNodeImp({
           id: input.name,
           dataType: DataType.CONST,
           opts: { displayedName },
         });
-        pGraph.nodeMap[pNode.id] = pNode;
+
+        let auxiliary = (pGraph.nodeMap[rNode.name] as OperationNode).auxiliary
+        auxiliary.add(dataNode.id) // 附属节点
+        pGraph.nodeMap[dataNode.id] = dataNode;
       }
       if (!constValNode)
         pGraph.rawEdges.push({
           source: newId,
           target: rNode.name
         })
+        pNode.inputNode.add(newId)
+        pGraph.nodeMap[newId].outputNode.add(pNode.id)
     }
   }
 
@@ -151,8 +145,6 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
   buildHierarchy(rGraph, pGraph, inputNodeName) // 构建层次
   buildModule(pGraph)
 
-  // console.log(rGraph);
-  // console.log(pGraph);
   processGroupNode(pGraph, inputInfo);  // 建立层次结束后，重新处理GroupNode，增加属性
   processOperationNode(rGraph, pGraph);  // 建立层次结束后，重新处理OperationNode，增加属性
   processDataNode(rGraph, pGraph, parameterNodeName);
@@ -181,7 +173,7 @@ function processDataNode(rGraph: RawGraph, pGraph: ProcessedGraph, parameterNode
 
     if (parameterNodeName.has(splitName[0])) { // 处理nodeMap[newNodeName]
       // 比如：data_Input2_1; 
-      (nodeMap[newNodeName] as DataNodeImp).outputNode.add(nodeMap[splitName[1]].displayedName); // 输出
+      (nodeMap[newNodeName] as DataNodeImp).outputNode.add(nodeMap[splitName[1]].id); // 输出
       (nodeMap[newNodeName] as DataNodeImp).typeAttibute = parametersMap.get(splitName[0]); // parameter的type属性
     }
   }
@@ -195,24 +187,10 @@ function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph) {
     if (node.input === undefined) continue;
 
     for (let input of node.input) {
-      let inputNodeName = input.name;
-      if ((nodeMap[inputNodeName] instanceof DataNodeImp) &&
-        (nodeMap[inputNodeName] as DataNodeImp).dataType === DataType.CONST)
+      let inputId = input.name;
+      if ((nodeMap[inputId] instanceof DataNodeImp) &&
+        (nodeMap[inputId] as DataNodeImp).dataType === DataType.CONST)
         continue;
-        
-      // 不是附属节点，则将inputNodeName加入pGraph的inputNode中
-      if (nodeMap[nodeName] instanceof OperationNodeImp) {
-        let displayedName = inputNodeName;
-        if (nodeMap[inputNodeName] instanceof OperationNodeImp)
-          displayedName = (nodeMap[inputNodeName] as OperationNodeImp).displayedName;
-        (nodeMap[nodeName] as OperationNodeImp).inputNode.add(displayedName);
-      }
-
-      // 同时处理一下output
-      if (nodeMap[inputNodeName] instanceof OperationNodeImp) {
-        let displayedName = nodeMap[nodeName].displayedName;
-        (nodeMap[inputNodeName] as OperationNodeImp).outputNode.add(displayedName);
-      }
     }
   }
 }
@@ -247,10 +225,10 @@ function processGroupNode(pGraph: ProcessedGraph, inputInfo: Set<string>) {
     inputInfo.forEach((info) => {
       let [source, target] = (info as string).split("_Input2_");
       if (childOperationNode.has(source) && !childOperationNode.has(target)) { // 则为外部输入节点
-        (node as GroupNode).outputNode.add(nodeMap[target].displayedName);
+        (node as GroupNode).outputNode.add(nodeMap[target].id);
       }
       if (childOperationNode.has(target) && !childOperationNode.has(source)) { // 则为外部输出节点
-        (node as GroupNode).inputNode.add(nodeMap[source].displayedName);
+        (node as GroupNode).inputNode.add(nodeMap[source].id);
       }
     })
   }
