@@ -22,6 +22,7 @@ import { modifyData } from '../../store/layerLevel';
 import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
 import MiniMap from '../MiniMap/MiniMap';
+import PopoverBox from '../PopoverBox/PopoverBox';
 import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
 import { generateNodeStyles, generateEdgeStyles, getColor, generateAcrossModuleEdgeStyles } from '../../common/style/graph';
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard"
@@ -368,6 +369,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       let clickNode;
       if (!selectedG.nodes().length) {
         let tempNode = e.target.parentNode;
+        console.log(tempNode)
         while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
           tempNode = tempNode.parentNode;
         }
@@ -1104,7 +1106,23 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         // outputSVG_Copy={(outputSVGRef.current) ? (outputSVGRef.current as any).cloneNode(true) : null}
         />
       </div>
-      <Popover
+      <PopoverBox
+        isPopoverOpen={isPopoverOpen}
+        anchorEl={anchorEl}
+        currentNodetype={currentNodetype}
+        handleClosePopoverWithoutDeselect={handleClosePopoverWithoutDeselect}
+        handleClosePopover={handleClosePopover}
+        handleAggregate={handleAggregate}
+        handleUngroup={handleUngroup}
+        handleNodetypeChange={handleNodetypeChange}
+        currentLayertype={currentLayertype}
+        handleLayertypeChange={handleLayertypeChange}
+        currentShowLineChart={currentShowLineChart}
+        handleLineChartToggle={handleLineChartToggle}
+        handleModifyNodetype={handleModifyNodetype}
+        handleEnterLayer={handleEnterLayer}
+      />
+      {/* <Popover
         open={isPopoverOpen}
         anchorEl={anchorEl}
         onClose={currentNodetype < 0 ? handleClosePopoverWithoutDeselect : handleClosePopover}//多选时关闭不取消已勾选项
@@ -1265,6 +1283,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           </CardContent>
         </Card>
       </Popover>
+     */}
     </div >
   );
 }

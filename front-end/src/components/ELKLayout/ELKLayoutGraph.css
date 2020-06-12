@@ -24,18 +24,28 @@ rect.behind-text {
     opacity: 1;
 }
 
-.node rect.elk-label-container.expanded {
+.node.expanded-node rect.elk-label-container {
     fill: #b2b2b2;
     fill-opacity: 0.2;
     stroke-width: 1px;
     stroke: #c7c7c7;
 }
+
+.node.expanded-node rect.elk-label-container.focus {
+    stroke-width: 3px;
+    stroke:blue;
+}
+
 .node .elk-label-container.focus{
     stroke-width: 3px;
     stroke:blue;
 }
 
-
+/* 选中样式 */
+.selected .elk-label-container {
+    fill: #5d83be;
+    stroke: #333;
+}
 /* .nodeitem-0 ellipse.label-container {
     
 } */

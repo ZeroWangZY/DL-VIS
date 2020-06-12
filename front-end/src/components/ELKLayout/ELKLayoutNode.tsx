@@ -16,6 +16,7 @@ import { useGlobalConfigurations } from "../../store/global-configuration";
 interface Props {
   setSelectedNodeId: { (nodeId: string): void };
   selectedNodeId: string | null;
+  handleRightClick: { (e: any): void }
 }
 
 const antiShakeDistance = 2;
@@ -106,7 +107,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               <g
                 className={`node ${d.data.class} ${
                   d.data.expand ? "expanded-node" : "child-node"
-                }`}
+                  }`}
                 id={d.data.id4Style}
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
@@ -136,21 +137,21 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                     ry={d.style.ellipseY}
                   ></ellipse>
                 ) : (
-                  <rect
-                    className={
-                      d.data.id === selectedNodeId
-                        ? "elk-label-container focus"
-                        : "elk-label-container"
-                    }
-                    width={d.style.rectWidth}
-                    height={d.style.rectHeight}
-                    transform={`translate(-${d.style.rectWidth / 2}, -${
-                      d.style.rectHeight / 2
-                    })`}
-                    fillOpacity={d.data.expand ? 0 : 1}
-                    pointerEvents="visibleStroke"
-                  ></rect>
-                )}
+                    <rect
+                      className={
+                        d.data.id === selectedNodeId
+                          ? "elk-label-container focus"
+                          : "elk-label-container"
+                      }
+                      width={d.style.rectWidth}
+                      height={d.style.rectHeight}
+                      transform={`translate(-${d.style.rectWidth / 2}, -${
+                        d.style.rectHeight / 2
+                        })`}
+                      fillOpacity={d.data.expand ? 0 : 1}
+                      pointerEvents="visibleStroke"
+                    ></rect>
+                  )}
                 <g
                   className="my-label"
                   transform={
@@ -158,6 +159,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       ? `translate(0,-${d.style.rectHeight / 2})`
                       : null
                   }
+                  onContextMenu={(e) => handleRightClick(e)}
                 >
                   {d.data.expand ? (
                     <rect
@@ -166,7 +168,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       height={10}
                       transform={`translate(-${d.data.textWidth / 2}, -${
                         d.style.rectHeight / 2 + 5
-                      })`}
+                        })`}
                       stroke="none"
                     ></rect>
                   ) : null}
@@ -179,19 +181,19 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       {d.data.label}
                     </text>
                   ) : (
-                    <text
-                      dominantBaseline={"middle"}
-                      y={
-                        d.data.expand ? `${-d.style.rectHeight / 2 + 2}` : null
-                      }
-                    >
-                      {d.data.label}
-                      {!d.data.expand &&
-                        (d.data.type === NodeType.GROUP ||
-                          d.data.type === NodeType.LAYER) &&
-                        "+"}
-                    </text>
-                  )}
+                      <text
+                        dominantBaseline={"middle"}
+                        y={
+                          d.data.expand ? `${-d.style.rectHeight / 2 + 2}` : null
+                        }
+                      >
+                        {d.data.label}
+                        {!d.data.expand &&
+                          (d.data.type === NodeType.GROUP ||
+                            d.data.type === NodeType.LAYER) &&
+                          "+"}
+                      </text>
+                    )}
                 </g>
               </g>
             );
