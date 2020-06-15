@@ -22,9 +22,9 @@ export async function produceLayoutGraph(
   const { nodeMap, visNodes, visEdges } = visGraph;
   //group存储每个节点的子节点（可见）
   let groups = { root: new Set() };
-  layoutNodeIdMap = { root: "" }; //format: ...-parent-originalNodeId
+  layoutNodeIdMap = { root: "" };
   visNodes.forEach((nodeId, i) => {
-    layoutNodeIdMap[nodeId] = "no_"+i;//nodeId.split("/").join("-"); //初始化
+    layoutNodeIdMap[nodeId] = idConverter(i); //初始化
     const node = nodeMap[nodeId];
     if (node.parent !== "___root___") {
       if (!groups.hasOwnProperty(node.parent)) {
@@ -193,6 +193,9 @@ function addLinkMap(linkMap, source, target): void {
   }
 }
 
+function idConverter(index: number): string {
+  return "no_" + index;
+}
 function restoreFromOldEleMap(newEle): void {
   let oldEle = oldEleMap[newEle.id];
   if (oldEle) {
@@ -203,13 +206,15 @@ function restoreFromOldEleMap(newEle): void {
 }
 
 export function generateElkNodeMap(elkNodeList, elkNodeMap): void {
-  elkNodeList.forEach((node) => {
+  elkNodeList.forEach((node, i) => {
+    const tmp = layoutNodeIdMap[node.id].split("-");
+    const id = tmp[tmp.length - 1];
     if (node.hasOwnProperty("children")) {
       let subMap = {};
       generateElkNodeMap(node["children"], subMap);
-      elkNodeMap[node.id] = subMap;
+      elkNodeMap[id] = subMap;
     } else {
-      elkNodeMap[node.id] = node;
+      elkNodeMap[id] = node;
     }
   });
 }
@@ -218,17 +223,18 @@ function generateLayoutNodeIdFromGroups(
   layoutNodeIdMap: any,
   groups: any
 ): void {
-  function addMap(id, parentId = "") {
+  function addMap(id, parentId) {
     if (parentId.length > 0) {
-      layoutNodeIdMap[id] = parentId + "-" + layoutNodeIdMap[id];
+      parentId += "-";
     }
+    layoutNodeIdMap[id] = parentId + layoutNodeIdMap[id];
     if (groups.hasOwnProperty(id)) {
       for (let child of groups[id]) {
-        addMap(child, parentId + layoutNodeIdMap[id]);
+        addMap(child, layoutNodeIdMap[id]);
       }
     }
   }
-  addMap("root");
+  addMap("root", layoutNodeIdMap["root"]);
 }
 
 export const generateNode = (

@@ -18,6 +18,8 @@ interface Props {
   selectedNodeId: string | null;
 }
 
+const antiShakeDistance = 2;
+
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const { setSelectedNodeId, selectedNodeId } = props;
   const visGraph = useVisGraph();
@@ -54,7 +56,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     //目前仅支持拖拽叶节点
     d3.selectAll("g .node").on(".drag", null);
     let selectionNodes = d3.selectAll("g .child-node");
-    console.log(selectionNodes);
     if (selectionNodes.size() === 0) return;
     selectionNodes.call(d3.drag().on("start", dragStarted));
 
@@ -63,7 +64,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       d3.event.on("drag", dragged).on("end", ended);
       const { x, y } = d3.event;
       function dragged(): void {
-        if (Math.abs(d3.event.x - x) < 5 || Math.abs(d3.event.y - y) < 5) {
+        if (Math.abs(d3.event.x - x) < antiShakeDistance || Math.abs(d3.event.y - y) < antiShakeDistance) {
           return;
         }
         node
@@ -72,7 +73,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
 
       function ended() {
-        if (Math.abs(d3.event.x - x) < 5 || Math.abs(d3.event.y - y) < 5) {
+        if (Math.abs(d3.event.x - x) < antiShakeDistance || Math.abs(d3.event.y - y) < antiShakeDistance) {
           return;
         }
         node.classed("dragging", false);
@@ -80,7 +81,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
         const nodeId = node.node().id;
 
-        //
         nodeId.split("-").forEach((id) => {
           toEditNode = toEditNode[id];
         });
