@@ -15,9 +15,10 @@ import { NodeType } from "../stage2/processed-graph";
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
+  let map_id4Style_Id = new Map();
   generateEdgeStyles(layoutGraph.edges, newLinkStyles);
-  generateNodeStyles(layoutGraph.children, newNodeStyles, newLinkStyles);
-  return new StyledGraphImp(newNodeStyles, newLinkStyles);
+  generateNodeStyles(map_id4Style_Id, layoutGraph.children, newNodeStyles, newLinkStyles);
+  return new StyledGraphImp(newNodeStyles, newLinkStyles, map_id4Style_Id);
 }
 
 //直接线性遍历给定的边数组，将对应的每条边的样式添加到已有样式数组
@@ -38,16 +39,16 @@ export const generateEdgeStyles = (
           bendPoints === undefined
             ? []
             : bendPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
+              x: ofs.x + point.x,
+              y: ofs.y + point.y,
+            })),
         junctionPoints:
           junctionPoints === undefined
             ? []
             : junctionPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
+              x: ofs.x + point.x,
+              y: ofs.y + point.y,
+            })),
       },
       style: {
         startPointX: spring(ofs.x + startPoint.x),
@@ -61,6 +62,7 @@ export const generateEdgeStyles = (
 
 //递归遍历给定的elk子节点的树，生成包含的所有点的样式以及内部边的样式
 export const generateNodeStyles = (
+  map_id4Style_Id: Map<string, string>,
   nodes: Array<LayoutNode>,
   nodeStyles: Array<Style>,
   linkStyles: Array<Style>,
@@ -71,31 +73,31 @@ export const generateNodeStyles = (
       key: node.id,
       data: node.hasOwnProperty("label")
         ? {
-            class: node.class,
-            type: node.type,
-            id: node.id,
-            id4Style: node.id4Style,
-            parent: node.parent,
-            label: node.label,
-            expand: node.expand,
-            textWidth:
-              textSize(
-                node.label +
-                  (!node.expand &&
-                  (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
-                    ? "+"
-                    : "")
-              ) + 2,
-          }
+          class: node.class,
+          type: node.type,
+          id: node.id,
+          id4Style: node.id4Style,
+          parent: node.parent,
+          label: node.label,
+          expand: node.expand,
+          textWidth:
+            textSize(
+              node.label +
+              (!node.expand &&
+                (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
+                ? "+"
+                : "")
+            ) + 2,
+        }
         : {
-            class: "dummy",
-            type: "dummy",
-            id: node.id,
-            id4Style: node.id4Style,
-            parent: node.parent,
-            label: node.id,
-            expand: node.expand,
-          },
+          class: "dummy",
+          type: "dummy",
+          id: node.id,
+          id4Style: node.id4Style,
+          parent: node.parent,
+          label: node.id,
+          expand: node.expand,
+        },
       style: {
         gNodeTransX: spring(ofs.x + node.x + node.width / 2),
         gNodeTransY: spring(ofs.y + node.y + node.height / 2),
@@ -105,13 +107,14 @@ export const generateNodeStyles = (
         ellipseY: spring(node.height / 4),
       },
     });
+    map_id4Style_Id.set(node.id4Style, node.id);
     if (node.hasOwnProperty("children")) {
       //有"children"属性<=>有"edge"属性
       generateEdgeStyles(node["edges"], linkStyles, {
         x: ofs.x + node.x,
         y: ofs.y + node.y,
       });
-      generateNodeStyles(node["children"], nodeStyles, linkStyles, {
+      generateNodeStyles(map_id4Style_Id, node["children"], nodeStyles, linkStyles, {
         x: ofs.x + node.x,
         y: ofs.y + node.y,
       });

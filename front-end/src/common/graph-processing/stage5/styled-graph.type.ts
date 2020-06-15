@@ -32,14 +32,17 @@ type LinkStyles = Array<Style>
 export interface StyledGraph {
   nodeStyles: NodeStyles;
   linkStyles: LinkStyles;
+  map_id4Style_Id: Map<string, string>;
 }
 
 export class StyledGraphImp implements StyledGraph {
   nodeStyles: NodeStyles;
   linkStyles: LinkStyles;
+  map_id4Style_Id: Map<string, string>;
 
-  constructor(nodeStyles: NodeStyles, linkStyles: LinkStyles) {
+  constructor(nodeStyles: NodeStyles, linkStyles: LinkStyles, map_id4Style_Id: Map<string, string>) {
     this.nodeStyles = nodeStyles;
     this.linkStyles = linkStyles;
+    this.map_id4Style_Id = map_id4Style_Id;
   }
 }

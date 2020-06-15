@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { NodeType, Attribute, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
 import { useGlobalConfigurations } from '../../store/global-configuration'
+import { useStyledGraph } from "../../store/styledGraph";
 import { ModifyLineData } from '../../types/layerLevel'
 import { useHistory, useLocation } from "react-router-dom";
 import { modifyData } from '../../store/layerLevel';
@@ -20,6 +21,11 @@ window["ELK"] = ELK;
 
 const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
   let iteration = props.iteration;
+  const styledGraph = useStyledGraph();
+  let map_id4Style_Id = null;
+  if (styledGraph)
+    map_id4Style_Id = styledGraph.map_id4Style_Id;
+    
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
@@ -57,7 +63,6 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
 
 
   const handleAggregate = () => {
-    console.log("handleAggregate")
     let inputNode = d3.select(`#group-name-input`).node() as HTMLInputElement;
     let groupName = inputNode.value;
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
@@ -73,7 +78,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
       let parentId = null;
       let aggregateFlag = true;
       selectedG.each(function () {
-        let nodeId = d3.select(this).attr("id").replace(/-/g, '/');// 还原Id
+        // let nodeId = d3.select(this).attr("id").replace(/-/g, '/');// 还原Id
+        let nodeId = map_id4Style_Id.get(d3.select(this).attr("id"));
         let node = graphForLayout.nodeMap[nodeId];
         selectedNodeId.push(nodeId);
         // 找到共同父节点 如果父节点不相同则不能聚合
@@ -105,7 +111,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
   const handleUngroup = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
-      let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      // let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      let nodeId = map_id4Style_Id.get(d3.select(this).attr("id"))
       modifyProcessedGraph(
         ProcessedGraphModificationType.DELETE_NODE,
         {
@@ -119,7 +126,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
   const handleModifyNodetype = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
-      let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      // let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      let nodeId = map_id4Style_Id.get(d3.select(this).attr("id"));
       let oldNode = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;
       console.log(nodeId);
       // 判断是否修改
@@ -289,7 +297,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
     alert
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     let node = selectedG.node();
-    let nodeId = d3.select(node).attr("id");
+    // let nodeId = d3.select(node).attr("id");
+    let nodeId = map_id4Style_Id.get(d3.select(node).attr("id"));
     let lineData = await fetchAndGetLayerInfo({
       "STEP_FROM": iteration,
       "STEP_TO": iteration + 100
