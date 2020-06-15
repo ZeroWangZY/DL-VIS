@@ -109,7 +109,7 @@ export default function PreprocessingPluginsSelector() {
               onChange={toggleProcessedGraphOptimizer}
             />
           }
-          label={"图处理优化"}
+          label={"ProcessedGraphOptimizer"}
         />
         {isElkLayout && (
           <FormControlLabel

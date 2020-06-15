@@ -429,7 +429,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
   // 点击空白处取消所有选择
   const handleBgClick = () => {
-    node.classed("previouslySelected", false);
+    // node.classed("previouslySelected", false);
     setSelectedNodeId(null);
   }
 

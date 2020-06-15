@@ -28,16 +28,18 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
   selectedNodeId;
 }) => {
   const { selectedNodeId } = props;
-  if (!selectedNodeId) return null;
-
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
   const selectedNode = nodeMap[selectedNodeId];
   const classes = useStyles();
 
+  if (!selectedNodeId || !selectedNode) return null;
+
+
   const getDisplayedName = (nodeId) => {
     return nodeMap[nodeId].displayedName;
   };
+  
   return (
     <div className={"info-card"}>
       <Card className={"info-card root"}>

@@ -1,4 +1,4 @@
-import { ProcessedGraph, GroupNode, NodeType, OperationNode, LayerNodeImp, LayerType } from "./processed-graph";
+import { ProcessedGraph, GroupNode, NodeType, OperationNode, LayerNodeImp, LayerType, DataNode, NodeMap, ROOT_SCOPE, GroupNodeImp, NodeId } from "./processed-graph";
 
 const aggreOptimization = (hGraph: ProcessedGraph): void => {//更改无意义边跨越节点的命名空间以简化视图
   //寻找
@@ -57,7 +57,7 @@ const aggreOptimization = (hGraph: ProcessedGraph): void => {//更改无意义�
 
     //修改
     //1:节点当前所在父节点的children中移除该节点
-    if (node.parent == "___root___") {
+    if (node.parent == ROOT_SCOPE) {
       if (hGraph.rootNode.children) {
         hGraph.rootNode.children.delete(node.id);
       }
@@ -111,13 +111,102 @@ const layerRecognition = (hGraph: ProcessedGraph): void => {
 
 }
 
+function deloop(processedGraph: ProcessedGraph): void {
+  const traverseStack = _findFirstInputNodes(processedGraph)
+  const { nodeMap } = processedGraph
+  const visitedNodes = new Set<string>()
+  const visitedScopes = new Set<string>()
+  let lastScope = null
+  while (traverseStack.length > 0) {
+    const currentNode = traverseStack.pop()
+    let currentScope = currentNode.parent
+    if (currentScope !== lastScope && visitedScopes.has(currentScope) && !inheritanceScope(currentScope, lastScope, nodeMap)) {
+      currentScope = splitScope(currentScope, visitedNodes, nodeMap)
+      console.log(currentNode)
+    }
+    visitedScopes.add(currentScope)
+    lastScope = currentScope
+    for (const nextNodeId of currentNode.outputNode) {
+      if (visitedNodes.has(nextNodeId)) continue
+      const nextNode = nodeMap[nextNodeId] as OperationNode
+      traverseStack.push(nextNode)
+      visitedNodes.add(nextNodeId)
+    }
+  }
+  console.log(nodeMap)
+}
+
+
+// 将1个scope分裂成2个，一部分children包含在visitedNode里的，一部分包含不在visitedNode里的。返回新GroupNode的id
+function splitScope(scope: string, visitedNodes: Set<string>, nodeMap: NodeMap): NodeId {
+  const scopeNode = nodeMap[scope] as GroupNode
+  const newScopeChildren = new Set<string>()
+  const newScope = new GroupNodeImp({
+    id: scope + "_copy_" + Math.random().toString(36).slice(-8),
+    children: newScopeChildren,
+    opts: { displayedName: scopeNode.displayedName },
+    isModule: scopeNode.isModule,
+    parentModule: scopeNode.parentModule
+  })
+  newScope.parent = scopeNode.parent;
+  (nodeMap[scopeNode.parent] as GroupNode).children.add(newScope.id)
+  nodeMap[newScope.id] = newScope
+  for (const child of scopeNode.children) {
+    if (visitedNodes.has(child)) continue
+    scopeNode.children.delete(child)
+    newScopeChildren.add(child)
+    const childNode = nodeMap[child]
+    childNode.parent = newScope.id
+  }
+  return newScope.id
+}
+
+// 判断两个scope之间是否有包含关系，如default/conv1和default之间是有包含关系的
+function inheritanceScope(scope1, scope2, nodeMap: NodeMap): boolean {
+  let tempScope = scope1
+
+  while (tempScope !== ROOT_SCOPE) {
+    if (tempScope === scope2) return true
+    tempScope = nodeMap[tempScope].parent
+  }
+
+  tempScope = scope2
+  while (tempScope !== ROOT_SCOPE) {
+    if (tempScope === scope1) return true
+    tempScope = nodeMap[tempScope].parent
+  }
+
+  return false
+}
+
+function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
+  const { nodeMap } = processedGraph
+  const results: OperationNode[] = []
+  for (const node of Object.values(nodeMap)) {
+    // if (node.type === NodeType.OPERTATION) {
+    //   let isFirstInputOperationNode = true
+    //   for (const input of node.inputNode) {
+    //     if (nodeMap[input].type !== NodeType.DATA) {
+    //       isFirstInputOperationNode = false
+    //       break
+    //     }
+    //   }
+    //   if (isFirstInputOperationNode) results.push(node as OperationNode)
+    // }
+
+    if (node.id === "2") results.push(node as OperationNode)
+  }
+  return results
+}
+
 export default class ProcessedGraphOptimizer {
   processedGraphOptimizers = [];
 
   constructor() {
     this.processedGraphOptimizers = [
       aggreOptimization,
-      layerRecognition
+      deloop,
+      layerRecognition,
     ];
   }
 
