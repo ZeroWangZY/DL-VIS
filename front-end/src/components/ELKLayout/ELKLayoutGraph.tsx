@@ -28,6 +28,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [brushSelectedNodeId, setBrushSelectedNodeId] = useState<string[]>([]);
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const handleChangeTransform = function (transform) {
@@ -56,6 +57,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
 
 
   const handleAggregate = () => {
+    console.log("handleAggregate")
     let inputNode = d3.select(`#group-name-input`).node() as HTMLInputElement;
     let groupName = inputNode.value;
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
@@ -99,27 +101,27 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
     }
   }
 
-    // ungroup一个group node or layer node
-    const handleUngroup = () => {
-      let selectedG = d3.select(svgRef.current).selectAll("g.selected");
-      selectedG.each(function () {
-        let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-        modifyProcessedGraph(
-          ProcessedGraphModificationType.DELETE_NODE,
-          {
-            nodeId
-          }
-        );
-      })
-    }
+  // ungroup一个group node or layer node
+  const handleUngroup = () => {
+    let selectedG = d3.select(svgRef.current).selectAll("g.selected");
+    selectedG.each(function () {
+      let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      modifyProcessedGraph(
+        ProcessedGraphModificationType.DELETE_NODE,
+        {
+          nodeId
+        }
+      );
+    })
+  }
 
-      // 修改节点属性, 暂时只考虑了修改单个节点属性
+  // 修改节点属性, 暂时只考虑了修改单个节点属性
   const handleModifyNodetype = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
       let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
       let oldNode = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;
-
+      console.log(nodeId);
       // 判断是否修改
       let newNode;
       // 折线图默认全部显示，不显示的节点Id存在数组里
@@ -177,7 +179,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
   // 两种情况：
   // 1. 当前没有选中的节点，右击一个节点，如果为group node或者layer node，则可以修改节点类型或者进行ungroup
   // 2. 当前有选中的节点，右击，可以选择是否聚合
-  const handleRightClick = (e) => {
+  const handleRightClick = (e, id) => {
     console.log("handle right click")
     e.preventDefault();
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
@@ -186,15 +188,15 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
       let clickNode;
       if (!selectedG.nodes().length) {
         let tempNode = e.target.parentNode;
-        while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
+        while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodeitem") < 0) {
           tempNode = tempNode.parentNode;
         }
         clickNode = tempNode;
       } else {
         clickNode = selectedG.node();
       }
-      let nodeId = d3.select(clickNode).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-      // if(nodeId.startsWith("node_")) nodeId = nodeId.split("node_")[1];
+      // let nodeId = d3.select(clickNode).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
+      let nodeId = id;
       let node = graphForLayout.nodeMap[nodeId];
       if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
         alert("Node type modification and ungroup operation can only be applied to group node or layer node!");
@@ -413,6 +415,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
               selectedNodeId={selectedNodeId}
               setSelectedNodeId={setSelectedNodeId}
               handleRightClick={handleRightClick}
+              brushSelectedNodeId={brushSelectedNodeId}
+              setBrushSelectedNodeId={setBrushSelectedNodeId}
             />
             <ELKLayoutEdge />
           </g>

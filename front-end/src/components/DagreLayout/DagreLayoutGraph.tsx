@@ -373,6 +373,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodetype") < 0) {
           tempNode = tempNode.parentNode;
         }
+        console.log(tempNode.getAttribute("class"))
         clickNode = tempNode;
       } else {
         clickNode = selectedG.node();

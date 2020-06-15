@@ -16,13 +16,15 @@ import { useGlobalConfigurations } from "../../store/global-configuration";
 interface Props {
   setSelectedNodeId: { (nodeId: string): void };
   selectedNodeId: string | null;
-  handleRightClick: { (e: any): void }
+  handleRightClick: { (e: any, id: string): void };
+  setBrushSelectedNodeId: { (nodeIds: string[]): void };
+  brushSelectedNodeId: string[];
 }
 
 const antiShakeDistance = 2;
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
-  const { setSelectedNodeId, selectedNodeId } = props;
+  const { setSelectedNodeId, selectedNodeId, handleRightClick, setBrushSelectedNodeId, brushSelectedNodeId } = props;
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
@@ -159,7 +161,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       ? `translate(0,-${d.style.rectHeight / 2})`
                       : null
                   }
-                  onContextMenu={(e) => handleRightClick(e)}
+                  onContextMenu={(e) => handleRightClick(e, d.data.id)}
                 >
                   {d.data.expand ? (
                     <rect
