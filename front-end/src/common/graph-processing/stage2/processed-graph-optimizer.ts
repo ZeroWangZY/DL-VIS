@@ -122,16 +122,15 @@ function deloop(processedGraph: ProcessedGraph): void {
     let currentScope = currentNode.parent
     if (currentScope !== lastScope && visitedScopes.has(currentScope) && !inheritanceScope(currentScope, lastScope, nodeMap)) {
       currentScope = splitScope(currentScope, visitedNodes, nodeMap)
-      console.log(currentNode)
     }
     visitedScopes.add(currentScope)
+    visitedNodes.add(currentNode.id)
     lastScope = currentScope
     for (const nextNodeId of currentNode.outputNode) {
       if (visitedNodes.has(nextNodeId)) continue
       const nextNode = nodeMap[nextNodeId] as OperationNode
       traverseStack.push(nextNode)
-      visitedNodes.add(nextNodeId)
-    }
+    } 
   }
   console.log(nodeMap)
 }
@@ -193,7 +192,6 @@ function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
     //   }
     //   if (isFirstInputOperationNode) results.push(node as OperationNode)
     // }
-
     if (node.id === "2") results.push(node as OperationNode)
   }
   return results

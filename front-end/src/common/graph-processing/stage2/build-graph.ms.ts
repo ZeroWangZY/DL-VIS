@@ -120,7 +120,7 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
 
       if (constValNode) {
         const displayedName = input.name;
-        
+
         const dataNode = new DataNodeImp({
           id: input.name,
           dataType: DataType.CONST,
@@ -136,8 +136,7 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
           source: newId,
           target: rNode.name
         })
-        pNode.inputNode.add(newId)
-        pGraph.nodeMap[newId].outputNode.add(pNode.id)
+      pNode.inputNode.add(newId)
     }
   }
 
@@ -149,6 +148,7 @@ function _buildGraph(rGraph: RawGraph, inputInfo: Set<string>): ProcessedGraph {
   processOperationNode(rGraph, pGraph);  // 建立层次结束后，重新处理OperationNode，增加属性
   processDataNode(rGraph, pGraph, parameterNodeName);
 
+  processedOutputNode(pGraph);
   return pGraph;
 }
 
@@ -248,6 +248,17 @@ function processGroupNode(pGraph: ProcessedGraph, inputInfo: Set<string>) {
       })
     }
     return;
+  }
+}
+
+function processedOutputNode(pGraph: ProcessedGraph) {
+  const { nodeMap } = pGraph
+  for (const node of Object.values(nodeMap)) {
+    if (node.type !== NodeType.OPERTATION) continue
+    for (const input of node.inputNode) {
+      const inputNode = nodeMap[input]
+      inputNode.outputNode.add(node.id)
+    }
   }
 }
 
