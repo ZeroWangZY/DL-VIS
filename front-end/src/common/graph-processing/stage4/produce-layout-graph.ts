@@ -23,8 +23,8 @@ export async function produceLayoutGraph(
   //group存储每个节点的子节点（可见）
   let groups = { root: new Set() };
   layoutNodeIdMap = { root: "" }; //format: ...-parent-originalNodeId
-  visNodes.forEach((nodeId) => {
-    layoutNodeIdMap[nodeId] = nodeId; //初始化
+  visNodes.forEach((nodeId, i) => {
+    layoutNodeIdMap[nodeId] = "no_"+i;//nodeId.split("/").join("-"); //初始化
     const node = nodeMap[nodeId];
     if (node.parent !== "___root___") {
       if (!groups.hasOwnProperty(node.parent)) {
@@ -38,7 +38,6 @@ export async function produceLayoutGraph(
   });
 
   generateLayoutNodeIdFromGroups(layoutNodeIdMap, groups);
-  console.log(layoutNodeIdMap);
   let newLinks = [],
     linkMap = {}, //{sourceID:[target0,target1,...],...}
     innerLeftLinkMap = {}, //links that are in the inner left side
