@@ -24,25 +24,36 @@ const useStyles = makeStyles({
   },
 });
 
-const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
+const NodeInfoCard: React.FC<{ selectedNodeId: string | string[] | null }> = (props: {
   selectedNodeId;
 }) => {
+  const isStringArray = (x: any): boolean => { // 判断传入的参数是不是string[]
+    return (x !== null && typeof selectedNodeId === "object");
+  }
   const { selectedNodeId } = props;
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
-  const selectedNode = nodeMap[selectedNodeId];
+  let selectedNodes = [];
+
+  if (isStringArray(selectedNodeId)) { // 如果传入的参数是string数组
+    for (let id of selectedNodeId)
+      selectedNodes.push(nodeMap[id]);
+  } else if (selectedNodeId !== null) { // 传入的参数是string
+    selectedNodes.push(nodeMap[selectedNodeId]);
+  }
+  //  如果selectedNodeId是null，则selectedNodes是一个空数组
+  // 否则，selectedNodes是一个数组，包含所有选中节点
   const classes = useStyles();
-
-  if (!selectedNodeId || !selectedNode) return null;
-
 
   const getDisplayedName = (nodeId) => {
     return nodeMap[nodeId].displayedName;
   };
-  
-  return (
-    <div className={"info-card"}>
-      <Card className={"info-card root"}>
+
+  const getContents = (selectedNodes): any[] => { // 如果选中多个节点，则将每个节点信息依次展示
+    let contents = [];
+    for (let selectedNode of selectedNodes) {
+      if (selectedNode === undefined || selectedNode === null) continue;
+      contents.push(
         <CardContent style={{ padding: 0 }}>
           <Typography
             className={classes.title}
@@ -91,19 +102,19 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
                 d,
                 i // d:[name: "xx",value: "xx"]
               ) => (
-                <div className={"Grid"}>
-                  <div className={"Grid-cell"}>
-                    <text>
-                      {(d.name as string).length <= 15
-                        ? d.name
-                        : d.name.slice(0, 15) + "..."}
-                    </text>
+                  <div className={"Grid"}>
+                    <div className={"Grid-cell"}>
+                      <text>
+                        {(d.name as string).length <= 15
+                          ? d.name
+                          : d.name.slice(0, 15) + "..."}
+                      </text>
+                    </div>
+                    <div className={"Grid-cell"}>
+                      <text>{d.value}</text>
+                    </div>
                   </div>
-                  <div className={"Grid-cell"}>
-                    <text>{d.value}</text>
-                  </div>
-                </div>
-              ))}
+                ))}
             </>
           )}
 
@@ -128,6 +139,15 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
             </Typography>
           ))}
         </CardContent>
+      )
+    }
+    return contents;
+  }
+
+  return (
+    <div className={"info-card"}>
+      <Card className={"info-card root"}>
+        {getContents(selectedNodes)}
       </Card>
     </div>
   );

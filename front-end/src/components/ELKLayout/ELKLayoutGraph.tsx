@@ -23,10 +23,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   let iteration = props.iteration;
   const elklayoutRef = props.elklayoutRef
   const styledGraph = useStyledGraph();
-  let map_id4Style_Id = null;
-  if (styledGraph)
-    map_id4Style_Id = styledGraph.map_id4Style_Id;
-    
+
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
@@ -34,8 +31,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   const { diagnosisMode, isHiddenInterModuleEdges } = useGlobalConfigurations();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  
+  const [selectedNodeId, setSelectedNodeId] = useState<string | string[] | null>(null);
+
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const handleChangeTransform = function (transform) {
     if (transform === null || transform === undefined) return;
@@ -49,7 +46,6 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   const [currentLayertype, setCurrentLayertype] = useState<string>(null);
   const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(true);
   const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState([])
-  const [layerLineChartData, setLayerLineChartData] = useState({})
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -78,8 +74,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
       let parentId = null;
       let aggregateFlag = true;
       selectedG.each(function () {
-        // let nodeId = d3.select(this).attr("id").replace(/-/g, '/');// 还原Id
-        let nodeId = map_id4Style_Id.get(d3.select(this).attr("id"));
+        let nodeId = d3.select(this).attr("data-id")
         let node = graphForLayout.nodeMap[nodeId];
         selectedNodeId.push(nodeId);
         // 找到共同父节点 如果父节点不相同则不能聚合
@@ -111,8 +106,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   const handleUngroup = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
-      // let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-      let nodeId = map_id4Style_Id.get(d3.select(this).attr("id"))
+      let nodeId = d3.select(this).attr("data-id")
       modifyProcessedGraph(
         ProcessedGraphModificationType.DELETE_NODE,
         {
@@ -126,8 +120,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   const handleModifyNodetype = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
-      // let nodeId = d3.select(this).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-      let nodeId = map_id4Style_Id.get(d3.select(this).attr("id"));
+      let nodeId = d3.select(this).attr("data-id")
       let oldNode = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;
       // 判断是否修改
       let newNode;
@@ -187,7 +180,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   // 1. 当前没有选中的节点，右击一个节点，如果为group node或者layer node，则可以修改节点类型或者进行ungroup
   // 2. 当前有选中的节点，右击，可以选择是否聚合
   const handleRightClick = (e) => {
-    console.log("right click")
+    // console.log("right click")
     e.preventDefault();
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     // 如果当前没有选中任何节点，或者只选中了一个，则表示选中当前右击的节点进行修改
@@ -202,8 +195,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
       } else {
         clickNode = selectedG.node();
       }
-      // let nodeId = d3.select(clickNode).attr("id").replace(/-/g, '/'); //还原为nodemap中存的id格式
-      let nodeId = map_id4Style_Id.get(d3.select(clickNode).attr("id"));
+      let nodeId = d3.select(clickNode).attr("data-id")
       let node = graphForLayout.nodeMap[nodeId];
       if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
         alert("Node type modification and ungroup operation can only be applied to group node or layer node!");
@@ -296,8 +288,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
     alert
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     let node = selectedG.node();
-    // let nodeId = d3.select(node).attr("id");
-    let nodeId = map_id4Style_Id.get(d3.select(node).attr("id"));
+    let nodeId = d3.select(node).attr("data-id");
     let lineData = await fetchAndGetLayerInfo({
       "STEP_FROM": iteration,
       "STEP_TO": iteration + 100
@@ -439,6 +430,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
               selectedNodeId={selectedNodeId}
               setSelectedNodeId={setSelectedNodeId}
               handleRightClick={handleRightClick}
+              currentNotShowLineChartID={currentNotShowLineChartID}
+              iteration={iteration}
             />
             <ELKLayoutEdge />
           </g>

@@ -1,6 +1,6 @@
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 
-import { BaseNode, NodeType, LayerNodeImp } from "../stage2/processed-graph";
+import { BaseNode, NodeType, LayerNodeImp, DataNodeImp, OperationNodeImp, DataType } from "../stage2/processed-graph";
 import { VisGraph } from "../stage3/vis-graph.type";
 import {
   ElkNodeMap,
@@ -115,7 +115,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-      }`,
+        }`,
       sources: [outPort ? source + "-out-port" : source],
       targets: [inPort ? target + "-in-port" : target],
       arrowheadStyle: "fill: #333; stroke: #333;",
@@ -245,6 +245,7 @@ function generateLayoutNodeIdFromGroups(layoutNodeIdMap: any): void {
 }
 
 export const generateNode = (
+  nodeMap,
   node: BaseNode,
   inPort: boolean,
   outPort: boolean,
@@ -267,6 +268,18 @@ export const generateNode = (
       },
     });
   }
+  let parameters: DataNodeImp[] = [], constVals: DataNodeImp[] = [];
+  if (node instanceof OperationNodeImp) {
+    let auxiliary = (node as OperationNodeImp).auxiliary;
+    auxiliary.forEach((id) => {
+      if ((nodeMap[id] as DataNodeImp).dataType === DataType.CONST)
+        constVals.push(nodeMap[id])
+      else if ((nodeMap[id] as DataNodeImp).dataType === DataType.PARAMETER) {
+        parameters.push(nodeMap[id])
+      }
+    })
+  }
+
   return {
     id: node.id,
     id4Style: layoutNodeIdMap[node.id],
@@ -283,6 +296,8 @@ export const generateNode = (
       algorithm: "layered",
       //   portConstraints: "FIXED_SIDE",
     },
+    parameters: node.type === NodeType.OPERTATION ? parameters : null,
+    constVals: node.type === NodeType.OPERTATION ? constVals : null,
     expand: false,
     width: node.type === NodeType.OPERTATION ? 30 : 120,
     height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum * 5, //简单子节点数量编码
@@ -309,7 +324,7 @@ function processNodes(
         const node = nodeMap[id];
         const [inPort, outPort] = isPort(nodeMap[id], nodeMap[id]);
         let childNum = node.type == NodeType.GROUP ? node.children.size : 0;
-        let child = generateNode(node, inPort, outPort, childNum);
+        let child = generateNode(nodeMap, node, inPort, outPort, childNum);
         processChildren(id, child, children);
         let source = id;
         if (linkMap.hasOwnProperty(source)) {
@@ -375,7 +390,7 @@ function processNodes(
     }
     const [inPort, outPort] = isPort(nodeMap[nodeId], nodeMap[nodeId]);
     let childNum = node.type == NodeType.GROUP ? node.children.size : 0;
-    let newNode = generateNode(node, inPort, outPort, childNum);
+    let newNode = generateNode(nodeMap, node, inPort, outPort, childNum);
     processChildren(nodeId, newNode, newNodes);
   }
   return newNodes;

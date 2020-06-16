@@ -18,17 +18,15 @@ let nodeKeyMap = {},
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
-  let map_id4Style_Id = new Map();
   nodeKeyMap = {};
   linkKeyMap = {};
   generateEdgeStyles(layoutGraph.edges, newLinkStyles);
   generateNodeStyles(
-    map_id4Style_Id,
     layoutGraph.children,
     newNodeStyles,
     newLinkStyles
   );
-  return new StyledGraphImp(newNodeStyles, newLinkStyles, map_id4Style_Id);
+  return new StyledGraphImp(newNodeStyles, newLinkStyles);
 }
 
 //直接线性遍历给定的边数组，将对应的每条边的样式添加到已有样式数组
@@ -84,7 +82,6 @@ export const generateEdgeStyles = (
 
 //递归遍历给定的elk子节点的树，生成包含的所有点的样式以及内部边的样式
 export const generateNodeStyles = (
-  map_id4Style_Id: Map<string, string>,
   nodes: Array<LayoutNode>,
   nodeStyles: Array<Style>,
   linkStyles: Array<Style>,
@@ -102,22 +99,24 @@ export const generateNodeStyles = (
       key: `${id4Style}_${nodeKeyMap[id4Style]}`,
       data: node.hasOwnProperty("label")
         ? {
-            class: node.class,
-            type: node.type,
-            id: node.id,
-            id4Style: node.id4Style,
-            parent: node.parent,
-            label: node.label,
-            expand: node.expand,
-            textWidth:
-              textSize(
-                node.label +
-                  (!node.expand &&
-                  (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
-                    ? "+"
-                    : "")
-              ) + 2,
-          }
+          class: node.class,
+          type: node.type,
+          id: node.id,
+          id4Style: node.id4Style,
+          parent: node.parent,
+          parameters: node.type === NodeType.OPERTATION ? node.parameters : null,
+          constVals: node.type === NodeType.OPERTATION ? node.constVals : null,
+          label: node.label,
+          expand: node.expand,
+          textWidth:
+            textSize(
+              node.label +
+              (!node.expand &&
+                (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
+                ? "+"
+                : "")
+            ) + 2,
+        }
         : {
             class: "dummy",
             type: "dummy",
@@ -136,7 +135,6 @@ export const generateNodeStyles = (
         ellipseY: spring(node.height / 4),
       },
     });
-    map_id4Style_Id.set(node.id4Style, node.id);
     if (node.hasOwnProperty("children")) {
       //node有"children"属性<=>有"edge"属性
       generateEdgeStyles(node["edges"], linkStyles, {
@@ -144,7 +142,6 @@ export const generateNodeStyles = (
         y: ofs.y + node.y,
       });
       generateNodeStyles(
-        map_id4Style_Id,
         node["children"],
         nodeStyles,
         linkStyles,

@@ -4,8 +4,7 @@
     user-select: none;
 }
 
-.node rect,
-ellipse {
+.node rect,ellipse,circle {
     fill: #fff;
     stroke-width: 1px;
     stroke: #808080;

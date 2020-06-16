@@ -4,8 +4,7 @@ import {
   ElkEdge,
   ElkEdgeSection,
 } from "elkjs/lib/elk.bundled.js";
-import { NodeType } from "../stage2/processed-graph";
-
+import { NodeType, DataNodeImp } from "../stage2/processed-graph";
 export interface ElkNodeMap {
   [propName: string]: ElkNodeMap;
 }
@@ -17,18 +16,20 @@ export interface LayoutOptions {
 
 export interface LayoutNode extends ElkNode {
   //仅供后续styleGraph使用，包含了层次信息:...-grandParent-parent-child-grandChild-...
-  id4Style?: string; 
+  id4Style?: string;
   parent?: string;
   label?: string;
   shape?: string;
   class?: string;
   type?: NodeType;
   expand?: boolean;
+  parameters?: DataNodeImp[];
+  constVals?: DataNodeImp[];
 }
 
 export interface LayoutEdge extends ElkEdge {
   //仅供后续styleGraph使用，包含了层次信息:...-grandParent-parent-child-grandChild-...
-  id4Style?: string; 
+  id4Style?: string;
   sources?: string[];
   targets?: string[];
   sections?: ElkEdgeSection[];
