@@ -7,6 +7,7 @@ import {
   useProcessedGraph,
 } from "../../store/processedGraph";
 import ProcessedGraphOptimizer from "../../common/graph-processing/stage2/processed-graph-optimizer";
+import VisGraphOptimizer from '../../common/graph-processing/stage3/vis-graph-optimizer'
 import { useTfRawGraph } from "../../store/rawGraph.tf";
 import { buildGraph } from "../../common/graph-processing/stage2/build-graph.tf";
 import { produceVisGraph } from "../../common/graph-processing/stage3/produce-vis-graph";
@@ -37,6 +38,7 @@ export default function useGraphPipeline() {
 
   // RawGraph --> ProcessedGraph
   useEffect(() => {
+    console.log('RawGraph --> ProcessedGraph')
     if (isMsGraph && msRawGraph) {
       const hGraph = buildMsGraph(msRawGraph);
       if (shouldOptimizeProcessedGraph) {
@@ -59,15 +61,20 @@ export default function useGraphPipeline() {
 
   // ProcessedGraph --> VisGraph
   useEffect(() => {
+    console.log('ProcessedGraph --> VisGraph')
     if (!processedGraph) return;
 
-    const vGraph = produceVisGraph(processedGraph)
+    let vGraph = produceVisGraph(processedGraph)
+    const visGraphOptimizer = new VisGraphOptimizer()
+    vGraph = visGraphOptimizer.optimize(vGraph)
+    console.log('visGraph optimize方法执行了...')
     setVisGraph(vGraph)
 
   }, [processedGraph]);
 
   // VisGraph --> layoutGraph
   useEffect(() => {
+    console.log('VisGraph --> layoutGraph')
     if (!visGraph) return;
 
     const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, mergeEdge: shouldMergeEdge });
@@ -79,6 +86,7 @@ export default function useGraphPipeline() {
 
   // layoutGraph --> StyledGraph
   useEffect(() => {
+    console.log('layoutGraph --> StyledGraph')
     if (!layoutGraph) return;
 
     const sGraph = produceStyledGraph(layoutGraph);
