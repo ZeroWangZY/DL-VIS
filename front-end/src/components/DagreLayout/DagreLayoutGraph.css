@@ -64,48 +64,8 @@
   ry: 5;
 }
 
-/* layer node */
-/* fc */
-.nodetype-1 .fc-layer-label-g circle {
-  fill: #eee;
-  stroke: #999999;
-}
-.nodetype-1 .fc-layer-label-g line {
-  stroke: #c7c7c7;
-  stroke-width: 1px;
-  stroke-opacity: 0.7;
-}
 .nodetype-1 text {
   fill: #333;
-}
-.nodetype-1 .fc-layer-label-container {
-  fill: white;
-  stroke-width: 1px;
-  stroke:#999999;
-  /* fill-opacity: 0.7; */
-}
-/* conv */
-.nodetype-1 .conv-layer-label-g rect {
-  fill: white;
-  stroke: #999999;
-  stroke-width: 1px;
-}
-/* RNN */
-.nodetype-1 .rnn-layer-label-g rect{
-  fill: white;
-  stroke: #999999;
-  stroke-width: 1px;
-}
-.nodetype-1 .rnn-layer-label-g path{
-  fill: none;
-  stroke: #c7c7c7;
-  stroke-width: 1px;
-}
-/* other */
-.nodetype-1 .other-layer-label-g rect{
-  fill: #cbcbcb;
-  stroke: #999999;
-  stroke-width: 1px;
 }
 
 /* data node */

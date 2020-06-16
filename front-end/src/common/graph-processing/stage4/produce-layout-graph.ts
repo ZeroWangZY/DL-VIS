@@ -1,6 +1,6 @@
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 
-import { BaseNode, NodeType } from "../stage2/processed-graph";
+import { BaseNode, NodeType, LayerNodeImp } from "../stage2/processed-graph";
 import { VisGraph } from "../stage3/vis-graph.type";
 import {
   ElkNodeMap,
@@ -109,7 +109,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-      }`,
+        }`,
       sources: [outPort ? source + "-out-port" : source],
       targets: [inPort ? target + "-in-port" : target],
       arrowheadStyle: "fill: #333; stroke: #333;",
@@ -265,7 +265,7 @@ export const generateNode = (
     parent: node.parent,
     label: node.displayedName,
     shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
-    class: `nodeitem-${node.type}`,
+    class: `nodeitem-${node.type}` + (node.type === NodeType.LAYER ? ` layertype-${(node as LayerNodeImp).layerType}` : ""),
     type: node.type,
     layoutOptions: {
       algorithm: "layered",

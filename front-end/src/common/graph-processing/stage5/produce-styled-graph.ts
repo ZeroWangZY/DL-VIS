@@ -10,7 +10,7 @@ import {
   StyledGraphImp,
 } from "../stage5/styled-graph.type";
 import { spring } from "react-motion";
-import { NodeType } from "../stage2/processed-graph";
+import { NodeType, DataType } from "../stage2/processed-graph";
 
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];

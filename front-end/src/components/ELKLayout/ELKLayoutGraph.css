@@ -46,6 +46,23 @@ rect.behind-text {
     fill: #5d83be;
     stroke: #333;
 }
+
+.selected .conv-layer-label-g rect{
+    fill: #5d83be;
+    stroke: #333;
+}
+.selected .fc-layer-label-g rect{
+    fill: #5d83be;
+    stroke: #333;
+}
+.selected .rnn-layer-label-g rect{
+    fill: #5d83be;
+    stroke: #333;
+}
+.selected .other-layer-label-g rect{
+    fill: #5d83be;
+    stroke: #333;
+}
 /* .nodeitem-0 ellipse.label-container {
     
 } */
