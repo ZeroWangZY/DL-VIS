@@ -19,6 +19,8 @@ export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
   let map_id4Style_Id = new Map();
+  nodeKeyMap = {};
+  linkKeyMap = {};
   generateEdgeStyles(layoutGraph.edges, newLinkStyles);
   generateNodeStyles(
     map_id4Style_Id,
@@ -36,20 +38,25 @@ export const generateEdgeStyles = (
   styles: Array<Style>,
   ofs: Offset = { x: 0, y: 0 }
 ): void => {
-  let linksCountMap = ofsLinks(links)
+  let linksCountMap = ofsLinks(links);
   for (const link of links) {
     const { startPoint, endPoint, bendPoints } = link.sections[0];
     const { junctionPoints, id4Style } = link;
+    if (id4Style in linkKeyMap) {
+      linkKeyMap[id4Style] += 1;
+    } else {
+      linkKeyMap[id4Style] = 1;
+    }
     let linkData = [
       { x: ofs.x + startPoint.x, y: ofs.y + startPoint.y },
-      ...bendPoints === undefined
+      ...(bendPoints === undefined
         ? []
         : bendPoints.map((point) => ({
-          x: ofs.x + point.x,
-          y: ofs.y + point.y,
-        })),
+            x: ofs.x + point.x,
+            y: ofs.y + point.y,
+          }))),
       { x: ofs.x + endPoint.x, y: ofs.y + endPoint.y },
-    ]
+    ];
     styles.push({
       key: `${id4Style}_${linkKeyMap[id4Style]}`,
       data: {
@@ -60,9 +67,9 @@ export const generateEdgeStyles = (
           junctionPoints === undefined
             ? []
             : junctionPoints.map((point) => ({
-              x: ofs.x + point.x,
-              y: ofs.y + point.y,
-            })),
+                x: ofs.x + point.x,
+                y: ofs.y + point.y,
+              })),
       },
       style: {
         startPointX: spring(ofs.x + startPoint.x),
@@ -71,117 +78,10 @@ export const generateEdgeStyles = (
         endPointY: spring(ofs.y + endPoint.y),
       },
     });
-
-
   }
-  // 
+  //
 };
-function ofsLinks(edges: Array<LayoutEdge>) {
-  let xyMap = {}
-  for (const edge of edges) {
-    const { startPoint, endPoint, bendPoints } = edge.sections[0];
-    let edgeData = [
-      { x: startPoint.x, y: startPoint.y },
-      ...bendPoints === undefined ? [] : bendPoints,
-      { x: endPoint.x, y: endPoint.y },
-    ]
-    //统计线段
-    for (let i = 0; i < edgeData.length - 1; i++) {
-      let point1 = edgeData[i]
-      let point2 = edgeData[i + 1]
-      if (xyMap.hasOwnProperty(`${point1.x}-${point1.y}-${point2.x}-${point2.y}`)) {
-        xyMap[`${point1.x}-${point1.y}-${point2.x}-${point2.y}`] += 1
-      } else {
-        xyMap[`${point1.x}-${point1.y}-${point2.x}-${point2.y}`] = 1
-      }
-    }
-  }
-  return xyMap
-}
 
-const drawArcPath = (lineData, linksCountMap) => {
-  let preStrokeWidth = linksCountMap[`${lineData[0].x}-${lineData[0].y}-${lineData[1].x}-${lineData[1].y}`]
-  if (lineData.length < 3)
-    return [{
-      d: `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x} ${lineData[1].y}`,
-      strokeWidth: preStrokeWidth
-    }]
-  let prePoint
-  let nowPoint
-  let firstPoint
-  let path = []
-  let nextStrokeWidth
-  let pathBuff = [`M${lineData[0].x} ${lineData[0].y}`]
-  for (let i = 2; i < lineData.length; i++) {
-    firstPoint = lineData[i - 2]
-    prePoint = lineData[i - 1]
-    nowPoint = lineData[i]
-    preStrokeWidth = linksCountMap[`${firstPoint.x}-${firstPoint.y}-${prePoint.x}-${prePoint.y}`]
-    nextStrokeWidth = linksCountMap[`${prePoint.x}-${prePoint.y}-${nowPoint.x}-${nowPoint.y}`]
-    pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)]
-    if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
-      path.push({
-        d: pathBuff.join(' '),
-        strokeWidth: preStrokeWidth,
-        arrowhead: false
-      })
-      pathBuff = [`M${prePoint.x} ${prePoint.y}`]
-      linksCountMap[`${firstPoint.x}-${firstPoint.y}-${prePoint.x}-${prePoint.y}`] = 0
-    }
-  }
-  //最后一段path
-  pathBuff.push(`L ${nowPoint.x} ${nowPoint.y}`)
-  path.push({
-    d: pathBuff.join(' '),
-    strokeWidth: nextStrokeWidth,
-    arrowhead: true
-  })
-  return path
-}
-const hoverPath = (lineData) => {
-  if (lineData.length < 3)
-    return `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x} ${lineData[1].y}`;
-  let prePoint;
-  let nowPoint;
-  let firstPoint;
-  let path = [`M${lineData[0].x} ${lineData[0].y}`];
-  for (let i = 2; i < lineData.length; i++) {
-    firstPoint = lineData[i - 2];
-    prePoint = lineData[i - 1];
-    nowPoint = lineData[i];
-    //根据点位置判断弧度方向
-    path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)]
-  }
-  path.push(`L ${nowPoint.x} ${nowPoint.y}`);
-  return path.join(" ");
-};
-function pointToPath(firstPoint, prePoint, nowPoint) {
-  let rx = 4;
-  let ry = 4;
-  let path = []
-  if (prePoint.x > firstPoint.x) {
-    path.push(`L ${prePoint.x - rx} ${prePoint.y}`);
-    nowPoint.y > prePoint.y
-      ? path.push(`a ${rx} ${ry} 0 0 1 ${rx} ${ry}`)
-      : path.push(`a ${rx} ${ry} 0 0 0 ${rx} ${-ry}`);
-  } else if (prePoint.x < firstPoint.x) {
-    path.push(`L ${prePoint.x + rx} ${prePoint.y}`);
-    nowPoint.y > prePoint.y
-      ? path.push(`a ${rx} ${ry} 0 0 0 ${-rx} ${ry}`)
-      : path.push(`a ${rx} ${ry} 0 0 1 ${-rx} ${-ry}`);
-  } else if (prePoint.y > firstPoint.y) {
-    path.push(`L ${prePoint.x} ${prePoint.y - ry}`);
-    nowPoint.x > prePoint.x
-      ? path.push(`a ${rx} ${ry} 0 0 0 ${rx} ${ry}`)
-      : path.push(`a ${rx} ${ry} 0 0 1 ${-rx} ${ry}`);
-  } else {
-    path.push(`L ${prePoint.x} ${prePoint.y + ry}`);
-    nowPoint.x > prePoint.x
-      ? path.push(`a ${rx} ${ry} 0 0 1 ${rx} ${-ry}`)
-      : path.push(`a ${rx} ${ry} 0 0 0 ${-rx} ${-ry}`);
-  }
-  return path
-}
 //递归遍历给定的elk子节点的树，生成包含的所有点的样式以及内部边的样式
 export const generateNodeStyles = (
   map_id4Style_Id: Map<string, string>,
@@ -194,39 +94,39 @@ export const generateNodeStyles = (
     const node = nodes[i];
     const { id4Style } = node;
     if (id4Style in nodeKeyMap) {
-      linkKeyMap[id4Style] += 1;
+      nodeKeyMap[id4Style] += 1;
     } else {
-      linkKeyMap[id4Style] = 1;
+      nodeKeyMap[id4Style] = 1;
     }
     nodeStyles.push({
       key: `${id4Style}_${nodeKeyMap[id4Style]}`,
       data: node.hasOwnProperty("label")
         ? {
-          class: node.class,
-          type: node.type,
-          id: node.id,
-          id4Style: node.id4Style,
-          parent: node.parent,
-          label: node.label,
-          expand: node.expand,
-          textWidth:
-            textSize(
-              node.label +
-              (!node.expand &&
-                (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
-                ? "+"
-                : "")
-            ) + 2,
-        }
+            class: node.class,
+            type: node.type,
+            id: node.id,
+            id4Style: node.id4Style,
+            parent: node.parent,
+            label: node.label,
+            expand: node.expand,
+            textWidth:
+              textSize(
+                node.label +
+                  (!node.expand &&
+                  (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
+                    ? "+"
+                    : "")
+              ) + 2,
+          }
         : {
-          class: "dummy",
-          type: "dummy",
-          id: node.id,
-          id4Style: node.id4Style,
-          parent: node.parent,
-          label: node.id,
-          expand: node.expand,
-        },
+            class: "dummy",
+            type: "dummy",
+            id: node.id,
+            id4Style: node.id4Style,
+            parent: node.parent,
+            label: node.id,
+            expand: node.expand,
+          },
       style: {
         gNodeTransX: spring(ofs.x + node.x + node.width / 2),
         gNodeTransY: spring(ofs.y + node.y + node.height / 2),
@@ -256,6 +156,126 @@ export const generateNodeStyles = (
     }
   }
 };
+
+function ofsLinks(edges: Array<LayoutEdge>) {
+  let xyMap = {};
+  for (const edge of edges) {
+    const { startPoint, endPoint, bendPoints } = edge.sections[0];
+    let edgeData = [
+      { x: startPoint.x, y: startPoint.y },
+      ...(bendPoints === undefined ? [] : bendPoints),
+      { x: endPoint.x, y: endPoint.y },
+    ];
+    //统计线段
+    for (let i = 0; i < edgeData.length - 1; i++) {
+      let point1 = edgeData[i];
+      let point2 = edgeData[i + 1];
+      if (
+        xyMap.hasOwnProperty(`${point1.x}-${point1.y}-${point2.x}-${point2.y}`)
+      ) {
+        xyMap[`${point1.x}-${point1.y}-${point2.x}-${point2.y}`] += 1;
+      } else {
+        xyMap[`${point1.x}-${point1.y}-${point2.x}-${point2.y}`] = 1;
+      }
+    }
+  }
+  return xyMap;
+}
+
+const drawArcPath = (lineData, linksCountMap) => {
+  let preStrokeWidth =
+    linksCountMap[
+      `${lineData[0].x}-${lineData[0].y}-${lineData[1].x}-${lineData[1].y}`
+    ];
+  if (lineData.length < 3)
+    return [
+      {
+        d: `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x} ${lineData[1].y}`,
+        strokeWidth: preStrokeWidth,
+      },
+    ];
+  let prePoint;
+  let nowPoint;
+  let firstPoint;
+  let path = [];
+  let nextStrokeWidth;
+  let pathBuff = [`M${lineData[0].x} ${lineData[0].y}`];
+  for (let i = 2; i < lineData.length; i++) {
+    firstPoint = lineData[i - 2];
+    prePoint = lineData[i - 1];
+    nowPoint = lineData[i];
+    preStrokeWidth =
+      linksCountMap[
+        `${firstPoint.x}-${firstPoint.y}-${prePoint.x}-${prePoint.y}`
+      ];
+    nextStrokeWidth =
+      linksCountMap[`${prePoint.x}-${prePoint.y}-${nowPoint.x}-${nowPoint.y}`];
+    pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)];
+    if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
+      path.push({
+        d: pathBuff.join(" "),
+        strokeWidth: preStrokeWidth,
+        arrowhead: false,
+      });
+      pathBuff = [`M${prePoint.x} ${prePoint.y}`];
+      linksCountMap[
+        `${firstPoint.x}-${firstPoint.y}-${prePoint.x}-${prePoint.y}`
+      ] = 0;
+    }
+  }
+  //最后一段path
+  pathBuff.push(`L ${nowPoint.x} ${nowPoint.y}`);
+  path.push({
+    d: pathBuff.join(" "),
+    strokeWidth: nextStrokeWidth,
+    arrowhead: true,
+  });
+  return path;
+};
+const hoverPath = (lineData) => {
+  if (lineData.length < 3)
+    return `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x} ${lineData[1].y}`;
+  let prePoint;
+  let nowPoint;
+  let firstPoint;
+  let path = [`M${lineData[0].x} ${lineData[0].y}`];
+  for (let i = 2; i < lineData.length; i++) {
+    firstPoint = lineData[i - 2];
+    prePoint = lineData[i - 1];
+    nowPoint = lineData[i];
+    //根据点位置判断弧度方向
+    path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)];
+  }
+  path.push(`L ${nowPoint.x} ${nowPoint.y}`);
+  return path.join(" ");
+};
+function pointToPath(firstPoint, prePoint, nowPoint) {
+  let rx = 4;
+  let ry = 4;
+  let path = [];
+  if (prePoint.x > firstPoint.x) {
+    path.push(`L ${prePoint.x - rx} ${prePoint.y}`);
+    nowPoint.y > prePoint.y
+      ? path.push(`a ${rx} ${ry} 0 0 1 ${rx} ${ry}`)
+      : path.push(`a ${rx} ${ry} 0 0 0 ${rx} ${-ry}`);
+  } else if (prePoint.x < firstPoint.x) {
+    path.push(`L ${prePoint.x + rx} ${prePoint.y}`);
+    nowPoint.y > prePoint.y
+      ? path.push(`a ${rx} ${ry} 0 0 0 ${-rx} ${ry}`)
+      : path.push(`a ${rx} ${ry} 0 0 1 ${-rx} ${-ry}`);
+  } else if (prePoint.y > firstPoint.y) {
+    path.push(`L ${prePoint.x} ${prePoint.y - ry}`);
+    nowPoint.x > prePoint.x
+      ? path.push(`a ${rx} ${ry} 0 0 0 ${rx} ${ry}`)
+      : path.push(`a ${rx} ${ry} 0 0 1 ${-rx} ${ry}`);
+  } else {
+    path.push(`L ${prePoint.x} ${prePoint.y + ry}`);
+    nowPoint.x > prePoint.x
+      ? path.push(`a ${rx} ${ry} 0 0 1 ${rx} ${-ry}`)
+      : path.push(`a ${rx} ${ry} 0 0 0 ${-rx} ${-ry}`);
+  }
+  return path;
+}
 
 const textSize = (text: string): number => {
   //计算字符的显示长度

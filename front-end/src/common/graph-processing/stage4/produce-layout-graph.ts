@@ -39,6 +39,8 @@ export async function produceLayoutGraph(
 
   generateLayoutNodeIdFromGroups(layoutNodeIdMap);
 
+  console.log(layoutNodeIdMap);
+
   for (let i = 0; i < visEdges.length; i++) {
     const edge = visEdges[i];
     if (edge.source in nodeLinkMap) {
