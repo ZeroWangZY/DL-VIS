@@ -397,7 +397,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
-            markerUnits="strokeWidth"
+            markerUnits="userSpaceOnUse"
             markerWidth="8"
             markerHeight="6"
             orient="auto"

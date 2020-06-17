@@ -240,7 +240,8 @@ function generateLayoutNodeIdFromGroups(
 export const generateNode = (
   node: BaseNode,
   inPort: boolean,
-  outPort: boolean
+  outPort: boolean,
+  childNum: number
 ): LayoutNode => {
   let ports = [];
   if (inPort) {
@@ -275,8 +276,8 @@ export const generateNode = (
     width:
       node.type === NodeType.OPERTATION
         ? 30
-        : Math.max(node.displayedName.length, 3) * 10 + 8,
-    height: node.type === NodeType.OPERTATION ? 20 : 40,
+        : 120,
+    height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum*5, //简单子节点数量编码
     ports: ports,
   };
 };
@@ -303,7 +304,8 @@ function processNodes(
           outPort = false;
         inPort = nodeMap[id].inputNode.size > maxPort;
         outPort = nodeMap[id].outputNode.size > maxPort;
-        let child = generateNode(node, inPort, outPort);
+        let childNum = node.type==NodeType.GROUP ? node.children.size : 0
+        let child = generateNode(node, inPort, outPort, childNum);
         processChildren(id, child, children);
         let source = id;
         if (linkMap.hasOwnProperty(source)) {
@@ -372,7 +374,8 @@ function processNodes(
       outPort = false;
     inPort = nodeMap[nodeId].inputNode.size > maxPort;
     outPort = nodeMap[nodeId].outputNode.size > maxPort;
-    let newNode = generateNode(node, inPort, outPort);
+    let childNum = node.type==NodeType.GROUP ? node.children.size : 0
+    let newNode = generateNode(node, inPort, outPort, childNum);
     processChildren(nodeId, newNode, newNodes);
   }
   return newNodes;

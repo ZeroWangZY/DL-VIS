@@ -91,15 +91,31 @@ rect.behind-text {
     cursor: pointer;
 }
 
-.edgePath path {
-    stroke: #3F3F3F;
+.my-label .label {
+    padding: 5px;
+    top: 50%;
+    left: 50%;
+    position: relative;
+    transform: translateX(-50%)translateY(-50%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.edgePath .hover {
+    /* stroke: ; */
     stroke-width: 1;
+    fill: none;
+}
+.edgePath path{
+    stroke: #999999;
+    /* stroke-width: 1; */
     fill: none;
 }
 
 .edgePath circle {
-    stroke: #3F3F3F;
-    fill: #3F3F3F;
+    stroke:#999999;
+    fill:#999999;
 }
 
 .behind-text {

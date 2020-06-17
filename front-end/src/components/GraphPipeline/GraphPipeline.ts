@@ -76,7 +76,6 @@ export default function useGraphPipeline() {
   useEffect(() => {
     console.log('VisGraph --> layoutGraph')
     if (!visGraph) return;
-
     const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, mergeEdge: shouldMergeEdge });
     lGraph.then(result => {
       setLayoutGraph(result);
@@ -88,7 +87,6 @@ export default function useGraphPipeline() {
   useEffect(() => {
     console.log('layoutGraph --> StyledGraph')
     if (!layoutGraph) return;
-
     const sGraph = produceStyledGraph(layoutGraph);
     setStyledGraph(sGraph);
   }, [layoutGraph]);

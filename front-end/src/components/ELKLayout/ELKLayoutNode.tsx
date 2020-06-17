@@ -108,7 +108,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       d3.event.on("drag", dragged).on("end", ended);
       const { x, y } = d3.event;
       function dragged(): void {
-        if (Math.abs(d3.event.x - x) < antiShakeDistance || Math.abs(d3.event.y - y) < antiShakeDistance) {
+        if (
+          Math.abs(d3.event.x - x) < antiShakeDistance ||
+          Math.abs(d3.event.y - y) < antiShakeDistance
+        ) {
           return;
         }
         node
@@ -117,7 +120,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
 
       function ended() {
-        if (Math.abs(d3.event.x - x) < antiShakeDistance || Math.abs(d3.event.y - y) < antiShakeDistance) {
+        if (
+          Math.abs(d3.event.x - x) < antiShakeDistance ||
+          Math.abs(d3.event.y - y) < antiShakeDistance
+        ) {
           return;
         }
         node.classed("dragging", false);
@@ -145,7 +151,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               return;
             }
 
-            const selectContent = `.${d.data.id4Style} path`;
+            const selectContent = `.${d.data.id4Style} .hover`;
             return (
               <g
                 className={`node ${d.data.class} ${
@@ -165,7 +171,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 onMouseOut={() => {
                   d3.selectAll(selectContent)
                     .transition()
-                    .style("stroke", "#3F3F3F")
+                    .style("stroke", "none")
                     .style("stroke-width", "1");
                 }}
                 onContextMenu={(e) => handleRightClick(e)}
@@ -202,11 +208,25 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       {d.data.label}
                     </text>
                   ) : (
-                      <text dominantBaseline={"middle"} y={d.data.expand ? `${-d.style.rectHeight / 2 + 2}` : null}>
+                    <foreignObject
+                      x={-d.style.rectWidth / 2}
+                      y={
+                        d.data.expand
+                          ? -d.style.rectHeight
+                          : -d.style.rectHeight / 2
+                      }
+                      width={d.style.rectWidth}
+                      height={d.style.rectHeight}
+                    >
+                      <div className="label">
                         {d.data.label}
-                        {!d.data.expand && (d.data.type === NodeType.GROUP || d.data.type === NodeType.LAYER) && "+"}
-                      </text>
-                    )}
+                        {!d.data.expand &&
+                          (d.data.type === NodeType.GROUP ||
+                            d.data.type === NodeType.LAYER) &&
+                          "+"}
+                      </div>
+                    </foreignObject>
+                  )}
                 </g>
               </g>
             );
