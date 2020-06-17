@@ -10,18 +10,18 @@ import {
   LayoutGraphImp,
 } from "./layout-graph.type";
 
-const portMode = false;
-const maxPort = 5;
 let oldEleMap = {};
 let newEleMap = {};
-let layoutNodeIdMap = { root: "" }; //format: ...-parent-originalNodeId
+let groups = { root: new Set() };
+let layoutNodeIdMap = { root: "" };
+let nodeLinkMap = {};
 export async function produceLayoutGraph(
   visGraph: VisGraph,
   layoutOptions: LayoutOptions = { networkSimplex: true }
 ): Promise<LayoutGraph> {
   const { nodeMap, visNodes, visEdges } = visGraph;
-  //group存储每个节点的子节点（可见）
-  let groups = { root: new Set() };
+  //groups存储每个节点的儿子
+  groups = { root: new Set() };
   layoutNodeIdMap = { root: "" };
   visNodes.forEach((nodeId, i) => {
     layoutNodeIdMap[nodeId] = idConverter(i); //初始化
@@ -37,7 +37,22 @@ export async function produceLayoutGraph(
     }
   });
 
-  generateLayoutNodeIdFromGroups(layoutNodeIdMap, groups);
+  generateLayoutNodeIdFromGroups(layoutNodeIdMap);
+
+  for (let i = 0; i < visEdges.length; i++) {
+    const edge = visEdges[i];
+    if (edge.source in nodeLinkMap) {
+      nodeLinkMap[edge.source]["target"].push(edge.target);
+    } else {
+      nodeLinkMap[edge.source] = { source: [], target: [edge.target] };
+    }
+    if (edge.target in nodeLinkMap) {
+      nodeLinkMap[edge.target]["source"].push(edge.source);
+    } else {
+      nodeLinkMap[edge.target] = { source: [edge.source], target: [] };
+    }
+  }
+
   let newLinks = [],
     linkMap = {}, //{sourceID:[target0,target1,...],...}
     innerLeftLinkMap = {}, //links that are in the inner left side
@@ -47,64 +62,48 @@ export async function produceLayoutGraph(
     const edge = visEdges[i];
     let source = nodeMap[edge.source]["id"];
     let target = nodeMap[edge.target]["id"];
-    if (portMode) {
-      //以下解决跨层边的id匹配问题，id升级至公共父节点
-      let _source = source.split("/"),
-        _target = target.split("/");
-      let __source = source,
-        __target = target;
-      //子节点判断
-      if (_source.length > _target.length) {
-        __source = _source.slice(0, _target.length).join("/");
-        while (nodeMap[source].parent !== nodeMap[target].parent) {
-          addLinkMap(innerRightLinkMap, nodeMap[source].parent, source);
-          source = nodeMap[source].parent;
-        }
-      } else if (_source.length < _target.length) {
-        __target = _target.slice(0, _source.length).join("/");
-        while (nodeMap[target].parent !== nodeMap[source].parent) {
-          addLinkMap(innerLeftLinkMap, nodeMap[target].parent, target);
-          target = nodeMap[target].parent;
-        }
-      } else {
-        if (nodeMap[source].parent !== nodeMap[target].parent) {
-          addLinkMap(innerRightLinkMap, nodeMap[source].parent, source);
-        }
-        if (nodeMap[target].parent !== nodeMap[source].parent) {
-          addLinkMap(innerLeftLinkMap, nodeMap[target].parent, target);
-        }
+
+    //以下解决跨层边的id匹配问题，id升级至公共父节点
+    let sourceLevel = layoutNodeIdMap[source].split("-").length,
+      targetLevel = layoutNodeIdMap[target].split("-").length;
+    let _source = source,
+      _target = target;
+
+    //port模式，分割跨层级的边
+    if (sourceLevel > targetLevel) {
+      for (let i = 0; i < sourceLevel - targetLevel; i++) {
+        addLinkMap(innerRightLinkMap, nodeMap[_source].parent, _source);
+        _source = nodeMap[_source].parent;
       }
-      //保证边的直接父节点相同
-      while (nodeMap[__source].parent !== nodeMap[__target].parent) {
-        __source = nodeMap[__source].parent;
-        __target = nodeMap[__target].parent;
+    } else if (sourceLevel < targetLevel) {
+      for (let i = 0; i < targetLevel - sourceLevel; i++) {
+        addLinkMap(innerLeftLinkMap, nodeMap[_target].parent, _target);
+        _target = nodeMap[_target].parent;
       }
-      addLinkMap(linkMap, __source, __target);
+    } else {
     }
-    //reset成初始值，防止以上操作将其改变
+
+    //保证边的直接父节点相同
+    while (nodeMap[_source].parent !== nodeMap[_target].parent) {
+      addLinkMap(innerRightLinkMap, nodeMap[_source].parent, _source);
+      addLinkMap(innerLeftLinkMap, nodeMap[_target].parent, _target);
+      _source = nodeMap[_source].parent;
+      _target = nodeMap[_target].parent;
+    }
+
+    //reset成初始值
     source = nodeMap[edge.source]["id"];
     target = nodeMap[edge.target]["id"];
-    //group内部边，过滤
-    if (
-      nodeMap[edge.source].parent !== "___root___" &&
-      nodeMap[edge.target].parent !== "___root___"
-    ) {
-      if (!portMode) {
-        addLinkMap(linkMap, source, target);
-      }
-      continue;
+
+    //将边升级至顶层
+    while (nodeMap[source].parent !== "___root___") {
+      source = nodeMap[source].parent;
     }
-    if (portMode) {
-      //将边升级至顶层
-      while (nodeMap[source].parent !== "___root___") {
-        source = nodeMap[source].parent;
-      }
-      while (nodeMap[target].parent !== "___root___") {
-        target = nodeMap[target].parent;
-      }
+    while (nodeMap[target].parent !== "___root___") {
+      target = nodeMap[target].parent;
     }
-    const inPort = nodeMap[target].inputNode.size > maxPort;
-    const outPort = nodeMap[source].outputNode.size > maxPort;
+
+    const [inPort, outPort] = isPort(nodeMap[target], nodeMap[source]);
     let newLink = {
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
@@ -125,7 +124,6 @@ export async function produceLayoutGraph(
     linkMap,
     innerLeftLinkMap,
     innerRightLinkMap,
-    groups,
     visNodes,
     newNodes
   );
@@ -185,7 +183,7 @@ function isElkNode(object: void | ElkNode): object is ElkNode {
   return (object as ElkNode).children !== undefined;
 }
 
-function addLinkMap(linkMap, source, target): void {
+function addLinkMap(linkMap, source: string, target: string): void {
   if (!linkMap.hasOwnProperty(source)) {
     linkMap[source] = [target];
   } else {
@@ -194,8 +192,13 @@ function addLinkMap(linkMap, source, target): void {
 }
 
 function idConverter(index: number): string {
-  return "no_" + index;
+  return "no" + index;
 }
+
+function isPort(target: BaseNode, source: BaseNode): boolean[] {
+  return [target["expanded"], source["expanded"]];
+}
+
 function restoreFromOldEleMap(newEle): void {
   let oldEle = oldEleMap[newEle.id];
   if (oldEle) {
@@ -219,10 +222,7 @@ export function generateElkNodeMap(elkNodeList, elkNodeMap): void {
   });
 }
 
-function generateLayoutNodeIdFromGroups(
-  layoutNodeIdMap: any,
-  groups: any
-): void {
+function generateLayoutNodeIdFromGroups(layoutNodeIdMap: any): void {
   function addMap(id, parentId) {
     if (parentId.length > 0) {
       parentId += "-";
@@ -277,7 +277,7 @@ export const generateNode = (
       node.type === NodeType.OPERTATION
         ? 30
         : 120,
-    height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum*5, //简单子节点数量编码
+    height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum * 5, //简单子节点数量编码
     ports: ports,
   };
 };
@@ -287,7 +287,6 @@ function processNodes(
   linkMap,
   innerLeftLinkMap,
   innerRightLinkMap,
-  groups,
   displayedNodes,
   newNodes
 ): Array<LayoutNode> {
@@ -300,18 +299,14 @@ function processNodes(
       let subNodes = groups[parentId];
       for (let id of subNodes) {
         const node = nodeMap[id];
-        let inPort = false,
-          outPort = false;
-        inPort = nodeMap[id].inputNode.size > maxPort;
-        outPort = nodeMap[id].outputNode.size > maxPort;
-        let childNum = node.type==NodeType.GROUP ? node.children.size : 0
+        const [inPort, outPort] = isPort(nodeMap[id], nodeMap[id]);
+        let childNum = node.type == NodeType.GROUP ? node.children.size : 0
         let child = generateNode(node, inPort, outPort, childNum);
         processChildren(id, child, children);
         let source = id;
         if (linkMap.hasOwnProperty(source)) {
           linkMap[source].forEach((target) => {
-            const inPort = nodeMap[target].inputNode.size > maxPort;
-            const outPort = nodeMap[source].outputNode.size > maxPort;
+            const [inPort, outPort] = isPort(nodeMap[target], nodeMap[source]);
             let edge = {
               id: `${source}-${target}`,
               id4Style: `${layoutNodeIdMap[source]}->${layoutNodeIdMap[target]}`,
@@ -325,35 +320,35 @@ function processNodes(
           });
         }
       }
-      if (portMode) {
-        if (innerLeftLinkMap.hasOwnProperty(parentId)) {
-          innerLeftLinkMap[parentId].forEach((target, i) => {
-            let edge = {
-              id: `__${i}__${parentId}-${target}`,
-              id4Style: `__${i}__${layoutNodeIdMap[parentId]}->${layoutNodeIdMap[target]}`,
-              sources: [parentId + "-in-port"],
-              targets: [target + "-in-port"],
-              arrowheadStyle: "fill: #333; stroke: #333;",
-              arrowhead: "vee",
-            };
-            restoreFromOldEleMap(edge);
-            edges.push(edge);
-          });
-        }
-        if (innerRightLinkMap.hasOwnProperty(parentId)) {
-          innerRightLinkMap[parentId].forEach((source, i) => {
-            let edge = {
-              id: `__${i}__${source}-${parentId}`,
-              id4Style: `__${i}__${layoutNodeIdMap[source]}-${layoutNodeIdMap[parentId]}`,
-              sources: [source + "-out-port"],
-              targets: [parentId + "-out-port"],
-              arrowheadStyle: "fill: #333; stroke: #333;",
-              arrowhead: "vee",
-            };
-            restoreFromOldEleMap(edge);
-            edges.push(edge);
-          });
-        }
+      if (innerLeftLinkMap.hasOwnProperty(parentId)) {
+        innerLeftLinkMap[parentId].forEach((target, i) => {
+          const [_, inPort] = isPort(nodeMap[parentId], nodeMap[target]);
+          let edge = {
+            id: `__${i}__${parentId}-${target}`,
+            id4Style: `__${i}__${layoutNodeIdMap[parentId]}->${layoutNodeIdMap[target]}`,
+            sources: [parentId + "-in-port"],
+            targets: [inPort ? target + "-in-port" : target],
+            arrowheadStyle: "fill: #333; stroke: #333;",
+            arrowhead: "vee",
+          };
+          restoreFromOldEleMap(edge);
+          edges.push(edge);
+        });
+      }
+      if (innerRightLinkMap.hasOwnProperty(parentId)) {
+        innerRightLinkMap[parentId].forEach((source, i) => {
+          const [outPort, _] = isPort(nodeMap[source], nodeMap[parentId]);
+          let edge = {
+            id: `__${i}__${source}-${parentId}`,
+            id4Style: `__${i}__${layoutNodeIdMap[source]}-${layoutNodeIdMap[parentId]}`,
+            sources: [outPort ? source + "-out-port" : source],
+            targets: [parentId + "-out-port"],
+            arrowheadStyle: "fill: #333; stroke: #333;",
+            arrowhead: "vee",
+          };
+          restoreFromOldEleMap(edge);
+          edges.push(edge);
+        });
       }
       newNode["expand"] = true;
       newNode["children"] = children;
@@ -370,11 +365,8 @@ function processNodes(
     if (node.parent !== "___root___") {
       continue;
     }
-    let inPort = false,
-      outPort = false;
-    inPort = nodeMap[nodeId].inputNode.size > maxPort;
-    outPort = nodeMap[nodeId].outputNode.size > maxPort;
-    let childNum = node.type==NodeType.GROUP ? node.children.size : 0
+    const [inPort, outPort] = isPort(nodeMap[nodeId], nodeMap[nodeId]);
+    let childNum = node.type == NodeType.GROUP ? node.children.size : 0
     let newNode = generateNode(node, inPort, outPort, childNum);
     processChildren(nodeId, newNode, newNodes);
   }
