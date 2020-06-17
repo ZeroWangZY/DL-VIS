@@ -1,3 +1,5 @@
+import { ElkPort } from "elkjs/lib/elk.bundled.js";
+
 import {
   LayoutNode,
   LayoutEdge,
@@ -15,18 +17,22 @@ import { link } from "fs";
 
 let nodeKeyMap = {},
   linkKeyMap = {};
+const portWidth = 7,
+  portHeight = 15;
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
+  let newPortStyles = [];
   nodeKeyMap = {};
   linkKeyMap = {};
   generateEdgeStyles(layoutGraph.edges, newLinkStyles);
   generateNodeStyles(
     layoutGraph.children,
     newNodeStyles,
-    newLinkStyles
+    newLinkStyles,
+    newPortStyles
   );
-  return new StyledGraphImp(newNodeStyles, newLinkStyles);
+  return new StyledGraphImp(newNodeStyles, newLinkStyles, newPortStyles);
 }
 
 //直接线性遍历给定的边数组，将对应的每条边的样式添加到已有样式数组
@@ -59,6 +65,8 @@ export const generateEdgeStyles = (
       key: `${id4Style}_${linkKeyMap[id4Style]}`,
       data: {
         id4Style: link.id4Style,
+        originalSource: link.originalSource,
+        originalTarget: link.originalTarget,
         lineData: hoverPath(linkData),
         drawData: drawArcPath(linkData, linksCountMap),
         junctionPoints:
@@ -85,6 +93,7 @@ export const generateNodeStyles = (
   nodes: Array<LayoutNode>,
   nodeStyles: Array<Style>,
   linkStyles: Array<Style>,
+  portStyles: Array<Style>,
   ofs: Offset = { x: 0, y: 0 }
 ): void => {
   for (let i = 0; i < nodes.length; i++) {
@@ -99,25 +108,27 @@ export const generateNodeStyles = (
       key: `${id4Style}_${nodeKeyMap[id4Style]}`,
       data: node.hasOwnProperty("label")
         ? {
-          class: node.class,
-          type: node.type,
-          id: node.id,
-          id4Style: node.id4Style,
-          parent: node.parent,
-          parameters: node.type === NodeType.OPERATION ? node.parameters : null,
-          constVals: node.type === NodeType.OPERATION ? node.constVals : null,
-          label: node.label,
-          expand: node.expand,
-          isStacked: node.isStacked,
-          textWidth:
-            textSize(
-              node.label +
-              (!node.expand &&
-                (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
-                ? "+"
-                : "")
-            ) + 2,
-        }
+            class: node.class,
+            type: node.type,
+            id: node.id,
+            id4Style: node.id4Style,
+            parent: node.parent,
+            parameters:
+              node.type === NodeType.OPERTATION ? node.parameters : null,
+            constVals:
+              node.type === NodeType.OPERTATION ? node.constVals : null,
+            label: node.label,
+            expand: node.expand,
+            isStacked: node.isStacked,
+            textWidth:
+              textSize(
+                node.label +
+                  (!node.expand &&
+                  (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
+                    ? "+"
+                    : "")
+              ) + 2,
+          }
         : {
             class: "dummy",
             type: "dummy",
@@ -136,21 +147,49 @@ export const generateNodeStyles = (
         ellipseY: spring(node.height / 4),
       },
     });
+    const [inPort, outPort] = node.ports;
+    if (inPort !== undefined) {
+      portStyles.push({
+        key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        data: {
+          type: "in",
+          id4Style: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+          hiddenEdges: node.hiddenEdges["in"],
+        },
+        style: {
+          gNodeTransX: spring(ofs.x + node.x + inPort.x - portWidth),
+          gNodeTransY: spring(ofs.y + node.y + inPort.y - portHeight / 2),
+          rectWidth: spring(portWidth),
+          rectHeight: spring(portHeight),
+        },
+      });
+    }
+    if (outPort !== undefined) {
+      portStyles.push({
+        key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        data: {
+          type: "out",
+          id4Style: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+          hiddenEdges: node.hiddenEdges["out"],
+        },
+        style: {
+          gNodeTransX: spring(ofs.x + node.x + outPort.x),
+          gNodeTransY: spring(ofs.y + node.y + outPort.y - portHeight / 2),
+          rectWidth: spring(portWidth),
+          rectHeight: spring(portHeight),
+        },
+      });
+    }
     if (node.hasOwnProperty("children")) {
       //node有"children"属性<=>有"edge"属性
       generateEdgeStyles(node["edges"], linkStyles, {
         x: ofs.x + node.x,
         y: ofs.y + node.y,
       });
-      generateNodeStyles(
-        node["children"],
-        nodeStyles,
-        linkStyles,
-        {
-          x: ofs.x + node.x,
-          y: ofs.y + node.y,
-        }
-      );
+      generateNodeStyles(node["children"], nodeStyles, linkStyles, portStyles, {
+        x: ofs.x + node.x,
+        y: ofs.y + node.y,
+      });
     }
   }
 };

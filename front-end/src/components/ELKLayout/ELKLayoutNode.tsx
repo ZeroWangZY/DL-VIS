@@ -33,6 +33,7 @@ interface Props {
 }
 
 const antiShakeDistance = 2;
+const svg = d3.select("#output-svg");
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
@@ -281,6 +282,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
     }
   });
+
   return (
     <TransitionMotion
       styles={styledGraph === null ? [] : styledGraph.nodeStyles}
@@ -291,8 +293,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             if (d.data.class === "dummy") {
               return;
             }
-
-            const selectContent = `.${d.data.id4Style} .hover`;
+            const linkedEdges = `.${d.data.id4Style} .hover`;
             return (
               <g
                 className={`node ${d.data.class} ${
@@ -304,14 +305,15 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onClick={() => handleClick(d.data.id)}
                 onDoubleClick={() => toggleExpanded(d.data.id)}
-                onMouseOver={() => {
-                  d3.selectAll(selectContent)
+                onMouseEnter={() => {
+                  svg
+                    .selectAll(linkedEdges)
                     .transition()
                     .style("stroke", hoverEdgePathStrokeColor)
                     .style("stroke-width", hoverEdgePathStrokeWidth);
                 }}
-                onMouseOut={() => {
-                  d3.selectAll(selectContent)
+                onMouseLeave={() => {
+                  d3.selectAll(linkedEdges)
                     .transition()
                     .style("stroke", "none")
                     .style("stroke-width", "1");

@@ -26,20 +26,29 @@ export interface NodeLinkMap {
 
 // }
 
-type NodeStyles = Array<Style>
+type NodeStyles = Array<Style>;
 
-type LinkStyles = Array<Style>
+type LinkStyles = Array<Style>;
+
+type PortStyles = Array<Style>;
 export interface StyledGraph {
   nodeStyles: NodeStyles;
   linkStyles: LinkStyles;
+  portStyles: PortStyles;
 }
 
 export class StyledGraphImp implements StyledGraph {
   nodeStyles: NodeStyles;
   linkStyles: LinkStyles;
+  portStyles: PortStyles;
 
-  constructor(nodeStyles: NodeStyles, linkStyles: LinkStyles) {
+  constructor(
+    nodeStyles: NodeStyles,
+    linkStyles: LinkStyles,
+    portStyles: PortStyles
+  ) {
     this.nodeStyles = nodeStyles;
     this.linkStyles = linkStyles;
+    this.portStyles = portStyles;
   }
 }

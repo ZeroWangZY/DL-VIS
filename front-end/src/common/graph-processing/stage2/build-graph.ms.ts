@@ -13,9 +13,13 @@ import {
   ProcessedGraphImp,
   SCOPE_DELIM,
   NodeType,
+  ROOT_SCOPE,
+  NodeId,
+  LayerNodeImp,
 } from "./processed-graph";
 
 const MODULE_PATTERN = new Set(['gradients', 'train_network', 'Momentum', 'Default', 'Gradients'])
+const MODULE_EDGE_NUMBER_THRESHOLD = 20; // 判断module的门槛
 
 function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataNode {
   const displayedName = rNode.opType + rNode.name
@@ -38,44 +42,6 @@ function buildBasicNode(rNode: RawNode, rGraph: RawGraph): OperationNode | DataN
   });
 }
 
-function buildModule(hGraph: ProcessedGraph): void {
-  const nodeMap = hGraph.nodeMap;
-  for (const modulePattern of MODULE_PATTERN) {
-    if (nodeMap[modulePattern]) {
-      let module = nodeMap[modulePattern]
-      hGraph.modules.add(module.id)
-      module = module as GroupNode
-      module.isModule = true
-      let queue = [module.id]
-      while (queue.length > 0) {
-        const nodeId = queue.shift()
-        const theNode = nodeMap[nodeId]
-        theNode.belongModule = module.id
-        if (theNode.type === NodeType.GROUP || theNode.type === NodeType.LAYER) {
-          queue = queue.concat(Array.from((theNode as GroupNode).children))
-        }
-      }
-    }
-  }
-  for (const edge of hGraph.rawEdges) {
-    const sourceNode = nodeMap[edge.source]
-    const targetNode = nodeMap[edge.target]
-    if (sourceNode.belongModule !== null && targetNode.belongModule !== null && sourceNode.belongModule !== targetNode.belongModule) {
-      sourceNode.outModuleConnection.add(targetNode.id)
-      targetNode.inModuleConnection.add(sourceNode.id)
-      let moduleEdge = hGraph.moduleEdges.find((moduleEdge => moduleEdge.source === sourceNode.belongModule && moduleEdge.target === targetNode.belongModule))
-      if (moduleEdge === undefined) {
-        hGraph.moduleEdges.push({
-          source: sourceNode.belongModule,
-          target: targetNode.belongModule,
-          width: 1
-        })
-      } else {
-        moduleEdge.width += 1
-      }
-    }
-  }
-}
 
 function _buildGraph(rGraph: RawGraph): ProcessedGraph {
   const inputInfo: Map<string, string> = new Map(); // 包含所有的input信息 target: source
@@ -112,7 +78,7 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
         const dataNode = new DataNodeImp({
           id: newId,
           dataType: dataType,
-          opts: { displayedName },
+          opts: { displayedName }, 
         });
         const auxiliary = (nodeMap[rNode.name] as OperationNode).auxiliary
         auxiliary.add(dataNode.id) // 附属节点
@@ -145,13 +111,15 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
 
 
   buildHierarchy(rGraph, pGraph) // 构建层次
-  buildModule(pGraph)
 
   processGroupNode(pGraph, inputInfo);  // 建立层次结束后，重新处理GroupNode，增加属性
   processOperationNode(rGraph, pGraph);  // 建立层次结束后，重新处理OperationNode，增加属性
   processDataNode(rGraph, pGraph); // 建立层次结束后，重新处理DataNode，增加属性
 
   processedOutputNode(pGraph);
+
+  buildModule(pGraph)
+
   return pGraph;
 }
 
@@ -348,3 +316,182 @@ export function buildMsGraph(rGraph: RawGraph): ProcessedGraph {
   // return wrapTaskWithTimeLogger(_buildMsGraph)(rGraph);
 }
 
+function getModulesId(hGraph: ProcessedGraph): Set<NodeId> {
+  const { nodeMap, rawEdges, rootNode } = hGraph;
+  let edgeMap = new Map();
+
+  // 先初始化edgeMap的所有键,对于同一层的每一对group node,把其id用"-"相连作为键一起作为键,暂时不分source和target
+  // 维护两个队列，parent和children是相对的
+  let groupNodeQueueParent = [], groupNodeQueueChildren = [];
+  let groupNodeQueueParentTmp = [];
+  groupNodeQueueParent = groupNodeQueueParent.concat(Array.from(rootNode.children));
+  let flag = true; // 是否继续层次遍历添加key，如果遍历到的层节点全为叶节点，则停止遍历
+  while (flag) {
+    groupNodeQueueChildren= [];// 上一层的children是这一层的parent
+    groupNodeQueueParentTmp = [];// 存储要填到到map中的节点
+    while (groupNodeQueueParent.length) {
+      const parent = groupNodeQueueParent.shift();
+      const node = nodeMap[parent];
+      if (node instanceof GroupNodeImp || node instanceof LayerNodeImp) {
+        groupNodeQueueChildren = groupNodeQueueChildren.concat(Array.from(node.children));
+        groupNodeQueueParentTmp.push(parent);
+      }
+    }
+    // 如果还有children，说明要添加这一层的parent
+    if (groupNodeQueueChildren.length) {
+      addKeysToEdgeMap(edgeMap, groupNodeQueueParentTmp);
+      groupNodeQueueParent = [...groupNodeQueueChildren];
+    } else { //如果遍历到的这层节点已经没有叶节点 则停止遍历
+      flag = false;
+    }
+  }
+  
+  // 遍历rawEdges，更新edgeMap的值
+  rawEdges.forEach(({source, target}) => {
+    let sourceNode = nodeMap[source], targetNode = nodeMap[target];
+    let sourceParentArray = [], targetParentArray = [];
+
+    while (sourceNode.parent !== ROOT_SCOPE) {
+      sourceParentArray.push(sourceNode.parent);
+      sourceNode = nodeMap[sourceNode.parent];
+    }
+    while (targetNode.parent !== ROOT_SCOPE) {
+      targetParentArray.push(targetNode.parent);
+      targetNode = nodeMap[targetNode.parent];
+    }
+
+    // 更新edgeMap的值
+    for (let i = 0; i < sourceParentArray.length; i++) {
+      for (let j = 0; j < targetParentArray.length; j++) {
+        const source = sourceParentArray[i], target = targetParentArray[j];
+        const key1 = `${source}-${target}`, key2 = `${target}-${source}`;
+        if(edgeMap.has(key1)) {
+          edgeMap.set(key1, edgeMap.get(key1) + 1);
+        } else if (edgeMap.has(key2)) {
+          edgeMap.set(key2, edgeMap.get(key2) + 1);
+        }
+      }
+    }
+  })
+  
+  // edgeMap按值从大到小排个序
+  let edgeMapSortedArray = Array.from(edgeMap);
+  edgeMapSortedArray.sort((a, b) => (b[1] - a[1]));
+
+  // console.log(edgeMapSortedArray)
+  // 根据threshold决定module
+  let modulesId = new Set<NodeId>();
+  for (let sortedItem of edgeMapSortedArray) {
+    // 如果比threshold低，结束遍历
+    if (sortedItem[1] < MODULE_EDGE_NUMBER_THRESHOLD) {
+      break;
+    }
+    const module1 = sortedItem[0].split("-")[0] as NodeId, module2 = sortedItem[0].split("-")[1] as NodeId;
+    // 如果不在同一个scope下，不添加
+    if (nodeMap[module1].parent === nodeMap[module2].parent) {
+      modulesId.add(module1);
+      modulesId.add(module2);
+    }
+  }
+  // console.log(modulesId)
+  return modulesId;
+}
+
+// 对于同一层的group node，两两的id作为键
+function addKeysToEdgeMap(edgeMap: Map<string, number>, groupNodeQueue: Array<NodeId>) {
+  if (groupNodeQueue.length === 1) return;
+  for (let i = 0; i < groupNodeQueue.length - 1; i++) {
+    for (let j = i + 1; j < groupNodeQueue.length; j++) {
+      const key = `${groupNodeQueue[i]}-${groupNodeQueue[j]}`;
+      edgeMap.set(key, 0);// 值初始化为0
+    }
+  }
+}
+
+function buildModule(hGraph: ProcessedGraph): void {
+  const { nodeMap } = hGraph;
+  
+  const modulesId = getModulesId(hGraph);
+  // 初始化图的modules和节点的isModule、belongModule、isNested属性
+  for (const modulePattern of modulesId) {
+  // for (const modulePattern of MODULE_PATTERN) { // 测试用例
+    if (nodeMap[modulePattern]) {
+      let module = nodeMap[modulePattern]
+      hGraph.modules.add(module.id)
+      module = module as GroupNode
+      module.isModule = true
+    }
+  }
+  // modulesId是按边数由大到小排序的，所以父module一定在子module前面,因此嵌套的子module赋值belongModule时会覆盖之前的
+  hGraph.modules.forEach(_moduleId => {
+    if (hGraph.modules.has(nodeMap[_moduleId].parent)) {
+      const moduleNode = nodeMap[_moduleId] as GroupNode;
+      moduleNode.parentModule = nodeMap[_moduleId].parent;
+    }
+    let queue = [_moduleId]
+    while(queue.length){
+      const nodeId = queue.shift()
+      const theNode = nodeMap[nodeId]
+      theNode.belongModule = _moduleId
+      if (theNode instanceof GroupNodeImp || theNode instanceof LayerNodeImp){
+        queue = queue.concat(Array.from(theNode.children))
+      }
+    }
+  })
+  
+  // 初始化moduleEdges
+  for(const edge of hGraph.rawEdges) {
+    const sourceNode = nodeMap[edge.source];
+    const targetNode = nodeMap[edge.target];
+    const sourceBelongModule = sourceNode.belongModule, targetBelongModule = targetNode.belongModule;
+    if (sourceBelongModule !== null
+      && targetBelongModule !== null
+      && sourceBelongModule !== targetBelongModule
+      ) {
+      // 跨模块
+      if ((sourceBelongModule.split('/')[0] !== targetBelongModule.split('/')[0])) {
+        if (!(nodeMap[targetBelongModule] as GroupNode).parentModule) {
+          sourceNode.outModuleConnection.add(targetNode.id);
+        }
+        if (!(nodeMap[sourceBelongModule] as GroupNode).parentModule) {
+          targetNode.inModuleConnection.add(sourceNode.id);
+        }
+      } else if(nodeMap[sourceBelongModule].parent === nodeMap[targetBelongModule].parent) {// 在同一个模块下的跨模块
+        sourceNode.outModuleConnection.add(targetNode.id);
+        targetNode.inModuleConnection.add(sourceNode.id);
+      }
+      
+      // module edge的source和target一定是同级同scope的
+      let sourceRootModule = sourceBelongModule, targetRootModule = targetBelongModule;
+      if ((nodeMap[sourceBelongModule] as GroupNode).parentModule) {
+        sourceRootModule = (nodeMap[sourceBelongModule] as GroupNode).parentModule;
+      }
+      if ((nodeMap[targetBelongModule] as GroupNode).parentModule) {
+        targetRootModule = (nodeMap[targetBelongModule] as GroupNode).parentModule;
+      }
+      if (sourceRootModule !== targetRootModule) {
+        let moduleEdge = hGraph.moduleEdges.find((moduleEdge => moduleEdge.source === sourceRootModule && moduleEdge.target === targetRootModule))
+        if (moduleEdge === undefined) {
+          hGraph.moduleEdges.push({
+            source: sourceRootModule,
+            target: targetRootModule,
+            width:1
+          })
+        } else {
+          moduleEdge.width += 1
+        }
+      } else if (nodeMap[sourceBelongModule].parent === nodeMap[targetBelongModule].parent) {
+        let moduleEdge = hGraph.moduleEdges.find((moduleEdge => moduleEdge.source === sourceBelongModule && moduleEdge.target === targetBelongModule))
+        if (moduleEdge === undefined) {
+          hGraph.moduleEdges.push({
+            source: sourceBelongModule,
+            target: targetBelongModule,
+            width:1
+          })
+        } else {
+          moduleEdge.width += 1
+        }
+      }
+    }
+  }
+}

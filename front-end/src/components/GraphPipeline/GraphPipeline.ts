@@ -62,7 +62,7 @@ export default function useGraphPipeline() {
   useEffect(() => {
     if (!processedGraph) return;
 
-    let vGraph = produceVisGraph(processedGraph)
+    let vGraph = produceVisGraph(processedGraph, { isDiggingEdgeBundlingMode: true })
     const visGraphOptimizer = new VisGraphOptimizer()
     vGraph = visGraphOptimizer.optimize(vGraph)
     setVisGraph(vGraph)

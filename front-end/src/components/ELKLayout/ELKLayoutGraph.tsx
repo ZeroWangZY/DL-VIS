@@ -9,15 +9,16 @@ import { GlobalConfigurationsModificationType } from "../../store/global-configu
 import { useStyledGraph } from "../../store/styledGraph";
 import { ModifyLineData } from '../../types/layerLevel'
 import { useHistory, useLocation } from "react-router-dom";
-import { modifyData } from '../../store/layerLevel';
-import NodeInfoCard from "../NodeInfoCard/NodeInfoCard"
-import MiniMap from '../MiniMap/MiniMap';
-import PopoverBox from '../PopoverBox/PopoverBox';
-import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
+import { modifyData } from "../../store/layerLevel";
+import NodeInfoCard from "../NodeInfoCard/NodeInfoCard";
+import MiniMap from "../MiniMap/MiniMap";
+import PopoverBox from "../PopoverBox/PopoverBox";
+import { fetchAndGetLayerInfo } from "../../common/model-level/snaphot";
 
 import ELK from "elkjs/lib/elk.bundled.js";
 import ELKLayoutEdge from "./ELKLayoutEdge";
 import ELKLayoutNode from "./ELKLayoutNode";
+import ELKLayoutPort from "./ELKLayoutPort";
 window["d3"] = d3;
 window["ELK"] = ELK;
 
@@ -46,23 +47,26 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   };
 
   const graphForLayout = useProcessedGraph();
-  const [selectMode, setSelectMode] = useState(false);// 单选模式
-  const [anchorEl, setAnchorEl] = useState(null);// popover的位置
+  const [selectMode, setSelectMode] = useState(false); // 单选模式
+  const [anchorEl, setAnchorEl] = useState(null); // popover的位置
   const [currentNodetype, setCurrentNodetype] = useState<number>(-1);
   const [currentLayertype, setCurrentLayertype] = useState<string>(null);
-  const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(true);
-  const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState([])
+  const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(
+    true
+  );
+  const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState(
+    []
+  );
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
-    brushMode,// 框选模式
+    brushMode, // 框选模式
     gBrushHolder,
-    gBrush,// 放置brush的group
-    brush;// d3 brush
+    gBrush, // 放置brush的group
+    brush; // d3 brush
 
-  let node = null;// 所有node group
+  let node = null; // 所有node group
   let svgBoundingClientRect = null;
-
 
   const handleAggregate = () => {
     let inputNode = d3.select(`#group-name-input`).node() as HTMLInputElement;
@@ -80,7 +84,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       let parentId = null;
       let aggregateFlag = true;
       selectedG.each(function () {
-        let nodeId = d3.select(this).attr("data-id")
+        let nodeId = d3.select(this).attr("data-id");
         let node = graphForLayout.nodeMap[nodeId];
         selectedNodeId.push(nodeId);
         // 找到共同父节点 如果父节点不相同则不能聚合
@@ -89,57 +93,60 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         } else if (aggregateFlag && parentId !== node.parent) {
           aggregateFlag = false;
         }
-      })
+      });
 
       if (!aggregateFlag) {
         alert("Aggregation can only be applied at the same level!");
       } else {
-        modifyProcessedGraph(
-          ProcessedGraphModificationType.NEW_NODE,
-          {
-            newNodeIdInfo: {
-              id: groupName,
-              children: new Set(selectedNodeId),
-              parent: parentId
-            }
-          }
-        )
+        modifyProcessedGraph(ProcessedGraphModificationType.NEW_NODE, {
+          newNodeIdInfo: {
+            id: groupName,
+            children: new Set(selectedNodeId),
+            parent: parentId,
+          },
+        });
       }
     }
-  }
+  };
 
   // ungroup一个group node or layer node
   const handleUngroup = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
-      let nodeId = d3.select(this).attr("data-id")
-      modifyProcessedGraph(
-        ProcessedGraphModificationType.DELETE_NODE,
-        {
-          nodeId
-        }
-      );
-    })
+      let nodeId = d3.select(this).attr("data-id");
+      modifyProcessedGraph(ProcessedGraphModificationType.DELETE_NODE, {
+        nodeId,
+      });
+    });
     handleClosePopover();
-  }
+  };
 
   // 修改节点属性, 暂时只考虑了修改单个节点属性
   const handleModifyNodetype = () => {
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     selectedG.each(function () {
-      let nodeId = d3.select(this).attr("data-id")
+      let nodeId = d3.select(this).attr("data-id");
       let oldNode = graphForLayout.nodeMap[nodeId] as GroupNode | LayerNode;
       // 判断是否修改
       let newNode;
       // 折线图默认全部显示，不显示的节点Id存在数组里
-      if (diagnosisMode && currentShowLineChart === false && currentNotShowLineChartID.indexOf(nodeId) < 0) {
-        setCurrentNotShowLineChartID([...currentNotShowLineChartID, nodeId])
-      } else if (diagnosisMode && currentShowLineChart === true && currentNotShowLineChartID.indexOf(nodeId) >= 0) {
-        let pos = currentNotShowLineChartID.indexOf(nodeId)
-        currentNotShowLineChartID.splice(pos, 1)
-        setCurrentNotShowLineChartID(currentNotShowLineChartID)
+      if (
+        diagnosisMode &&
+        currentShowLineChart === false &&
+        currentNotShowLineChartID.indexOf(nodeId) < 0
+      ) {
+        setCurrentNotShowLineChartID([...currentNotShowLineChartID, nodeId]);
+      } else if (
+        diagnosisMode &&
+        currentShowLineChart === true &&
+        currentNotShowLineChartID.indexOf(nodeId) >= 0
+      ) {
+        let pos = currentNotShowLineChartID.indexOf(nodeId);
+        currentNotShowLineChartID.splice(pos, 1);
+        setCurrentNotShowLineChartID(currentNotShowLineChartID);
       }
-      if (oldNode.type !== currentNodetype) {// 修改了节点类型
+      if (oldNode.type !== currentNodetype) {
+        // 修改了节点类型
         let opts = { displayedName: oldNode.displayedName };
         if (currentNodetype === NodeType.GROUP) {
           modifyProcessedGraph(
@@ -161,11 +168,15 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
                 outputNode: oldNode.outputNode,
                 parent: oldNode.parent,
                 opts,
+<<<<<<< HEAD
                 isModule: oldNode.isModule,
                 parentModule: oldNode.parentModule,
               }
+=======
+              },
+>>>>>>> feat: 在VisGraph中增加挖孔式边绑定的属性
             }
-          )
+          );
         } else if (currentNodetype === NodeType.LAYER) {
           modifyProcessedGraph(
             ProcessedGraphModificationType.MODIFY_NODE_TYPE,
@@ -186,27 +197,31 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
                 outputNode: oldNode.outputNode,
                 parent: oldNode.parent,
                 opts,
+<<<<<<< HEAD
                 isModule: oldNode.isModule,
                 parentModule: oldNode.parentModule,
                 layerType: LayerType[currentLayertype],
               }
+=======
+              },
+>>>>>>> feat: 在VisGraph中增加挖孔式边绑定的属性
             }
-          )
+          );
         }
-      } else if (oldNode.type === NodeType.LAYER && (oldNode as LayerNode).layerType !== currentLayertype) {
-        modifyProcessedGraph(
-          ProcessedGraphModificationType.MODIFY_NODE_ATTR,
-          {
-            nodeId: oldNode.id,
-            modifyOptions: {
-              layerType: LayerType[currentLayertype]
-            }
-          }
-        );
+      } else if (
+        oldNode.type === NodeType.LAYER &&
+        (oldNode as LayerNode).layerType !== currentLayertype
+      ) {
+        modifyProcessedGraph(ProcessedGraphModificationType.MODIFY_NODE_ATTR, {
+          nodeId: oldNode.id,
+          modifyOptions: {
+            layerType: LayerType[currentLayertype],
+          },
+        });
       }
-    })
-    handleClosePopover()
-  }
+    });
+    handleClosePopover();
+  };
 
   // 两种情况：
   // 1. 当前没有选中的节点，右击一个节点，如果为group node或者layer node，则可以修改节点类型或者进行ungroup
@@ -220,17 +235,22 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       let clickNode;
       if (!selectedG.nodes().length) {
         let tempNode = e.target.parentNode;
-        while (!tempNode.getAttribute("class") || tempNode.getAttribute("class").indexOf("nodeitem") < 0) {
+        while (
+          !tempNode.getAttribute("class") ||
+          tempNode.getAttribute("class").indexOf("nodeitem") < 0
+        ) {
           tempNode = tempNode.parentNode;
         }
         clickNode = tempNode;
       } else {
         clickNode = selectedG.node();
       }
-      let nodeId = d3.select(clickNode).attr("data-id")
+      let nodeId = d3.select(clickNode).attr("data-id");
       let node = graphForLayout.nodeMap[nodeId];
       if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
-        alert("Node type modification and ungroup operation can only be applied to group node or layer node!");
+        alert(
+          "Node type modification and ungroup operation can only be applied to group node or layer node!"
+        );
       } else {
         d3.select(clickNode).classed("selected", true);
         setCurrentNodetype(node.type);
@@ -239,12 +259,13 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         }
         setAnchorEl(e.target);
       }
-    } else {// 已有选中节点，则选项为聚合
+    } else {
+      // 已有选中节点，则选项为聚合
       setAnchorEl(e.target);
       setCurrentNodetype(-1);
-      setCurrentLayertype(null)
+      setCurrentLayertype(null);
     }
-  }
+  };
   // 关闭popover
   const handleClosePopover = () => {
     node = d3.select(".nodes").selectAll(".node");
@@ -253,29 +274,29 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     setAnchorEl(null);
     //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
     // setCurrentNodetype(-1);
-    setCurrentLayertype(null)
-  }
+    setCurrentLayertype(null);
+  };
   const handleClosePopoverWithoutDeselect = () => {
     setAnchorEl(null);
     //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
     // setCurrentNodetype(-1);
-    setCurrentLayertype(null)
-  }
+    setCurrentLayertype(null);
+  };
 
   // 修改node type
   const handleNodetypeChange = (e) => {
     setCurrentNodetype(e.target.value);
     setCurrentLayertype(LayerType.CONV);
-  }
+  };
 
   // 修改layer type
   const handleLayertypeChange = (e) => {
-    setCurrentLayertype(e.target.value)
-  }
+    setCurrentLayertype(e.target.value);
+  };
 
   const handleLineChartToggle = (e) => {
-    setCurrentShowLineChart(e.target.value === "true" ? true : false)
-  }
+    setCurrentShowLineChart(e.target.value === "true" ? true : false);
+  };
   // 点击空白处取消所有选择
   const handleBgClick = () => {
     //  setSelectedNodeId ("");
@@ -288,55 +309,65 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const keydown = () => {
     ctrlKey = d3.event.ctrlKey;
     shiftKey = d3.event.shiftKey;
-    if (ctrlKey) { // 按下ctrl开始刷选
+    if (ctrlKey) {
+      // 按下ctrl开始刷选
       if (gBrush) {
         return;
       } else {
         brushMode = true;
-        gBrush = gBrushHolder.append('g');
+        gBrush = gBrushHolder.append("g");
         gBrush.call(brush);
       }
     }
-    if (shiftKey) { // 按下shift可以单击
+    if (shiftKey) {
+      // 按下shift可以单击
       setSelectMode(true);
     }
-  }
+  };
 
   const keyup = () => {
     // 如果是按下ctrl
     if (brushMode) {
       ctrlKey = false;
       brushMode = false;
-      if (!gBrush)
-        return;
+      if (!gBrush) return;
       gBrush.remove();
       gBrush = null;
-    } else { // 按下shift
+    } else {
+      // 按下shift
       shiftKey = false;
       setSelectMode(false);
     }
-  }
+  };
 
   const handleEnterLayer = async () => {
-    alert
+    alert;
     let selectedG = d3.select(svgRef.current).selectAll("g.selected");
     let node = selectedG.node();
     let nodeId = d3.select(node).attr("data-id");
-    let lineData = await fetchAndGetLayerInfo({
-      "STEP_FROM": iteration,
-      "STEP_TO": iteration + 100
-    }, nodeId, graphForLayout);
-    modifyData(ModifyLineData.UPDATE_Line, lineData)
-    history.push("layer")
-  }
+    let lineData = await fetchAndGetLayerInfo(
+      {
+        STEP_FROM: iteration,
+        STEP_TO: iteration + 100,
+      },
+      nodeId,
+      graphForLayout
+    );
+    modifyData(ModifyLineData.UPDATE_Line, lineData);
+    history.push("layer");
+  };
 
   const brushstart = () => {
     node = d3.select(".nodes").selectAll(".node");
     node.each(function () {
-      const previouslySelected = d3.select(this).attr("class").indexOf("selected") > -1 ? true : false;
-      d3.select(this).classed("previouslySelected", ctrlKey && previouslySelected);
+      const previouslySelected =
+        d3.select(this).attr("class").indexOf("selected") > -1 ? true : false;
+      d3.select(this).classed(
+        "previouslySelected",
+        ctrlKey && previouslySelected
+      );
     });
-  }
+  };
 
   const brushed = () => {
     if (!d3.event.sourceEvent) return;
@@ -344,18 +375,28 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
     let extent = d3.event.selection;
     node.classed("selected", function () {
-      if (d3.select(this).attr("class").indexOf("cluster") > -1) {// 展开的cluster节点不刷选
+      if (d3.select(this).attr("class").indexOf("cluster") > -1) {
+        // 展开的cluster节点不刷选
         return false;
       }
       const bounding = this.getBoundingClientRect();
-      let xCenter = (bounding.x - svgBoundingClientRect.x) + bounding.width * 0.5;
-      let yCenter = bounding.y - svgBoundingClientRect.y + bounding.height * 0.5;
-      let inExtent = extent[0][0] <= xCenter && xCenter < extent[1][0]
-        && extent[0][1] <= yCenter && yCenter < extent[1][1] ? 1 : 0;
-      const previouslySelected = d3.select(this).attr("class").indexOf("previouslySelected") > -1 ? 1 : 0;
+      let xCenter = bounding.x - svgBoundingClientRect.x + bounding.width * 0.5;
+      let yCenter =
+        bounding.y - svgBoundingClientRect.y + bounding.height * 0.5;
+      let inExtent =
+        extent[0][0] <= xCenter &&
+        xCenter < extent[1][0] &&
+        extent[0][1] <= yCenter &&
+        yCenter < extent[1][1]
+          ? 1
+          : 0;
+      const previouslySelected =
+        d3.select(this).attr("class").indexOf("previouslySelected") > -1
+          ? 1
+          : 0;
       return previouslySelected ^ inExtent;
     });
-  }
+  };
 
   const brushend = () => {
     if (!d3.event.sourceEvent) return;
@@ -363,7 +404,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     if (!gBrush) return;
 
     node.classed("previouslySelected", function () {
-      const previouslySelected = d3.select(this).attr("class").indexOf("select") > -1 ? true : false;
+      const previouslySelected =
+        d3.select(this).attr("class").indexOf("select") > -1 ? true : false;
       return previouslySelected;
     });
 
@@ -373,12 +415,12 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       gBrush.remove();
       gBrush = null;
     }
-  }
+  };
 
-  const zoomofD3 = d3.zoom()
+  const zoomofD3 = d3.zoom();
   const updateZoomofD3 = (transform) => {
-    zoomofD3.transform(d3.select(svgRef.current), transform)
-  }
+    zoomofD3.transform(d3.select(svgRef.current), transform);
+  };
 
   function canvasBackToRight() {
     setTransform({
@@ -413,12 +455,16 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
     // 刷选
     gBrushHolder = d3.select("#gBrushHolder");
-    d3.select('body').on('keydown', keydown);
-    d3.select('body').on('keyup', keyup);
+    d3.select("body").on("keydown", keydown);
+    d3.select("body").on("keyup", keyup);
     brushMode = false;
     gBrush = null;
-    brush = d3.brush()
-      .extent([[0, 0], [svgWidth, svgHeight]])
+    brush = d3
+      .brush()
+      .extent([
+        [0, 0],
+        [svgWidth, svgHeight],
+      ])
       .on("start", brushstart)
       .on("brush", brushed)
       .on("end", brushend);
@@ -463,6 +509,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
             />
+            <ELKLayoutPort />
             <ELKLayoutEdge />
           </g>
         </svg>
