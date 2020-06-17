@@ -80,7 +80,6 @@ export async function produceLayoutGraph(
         addLinkMap(innerLeftLinkMap, nodeMap[_target].parent, _target);
         _target = nodeMap[_target].parent;
       }
-    } else {
     }
 
     //保证边的直接父节点相同
@@ -89,6 +88,12 @@ export async function produceLayoutGraph(
       addLinkMap(innerLeftLinkMap, nodeMap[_target].parent, _target);
       _source = nodeMap[_source].parent;
       _target = nodeMap[_target].parent;
+    }
+
+    //group内部边
+    if (nodeMap[_source].parent !== "___root___") {
+      addLinkMap(linkMap, _source, _target);
+      continue;
     }
 
     //reset成初始值
@@ -108,7 +113,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-        }`,
+      }`,
       sources: [outPort ? source + "-out-port" : source],
       targets: [inPort ? target + "-in-port" : target],
       arrowheadStyle: "fill: #333; stroke: #333;",
@@ -266,17 +271,18 @@ export const generateNode = (
     parent: node.parent,
     label: node.displayedName,
     shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
-    class: `nodeitem-${node.type}` + (node.type === NodeType.LAYER ? ` layertype-${(node as LayerNodeImp).layerType}` : ""),
+    class:
+      `nodeitem-${node.type}` +
+      (node.type === NodeType.LAYER
+        ? ` layertype-${(node as LayerNodeImp).layerType}`
+        : ""),
     type: node.type,
     layoutOptions: {
       algorithm: "layered",
       //   portConstraints: "FIXED_SIDE",
     },
     expand: false,
-    width:
-      node.type === NodeType.OPERTATION
-        ? 30
-        : 120,
+    width: node.type === NodeType.OPERTATION ? 30 : 120,
     height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum * 5, //简单子节点数量编码
     ports: ports,
   };
@@ -300,7 +306,7 @@ function processNodes(
       for (let id of subNodes) {
         const node = nodeMap[id];
         const [inPort, outPort] = isPort(nodeMap[id], nodeMap[id]);
-        let childNum = node.type == NodeType.GROUP ? node.children.size : 0
+        let childNum = node.type == NodeType.GROUP ? node.children.size : 0;
         let child = generateNode(node, inPort, outPort, childNum);
         processChildren(id, child, children);
         let source = id;
@@ -366,7 +372,7 @@ function processNodes(
       continue;
     }
     const [inPort, outPort] = isPort(nodeMap[nodeId], nodeMap[nodeId]);
-    let childNum = node.type == NodeType.GROUP ? node.children.size : 0
+    let childNum = node.type == NodeType.GROUP ? node.children.size : 0;
     let newNode = generateNode(node, inPort, outPort, childNum);
     processChildren(nodeId, newNode, newNodes);
   }
