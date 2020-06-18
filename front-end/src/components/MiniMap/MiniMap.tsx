@@ -17,12 +17,13 @@ interface Props {
   outputG: HTMLElement;
   outputSVG: HTMLElement;
   transform: Transform;
+  updateZoomofD3: any;
   handleChangeTransform: { (transform: Transform): void };
 }
 
 const MiniMap: React.FC<Props> = (props: Props) => {
   if (props.graph === undefined || props.graph === null) return (<div />); // 没有输入
-  const { graph, outputG, outputSVG, transform, handleChangeTransform } = props;
+  const { graph, outputG, outputSVG, transform, handleChangeTransform, updateZoomofD3 } = props;
 
   let outputSVGToDrawInCanvas = null;
 
@@ -151,6 +152,10 @@ const MiniMap: React.FC<Props> = (props: Props) => {
       updateRect(viewpointCoord.x, viewpointCoord.y)    // 同时改变矩形位置
 
       // 更新svg图的位置
+      const outputSVGTransform = d3.zoomTransform(outputSVG)
+                                  .translate(-d3.event.x * transform.k * scale / fitK, -d3.event.y * transform.k * scale / fitK)
+                                  .scale(transform.k)
+      updateZoomofD3(outputSVGTransform)
       d3.select(outputG).attr("transform",
         `translate(${-d3.event.x * transform.k * scale / fitK},${-d3.event.y * transform.k * scale / fitK}) scale(${transform.k})`
       )

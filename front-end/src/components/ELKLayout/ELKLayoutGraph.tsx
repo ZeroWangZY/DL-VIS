@@ -352,6 +352,10 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   }
 
   const zoomofD3 = d3.zoom()
+  const updateZoomofD3 = (transform) => {
+    zoomofD3.transform(d3.select(svgRef.current), transform)
+  }
+
   useImperativeHandle(elklayoutRef, () => ({
     canvasBackToRight() {
       setTransform({
@@ -361,7 +365,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
       })
       const outputG = d3.select(outputRef.current);
       outputG.attr('transform', 'translate(0,0) scale(1)')
-      zoomofD3.transform(d3.select(svgRef.current), d3.zoomIdentity)
+      updateZoomofD3(d3.zoomIdentity)
     }
   }))
 
@@ -450,6 +454,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
           outputSVG={outputSVGRef.current}
           outputG={outputRef.current}
           transform={transform}
+          updateZoomofD3={updateZoomofD3}
           handleChangeTransform={handleChangeTransform}
         />
       </div>
