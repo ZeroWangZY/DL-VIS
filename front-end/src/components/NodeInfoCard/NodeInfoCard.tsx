@@ -54,7 +54,7 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | string[] | null }> = (pr
     for (let selectedNode of selectedNodes) {
       if (selectedNode === undefined || selectedNode === null) continue;
       contents.push(
-        <CardContent style={{ padding: 0 }}>
+        <CardContent style={{ padding: 0 }} key={selectedNode.displayedName}>
           <Typography
             className={classes.title}
             style={{
@@ -122,7 +122,7 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | string[] | null }> = (pr
             {"Inputs: (" + `${selectedNode.inputNode.size}` + ")"}
           </Typography>
           {Array.from(selectedNode.inputNode).map((d, i) => (
-            <Typography className={classes.content} key={i}>
+            <Typography className={classes.content} key={"inputNode" + i}>
               {getDisplayedName(d).length <= 25
                 ? getDisplayedName(d)
                 : getDisplayedName(d).slice(0, 25) + "..."}
@@ -132,7 +132,7 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | string[] | null }> = (pr
             {"Outputs: (" + `${selectedNode.outputNode.size}` + ")"}
           </Typography>
           {Array.from(selectedNode.outputNode).map((d, i) => (
-            <Typography className={classes.content} key={i}>
+            <Typography className={classes.content} key={"outputNode" + i}>
               {getDisplayedName(d).length <= 25
                 ? getDisplayedName(d)
                 : getDisplayedName(d).slice(0, 25) + "..."}

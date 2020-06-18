@@ -19,7 +19,7 @@ import ELKLayoutNode from "./ELKLayoutNode";
 window["d3"] = d3;
 window["ELK"] = ELK;
 
-const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (props: { iteration, elklayoutRef }) => {
+const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (props: { iteration, elklayoutRef }) => {
   let iteration = props.iteration;
   const elklayoutRef = props.elklayoutRef
   const styledGraph = useStyledGraph();
@@ -114,6 +114,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
         }
       );
     })
+    handleClosePopover();
   }
 
   // 修改节点属性, 暂时只考虑了修改单个节点属性
@@ -174,6 +175,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
         );
       }
     })
+    handleClosePopover()
   }
 
   // 两种情况：
@@ -246,6 +248,11 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
   }
   // 点击空白处取消所有选择
   const handleBgClick = () => {
+    // let selectedG = d3.select(svgRef.current).selectAll("g.selected");
+    node = d3.select(".nodes").selectAll(".node");
+    node.classed("selected", false);
+    node.classed("previouslySelected", false);
+
     setSelectedNodeId("");
   };
 
@@ -394,6 +401,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (pro
 
     setBgRectHeight(svgHeight);
   }, []);
+
   const isPopoverOpen = Boolean(anchorEl);
 
   return (
