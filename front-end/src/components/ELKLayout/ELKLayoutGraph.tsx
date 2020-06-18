@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
 import "./ELKLayoutGraph.css";
 import * as d3 from "d3";
 import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
@@ -19,8 +19,9 @@ import ELKLayoutNode from "./ELKLayoutNode";
 window["d3"] = d3;
 window["ELK"] = ELK;
 
-const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
+const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef : any }> = (props: { iteration, elklayoutRef }) => {
   let iteration = props.iteration;
+  const elklayoutRef = props.elklayoutRef
   const styledGraph = useStyledGraph();
   let map_id4Style_Id = null;
   if (styledGraph)
@@ -350,13 +351,25 @@ const ELKLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) =
     }
   }
 
+  const zoomofD3 = d3.zoom()
+  useImperativeHandle(elklayoutRef, () => ({
+    canvasBackToRight() {
+      setTransform({
+        x: 0,
+        y: 0,
+        k: 1
+      })
+      const outputG = d3.select(outputRef.current);
+      outputG.attr('transform', 'translate(0,0) scale(1)')
+      zoomofD3.transform(d3.select(svgRef.current), d3.zoomIdentity)
+    }
+  }))
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     const outputG = d3.select(outputRef.current);
 
-    let zoom = d3
-      .zoom()
+    let zoom = zoomofD3
       .on("zoom", function () {
         outputG.attr("transform", d3.event.transform);
       })
