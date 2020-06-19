@@ -3,9 +3,12 @@ import { TransitionMotion } from "react-motion";
 import { useStyledGraph } from "../../store/styledGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import * as d3 from "d3";
+import styles from "../../cssVariables/cssVariables.less"
 
 const ELKLayoutEdge: React.FC = () => {
   const styledGraph = useStyledGraph();
+  const edgePathStrokeColor = styles.edge_path_stroke_color;
+
   return (
     <g>
       <TransitionMotion
@@ -53,7 +56,7 @@ const ELKLayoutEdge: React.FC = () => {
                 <path
                   className="hover"
                   d={d.data.lineData}
-                  style={{stroke: "none"}} 
+                  style={{stroke: edgePathStrokeColor}} 
                 ></path>
               </g>
             ))}

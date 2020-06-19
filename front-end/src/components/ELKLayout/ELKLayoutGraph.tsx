@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
-import "./ELKLayoutGraph.css";
+import "./ELKLayoutGraph.less";
+import styles from "../../cssVariables/cssVariables.less"
 import * as d3 from "d3";
 import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { NodeType, Attribute, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
@@ -19,9 +20,12 @@ import ELKLayoutNode from "./ELKLayoutNode";
 window["d3"] = d3;
 window["ELK"] = ELK;
 
+const arrowStrokeColor = styles.arrow_stroke_color;
+const arrowFillColor = styles.arrow_fill_color;
+
 const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (props: { iteration, elklayoutRef }) => {
   let iteration = props.iteration;
-  const elklayoutRef = props.elklayoutRef
+  const elklayoutRef = props.elklayoutRef;
   const styledGraph = useStyledGraph();
 
   const history = useHistory();
@@ -420,8 +424,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
           >
             <path
               d="M 0 0 L 10 5 L 0 10 L 4 5 z"
-              fill="#999999"
-              stroke="#999999"
+              fill={arrowFillColor}
+              stroke={arrowStrokeColor}
             ></path>
           </marker>
         </defs>

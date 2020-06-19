@@ -9,12 +9,17 @@ import {
   LayoutGraph,
   LayoutGraphImp,
 } from "./layout-graph.type";
+import styles from "../../../cssVariables/cssVariables.less"
+
 
 let oldEleMap = {};
 let newEleMap = {};
 let groups = { root: new Set() };
 let layoutNodeIdMap = { root: "" };
 let nodeLinkMap = {};
+let arrowStrokeColor = styles.arrow_stroke_color 
+let arrowFillColor = styles.arrow_fill_color
+
 export async function produceLayoutGraph(
   visGraph: VisGraph,
   layoutOptions: LayoutOptions = { networkSimplex: true }
@@ -118,7 +123,7 @@ export async function produceLayoutGraph(
         }`,
       sources: [outPort ? source + "-out-port" : source],
       targets: [inPort ? target + "-in-port" : target],
-      arrowheadStyle: "fill: #333; stroke: #333;",
+      arrowheadStyle: "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
       arrowhead: "vee",
     };
     restoreFromOldEleMap(newLink);
@@ -336,7 +341,7 @@ function processNodes(
               id4Style: `${layoutNodeIdMap[source]}->${layoutNodeIdMap[target]}`,
               sources: [outPort ? source + "-out-port" : source],
               targets: [inPort ? target + "-in-port" : target],
-              arrowheadStyle: "fill: #333; stroke: #333;",
+              arrowheadStyle: "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
               arrowhead: "vee",
             };
             restoreFromOldEleMap(edge);
@@ -352,7 +357,7 @@ function processNodes(
             id4Style: `__${i}__${layoutNodeIdMap[parentId]}->${layoutNodeIdMap[target]}`,
             sources: [parentId + "-in-port"],
             targets: [inPort ? target + "-in-port" : target],
-            arrowheadStyle: "fill: #333; stroke: #333;",
+            arrowheadStyle: "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
             arrowhead: "vee",
           };
           restoreFromOldEleMap(edge);

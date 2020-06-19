@@ -1,0 +1,29 @@
+@import "../../cssVariables/cssVariables.less";
+
+@StrokeAndWidth:{
+  stroke: #999999;
+  stroke-width: 1px;
+}
+
+.nodeitem-1 .fc-layer-label-container {
+  fill: @rnn_layer_bg_color;
+  @StrokeAndWidth();
+}
+
+/* conv */
+.nodeitem-1 .conv-layer-label-g rect {
+  fill: @conv_layer_bg_color;
+  @StrokeAndWidth();
+}
+
+/* RNN */
+.nodeitem-1 .rnn-layer-label-g rect{
+  fill: @rnn_layer_bg_color;
+  @StrokeAndWidth();
+}
+
+/* other */
+.nodeitem-1 .other-layer-label-g rect{
+  fill: #cbcbcb;
+  @StrokeAndWidth();
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import './LayerNodeGraph.css'
+import './LayerNodeGraph.less'
 
 interface LayerNodeProps {
   width: number;

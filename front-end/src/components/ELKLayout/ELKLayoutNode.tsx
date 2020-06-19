@@ -6,6 +6,7 @@ import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from '../LayerNodeGraph/LayerNodeGraph';
 import { NodeType, LayerType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
+import styles from "../../cssVariables/cssVariables.less"
 import {
   useProcessedGraph,
   modifyProcessedGraph,
@@ -28,6 +29,11 @@ interface Props {
 const antiShakeDistance = 2;
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
+  const edgePathStrokeColor = styles.edge_path_stroke_color;
+  const edgePathStrokeWidth = styles.edge_path_stroke_width;
+  const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
+  const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
+
   const { setSelectedNodeId, selectedNodeId, handleRightClick, currentNotShowLineChartID, iteration } = props;
   const { diagnosisMode, isHiddenInterModuleEdges } = useGlobalConfigurations();
   const graphForLayout = useProcessedGraph();
@@ -274,8 +280,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   //   .style("stroke-width", "1");
                   d3.selectAll(selectContent)
                     .transition()
-                    .style("stroke", "#7F0723")
-                    .style("stroke-width", "3");
+                    .style("stroke", hoverEdgePathStrokeColor)
+                    .style("stroke-width", hoverEdgePathStrokeWidth);
                 }}
                 onMouseOut={() => {
                   d3.selectAll(selectContent)

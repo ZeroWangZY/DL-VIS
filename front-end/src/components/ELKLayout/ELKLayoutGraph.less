@@ -1,10 +1,24 @@
+@import "../../cssVariables/cssVariables.less";
+@icons: "../../icon";
+
 #elk-svg {
     width: 100%;
     overflow: hidden;
     user-select: none;
 }
 
-.node rect,ellipse,circle {
+.nodeitem-1.layertype-FC text::before{
+    content: url("@{icons}/fc.png");
+}
+
+.nodeitem-1.layertype-CONV text::before{
+    content: url("@{icons}/conv.png");
+}
+.nodeitem-1.layertype-RNN text::before{
+    content: url("@{icons}/rnn.png");
+}
+
+.node rect, ellipse, circle {
     fill: #fff;
     stroke-width: 1px;
     stroke: #808080;
@@ -32,47 +46,40 @@ rect.behind-text {
 
 .node.expanded-node rect.elk-label-container.focus {
     stroke-width: 3px;
-    stroke:blue;
+    stroke: @focus_node_stroke_color;
 }
 
-.node .elk-label-container.focus{
+.node .elk-label-container.focus {
     stroke-width: 3px;
-    stroke:blue;
+    stroke: @focus_node_stroke_color;
 }
 
 /* 选中样式 */
+
 .selected .elk-label-container {
-    fill: #5d83be;
-    stroke: #333;
+    fill: @selected_node_fill_color;
+    stroke: @selected_node_stroke_color;
 }
 
-.selected .conv-layer-label-g rect{
-    fill: #5d83be;
-    stroke: #333;
+.selected .conv-layer-label-g rect {
+    fill: @selected_node_fill_color;
+    stroke: @selected_node_stroke_color;
 }
-.selected .fc-layer-label-g rect{
-    fill: #5d83be;
-    stroke: #333;
+
+.selected .fc-layer-label-g rect {
+    fill: @selected_node_fill_color;
+    stroke: @selected_node_stroke_color;
 }
-.selected .rnn-layer-label-g rect{
-    fill: #5d83be;
-    stroke: #333;
+
+.selected .rnn-layer-label-g rect {
+    fill: @selected_node_fill_color;
+    stroke: @selected_node_stroke_color;
 }
-.selected .other-layer-label-g rect{
-    fill: #5d83be;
-    stroke: #333;
+
+.selected .other-layer-label-g rect {
+    fill: @selected_node_fill_color;
+    stroke: @selected_node_stroke_color;
 }
-/* .nodeitem-0 ellipse.label-container {
-    
-} */
-
-
-/* node type为data  */
-
-
-/* .nodeitem-3 rect.elk-label-container {
-    stroke: none;
-} */
 
 .cluster rect {
     fill: #eee;
@@ -106,15 +113,16 @@ rect.behind-text {
     stroke-width: 1;
     fill: none;
 }
-.edgePath path{
+
+.edgePath path {
     stroke: #999999;
     /* stroke-width: 1; */
     fill: none;
 }
 
 .edgePath circle {
-    stroke:#999999;
-    fill:#999999;
+    stroke: #999999;
+    fill: #999999;
 }
 
 .behind-text {
