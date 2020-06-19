@@ -90,9 +90,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     treeView: {
       margin: theme.spacing(1),
-      maxHeight: 400,
+      height: 600,
       flexGrow: 1,
-      maxWidth: 400,
+      width: 350,
       textAlign: "left",
       overflow: "auto",
     },

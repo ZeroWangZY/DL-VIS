@@ -31,7 +31,7 @@ import { useGlobalConfigurations } from "../store/global-configuration";
 import { LayoutType } from "../store/global-configuration.type";
 import ELKLayout from "./ELKLayout/ELKLayout";
 
-const drawerWidth = 360;
+const drawerWidth = 360, drawerHeight = 400; 
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -40,10 +40,12 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "100vh",
     },
     appBar: {
-      transition: theme.transitions.create(["margin", "width"], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
+      zIndex: theme.zIndex.drawer + 1,
+      backgroundColor: "#344e61",
+      // transition: theme.transitions.create(["margin", "width"], {
+      //   easing: theme.transitions.easing.sharp,
+      //   duration: theme.transitions.duration.leavingScreen,
+      // }),
     },
     appBarShift: {
       width: `calc(100% - ${drawerWidth}px)`,
@@ -54,17 +56,44 @@ const useStyles = makeStyles((theme: Theme) =>
       }),
     },
     menuButton: {
-      marginRight: theme.spacing(2),
+      margin: theme.spacing(8,0,0,0),
+      backgroundColor: "rgba(0, 0, 0, 0.02)",
+      padding: 0,
+      borderRadius: 0,
+      borderRight: "1px solid #ccc",
+      width: theme.spacing(2)
     },
     hide: {
       display: "none",
     },
-    drawer: {
+    drawerLeft: {
       width: drawerWidth,
       flexShrink: 0,
     },
-    drawerPaper: {
+    drawerPaperLeft: {
       width: drawerWidth,
+      margin: theme.spacing(8,0,0,0),
+    }, 
+    drawerRight: {
+      // width: drawerWidth,
+      // height: '50vh',
+      flexShrink: 0,
+    },
+    drawerPaperRight: {
+      height: '50vh',
+      width: drawerWidth,
+      margin: theme.spacing(8,0,0,0),
+    },
+    drawerBottom: {
+      // height: drawerHeight,
+      flexShrink: 0,
+      marginLeft: 360,
+    },
+    drawerPaperBottom: {
+      height: drawerHeight,
+      marginLeft: 360,
+      // width: drawerWidth,
+      // margin: theme.spacing(7,0,0,0),
     },
     drawerHeader: {
       display: "flex",
@@ -111,37 +140,39 @@ const AppEntry: React.FC = () => {
         <CssBaseline />
         <AppBar
           position="fixed"
-          className={clsx(classes.appBar, {
-            [classes.appBarShift]: open,
-          })}
+          // className={clsx(classes.appBar, {
+          //   [classes.appBarShift]: open,
+          // })}
+          className={classes.appBar}
         >
           <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              edge="start"
-              className={clsx(classes.menuButton, open && classes.hide)}
-            >
-              <SettingsIcon />
-            </IconButton>
             <Typography variant="h6" noWrap>
-              葫芦娃的项目
+              Mindspore可视分析
             </Typography>
           </Toolbar>
         </AppBar>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          onClick={handleDrawerOpen}
+          edge="start"
+          className={clsx(classes.menuButton, open && classes.hide)}
+        >
+          <ChevronRightIcon />
+        </IconButton>
+        {/* ---------------------start of 左侧抽屉------------------------- */}
         <Drawer
-          className={classes.drawer}
+          className={classes.drawerLeft}
           variant="persistent"
           anchor="left"
           open={open}
           classes={{
-            paper: classes.drawerPaper,
+            paper: classes.drawerPaperLeft,
           }}
         >
           <div className={classes.drawerHeader}>
-            <Typography style={{ width: "100%" }} variant="h6" noWrap>
-              Preference
+            <Typography style={{ width: "100%", paddingLeft: theme.spacing(6) }} variant="h6" noWrap>
+              控制面板
             </Typography>
             <IconButton onClick={handleDrawerClose}>
               {theme.direction === "ltr" ? (
@@ -152,17 +183,20 @@ const AppEntry: React.FC = () => {
             </IconButton>
           </div>
           <Divider />
-          <LayoutSelector />
-          <Divider />
+          {/* leyout 去掉了，只显示elk布局的计算图 */}
+          {/* <LayoutSelector />
+          <Divider /> */}
           <GraphSelector />
           <Divider />
           <PreprocessingPluginsSelector />
           <Divider />
           <NodeSelector />
-          <Divider />
+          {/* <Divider />
           <Diagnosis />
-          <ConceptualGraphMode />
+          <ConceptualGraphMode /> */}
         </Drawer>
+        {/* ------------------------end of 左侧抽屉------------------------- */}
+        {/* ------------------------- 中间画布 ---------------------------- */}
         <main
           className={clsx(classes.content, {
             [classes.contentShift]: open,
@@ -187,6 +221,33 @@ const AppEntry: React.FC = () => {
             </Route>
           </Switch>
         </main>
+        {/* -------------------------end of 中间画布 ---------------------------- */}
+        {/* ------------------------- 右侧抽屉----------------------------------- */}
+        <Drawer
+          className={classes.drawerRight}
+          variant="persistent"
+          anchor="right"
+          open={open}
+          classes={{
+            paper: classes.drawerPaperRight,
+          }}
+        >
+
+        </Drawer>
+        {/* --------------------------end of 右侧抽屉------------------------------ */}
+        {/* ------------------------- 下侧抽屉----------------------------------- */}
+        <Drawer
+          className={classes.drawerBottom}
+          variant="persistent"
+          anchor="bottom"
+          open={open}
+          classes={{
+            paper: classes.drawerPaperBottom,
+          }}
+        >
+
+        </Drawer>
+        {/* --------------------------end of 下侧抽屉------------------------------ */}
       </div>
     </Router>
   );
