@@ -244,10 +244,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 onClick={() => handleClick(d.data.id)}
                 onDoubleClick={() => toggleExpanded(d.data.id)}
                 onMouseOver={() => {
-                  d3.selectAll(".edgePath path")
-                    .transition()
-                    .style("stroke", "#3F3F3F")
-                    .style("stroke-width", "1");
+                  // d3.selectAll(".edgePath path")
+                  //   .transition()
+                  //   .style("stroke", "#3F3F3F")
+                  //   .style("stroke-width", "1");
                   d3.selectAll(selectContent)
                     .transition()
                     .style("stroke", "#7F0723")
