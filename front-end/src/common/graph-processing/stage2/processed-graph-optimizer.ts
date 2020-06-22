@@ -192,7 +192,7 @@ function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
     //   }
     //   if (isFirstInputOperationNode) results.push(node as OperationNode)
     // }
-    if (node.id === "2") results.push(node as OperationNode)
+    if (node.id === "2" && (node as OperationNode).operationType === "Conv2D" && Object.keys(nodeMap).length < 500) results.push(node as OperationNode)
   }
   return results
 }

@@ -1,7 +1,7 @@
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 
 import { BaseNode, NodeType, LayerNodeImp, DataNodeImp, OperationNodeImp, DataType } from "../stage2/processed-graph";
-import { VisGraph } from "../stage3/vis-graph.type";
+import { VisGraph, StackedOpNodeImp } from "../stage3/vis-graph.type";
 import {
   ElkNodeMap,
   LayoutNode,
@@ -19,13 +19,13 @@ export async function produceLayoutGraph(
   visGraph: VisGraph,
   layoutOptions: LayoutOptions = { networkSimplex: true }
 ): Promise<LayoutGraph> {
-  const { nodeMap, visNodes, visEdges } = visGraph;
+  const { visNodeMap, visNodes, visEdges } = visGraph;
   //groups存储每个节点的儿子
   groups = { root: new Set() };
   layoutNodeIdMap = { root: "" };
   visNodes.forEach((nodeId, i) => {
     layoutNodeIdMap[nodeId] = idConverter(i); //初始化
-    const node = nodeMap[nodeId];
+    const node = visNodeMap[nodeId];
     if (node.parent !== "___root___") {
       if (!groups.hasOwnProperty(node.parent)) {
         groups[node.parent] = new Set([nodeId]);
@@ -62,8 +62,8 @@ export async function produceLayoutGraph(
 
   for (let i = 0; i < visEdges.length; i++) {
     const edge = visEdges[i];
-    let source = nodeMap[edge.source]["id"];
-    let target = nodeMap[edge.target]["id"];
+    let source = visNodeMap[edge.source]["id"];
+    let target = visNodeMap[edge.target]["id"];
 
     //以下解决跨层边的id匹配问题，id升级至公共父节点
     let sourceLevel = layoutNodeIdMap[source].split("-").length,
@@ -74,43 +74,43 @@ export async function produceLayoutGraph(
     //port模式，分割跨层级的边
     if (sourceLevel > targetLevel) {
       for (let i = 0; i < sourceLevel - targetLevel; i++) {
-        addLinkMap(innerRightLinkMap, nodeMap[_source].parent, _source);
-        _source = nodeMap[_source].parent;
+        addLinkMap(innerRightLinkMap, visNodeMap[_source].parent, _source);
+        _source = visNodeMap[_source].parent;
       }
     } else if (sourceLevel < targetLevel) {
       for (let i = 0; i < targetLevel - sourceLevel; i++) {
-        addLinkMap(innerLeftLinkMap, nodeMap[_target].parent, _target);
-        _target = nodeMap[_target].parent;
+        addLinkMap(innerLeftLinkMap, visNodeMap[_target].parent, _target);
+        _target = visNodeMap[_target].parent;
       }
     }
 
     //保证边的直接父节点相同
-    while (nodeMap[_source].parent !== nodeMap[_target].parent) {
-      addLinkMap(innerRightLinkMap, nodeMap[_source].parent, _source);
-      addLinkMap(innerLeftLinkMap, nodeMap[_target].parent, _target);
-      _source = nodeMap[_source].parent;
-      _target = nodeMap[_target].parent;
+    while (visNodeMap[_source].parent !== visNodeMap[_target].parent) {
+      addLinkMap(innerRightLinkMap, visNodeMap[_source].parent, _source);
+      addLinkMap(innerLeftLinkMap, visNodeMap[_target].parent, _target);
+      _source = visNodeMap[_source].parent;
+      _target = visNodeMap[_target].parent;
     }
 
     //group内部边
-    if (nodeMap[_source].parent !== "___root___") {
+    if (visNodeMap[_source].parent !== "___root___") {
       addLinkMap(linkMap, _source, _target);
       continue;
     }
 
     //reset成初始值
-    source = nodeMap[edge.source]["id"];
-    target = nodeMap[edge.target]["id"];
+    source = visNodeMap[edge.source]["id"];
+    target = visNodeMap[edge.target]["id"];
 
     //将边升级至顶层
-    while (nodeMap[source].parent !== "___root___") {
-      source = nodeMap[source].parent;
+    while (visNodeMap[source].parent !== "___root___") {
+      source = visNodeMap[source].parent;
     }
-    while (nodeMap[target].parent !== "___root___") {
-      target = nodeMap[target].parent;
+    while (visNodeMap[target].parent !== "___root___") {
+      target = visNodeMap[target].parent;
     }
 
-    const [inPort, outPort] = isPort(nodeMap[target], nodeMap[source]);
+    const [inPort, outPort] = isPort(visNodeMap[target], visNodeMap[source]);
     let newLink = {
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
@@ -127,7 +127,7 @@ export async function produceLayoutGraph(
 
   let newNodes = [];
   newNodes = processNodes(
-    nodeMap,
+    visNodeMap,
     linkMap,
     innerLeftLinkMap,
     innerRightLinkMap,
@@ -302,6 +302,7 @@ export const generateNode = (
     width: node.type === NodeType.OPERTATION ? 30 : 120,
     height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum * 5, //简单子节点数量编码
     ports: ports,
+    isStacked: node instanceof StackedOpNodeImp
   };
 };
 

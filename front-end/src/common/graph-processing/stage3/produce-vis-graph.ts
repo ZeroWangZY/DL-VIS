@@ -1,11 +1,12 @@
 import { ProcessedGraph, NodeId, NodeMap, NodeDef, ROOT_SCOPE } from "../stage2/processed-graph";
-import { VisGraph, VisEdge, VisGraphImp } from "./vis-graph.type";
+import { VisGraph, VisEdge, VisGraphImp, VisNodeMap } from "./vis-graph.type";
 
 export function produceVisGraph(processedGraph: ProcessedGraph): VisGraph {
   const visNodes = getVisNodes(processedGraph)
   const visEdges = getVisEdges(processedGraph, visNodes)
   const { nodeMap, rootNode } = processedGraph
-  return new VisGraphImp(nodeMap, rootNode, visEdges, visNodes)
+  const visNodeMap = buildVisNodeMap(nodeMap)
+  return new VisGraphImp(visNodeMap, rootNode, visEdges, visNodes)
 }
 
 function getVisNodes(processedGraph: ProcessedGraph): NodeId[] {
@@ -53,6 +54,11 @@ function getVisEdges(processedGraph: ProcessedGraph, visNodes: NodeId[]): VisEdg
     }
   }
   return visEdges;
+}
+
+function buildVisNodeMap(nodeMap: NodeMap): VisNodeMap {
+  const visNodeMap = Object.assign({}, nodeMap)
+  return visNodeMap
 }
 
 function findOldestUnexpandParentNodeId(nodeMap: NodeMap, targetNodeId: string): string {

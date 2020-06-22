@@ -4,7 +4,7 @@ import {
   ElkEdge,
   ElkEdgeSection,
 } from "elkjs/lib/elk.bundled.js";
-import { NodeType, DataNodeImp } from "../stage2/processed-graph";
+import { NodeType, DataNodeImp, NodeId } from "../stage2/processed-graph";
 export interface ElkNodeMap {
   [propName: string]: ElkNodeMap;
 }
@@ -25,6 +25,7 @@ export interface LayoutNode extends ElkNode {
   expand?: boolean;
   parameters?: DataNodeImp[];
   constVals?: DataNodeImp[];
+  isStacked?: boolean;
 }
 
 export interface LayoutEdge extends ElkEdge {

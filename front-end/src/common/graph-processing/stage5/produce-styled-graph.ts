@@ -108,6 +108,7 @@ export const generateNodeStyles = (
           constVals: node.type === NodeType.OPERTATION ? node.constVals : null,
           label: node.label,
           expand: node.expand,
+          isStacked: node.isStacked,
           textWidth:
             textSize(
               node.label +

@@ -128,6 +128,30 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     if (node.type === NodeType.OPERTATION) { // OPERATION
       return (
         <g>
+          {node.isStacked && (
+            <>
+              <ellipse
+                className={
+                  "elk-label-container" +
+                  (node.expand ? " expanded" : "") +
+                  (node.id === selectedNodeId ? " focus" : "")
+                }
+                rx={ellipseX}
+                ry={ellipseY}
+                transform="translate(0, 6)"
+              />
+              <ellipse
+                className={
+                  "elk-label-container" +
+                  (node.expand ? " expanded" : "") +
+                  (node.id === selectedNodeId ? " focus" : "")
+                }
+                rx={ellipseX}
+                ry={ellipseY}
+                transform="translate(0, 3)"
+              />
+            </>
+          )}
           <ellipse
             className={
               "elk-label-container" +
