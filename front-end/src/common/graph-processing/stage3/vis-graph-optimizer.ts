@@ -22,7 +22,7 @@ function genHash(str: string): number {
 }
 
 
-const EDGE_COUNT_THRESHOLD_TO_TRIGER_STACK = 5
+const EDGE_COUNT_THRESHOLD_TO_TRIGER_STACK = 10
 const MAX_SUBGRAPH_DETECTING_STEP = 5
 
 
@@ -128,6 +128,7 @@ function _findSubgraphsFromEndHubNode(endHubNode: NodeId, edgeMap: EdgeMap, node
   const retSet = new Set<Subgraph>()
   const consideredNodes = new Set<NodeId>()
 
+  console.log(endHubNode)
   const startNodes = edgeMap.get(endHubNode).inEdges
 
   for (const startNode of startNodes) {
@@ -236,7 +237,7 @@ function _stackSimilarSubgraphs(similarSubgraphs: Set<Subgraph>, visNodes: NodeI
       const node = nodeMap[n]
       if (node instanceof StackedOpNodeImp) {
         (node as StackedOpNode).nodesContained.forEach(subnode =>
-          (nodeMap[hashToNodeMap.get(_getNodeHash(n, nodeMap))] as StackedOpNode).nodesContained.add(n))
+          (nodeMap[hashToNodeMap.get(_getNodeHash(n, nodeMap))] as StackedOpNode).nodesContained.add(subnode))
       } else {
         (nodeMap[hashToNodeMap.get(_getNodeHash(n, nodeMap))] as StackedOpNode).nodesContained.add(n)
       }
@@ -297,6 +298,7 @@ function stackFrequentSubgraph(visGraph: VisGraph) {
     const startHubNodes = _getStartHubNodes(edgeMap)
 
     for (const startHubNode of startHubNodes) {
+      if (!edgeMap.get(startHubNode)) continue // startHubNode有可能在上次合并中删去了
       if (edgeMap.get(startHubNode).outEdges.size > EDGE_COUNT_THRESHOLD_TO_TRIGER_STACK) {
         // step 2: 沿着step 1中的节点，找到这些发散出去的边的收合位置，也就是这些边的以step 1中的节点开始，找到这些边的共同结束位置
         const endHubNodes = _findEndHubNode(startHubNode, edgeMap, false)
@@ -316,18 +318,22 @@ function stackFrequentSubgraph(visGraph: VisGraph) {
     }
   }
 
-  // 上面只合并了从statHubNode到endHubNode之间的频繁子图，接下来合并输出到某个节点，但没有输入的子图（这些子图不会和startHubNode相连）
-  const endHubNodes = _getEndHubNodes(edgeMap)
-  for (const endHubNode of endHubNodes) {
-    const subgraphs = _findSubgraphsFromEndHubNode(endHubNode, edgeMap, visNodeMap)
-    if (subgraphs.size < EDGE_COUNT_THRESHOLD_TO_TRIGER_STACK) continue
+  for (let i = 0; i < 3; i++) {
+    // 上面只合并了从statHubNode到endHubNode之间的频繁子图，接下来合并输出到某个节点，但没有输入的子图（这些子图不会和startHubNode相连）
+    const endHubNodes = _getEndHubNodes(edgeMap)
+    for (const endHubNode of endHubNodes) {
+      if (!edgeMap.get(endHubNode)) continue // startHubNode有可能在上次合并中删去了
+      const subgraphs = _findSubgraphsFromEndHubNode(endHubNode, edgeMap, visNodeMap)
+      if (subgraphs.size < 2) continue
 
-    const similarSubgraphMap = _detectSimilarSubgraph(subgraphs, visNodeMap)
-    for (const [hash, similarSubgraphs] of similarSubgraphMap) {
-      _stackSimilarSubgraphs(similarSubgraphs, visNodes, visEdges, visNodeMap)
-      edgeMap = _buildEdgeMap(visNodes, visEdges)
+      const similarSubgraphMap = _detectSimilarSubgraph(subgraphs, visNodeMap)
+      for (const [hash, similarSubgraphs] of similarSubgraphMap) {
+        _stackSimilarSubgraphs(similarSubgraphs, visNodes, visEdges, visNodeMap)
+        edgeMap = _buildEdgeMap(visNodes, visEdges)
+      }
     }
   }
+
 
   console.log("after: ", visNodes.length)
 }
