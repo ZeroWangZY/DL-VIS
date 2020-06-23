@@ -3,7 +3,7 @@ import { TransitionMotion } from "react-motion";
 import { useStyledGraph } from "../../store/styledGraph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import * as d3 from "d3";
-import styles from "../../cssVariables/cssVariables.less"
+import styles from "../../CSSVariables/CSSVariables.less"
 
 const ELKLayoutEdge: React.FC = () => {
   const styledGraph = useStyledGraph();

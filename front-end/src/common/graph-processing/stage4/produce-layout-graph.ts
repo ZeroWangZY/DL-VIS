@@ -9,7 +9,7 @@ import {
   LayoutGraph,
   LayoutGraphImp,
 } from "./layout-graph.type";
-import styles from "../../../cssVariables/cssVariables.less"
+import styles from "../../../CSSVariables/CSSVariables.less"
 
 
 let oldEleMap = {};

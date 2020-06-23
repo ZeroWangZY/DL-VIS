@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
 import "./ELKLayoutGraph.less";
-import styles from "../../cssVariables/cssVariables.less"
+import styles from "../../CSSVariables/CSSVariables.less"
 import * as d3 from "d3";
 import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { NodeType, Attribute, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'

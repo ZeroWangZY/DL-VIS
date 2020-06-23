@@ -6,7 +6,7 @@ import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
 import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from '../LayerNodeGraph/LayerNodeGraph';
 import { NodeType, LayerType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
-import styles from "../../cssVariables/cssVariables.less"
+import styles from "../../CSSVariables/CSSVariables.less"
 import {
   useProcessedGraph,
   modifyProcessedGraph,
