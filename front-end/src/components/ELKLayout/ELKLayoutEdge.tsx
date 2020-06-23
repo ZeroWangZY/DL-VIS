@@ -18,7 +18,6 @@ const ELKLayoutEdge: React.FC = () => {
           <g className="edgePaths">
             {interpolatedStyles.map((d) => (
               <g
-              // className={"edgePath " + d.data.id4Style.split("->").join(" ")}
                 className={"edgePath"}
                 key={d.key}
               >
@@ -29,14 +28,6 @@ const ELKLayoutEdge: React.FC = () => {
                     markerEnd={link.arrowhead === false ? "" : "url(#arrowhead)"}
                     strokeWidth={link.strokeWidth}
                   ></path>
-                ))}
-                {d.data.junctionPoints.map((point, i) => (
-                  <circle
-                    key={d.key + "_junkPoint_" + i}
-                    cx={point.x}
-                    cy={point.y}
-                    r={2}
-                  />
                 ))}
               </g>
             ))}
@@ -56,7 +47,7 @@ const ELKLayoutEdge: React.FC = () => {
                 <path
                   className="hover"
                   d={d.data.lineData}
-                  style={{stroke: edgePathStrokeColor}} 
+                  style={{stroke: "none"}} 
                 ></path>
               </g>
             ))}
