@@ -1,6 +1,18 @@
 @import "../../CSSVariables/CSSVariables.less";
 @icons: "../../icon";
 
+@iconSize: 15px;
+
+@IconsStyle:{
+    content:"";
+    background-size: @iconSize @iconSize;
+    width:@iconSize;
+    height:@iconSize;
+    position:absolute;
+    left:-17px;
+    // top:32%;
+}
+
 #elk-svg {
     width: 100%;
     overflow: hidden;
@@ -8,14 +20,23 @@
 }
 
 .nodeitem-1.layertype-FC text::before{
-    content: url("@{icons}/fc.png");
+    background:url("@{icons}/fc.png");
+    @IconsStyle();
 }
 
 .nodeitem-1.layertype-CONV text::before{
-    content: url("@{icons}/conv.png");
+    background: url("@{icons}/conv.png");
+    @IconsStyle();
 }
 .nodeitem-1.layertype-RNN text::before{
-    content: url("@{icons}/rnn.png");
+    background: url("@{icons}/rnn.png");
+    @IconsStyle();
+}
+
+.nodeitem-1 .my-label text {
+    color: red;
+    position: relative;
+    left: 8px;
 }
 
 .node rect, ellipse, circle {
@@ -127,4 +148,8 @@ rect.behind-text {
 
 .behind-text {
     stroke: none !important
+}
+
+:export {
+    iconSize: @iconSize;
 }

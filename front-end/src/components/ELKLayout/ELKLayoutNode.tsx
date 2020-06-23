@@ -7,6 +7,7 @@ import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from '../Lay
 import { NodeType, LayerType } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import styles from "../../CSSVariables/CSSVariables.less"
+import elkStyles from "./ELKLayoutGraph.less";
 import {
   useProcessedGraph,
   modifyProcessedGraph,
@@ -94,7 +95,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   };
 
   const showLineChart = (node): boolean => {
-    // TODO: 最好的方式应该是在data里面添加一个nodetype
     if (diagnosisMode
       && (node.type === NodeType.LAYER && node.expand === false)
       && currentNotShowLineChartID.indexOf(node.id) < 0)
@@ -113,6 +113,9 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   };
 
   const getLineChartAndText = (node, rectWidth, rectHeight) => {
+    const iconSize = parseInt(elkStyles.iconSize);
+    console.log(typeof iconSize)
+    // 注意： 目前折线图处于中间3/4之类。所以上方和下方分别剩余1/8的空余
     return (
       <g className="LineChartInNode" >
         <LineGroup
@@ -121,11 +124,17 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           height={rectHeight * 3 / 4}
           data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []} />
         {console.log(lineChartData.get(node.id))}
-        <text transform={`translate(0,-${rectHeight * 3 / 8})`}
-          dominantBaseline={(node.class.indexOf('cluster') > -1) ? "text-before-edge" : "middle"}
-        >
-          {node.label}
-        </text>
+        <foreignObject
+          x={-rectWidth / 2}
+          y={-rectHeight * 3 / 8 - iconSize}
+          width={rectWidth}
+          height={iconSize}>
+          <div>
+            <text >
+              {node.label.length <= 10 ? node.label : (node.label.slice(0, 10) + "...")}
+            </text>
+          </div>
+        </foreignObject>
       </g >)
 
   }
@@ -327,11 +336,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       height={d.style.rectHeight}
                     >
                       <div className="label">
-                        {d.data.label}
-                        {!d.data.expand &&
-                          (d.data.type === NodeType.GROUP ||
-                            d.data.type === NodeType.LAYER) &&
-                          "+"}
+                        <text>
+                          {d.data.label.length <= 10 ? d.data.label : (d.data.label.slice(0, 10) + "...")}
+                          {!d.data.expand &&
+                            (d.data.type === NodeType.GROUP ||
+                              d.data.type === NodeType.LAYER) &&
+                            "+"}
+                        </text>
                       </div>
                     </foreignObject>
                   )}
