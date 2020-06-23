@@ -36,6 +36,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [selectedNodeId, setSelectedNodeId] = useState<string | string[] | null>(null);
+  const [selectedAuxiliaryNodeId, setSelectedAuxiliaryNodeId] = useState("");
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const handleChangeTransform = function (transform) {
@@ -257,6 +258,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
     node.classed("selected", false);
     node.classed("previouslySelected", false);
 
+    setSelectedAuxiliaryNodeId("");
     setSelectedNodeId("");
   };
 
@@ -444,6 +446,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
               handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
+              selectedAuxiliaryNodeId={selectedAuxiliaryNodeId}
+              setSelectedAuxiliaryNodeId={setSelectedAuxiliaryNodeId}
             />
             <ELKLayoutEdge />
           </g>

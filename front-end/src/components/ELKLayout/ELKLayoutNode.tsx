@@ -25,6 +25,8 @@ interface Props {
   handleRightClick: { (e: any): void };
   currentNotShowLineChartID: string[];
   iteration: number;
+  selectedAuxiliaryNodeId: string;
+  setSelectedAuxiliaryNodeId: { (nodeId: string): void };
 }
 
 const antiShakeDistance = 2;
@@ -35,7 +37,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { setSelectedNodeId, selectedNodeId, handleRightClick, currentNotShowLineChartID, iteration } = props;
+  const { setSelectedNodeId,
+    selectedNodeId,
+    handleRightClick,
+    currentNotShowLineChartID,
+    iteration,
+    selectedAuxiliaryNodeId,
+    setSelectedAuxiliaryNodeId } = props;
   const { diagnosisMode, isHiddenInterModuleEdges } = useGlobalConfigurations();
   const graphForLayout = useProcessedGraph();
   const visGraph = useVisGraph();
@@ -73,12 +81,14 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       return;
     }
     let nodeId = id // .replace(/-/g, "/");
+    setSelectedAuxiliaryNodeId("");
     setSelectedNodeId(nodeId);
   };
 
-  const handleClickAuxiliaryNode = (auxiliaryNodes: any[]) => {
+  const handleClickAuxiliaryNode = (paramOrConstId: string, auxiliaryNodes: any[]) => {
     clickAuxiliaryNode = true;
     let nodeIds = [];
+    setSelectedAuxiliaryNodeId(paramOrConstId);
     for (let node of auxiliaryNodes)
       nodeIds.push(node.id);
     setSelectedNodeId(nodeIds);
@@ -141,6 +151,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   const getLabelContainer = (node, ellipseX, ellipseY, rectWidth, rectHeight) => {
     if (node.type === NodeType.OPERTATION) { // OPERATION
+      let parameterId = node.id + "_parameter";
+      let constId = node.id + "_const";
       return (
         <g>
           {node.isStacked && (
@@ -176,11 +188,22 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             rx={ellipseX}
             ry={ellipseY}
           />
-          {node.parameters.length !== 0
-            && <circle cx={ellipseY} cy={ellipseY} r={ellipseY / 2} strokeDasharray={1} onClick={() => handleClickAuxiliaryNode(node.parameters)} />
+          {node.parameters.length !== 0 &&
+            <circle
+              className={"parameter" + (selectedAuxiliaryNodeId === parameterId ? " focus" : "")}
+              cx={ellipseY}
+              cy={ellipseY}
+              r={ellipseY / 2}
+              strokeDasharray={1}
+              onClick={() => handleClickAuxiliaryNode(parameterId, node.parameters)} />
           }
-          {node.constVals.length !== 0
-            && <circle cx={-ellipseY} cy={ellipseY} r={ellipseY / 2} onClick={() => handleClickAuxiliaryNode(node.constVals)} />
+          {node.constVals.length !== 0 &&
+            <circle
+              className={"const" + (selectedAuxiliaryNodeId === constId ? " focus" : "")}
+              cx={-ellipseY}
+              cy={ellipseY}
+              r={ellipseY / 2}
+              onClick={() => handleClickAuxiliaryNode(constId, node.constVals)} />
           }
         </g>)
 
