@@ -216,7 +216,7 @@ function _detectSimilarSubgraph(subgraphs: Set<Subgraph>, nodeMap: VisNodeMap): 
 
 function _stackSimilarSubgraphs(similarSubgraphs: Set<Subgraph>, visNodes: NodeId[],
   visEdges: VisEdge[], nodeMap: VisNodeMap) {
-  if (similarSubgraphs.size === 0) return
+  if (similarSubgraphs.size < 2) return
   const similarSubgraphsArray = Array.from(similarSubgraphs)
   const sampleSubgraph = similarSubgraphsArray[0]
 
@@ -324,8 +324,7 @@ function stackFrequentSubgraph(visGraph: VisGraph) {
     for (const endHubNode of endHubNodes) {
       if (!edgeMap.get(endHubNode)) continue // startHubNode有可能在上次合并中删去了
       const subgraphs = _findSubgraphsFromEndHubNode(endHubNode, edgeMap, visNodeMap)
-      if (subgraphs.size < 2) continue
-
+      
       const similarSubgraphMap = _detectSimilarSubgraph(subgraphs, visNodeMap)
       for (const [hash, similarSubgraphs] of similarSubgraphMap) {
         _stackSimilarSubgraphs(similarSubgraphs, visNodes, visEdges, visNodeMap)
