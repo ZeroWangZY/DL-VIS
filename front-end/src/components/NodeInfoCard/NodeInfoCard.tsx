@@ -10,6 +10,8 @@ import {
   GroupNode,
   OperationNode,
 } from "../../common/graph-processing/stage2/processed-graph";
+import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type"
+import { useVisGraph } from "../../store/visGraph";
 
 const useStyles = makeStyles({
   title: {
@@ -27,25 +29,37 @@ const useStyles = makeStyles({
 const NodeInfoCard: React.FC<{ selectedNodeId: string | string[] | null }> = (props: {
   selectedNodeId;
 }) => {
+  const { selectedNodeId } = props;
+  const visGraph = useVisGraph();
+  const processedGraph = useProcessedGraph();
+  const classes = useStyles();
+  if (!selectedNodeId || !visGraph || !visGraph.visNodeMap || !processedGraph || !processedGraph.nodeMap)
+    return (<div></div>);
+
+  const { nodeMap } = processedGraph;
+  const { visNodeMap } = visGraph;
+
   const isStringArray = (x: any): boolean => { // 判断传入的参数是不是string[]
     return (x !== null && typeof selectedNodeId === "object");
   }
-  const { selectedNodeId } = props;
-  const processedGraph = useProcessedGraph();
-  const { nodeMap } = processedGraph;
-  let selectedNodes = [];
 
-  if (isStringArray(selectedNodeId)) { // 如果传入的参数是string数组
-    for (let id of selectedNodeId)
-      selectedNodes.push(nodeMap[id]);
-  } else if (selectedNodeId !== null) { // 传入的参数是string
-    selectedNodes.push(nodeMap[selectedNodeId]);
+  let selectedNodes = []; // selectedNodes包含所有选中节点
+
+  let isStackedNode = false;
+  if (visNodeMap[selectedNodeId] instanceof StackedOpNodeImp) { // 选中堆叠子图
+    isStackedNode = true;
+    selectedNodes.push(visNodeMap[selectedNodeId]);
+  } else { // 选中的不是堆叠子图
+    if (isStringArray(selectedNodeId)) { // 如果传入的参数是string数组
+      for (let id of selectedNodeId)
+        selectedNodes.push(nodeMap[id]);
+    } else if (selectedNodeId !== null) { // 传入的参数是string
+      selectedNodes.push(nodeMap[selectedNodeId]);
+    }
   }
-  //  如果selectedNodeId是null，则selectedNodes是一个空数组
-  // 否则，selectedNodes是一个数组，包含所有选中节点
-  const classes = useStyles();
 
   const getDisplayedName = (nodeId) => {
+    if (isStackedNode) return visNodeMap[nodeId].displayedName;
     return nodeMap[nodeId].displayedName;
   };
 
@@ -144,10 +158,44 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | string[] | null }> = (pr
     return contents;
   }
 
+  const getStackedNodeContents = (selectedNodes): any[] => {
+    let selectedNode = selectedNodes[0];
+    let contents = [];
+    if (selectedNode === undefined || selectedNode === null) return [];
+
+    contents.push(
+      <CardContent style={{ padding: 0 }} key={selectedNode.displayedName}>
+        <Typography
+          className={classes.title}
+          style={{
+            backgroundColor: "RGB(233,233,233)",
+          }}
+        >
+          {(selectedNode.displayedName as string).length <= 25
+            ? selectedNode.displayedName
+            : selectedNode.displayedName.slice(0, 25) + "..."}
+        </Typography>
+
+        <Typography className={classes.title}>
+          {"nodesContained: (" + `${selectedNode.nodesContained.size}` + ")"}
+        </Typography>
+        {Array.from(selectedNode.nodesContained).map((d, i) => (
+          <Typography className={classes.content} key={"nodesContained" + i}>
+            {getDisplayedName(d).length <= 25
+              ? getDisplayedName(d)
+              : getDisplayedName(d).slice(0, 25) + "..."}
+          </Typography>
+        ))}
+      </CardContent>
+    )
+
+    return contents;
+  }
+
   return (
     <div className={"info-card"}>
       <Card className={"info-card root"}>
-        {getContents(selectedNodes)}
+        {isStackedNode ? getStackedNodeContents(selectedNodes) : getContents(selectedNodes)}
       </Card>
     </div>
   );

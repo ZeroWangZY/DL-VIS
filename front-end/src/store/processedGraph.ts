@@ -32,7 +32,7 @@ export const modifyProcessedGraph = (operation: ProcessedGraphModificationType, 
       nodeId = nodeId.replace(/-/g, '/'); //还原为nodemap中存的id格式
       while (1) {
         let node = processedGraph.nodeMap[nodeId];
-        if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
+        if (!node || (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER)) {
           return
         }
 

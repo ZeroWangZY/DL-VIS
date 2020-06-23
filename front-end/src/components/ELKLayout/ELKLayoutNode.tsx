@@ -71,7 +71,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       clickAuxiliaryNode = false;
       return;
     }
-    let nodeId = id.replace(/-/g, "/");
+    let nodeId = id // .replace(/-/g, "/");
     setSelectedNodeId(nodeId);
   };
 
