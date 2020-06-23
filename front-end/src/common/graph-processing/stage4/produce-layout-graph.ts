@@ -11,13 +11,12 @@ import {
 } from "./layout-graph.type";
 import styles from "../../../CSSVariables/CSSVariables.less"
 
-
 let oldEleMap = {};
 let newEleMap = {};
 let groups = { root: new Set() };
 let layoutNodeIdMap = { root: "" };
 let nodeLinkMap = {};
-let arrowStrokeColor = styles.arrow_stroke_color 
+let arrowStrokeColor = styles.arrow_stroke_color
 let arrowFillColor = styles.arrow_fill_color
 
 export async function produceLayoutGraph(
@@ -179,6 +178,7 @@ async function generateLayout(
         "org.eclipse.elk.interactive": "true",
         "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
         // "org.eclipse.elk.edgeRouting": "SPLINES"
+        "spacing.nodeNodeBetweenLayers": "50.0",
       },
     }
   );
@@ -307,6 +307,7 @@ export const generateNode = (
     width: node.type === NodeType.OPERTATION ? 30 : 120,
     height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum * 5, //简单子节点数量编码
     ports: ports,
+    labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp
   };
 };
@@ -400,4 +401,18 @@ function processNodes(
     processChildren(nodeId, newNode, newNodes);
   }
   return newNodes;
+}
+
+
+// Label会被添加在展开后的groupNode中，ELK会考虑Label的大小，从而方便绘制时有放label的地方
+function genLabel(id){
+  return [{
+    id,
+    text: "",
+    layoutOptions: {
+      "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]"
+    },
+    width: 10.0,
+    height: 15.0
+  }]
 }

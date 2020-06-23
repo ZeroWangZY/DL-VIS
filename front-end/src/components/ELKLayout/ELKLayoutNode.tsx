@@ -321,21 +321,11 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               >
                 {getLabelContainer(d.data, d.style.ellipseX, d.style.ellipseY, d.style.rectWidth, d.style.rectHeight)}
                 <g className="my-label"
-                  transform={
-                    d.data.class.indexOf("cluster") > -1 ? `translate(0,-${d.style.rectHeight / 2})` : null
-                  }
+                  // transform={
+                  //   d.data.class.indexOf("cluster") > -1 ? `translate(0,-${d.style.rectHeight / 2})` : null
+                  // }
                 >
                   {showLineChart(d.data) && getLineChartAndText(d.data, d.style.rectWidth, d.style.rectHeight)}
-
-                  {d.data.expand ? (
-                    <rect
-                      className="behind-text"
-                      width={d.data.textWidth}
-                      height={10}
-                      transform={`translate(-${d.data.textWidth / 2}, -${d.style.rectHeight / 2 + 5})`}
-                      stroke="none"
-                    ></rect>
-                  ) : null}
 
                   {d.data.type === NodeType.OPERTATION && (
                     <text dominantBaseline={"baseline"} y={`${-d.style.rectHeight / 4 - 3}`} style={{ fontSize: 10 }}>
@@ -346,11 +336,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   {!showLineChart(d.data) && d.data.type !== NodeType.OPERTATION && (
                     <foreignObject
                       x={-d.style.rectWidth / 2}
-                      y={
-                        d.data.expand
-                          ? -d.style.rectHeight
-                          : -d.style.rectHeight / 2
-                      }
+                      y={-d.style.rectHeight / 2}
+                      // transform={`translate(-${d.style.rectWidth / 2}, -${d.style.rectHeight / 2})`}
                       width={d.style.rectWidth}
                       height={d.style.rectHeight}
                     >
@@ -365,13 +352,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       </div>
                     </foreignObject>
                   )}
-
-                  {/* {!showLineChart(d.data) && d.data.type !== NodeType.OPERTATION && (
-                    <text dominantBaseline={"middle"} y={d.data.expand ? `${-d.style.rectHeight / 2 + 2}` : null}>
-                      {d.data.label}
-                      {!d.data.expand && (d.data.type === NodeType.GROUP || d.data.type === NodeType.LAYER) && "+"}
-                    </text>
-                  )} */}
                 </g>
               </g>
             );
