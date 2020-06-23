@@ -156,7 +156,7 @@ async function generateLayout(
   layoutOptions: LayoutOptions
 ): Promise<LayoutGraph> {
   const { networkSimplex, mergeEdge } = layoutOptions;
-  const elk = new ELK({ workerUrl: "./elk-worker.min.js" });
+  const elk = new ELK();
   let elkLayout: Promise<ElkNode> = elk.layout(
     {
       id: "root",
