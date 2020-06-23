@@ -23,10 +23,17 @@ window["ELK"] = ELK;
 
 const arrowStrokeColor = styles.arrow_stroke_color;
 const arrowFillColor = styles.arrow_fill_color;
+interface Props {
+  iteration: number; 
+  bottom: number; 
+  right: number;
+}
 
-const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (props: { iteration, elklayoutRef }) => {
+const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   let iteration = props.iteration;
   const elklayoutRef = props.elklayoutRef;
+  let bottom = props.bottom;
+  let right = props.right;
   const styledGraph = useStyledGraph();
 
   const history = useHistory();
@@ -446,7 +453,7 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
 
       <NodeInfoCard selectedNodeId={selectedNodeId} />
 
-      <div className="minimap-container">
+      <div className="minimap-container" style={{bottom: bottom, right: right}}>
         <MiniMap
           graph={svgRef.current}
           outputSVG={outputSVGRef.current}

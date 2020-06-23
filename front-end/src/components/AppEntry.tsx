@@ -46,7 +46,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     appBar: {
       zIndex: theme.zIndex.drawer + 1,
-      backgroundColor: "#344e61",
+      // backgroundColor: "#344e61",
+      backgroundImage: 'linear-gradient(180deg,#263d5f,#16233b)',
       // transition: theme.transitions.create(["margin", "width"], {
       //   easing: theme.transitions.easing.sharp,
       //   duration: theme.transitions.duration.leavingScreen,
@@ -66,7 +67,14 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 0,
       borderRadius: 0,
       borderRight: "1px solid #ccc",
-      width: theme.spacing(2)
+      width: theme.spacing(3),
+    },
+    menuButtonShift: {
+      transition: theme.transitions.create("height", {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      height: 543,//这里写计算公式不生效，直接写的右侧抽屉的高度
     },
     hide: {
       display: "none",
@@ -83,19 +91,23 @@ const useStyles = makeStyles((theme: Theme) =>
       flexShrink: 0,
     },
     drawerPaperRight: {
-      height: '55vh',
+      height: `calc(100% - 467px)`,
       width: drawerWidth,
       margin: theme.spacing(8,0,0,0),
+      borderBottom: "1px solid #ccc",
     },
     menuButtonRight: {
-      height: '55vh',
-      margin: theme.spacing(8,0,0,0),
+      height: `calc(100% - 467px)`,
+      // margin: theme.spacing(8,0,0,0),
       backgroundColor: "rgba(0, 0, 0, 0.02)",
       padding: 0,
       borderRadius: 0,
       borderLeft: "1px solid #ccc",
       borderBottom: "1px solid #ccc",
-      width: theme.spacing(2),
+      width: theme.spacing(3),
+      position: 'absolute',
+      top: theme.spacing(8),
+      right: 1,
     },
     drawerBottom: {
       flexShrink: 0,
@@ -106,16 +118,31 @@ const useStyles = makeStyles((theme: Theme) =>
       // width: drawerWidth,
       // margin: theme.spacing(7,0,0,0),
     },
+    drawerPaperBottomShift: {
+      transition: theme.transitions.create("marginLeft", {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      marginLeft: 0,
+    },
     menuButtonBottom: {
       backgroundColor: "rgba(0, 0, 0, 0.02)",
       padding: 0,
       borderRadius: 0,
       borderTop: "1px solid #ccc",
-      height: theme.spacing(2),
+      height: theme.spacing(3),
       width: `calc(100% - ${drawerWidth}px)`,
       position: 'absolute',
-      top: `calc(100% - ${theme.spacing(2)}px)`,
+      bottom: 1,
       left: `calc(${drawerWidth+12}px)`,
+    },
+    menuButtonBottomShift: {
+      transition: theme.transitions.create(["left","width"], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      left: 36,
+      width: `calc(100% - ${theme.spacing(3)}px)`
     },
     drawerHeader: {
       display: "flex",
@@ -127,6 +154,7 @@ const useStyles = makeStyles((theme: Theme) =>
     content: {
       flexGrow: 1,
       padding: theme.spacing(3),
+      height: `calc(100% - 0px)`,
       transition: theme.transitions.create("margin", {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
@@ -140,11 +168,9 @@ const useStyles = makeStyles((theme: Theme) =>
       }),
       marginLeft: 0,
     },
-    // indicator:{
-    //   color: "#c7000b",
-    // },
     tabsStyle: {
       borderBottom: '1px solid #ccc',
+      
     },
     innerTabsStyle: {
       borderBottom: '1px solid #ccc',
@@ -158,6 +184,9 @@ const useStyles = makeStyles((theme: Theme) =>
     itabStyle: {
       minWidth: 70,
       fontSize: '12px',
+    },
+    indicator: {
+      backgroundColor: '#00a5a7',
     },
   })
 );
@@ -240,13 +269,30 @@ const AppEntry: React.FC = () => {
     setValue({ ...value, [pos]: newValue});
   };
 
-  // const toggleTab('right', ) = (event: React.ChangeEvent<{}>, newValue: number) => {
-  //   setValue(newValue);
-  // };
+//   const styles = theme => ({
+//   indicator: {
+//     backgroundColor: 'white',
+//   },
+// })
 
-  // const toggleTab('right', )Index = (index: number) => {
-  //   setValue(index);
-  // };
+  // minimap
+ const minimapPosition = (rightState: boolean, bottomState: boolean) => {
+   console.log(rightState, bottomState)
+   let right = 0, bottom = 0;
+   if (rightState && bottomState) {
+     right = drawerWidth + 5;
+     bottom = window.innerHeight * 0.4 + 5;
+   }
+   if (bottomState && !rightState) {
+     bottom = window.innerHeight * 0.4 + 5;
+     right = theme.spacing(3) + 5;
+   }
+   if (rightState && !bottomState || !rightState && !bottomState) {
+     right = theme.spacing(3) + 5;
+     bottom = theme.spacing(3) + 5;
+   }
+   return {bottom: bottom, right: right};
+ };
 
   return (
     <Router>
@@ -260,9 +306,10 @@ const AppEntry: React.FC = () => {
           className={classes.appBar}
         >
           <Toolbar>
-            <Typography variant="h6" noWrap>
+            {/* <Typography variant="h6" noWrap>
               Mindspore可视分析
-            </Typography>
+            </Typography> */}
+            <img src={require('../../public/logo-mindspore.png')} alt='log'/>
           </Toolbar>
         </AppBar>
         <IconButton
@@ -270,7 +317,7 @@ const AppEntry: React.FC = () => {
           aria-label="open drawer"
           onClick={toggleDrawer("left", true)}
           edge="start"
-          className={clsx(classes.menuButton, state["left"] && classes.hide)}
+          className={clsx({[classes.menuButton]: true || state["left"] && classes.hide}, {[classes.menuButtonShift]: (state['bottom'] && !state['left'])})}
         >
           <ChevronRightIcon />
         </IconButton>
@@ -324,14 +371,14 @@ const AppEntry: React.FC = () => {
               <LaylerLevel />
             </Route>
             <Route path="/">
-              <div style={{ height: "calc(100% - 364px)" }}>
+              <div style={{ height: "calc(100% - 64px)" }}>
                 {currentLayout === LayoutType.DAGRE_FOR_TF && <DagreLayout />}
                 {currentLayout === LayoutType.TENSORBOARD && (
                   <TensorBoardGraph />
                 )}
                 {currentLayout === LayoutType.DAGRE_FOR_MS && <DagreLayout />}
-                {currentLayout === LayoutType.ELK_FOR_TF && <ELKLayout />}
-                {currentLayout === LayoutType.ELK_FOR_MS && <ELKLayout />}
+                {currentLayout === LayoutType.ELK_FOR_TF && <ELKLayout {...minimapPosition(state['right'], state['bottom'])}/>}
+                {currentLayout === LayoutType.ELK_FOR_MS && <ELKLayout {...minimapPosition(state['right'], state['bottom'])}/>}
               </div>
               {/* <Snaphot />移动到下方的tab中 */}
             </Route>
@@ -358,12 +405,11 @@ const AppEntry: React.FC = () => {
           }}
         >
           <Tabs value={value['right']} onChange={toggleTab('right')} 
-          indicatorColor="secondary"
-            textColor="secondary" 
+            classes={{indicator: classes.indicator}}
             className={classes.tabsStyle}
             aria-label="info panel">
-            <Tab className={classes.tabStyle} label="图例" {...a11yProps(0,'right')} />
-            <Tab className={classes.tabStyle} label="属性" {...a11yProps(1,'right')} />
+            <Tab className={classes.tabStyle} label="图例" style={{color: value['right']===0?'#00a5a7':'#333'}} {...a11yProps(0,'right')} />
+            <Tab className={classes.tabStyle} label="属性" style={{color: value['right']===1?'#00a5a7':'#333'}} {...a11yProps(1,'right')} />
             <IconButton style={{marginLeft: `calc(${drawerWidth-190}px)`}} onClick={toggleDrawer("right", false)}>
               <ChevronRightIcon />
             </IconButton>
@@ -384,16 +430,15 @@ const AppEntry: React.FC = () => {
           anchor="bottom"
           open={state["bottom"]}
           classes={{
-            paper: classes.drawerPaperBottom,
+            paper: clsx(classes.drawerPaperBottom, {[classes.drawerPaperBottomShift]: !state['left']})
           }}
         >
           <Tabs value={value['outerBottom']} onChange={toggleTab('outerBottom')} 
-          indicatorColor="secondary"
-            textColor="secondary" 
+            classes={{indicator: classes.indicator}}
             className={classes.tabsStyle}
             aria-label="dynamic info panel">
-            <Tab style={{paddingLeft: theme.spacing(3)}} className={classes.tabStyle} label="Model level" {...a11yProps(0,'outerBottom')} />
-            <Tab className={classes.tabStyle} label="Layer level" {...a11yProps(1,'outerBottom')} />
+            <Tab style={{paddingLeft: theme.spacing(3), color: value['outerBottom']===0?'#00a5a7':'#333'}} className={classes.tabStyle} label="Model level" {...a11yProps(0,'outerBottom')} />
+            <Tab style={{color: value['outerBottom']===1?'#00a5a7':'#333'}} className={classes.tabStyle} label="Layer level" {...a11yProps(1,'outerBottom')} />
             <IconButton style={{marginLeft: `calc(100% - ${drawerWidth-65}px)`}} onClick={toggleDrawer("bottom", false)}>
               <ExpandMoreIcon />
             </IconButton>
@@ -404,14 +449,13 @@ const AppEntry: React.FC = () => {
           <TabPanel value={value['outerBottom']} index={1} pos={'outerBottom'}>
             {/* layer level 的tab */}
             <Tabs value={value['innerBottom']} onChange={toggleTab('innerBottom')} 
-            indicatorColor="secondary"
-              textColor="secondary" 
               className={classes.innerTabsStyle}
+              classes={{indicator: classes.indicator}}
               aria-label="info panel">
-              <Tab style={{paddingLeft: theme.spacing(3)}} className={classes.itabStyle} label="loss" {...a11yProps(0,'innerBottom')} />
-              <Tab className={classes.itabStyle} label="accuracy" {...a11yProps(1,'innerBottom')} />
-              <Tab className={classes.itabStyle} label="activation" {...a11yProps(2,'innerBottom')} />
-              <Tab className={classes.itabStyle} label="gradient" {...a11yProps(3,'innerBottom')} />
+              <Tab style={{paddingLeft: theme.spacing(3), color: value['innerBottom']===0?'#00a5a7':'#333'}} className={classes.itabStyle} label="loss" {...a11yProps(0,'innerBottom')} />
+              <Tab style={{color: value['innerBottom']===1?'#00a5a7':'#333'}} className={classes.itabStyle} label="accuracy" {...a11yProps(1,'innerBottom')} />
+              <Tab style={{color: value['innerBottom']===2?'#00a5a7':'#333'}} className={classes.itabStyle} label="activation" {...a11yProps(2,'innerBottom')} />
+              <Tab style={{color: value['innerBottom']===3?'#00a5a7':'#333'}} className={classes.itabStyle} label="gradient" {...a11yProps(3,'innerBottom')} />
             </Tabs>
             <TabPanel value={value['innerBottom']} index={0} pos={'innerBottom'}>
               Item One
@@ -432,7 +476,7 @@ const AppEntry: React.FC = () => {
           aria-label="open drawer"
           onClick={toggleDrawer("bottom", true)}
           edge="start"
-          className={clsx(classes.menuButtonBottom, true)}
+          className={clsx({[classes.menuButtonBottom]: true || state["bottom"] && classes.hide}, {[classes.menuButtonBottomShift]: !state["left"]})}
         >
           <ExpandLessIcon />
         </IconButton>

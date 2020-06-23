@@ -178,7 +178,7 @@ const MiniMap: React.FC<Props> = (props: Props) => {
           <filter id="minimapDropShadow" x="-20%" y="-20%" width="150%" height="150%">
             <feOffset result="offOut" in="SourceGraphic" dx="1" dy="1"></feOffset>
             <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0"></feColorMatrix>
-            <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="2"></feGaussianBlur>
+            {/* <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="2"></feGaussianBlur> */}
             <feBlend in="SourceGraphic" in2="blurOut" mode="normal"></feBlend>
           </filter>
         </defs>
@@ -188,10 +188,11 @@ const MiniMap: React.FC<Props> = (props: Props) => {
             transform={`translate(${viewpointCoord.x},${viewpointCoord.y}) scale(${1 / transform.k})`}
             width={minimapSize.width}
             height={minimapSize.height}
+            style={{'fill': '#c0d3ff', 'fillOpacity': 0.3, 'strokeWidth': 0}}
           />
         </g>
       </svg>
-      <canvas ref={canvasRef} width={minimapSize.width} height={minimapSize.height} />
+      <canvas ref={canvasRef} width={minimapSize.width} height={minimapSize.height} style={{'border':'none'}}/>
     </div>
   );
 }
