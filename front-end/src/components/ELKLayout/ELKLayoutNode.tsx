@@ -30,6 +30,7 @@ interface Props {
   handleRightClick: { (e: any): void };
   currentNotShowLineChartID: string[];
   iteration: number;
+  interactmode: number;
 }
 
 const antiShakeDistance = 2;
@@ -39,7 +40,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { handleRightClick, currentNotShowLineChartID, iteration } = props;
+  const { handleRightClick, currentNotShowLineChartID, iteration, interactmode } = props;
   const graphForLayout = useProcessedGraph();
   const {
     diagnosisMode,
@@ -242,8 +243,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     d3.selectAll("g .node").on(".drag", null);
     let selectionNodes = d3.selectAll("g .child-node");
     if (selectionNodes.size() === 0) return;
-    selectionNodes.call(d3.drag().on("start", dragStarted));
-
+    
+    if(interactmode == 1){
+      selectionNodes.call(d3.drag().on("start", dragStarted));
+    }
+    else return;
+    
     function dragStarted(): void {
       let node = d3.select(this).classed("dragging", true);
       d3.event.on("drag", dragged).on("end", ended);

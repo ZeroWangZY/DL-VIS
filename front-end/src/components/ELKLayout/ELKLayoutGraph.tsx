@@ -54,6 +54,8 @@ interface Props {
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const { iteration, bottom, right } = props;
 
+  const [interactmode,setInterMode] = useState(0);
+
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
@@ -131,8 +133,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           },
         });
       }
-    }
-  };
+    } 
+  }
 
   // ungroup一个group node or layer node
   const handleUngroup = () => {
@@ -449,8 +451,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       k: 1,
     });
     const outputG = d3.select(outputRef.current);
-    outputG.attr("transform", "translate(0,0) scale(1)");
-    updateZoomofD3(d3.zoomIdentity);
+    outputG.attr('transform', 'translate(0,0) scale(1)')
+    updateZoomofD3(d3.zoomIdentity)
+    
+    if(interactmode != 4) setInterMode(4)
+    else setInterMode(0);
   }
 
   useEffect(() => {
@@ -490,9 +495,46 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       .on("end", brushend);
 
     setBgRectHeight(svgHeight);
+    
   }, []);
 
   const isPopoverOpen = Boolean(anchorEl);
+
+  useEffect(()=>{
+
+    d3.select("#display-switch").attr("class","interactive-button");
+    d3.select("#search-switch").attr("class","interactive-button");
+    d3.select("#modify-switch").attr("class","interactive-button");
+    d3.select("#reset-switch").attr("class","interactive-button");
+    if(interactmode==1){
+      d3.select("#modify-switch").attr("class","interactive-on-button");
+    }
+    else if(interactmode==2){
+      d3.select("#display-switch").attr("class","interactive-on-button");
+    }
+    else if(interactmode==3){
+      d3.select("#search-switch").attr("class","interactive-on-button");
+    }
+    else if(interactmode==4){
+      d3.select("#reset-switch").attr("class","interactive-on-button");
+    }
+  })
+
+  const handleLayoutModify = () => {
+    if(interactmode != 1) setInterMode(1)
+    else setInterMode(0);
+  }
+
+  const handleDisplaySwitch = () => {
+    if(interactmode != 2) setInterMode(2);
+    else setInterMode(0);
+      modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE,'');
+  }
+  
+  const handleSearchPath = () => {
+    if(interactmode != 3) setInterMode(3);
+    else setInterMode(0);
+  }
 
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
@@ -528,6 +570,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
+              interactmode={interactmode}
             />
             <ELKLayoutPort />
             <ELKLayoutEdge />
@@ -567,16 +610,39 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleModifyNodetype={handleModifyNodetype}
         handleEnterLayer={handleEnterLayer}
       />
-      <img
-        style={{
-          position: "absolute",
-          left: 10,
-          bottom: 10,
-          cursor: "pointer",
-        }}
-        src={process.env.PUBLIC_URL + "/assets/canvas-back-to-right.png"}
-        onClick={canvasBackToRight}
-      />
+
+      <div id = "modify-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 400}}>
+        <img
+          style={{ height:"16px",width:"24px"}}
+          src={process.env.PUBLIC_URL + "/assets/layout-modify.svg"}
+          onClick={handleLayoutModify}
+        />
+      </div>
+
+      <div id = "search-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 389}}>
+        <img
+          style={{ height:"16px",width:"24px"}}
+          src={process.env.PUBLIC_URL + "/assets/path-search.svg"}
+          onClick={handleSearchPath}
+        />
+      </div>
+
+      <div id = "reset-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 378}}>
+        <img
+          style={{ height:"14px",width:"20px"}}
+          src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
+          onClick={canvasBackToRight}
+        />
+      </div>
+
+      <div id = "display-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 367}}>
+        <img
+          style={{ height:"14px",width:"20px"}}
+          src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
+          onClick={handleDisplaySwitch}
+        />
+      </div>
+
     </div>
   );
 };

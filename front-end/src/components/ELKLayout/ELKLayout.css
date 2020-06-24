@@ -4,3 +4,34 @@
     background: white;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
 }
+.interactive-button {
+    height: 24px;
+    width: 30px;
+    background-color:#e8e9e9;
+    border-color: #cccccc;
+    left: 10;
+    bottom: 40;
+    border-radius: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 3px;
+    padding-right: 3px;
+    position: "absolute"
+
+}
+
+.interactive-on-button {
+    height: 24px;
+    width: 30px;
+    background-color:#4d7e96;
+    border-color: #cccccc;
+    left: 10;
+    bottom: 40;
+    border-radius: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 3px;
+    padding-right: 3px;
+    position: "absolute"
+
+}
