@@ -36,8 +36,6 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
   const { diagnosisMode, isHiddenInterModuleEdges, selectedNodeId } = useGlobalConfigurations();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const handleChangeTransform = function (transform) {
     if (transform === null || transform === undefined) return;
@@ -436,13 +434,9 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
         <svg id="output-svg" ref={outputSVGRef}>
           <g className="output" id="output-g" ref={outputRef}>
             <ELKLayoutNode
-              // selectedNodeId={selectedNodeId}
-              // setSelectedNodeId={setSelectedNodeId}
               handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
-              selectedAuxiliaryNodeId={selectedAuxiliaryNodeId}
-              setSelectedAuxiliaryNodeId={setSelectedAuxiliaryNodeId}
             />
             <ELKLayoutEdge />
           </g>

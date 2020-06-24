@@ -3,50 +3,51 @@ import { TransitionMotion } from "react-motion";
 import { useVisGraph } from "../../store/visGraph";
 import { useStyledGraph } from "../../store/styledGraph";
 import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
-import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from '../LayerNodeGraph/LayerNodeGraph';
-import { NodeType, LayerType } from "../../common/graph-processing/stage2/processed-graph";
+import {
+  FCLayerNode,
+  CONVLayerNode,
+  RNNLayerNode,
+  OTHERLayerNode,
+} from "../LayerNodeGraph/LayerNodeGraph";
+import {
+  NodeType,
+  LayerType,
+} from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
-import styles from "../../CSSVariables/CSSVariables.less"
+import styles from "../../CSSVariables/CSSVariables.less";
 import elkStyles from "./ELKLayoutGraph.less";
 import {
   useProcessedGraph,
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
-import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
-import { useGlobalConfigurations, modifyGlobalConfigurations } from '../../store/global-configuration'
+import { fetchAndGetLayerInfo } from "../../common/model-level/snaphot";
+import {
+  useGlobalConfigurations,
+  modifyGlobalConfigurations,
+} from "../../store/global-configuration";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
-import { LineGroup } from '../LineCharts/index'
+import { LineGroup } from "../LineCharts/index";
 import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
-import convURL from '../../icon/conv.png';
 
 interface Props {
-  // setSelectedNodeId: { (nodeId: string): void };
-  // selectedNodeId: string | null;
   handleRightClick: { (e: any): void };
   currentNotShowLineChartID: string[];
   iteration: number;
-  selectedAuxiliaryNodeId: string;
-  setSelectedAuxiliaryNodeId: { (nodeId: string): void };
 }
 
 const antiShakeDistance = 2;
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
-  const edgePathStrokeColor = styles.edge_path_stroke_color;
-  const edgePathStrokeWidth = styles.edge_path_stroke_width;
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { setSelectedNodeId,
-    selectedNodeId,
-    handleRightClick,
-    currentNotShowLineChartID,
-    iteration,
-    selectedAuxiliaryNodeId,
-    setSelectedAuxiliaryNodeId } = props;
+  const { handleRightClick, currentNotShowLineChartID, iteration } = props;
   const graphForLayout = useProcessedGraph();
-  const { diagnosisMode, isHiddenInterModuleEdges, selectedNodeId } = useGlobalConfigurations();
+  const {
+    diagnosisMode,
+    selectedNodeId,
+  } = useGlobalConfigurations();
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
@@ -59,36 +60,32 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     let nodes = styledGraph.nodeStyles;
 
     for (const node of nodes) {
-      if (node.data.type === NodeType.LAYER) { // LAYER
-        let data = await fetchAndGetLayerInfo({
-          "STEP_FROM": iteration,
-          "STEP_TO": iteration + 20
-        }, node.data.id, graphForLayout);
+      if (node.data.type === NodeType.LAYER) {
+        // LAYER
+        let data = await fetchAndGetLayerInfo(
+          {
+            STEP_FROM: iteration,
+            STEP_TO: iteration + 20,
+          },
+          node.data.id,
+          graphForLayout
+        );
         _lineChartData.set(node.data.id, data);
       }
     }
-  }
+  };
 
   useEffect(() => {
     getLayerInfo().then(() => {
       setLineChartData(_lineChartData);
     });
-  }, [styledGraph])
+  }, [styledGraph]);
 
-  let clickAuxiliaryNode = false;
   const handleClick = (id) => {
-    let nodeId = id.replace(/-/g, "/");
-    // setSelectedNodeId(nodeId);
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, nodeId)
-  };
-
-  const handleClickAuxiliaryNode = (paramOrConstId: string, auxiliaryNodes: any[]) => {
-    clickAuxiliaryNode = true;
-    let nodeIds = [];
-    setSelectedAuxiliaryNodeId(paramOrConstId);
-    for (let node of auxiliaryNodes)
-      nodeIds.push(node.id);
-    setSelectedNodeId(nodeIds);
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+      id
+    );
   };
 
   let elkNodeMap = {};
@@ -102,12 +99,15 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   };
 
   const showLineChart = (node): boolean => {
-    if (diagnosisMode
-      && (node.type === NodeType.LAYER && node.expand === false)
-      && currentNotShowLineChartID.indexOf(node.id) < 0)
+    if (
+      diagnosisMode &&
+      node.type === NodeType.LAYER &&
+      node.expand === false &&
+      currentNotShowLineChartID.indexOf(node.id) < 0
+    )
       return true;
     return false;
-  }
+  };
 
   const editLayoutGraph = (): void => {
     const lGraph = produceLayoutGraph(visGraph, {
@@ -121,33 +121,44 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   const getLineChartAndText = (node, rectWidth, rectHeight) => {
     const iconSize = parseInt(elkStyles.iconSize);
-    console.log(typeof iconSize)
+    console.log(typeof iconSize);
     // 注意： 目前折线图处于中间3/4之类。所以上方和下方分别剩余1/8的空余
     return (
-      <g className="LineChartInNode" >
+      <g className="LineChartInNode">
         <LineGroup
-          transform={`translate(-${rectWidth / 2},-${rectHeight * 3 / 8})`}
+          transform={`translate(-${rectWidth / 2},-${(rectHeight * 3) / 8})`}
           width={rectWidth}
-          height={rectHeight * 3 / 4}
-          data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []} />
+          height={(rectHeight * 3) / 4}
+          data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []}
+        />
         {console.log(lineChartData.get(node.id))}
         <foreignObject
           x={-rectWidth / 2}
-          y={-rectHeight * 3 / 8 - iconSize}
+          y={(-rectHeight * 3) / 8 - iconSize}
           width={rectWidth}
-          height={iconSize}>
+          height={iconSize}
+        >
           <div>
-            <text >
-              {node.label.length <= 10 ? node.label : (node.label.slice(0, 10) + "...")}
+            <text>
+              {node.label.length <= 10
+                ? node.label
+                : node.label.slice(0, 10) + "..."}
             </text>
           </div>
         </foreignObject>
-      </g >)
+      </g>
+    );
+  };
 
-  }
-
-  const getLabelContainer = (node, ellipseX, ellipseY, rectWidth, rectHeight) => {
-    if (node.type === NodeType.OPERTATION) { // OPERATION
+  const getLabelContainer = (
+    node,
+    ellipseX,
+    ellipseY,
+    rectWidth,
+    rectHeight
+  ) => {
+    if (node.type === NodeType.OPERTATION) {
+      // OPERATION
       let parameterId = node.id + "_parameter";
       let constId = node.id + "_const";
       return (
@@ -185,27 +196,29 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             rx={ellipseX}
             ry={ellipseY}
           />
-          {node.parameters.length !== 0 &&
+          {node.parameters.length !== 0 && (
             <circle
-              className={"parameter" + (selectedAuxiliaryNodeId === parameterId ? " focus" : "")}
+              className={
+                "parameter" + (node.id === selectedNodeId ? " focus" : "")
+              }
               cx={ellipseY}
               cy={ellipseY}
               r={ellipseY / 2}
               strokeDasharray={1}
-              onClick={() => handleClickAuxiliaryNode(parameterId, node.parameters)} />
-          }
-          {node.constVals.length !== 0 &&
+            />
+          )}
+          {node.constVals.length !== 0 && (
             <circle
-              className={"const" + (selectedAuxiliaryNodeId === constId ? " focus" : "")}
+              className={"const" + (node.id === selectedNodeId ? " focus" : "")}
               cx={-ellipseY}
               cy={ellipseY}
               r={ellipseY / 2}
-              onClick={() => handleClickAuxiliaryNode(constId, node.constVals)} />
-          }
-        </g>)
-
-    }
-    else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) { // GROUP或者DATA
+            />
+          )}
+        </g>
+      );
+    } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
+      // GROUP或者DATA
       return (
         <rect
           className={
@@ -213,60 +226,27 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               ? "elk-label-container focus"
               : "elk-label-container"
           }
-          id={nodeId}
           width={rectWidth}
           height={rectHeight}
-          transform={`translate(-${rectWidth / 2}, -${
-            rectHeight / 2
-            })`}
+          transform={`translate(-${rectWidth / 2}, -${rectHeight / 2})`}
           fillOpacity={node.expand ? 0 : 1}
           pointerEvents="visibleStroke"
         ></rect>
-      )
-    } else if (node.type === NodeType.LAYER) { // LAYER
+      );
+    } else if (node.type === NodeType.LAYER) {
+      // LAYER
       if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
-        return (<FCLayerNode width={rectWidth} height={rectHeight} />);
+        return <FCLayerNode width={rectWidth} height={rectHeight} />;
       } else if (node.class.indexOf(`layertype-${LayerType.CONV}`) > -1) {
-        return (<CONVLayerNode width={rectWidth} height={rectHeight} />);
+        return <CONVLayerNode width={rectWidth} height={rectHeight} />;
       } else if (node.class.indexOf(`layertype-${LayerType.RNN}`) > -1) {
-        return (<RNNLayerNode width={rectWidth} height={rectHeight} />);
+        return <RNNLayerNode width={rectWidth} height={rectHeight} />;
       } else if (node.class.indexOf(`layertype-${LayerType.OTHER}`) > -1) {
-        return (<OTHERLayerNode width={rectWidth} height={rectHeight} />)
+        return <OTHERLayerNode width={rectWidth} height={rectHeight} />;
       }
     }
-  }
-  const getLabel = (node)  => {
-      if (node.data.expand){
-        return(
-          <text dominantBaseline={"baseline"} y={`${-node.style.rectHeight / 2}`} style={{ fontSize: 10 }}>
-              {node.data.label}
-          </text>
-        )
-      }else if (node.data.type === NodeType.OPERTATION){
-        return(
-          <text dominantBaseline={"baseline"} y={`${-node.style.rectHeight / 4 - 3}`} style={{ fontSize: 10 }}>
-              {node.data.label}
-          </text>
-      )}else{
-        return(
-            <foreignObject
-               x={-node.style.rectWidth / 2}
-               y={-node.style.rectHeight / 2}
-               width={ node.style.rectWidth}
-               height={node.style.rectHeight}
-               >
-               <div className="label">
-                {node.data.label}
-                 {!node.data.expand &&
-                  (node.data.type === NodeType.GROUP ||
-                   node.data.type === NodeType.LAYER) &&
-                  "+"}
-                </div>
-             </foreignObject>
-        )
-      } 
+  };
 
-  }
   useEffect(() => {
     //目前仅支持拖拽叶节点
     d3.selectAll("g .node").on(".drag", null);
@@ -327,7 +307,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               <g
                 className={`node ${d.data.class} ${
                   d.data.expand ? "expanded-node" : "child-node"
-                  }`}
+                }`}
                 id={d.data.id4Style}
                 data-id={d.data.id}
                 key={d.key}
@@ -348,39 +328,44 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 }}
                 onContextMenu={(e) => handleRightClick(e)}
               >
-                {getLabelContainer(d.data, d.style.ellipseX, d.style.ellipseY, d.style.rectWidth, d.style.rectHeight)}
-                <g className="my-label"
-                  // transform={
-                  //   d.data.class.indexOf("cluster") > -1 ? `translate(0,-${d.style.rectHeight / 2})` : null
-                  // }
-                >
-                  {showLineChart(d.data) && getLineChartAndText(d.data, d.style.rectWidth, d.style.rectHeight)}
+                {getLabelContainer(
+                  d.data,
+                  d.style.ellipseX,
+                  d.style.ellipseY,
+                  d.style.rectWidth,
+                  d.style.rectHeight
+                )}
+                <g className="my-label">
+                  {showLineChart(d.data) &&
+                    getLineChartAndText(
+                      d.data,
+                      d.style.rectWidth,
+                      d.style.rectHeight
+                    )}
 
                   {d.data.type === NodeType.OPERTATION && (
-                    <text dominantBaseline={"baseline"} y={`${-d.style.rectHeight / 4 - 3}`} style={{ fontSize: 10 }}>
+                    <text
+                      dominantBaseline={"baseline"}
+                      y={`${-d.style.rectHeight / 4 - 3}`}
+                      style={{ fontSize: 10 }}
+                    >
                       {d.data.label}
                     </text>
                   )}
 
-                  {!showLineChart(d.data) && d.data.type !== NodeType.OPERTATION && (
-                    <foreignObject
-                      x={-d.style.rectWidth / 2}
-                      y={-d.style.rectHeight / 2}
-                      // transform={`translate(-${d.style.rectWidth / 2}, -${d.style.rectHeight / 2})`}
-                      width={d.style.rectWidth}
-                      height={d.style.rectHeight}
-                    >
-                      <div className="label">
-                        <text>
-                          {d.data.label.length <= 10 ? d.data.label : (d.data.label.slice(0, 10) + "...")}
-                          {!d.data.expand &&
-                            (d.data.type === NodeType.GROUP ||
-                              d.data.type === NodeType.LAYER) &&
-                            "+"}
-                        </text>
-                      </div>
-                    </foreignObject>
-                  )} */}
+                  {!showLineChart(d.data) &&
+                    d.data.type !== NodeType.OPERTATION && (
+                      <foreignObject
+                        x={-d.style.rectWidth / 2}
+                        y={-d.style.rectHeight / 2}
+                        width={d.style.rectWidth}
+                        height={d.style.rectHeight}
+                      >
+                        <div className="label">
+                          {d.data.label}
+                        </div>
+                      </foreignObject>
+                    )}
                 </g>
               </g>
             );
