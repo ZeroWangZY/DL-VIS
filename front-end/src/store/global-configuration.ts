@@ -18,7 +18,7 @@ let globalConfigurations: GlobalConfigurations = {
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
   shouldMergeEdge: false,
-  currentLayout: LayoutType.ELK_FOR_TF,
+  currentLayout: LayoutType.ELK_FOR_MS,
   currentStep: null,
   selectedNodeId: null
 };

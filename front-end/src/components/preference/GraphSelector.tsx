@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { createStyles, makeStyles, Theme, ThemeProvider } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider,
+} from "@material-ui/core/styles";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
@@ -83,7 +88,7 @@ export default function GraphSelector() {
   }, []);
 
   useEffect(() => {
-    if (!isMsGraph) return; // MSGraph
+    if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
     fetchLocalMsGraph(msGraphMetadatas[currentMsGraphIndex].name).then(
       (RawData) => {
         let parsedGraph = RawData.data.data; // 处理
@@ -95,7 +100,7 @@ export default function GraphSelector() {
         setMsRawGraph(parsedGraph);
       }
     );
-  }, [currentMsGraphIndex, currentLayout, conceptualGraphMode]);
+  }, [currentMsGraphIndex, currentLayout, conceptualGraphMode, msGraphMetadatas]);
 
   useEffect(() => {
     if (!isTfGraph) return; // TFGraph
@@ -125,7 +130,7 @@ export default function GraphSelector() {
       <Typography>图数据集</Typography>
       <FormControl className={classes.formControl}>
         <InputLabel id="graph-selector"></InputLabel>
-        {/* {isTfGraph && (
+        {isTfGraph && (
           <Select
             labelId="graph-selector"
             value={currentTfGraphIndex}
@@ -137,10 +142,10 @@ export default function GraphSelector() {
               </MenuItem>
             ))}
           </Select>
-        )} */}
-        {/* {isMsGraph && ( */}
-        {true && (//此处直接将判断是否是msgraph改为永真，即系统只做ms的计算图，（改判断的逻辑怕会改乱
-          <Select style={{marginTop: "0px"}}
+        )}
+        {isMsGraph && (
+          <Select
+            style={{ marginTop: "0px" }}
             labelId="graph-selector"
             value={currentMsGraphIndex}
             onChange={handleMsGraphIndexChange}
@@ -153,7 +158,7 @@ export default function GraphSelector() {
           </Select>
         )}
 
-        {/* {isTfGraph &&
+        {isTfGraph &&
           graphMetadatas.length > 0 &&
           graphMetadatas[currentTfGraphIndex].description !== undefined && (
             <FormHelperText>
@@ -166,7 +171,7 @@ export default function GraphSelector() {
             <FormHelperText>
               description: {msGraphMetadatas[currentMsGraphIndex].description}
             </FormHelperText>
-          )} */}
+          )}
       </FormControl>
     </div>
   );

@@ -1,7 +1,12 @@
 import React, { useState } from "react";
-import { makeStyles, Theme, createStyles, withStyles } from "@material-ui/core/styles";
+import {
+  makeStyles,
+  Theme,
+  createStyles,
+  withStyles,
+} from "@material-ui/core/styles";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch, { SwitchClassKey, SwitchProps } from '@material-ui/core/Switch';
+import Switch, { SwitchClassKey, SwitchProps } from "@material-ui/core/Switch";
 import Typography from "@material-ui/core/Typography";
 import {
   useGlobalConfigurations,
@@ -30,35 +35,35 @@ const IOSSwitch = withStyles((theme: Theme) =>
     },
     switchBase: {
       padding: 1,
-      '&$checked': {
-        transform: 'translateX(12px)',
+      "&$checked": {
+        transform: "translateX(12px)",
         color: theme.palette.common.white,
-        '& + $track': {
-          backgroundColor: '#4d7e96',
+        "& + $track": {
+          backgroundColor: "#4d7e96",
           opacity: 1,
-          border: 'none',
+          border: "none",
         },
       },
-      '&$focusVisible $thumb': {
-        color: '#4d7e96', 
-        border: '6px solid #fff',
+      "&$focusVisible $thumb": {
+        color: "#4d7e96",
+        border: "6px solid #fff",
       },
     },
     thumb: {
       width: 18,
       height: 18,
-      boxShadow: 'none'
+      boxShadow: "none",
     },
     track: {
       borderRadius: 20 / 2,
       // border: `1px solid ${theme.palette.grey[400]}`,
-      backgroundColor: '#666',
+      backgroundColor: "#666",
       opacity: 1,
-      transition: theme.transitions.create(['background-color', 'border']),
+      transition: theme.transitions.create(["background-color", "border"]),
     },
     checked: {},
     focusVisible: {},
-  }),
+  })
 )(({ classes, ...props }: Props) => {
   return (
     <Switch
@@ -91,15 +96,15 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     FormControlLabelStyle: {
       marginLeft: theme.spacing(0),
-      marginRight: '2px',
+      marginRight: "2px",
     },
     left: {
-      float: 'left',
-      width: '164px',
+      float: "left",
+      width: "164px",
     },
     right: {
-      overflow: 'hidden',
-    }
+      overflow: "hidden",
+    },
   })
 );
 
@@ -157,51 +162,61 @@ export default function PreprocessingPluginsSelector() {
       <div className={classes.content}>
         {/* 左三个 */}
         <div className={classes.left}>
-        {isTfGraph &&
-          Object.keys(descriptions).map((key) => (
-            <FormControlLabel className={classes.FormControlLabelStyle}
-              key={key}
-              control={
-                <IOSSwitch
-                  checked={preprocessingPlugins[key]}
-                  onChange={handleChange(key)}
-                />
-              }
-              label={descriptions[key]}
-            />
-          ))}
+          {isTfGraph &&
+            Object.keys(descriptions).map((key) => (
+              <FormControlLabel
+                className={classes.FormControlLabelStyle}
+                key={key}
+                control={
+                  <IOSSwitch
+                    checked={preprocessingPlugins[key]}
+                    onChange={handleChange(key)}
+                  />
+                }
+                label={descriptions[key]}
+              />
+            ))}
         </div>
         {/* 右三个 */}
         <div className={classes.right}>
-          <FormControlLabel className={classes.FormControlLabelStyle}
-          control={
-            <IOSSwitch
-              checked={isHiddenInterModuleEdges}
-              onChange={toggleIsHiddenInterModuleEdges}
+          {isTfGraph && (
+            <FormControlLabel
+              className={classes.FormControlLabelStyle}
+              control={
+                <IOSSwitch
+                  checked={isHiddenInterModuleEdges}
+                  onChange={toggleIsHiddenInterModuleEdges}
+                />
+              }
+              label={"Variable重命名"}
             />
-          }
-          label={"Variable重命名"}
-        />
-        {isElkLayout && (
-          <FormControlLabel className={classes.FormControlLabelStyle}
+          )}
+          {isElkLayout && (
+            <FormControlLabel
+              className={classes.FormControlLabelStyle}
+              control={
+                <IOSSwitch
+                  checked={shouldMergeEdge}
+                  onChange={toggleMergeEdge}
+                />
+              }
+              label={"ELK布局边合并"}
+            />
+          )}
+          <FormControlLabel
+            className={classes.FormControlLabelStyle}
             control={
-              <IOSSwitch checked={shouldMergeEdge} onChange={toggleMergeEdge} />
+              <IOSSwitch
+                checked={isHiddenInterModuleEdges}
+                onChange={toggleIsHiddenInterModuleEdges}
+              />
             }
-            label={"ELK布局边合并"}
+            label={"挖孔式边绑定"}
           />
-        )}
-        <FormControlLabel className={classes.FormControlLabelStyle}
-          control={
-            <IOSSwitch
-              checked={isHiddenInterModuleEdges}
-              onChange={toggleIsHiddenInterModuleEdges}
-            />
-          }
-          label={"挖孔式边绑定"}
-        />
         </div>
         {/* 下面一个 */}
-        <FormControlLabel className={classes.FormControlLabelStyle}
+        <FormControlLabel
+          className={classes.FormControlLabelStyle}
           control={
             <IOSSwitch
               checked={shouldOptimizeProcessedGraph}
