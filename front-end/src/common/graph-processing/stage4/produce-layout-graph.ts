@@ -254,7 +254,7 @@ export const generateNode = (
   node: BaseNode,
   inPort: boolean,
   outPort: boolean,
-  childNum: number
+  leafNum: number
 ): LayoutNode => {
   let ports = [];
   if (inPort) {
@@ -305,7 +305,7 @@ export const generateNode = (
     constVals: node.type === NodeType.OPERTATION ? constVals : null,
     expand: false,
     width: node.type === NodeType.OPERTATION ? 30 : 120,
-    height: node.type === NodeType.OPERTATION ? 20 : 40 + 4 * Math.floor(Math.sqrt(childNum)), //简单子节点数量编码
+    height: node.type === NodeType.OPERTATION ? 20 : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     ports: ports,
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp
@@ -330,8 +330,8 @@ function processNodes(
       for (let id of subNodes) {
         const node = nodeMap[id];
         const [inPort, outPort] = isPort(nodeMap[id], nodeMap[id]);
-        let childNum = node.type == NodeType.GROUP ? node.children.size : 0;
-        let child = generateNode(nodeMap, node, inPort, outPort, childNum);
+        let leafNum = node.type == NodeType.GROUP ? node.leafOperationNodeCount : 0;
+        let child = generateNode(nodeMap, node, inPort, outPort, leafNum);
         processChildren(id, child, children);
         let source = id;
         if (linkMap.hasOwnProperty(source)) {
@@ -396,8 +396,8 @@ function processNodes(
       continue;
     }
     const [inPort, outPort] = isPort(nodeMap[nodeId], nodeMap[nodeId]);
-    let childNum = node.type == NodeType.GROUP ? node.children.size : 0;
-    let newNode = generateNode(nodeMap, node, inPort, outPort, childNum);
+    let leafNum = node.type == NodeType.GROUP ? node.leafOperationNodeCount : 0;
+    let newNode = generateNode(nodeMap, node, inPort, outPort, leafNum);
     processChildren(nodeId, newNode, newNodes);
   }
   return newNodes;
