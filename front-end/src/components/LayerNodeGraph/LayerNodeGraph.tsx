@@ -4,44 +4,19 @@ import './LayerNodeGraph.less'
 interface LayerNodeProps {
   width: number;
   height: number;
+  layerType: string;
+  focused: boolean;
 }
 
-export function FCLayerNode(props: LayerNodeProps) {
-  const { width, height } = props;
+export function LayerNodeContainer(props: LayerNodeProps) {
+  const { width, height, layerType, focused } = props;
+  let gClassName = layerType + "-layer-label-g";
+  let containerClassName = layerType + "-layer-label-container";
+  if (focused) containerClassName += " focus";
   return (
-    <g className="fc-layer-label-g"
+    <g className={gClassName}
       transform={`translate(-${width / 2}, -${height / 2})`}>
-      <rect className='fc-layer-label-container' width={width} height={height}></rect>
-    </g>
-  )
-}
-
-export function CONVLayerNode(props: LayerNodeProps) {
-  const { width, height } = props;
-  return (
-    <g className="conv-layer-label-g"
-      transform={`translate(-${width / 2}, -${height / 2})`}>
-      <rect width={width} height={height}></rect>
-    </g>
-  )
-}
-
-export function RNNLayerNode(props: LayerNodeProps) {
-  const { width, height } = props;
-  return (
-    <g className="rnn-layer-label-g"
-      transform={`translate(-${width / 2}, -${height / 2})`}>
-      <rect className="rnn-layer-label-container" width={width} height={height}></rect>
-    </g>
-  )
-}
-
-export function OTHERLayerNode(props: LayerNodeProps) {
-  const { width, height } = props;
-  return (
-    <g className="other-layer-label-g"
-      transform={`translate(-${width / 2}, -${height / 2})`}>
-      <rect className="other-layer-label-container" width={width} height={height} rx="5" ry="5"></rect>
+      <rect className={containerClassName} width={width} height={height}></rect>
     </g>
   )
 }

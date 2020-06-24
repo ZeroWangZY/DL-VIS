@@ -4,10 +4,7 @@ import { useVisGraph } from "../../store/visGraph";
 import { useStyledGraph } from "../../store/styledGraph";
 import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
 import {
-  FCLayerNode,
-  CONVLayerNode,
-  RNNLayerNode,
-  OTHERLayerNode,
+  LayerNodeContainer
 } from "../LayerNodeGraph/LayerNodeGraph";
 import {
   NodeType,
@@ -15,7 +12,6 @@ import {
 } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import styles from "../../CSSVariables/CSSVariables.less";
-import elkStyles from "./ELKLayoutGraph.less";
 import {
   useProcessedGraph,
   modifyProcessedGraph,
@@ -120,8 +116,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   };
 
   const getLineChartAndText = (node, rectWidth, rectHeight) => {
-    const iconSize = parseInt(elkStyles.iconSize);
-    console.log(typeof iconSize);
     // 注意： 目前折线图处于中间3/4之类。所以上方和下方分别剩余1/8的空余
     return (
       <g className="LineChartInNode">
@@ -131,12 +125,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           height={(rectHeight * 3) / 4}
           data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []}
         />
-        {console.log(lineChartData.get(node.id))}
+        {/* {console.log(lineChartData.get(node.id))} */}
         <foreignObject
           x={-rectWidth / 2}
-          y={(-rectHeight * 3) / 8 - iconSize}
+          y={-rectHeight / 2}
           width={rectWidth}
-          height={iconSize}
+          height={rectHeight / 8}
         >
           <div>
             <text>
@@ -157,10 +151,9 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     rectWidth,
     rectHeight
   ) => {
+    let focused = (node.id === selectedNodeId);
     if (node.type === NodeType.OPERTATION) {
       // OPERATION
-      let parameterId = node.id + "_parameter";
-      let constId = node.id + "_const";
       return (
         <g>
           {node.isStacked && (
@@ -169,7 +162,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 className={
                   "elk-label-container" +
                   (node.expand ? " expanded" : "") +
-                  (node.id === selectedNodeId ? " focus" : "")
+                  (focused ? " focus" : "")
                 }
                 rx={ellipseX}
                 ry={ellipseY}
@@ -179,7 +172,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 className={
                   "elk-label-container" +
                   (node.expand ? " expanded" : "") +
-                  (node.id === selectedNodeId ? " focus" : "")
+                  (focused ? " focus" : "")
                 }
                 rx={ellipseX}
                 ry={ellipseY}
@@ -191,7 +184,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             className={
               "elk-label-container" +
               (node.expand ? " expanded" : "") +
-              (node.id === selectedNodeId ? " focus" : "")
+              (focused ? " focus" : "")
             }
             rx={ellipseX}
             ry={ellipseY}
@@ -199,7 +192,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           {node.parameters.length !== 0 && (
             <circle
               className={
-                "parameter" + (node.id === selectedNodeId ? " focus" : "")
+                "parameter" + (focused ? " focus" : "")
               }
               cx={ellipseY}
               cy={ellipseY}
@@ -209,7 +202,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           )}
           {node.constVals.length !== 0 && (
             <circle
-              className={"const" + (node.id === selectedNodeId ? " focus" : "")}
+              className={"const" + (focused ? " focus" : "")}
               cx={-ellipseY}
               cy={ellipseY}
               r={ellipseY / 2}
@@ -221,11 +214,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       // GROUP或者DATA
       return (
         <rect
-          className={
-            node.id === selectedNodeId
-              ? "elk-label-container focus"
-              : "elk-label-container"
-          }
+          className={focused ? "elk-label-container focus" : "elk-label-container"}
           width={rectWidth}
           height={rectHeight}
           transform={`translate(-${rectWidth / 2}, -${rectHeight / 2})`}
@@ -234,15 +223,16 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         ></rect>
       );
     } else if (node.type === NodeType.LAYER) {
+      console.log(focused);
       // LAYER
       if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
-        return <FCLayerNode width={rectWidth} height={rectHeight} />;
+        return <LayerNodeContainer width={rectWidth} height={rectHeight} layerType={LayerType.FC} focused={focused} />;
       } else if (node.class.indexOf(`layertype-${LayerType.CONV}`) > -1) {
-        return <CONVLayerNode width={rectWidth} height={rectHeight} />;
+        return <LayerNodeContainer width={rectWidth} height={rectHeight} layerType={LayerType.CONV} focused={focused} />;
       } else if (node.class.indexOf(`layertype-${LayerType.RNN}`) > -1) {
-        return <RNNLayerNode width={rectWidth} height={rectHeight} />;
+        return <LayerNodeContainer width={rectWidth} height={rectHeight} layerType={LayerType.RNN} focused={focused} />;
       } else if (node.class.indexOf(`layertype-${LayerType.OTHER}`) > -1) {
-        return <OTHERLayerNode width={rectWidth} height={rectHeight} />;
+        return <LayerNodeContainer width={rectWidth} height={rectHeight} layerType={LayerType.OTHER} focused={focused} />;
       }
     }
   };
@@ -308,7 +298,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               <g
                 className={`node ${d.data.class} ${
                   d.data.expand ? "expanded-node" : "child-node"
-                }`}
+                  }`}
                 id={d.data.id4Style}
                 data-id={d.data.id}
                 key={d.key}
@@ -363,7 +353,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         height={d.style.rectHeight}
                       >
                         <div className="label">
-                          {d.data.label}
+                          <text>
+                            {/* 增加一层text是为了让伪类中的before生效；否则不展示layerNode折线图的时候，图标不会显示 */}
+                            {d.data.label}
+                          </text>
                         </div>
                       </foreignObject>
                     )}

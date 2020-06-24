@@ -131,14 +131,13 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
       }
 
       if (!parameterNode && !constValNode) {
+        pNode.inputNode.add(newId);
         inputInfo.add(input.name + "_Input2_" + rNode.name)
         pGraph.rawEdges.push({
           source: newId,
           target: rNode.name
         })
       }
-
-      pNode.inputNode.add(newId)
     }
   }
 

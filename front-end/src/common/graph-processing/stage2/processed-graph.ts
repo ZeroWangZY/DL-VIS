@@ -59,8 +59,8 @@ export interface GroupNode extends BaseNode {
   expanded: boolean;  // group是否被展开 
   isModule: boolean;
   parentModule: NodeId; // 如果是位于module中的嵌套module
-  operationChildrenCount: Number;
-  leafOperationNodeCount: Number;
+  operationChildrenCount: number;
+  leafOperationNodeCount: number;
 }
 
 export interface LayerNode extends GroupNode {
@@ -147,25 +147,61 @@ export class GroupNodeImp implements GroupNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
-  operationChildrenCount: Number;
-  leafOperationNodeCount: Number;
+  operationChildrenCount: number;
+  leafOperationNodeCount: number;
   inputNode: Set<NodeId>;
   outputNode: Set<NodeId>;
 
-  constructor({ id, children, parent, opts = {}, isModule = false, parentModule = null }:
-    { id: string; children?: Set<NodeId>; parent?: string; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
+  constructor(
+    { id,
+      operationChildrenCount,
+      leafOperationNodeCount,
+      expanded,
+      belongModule,
+      outModuleConnection,
+      inModuleConnection,
+      visibility,
+      children,
+      parent,
+      opts = {},
+      isModule = false,
+      parentModule = null,
+      inputNode,
+      outputNode }:
+      {
+        id: string;
+        visibility?: boolean;
+        expanded?: boolean;
+        leafOperationNodeCount?: number;
+        operationChildrenCount?: number;
+        outModuleConnection?: Set<NodeId>;
+        inModuleConnection?: Set<NodeId>;
+        belongModule?: string;
+        children?: Set<NodeId>;
+        inputNode?: Set<NodeId>;
+        outputNode?: Set<NodeId>;
+        parent?: string;
+        opts?: OptionsDef;
+        isModule?: boolean;
+        parentModule?: NodeId
+      }
+  ) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.GROUP;
     this.parent = parent || "";
     this.children = children || new Set();
-    this.expanded = false;
+    this.expanded = expanded || false;
+    this.visibility = visibility || true;
     this.isModule = isModule;
     this.parentModule = parentModule;
-    this.outModuleConnection = new Set();
-    this.inModuleConnection = new Set();
-    this.inputNode = new Set();
-    this.outputNode = new Set();
+    this.belongModule = belongModule || null;
+    this.outModuleConnection = outModuleConnection || new Set();
+    this.inModuleConnection = inModuleConnection || new Set();
+    this.operationChildrenCount = operationChildrenCount || 0;
+    this.leafOperationNodeCount = leafOperationNodeCount || 0;
+    this.inputNode = inputNode || new Set();
+    this.outputNode = outputNode || new Set();
   }
 }
 
@@ -183,26 +219,64 @@ export class LayerNodeImp implements LayerNode {
   belongModule: string = null;
   outModuleConnection: Set<NodeId>;
   inModuleConnection: Set<NodeId>;
-  operationChildrenCount: Number;
-  leafOperationNodeCount: Number;
+  operationChildrenCount: number;
+  leafOperationNodeCount: number;
   inputNode: Set<NodeId>;
   outputNode: Set<NodeId>;
 
-  constructor({ id, layerType, children, parent, opts = {}, isModule = false, parentModule = null }:
-    { id: string; children?: Set<NodeId>; parent?: string; layerType: LayerType; opts?: OptionsDef; isModule?: boolean; parentModule?: NodeId }) {
+  constructor(
+    { id,
+      layerType,
+      operationChildrenCount,
+      leafOperationNodeCount,
+      expanded,
+      belongModule,
+      outModuleConnection,
+      inModuleConnection,
+      visibility,
+      children,
+      parent,
+      opts = {},
+      isModule = false,
+      parentModule = null,
+      inputNode,
+      outputNode }:
+      {
+        id: string;
+        visibility?: boolean;
+        expanded?: boolean;
+        leafOperationNodeCount?: number;
+        operationChildrenCount?: number;
+        outModuleConnection?: Set<NodeId>;
+        inModuleConnection?: Set<NodeId>;
+        belongModule?: string;
+        children?: Set<NodeId>;
+        inputNode?: Set<NodeId>;
+        outputNode?: Set<NodeId>;
+        parent?: string;
+        layerType: LayerType;
+        opts?: OptionsDef;
+        isModule?: boolean;
+        parentModule?: NodeId
+      }
+  ) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
     this.type = NodeType.LAYER;
     this.parent = parent || "";
     this.children = children || new Set();
-    this.expanded = false;
+    this.expanded = expanded || false;
     this.layerType = layerType;
+    this.visibility = visibility || true;
     this.isModule = isModule;
     this.parentModule = parentModule;
-    this.outModuleConnection = new Set();
-    this.inModuleConnection = new Set();
-    this.inputNode = new Set();
-    this.outputNode = new Set();
+    this.belongModule = belongModule || null;
+    this.outModuleConnection = outModuleConnection || new Set();
+    this.inModuleConnection = inModuleConnection || new Set();
+    this.operationChildrenCount = operationChildrenCount || 0;
+    this.leafOperationNodeCount = leafOperationNodeCount || 0;
+    this.inputNode = inputNode || new Set();
+    this.outputNode = outputNode || new Set();
   }
 }
 

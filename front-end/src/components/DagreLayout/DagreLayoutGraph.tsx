@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import './DagreLayoutGraph.css';
 import { transformImp, elModifyType, TransformType } from '../../types/mini-map'
 import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
-import { FCLayerNode, CONVLayerNode, RNNLayerNode, OTHERLayerNode } from '../LayerNodeGraph/LayerNodeGraph';
+import { LayerNodeContainer } from '../LayerNodeGraph/LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
 import { TransitionMotion, spring } from 'react-motion';
@@ -852,19 +852,19 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   }, [graphForLayout, isHiddenInterModuleEdges]);
 
   const getLabelContainer = (nodeId, nodeClass, width, height) => {
-    let focus = nodeId === selectedNodeId.replace(/\//g, '-');
-    if (nodeClass.indexOf(`layertype-${LayerType.FC}`) > -1) {
-      return (<FCLayerNode width={width} height={height} />);
-    } else if (nodeClass.indexOf(`layertype-${LayerType.CONV}`) > -1) {
-      return (<CONVLayerNode width={width} height={height} />);
-    } else if (nodeClass.indexOf(`layertype-${LayerType.RNN}`) > -1) {
-      return (<RNNLayerNode width={width} height={height} />);
-    } else if (nodeClass.indexOf(`layertype-${LayerType.OTHER}`) > -1) {
-      return (<OTHERLayerNode width={width} height={height} />)
+    let focused = nodeId === selectedNodeId.replace(/\//g, '-');
+    if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
+      return <LayerNodeContainer width={width} height={height} layerType={LayerType.FC} focused={focused} />;
+    } else if (node.class.indexOf(`layertype-${LayerType.CONV}`) > -1) {
+      return <LayerNodeContainer width={width} height={height} layerType={LayerType.CONV} focused={focused} />;
+    } else if (node.class.indexOf(`layertype-${LayerType.RNN}`) > -1) {
+      return <LayerNodeContainer width={width} height={height} layerType={LayerType.RNN} focused={focused} />;
+    } else if (node.class.indexOf(`layertype-${LayerType.OTHER}`) > -1) {
+      return <LayerNodeContainer width={width} height={height} layerType={LayerType.OTHER} focused={focused} />;
     } else {
       return (
         <g className="label">
-          <rect className={focus ? 'label-container focus' : "label-container"}
+          <rect className={focused ? 'label-container focus' : "label-container"}
             width={width}
             height={height}
             transform={`translate(-${width / 2}, -${height / 2})`}

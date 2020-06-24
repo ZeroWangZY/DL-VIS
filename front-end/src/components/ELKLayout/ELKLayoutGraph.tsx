@@ -24,13 +24,13 @@ window["ELK"] = ELK;
 const arrowStrokeColor = styles.arrow_stroke_color;
 const arrowFillColor = styles.arrow_fill_color;
 interface Props {
-  iteration: number; 
-  bottom: number; 
+  iteration: number;
+  bottom: number;
   right: number;
 }
 
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
-  const {iteration , bottom, right} = props
+  const { iteration, bottom, right } = props
 
   const history = useHistory();
   const svgRef = useRef();
@@ -148,9 +148,21 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               nodeId: oldNode.id,
               modifyOptions: {
                 id: oldNode.id,
+                visibility: oldNode.visibility,
+                expanded: oldNode.expanded,
+                leafOperationNodeCount: oldNode.leafOperationNodeCount,
+                operationChildrenCount: oldNode.operationChildrenCount,
+                outModuleConnection: oldNode.outModuleConnection,
+                inModuleConnection: oldNode.inModuleConnection,
+                type: oldNode.type,
+                belongModule: oldNode.belongModule,
                 children: oldNode.children,
+                inputNode: oldNode.inputNode,
+                outputNode: oldNode.outputNode,
                 parent: oldNode.parent,
                 opts,
+                isModule: oldNode.isModule,
+                parentModule: oldNode.parentModule,
               }
             }
           )
@@ -161,10 +173,22 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               nodeId: oldNode.id,
               modifyOptions: {
                 id: oldNode.id,
+                visibility: oldNode.visibility,
+                expanded: oldNode.expanded,
+                leafOperationNodeCount: oldNode.leafOperationNodeCount,
+                operationChildrenCount: oldNode.operationChildrenCount,
+                outModuleConnection: oldNode.outModuleConnection,
+                inModuleConnection: oldNode.inModuleConnection,
+                type: oldNode.type,
+                belongModule: oldNode.belongModule,
                 children: oldNode.children,
+                inputNode: oldNode.inputNode,
+                outputNode: oldNode.outputNode,
                 parent: oldNode.parent,
-                layerType: LayerType[currentLayertype],
                 opts,
+                isModule: oldNode.isModule,
+                parentModule: oldNode.parentModule,
+                layerType: LayerType[currentLayertype],
               }
             }
           )
@@ -254,8 +278,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   }
   // 点击空白处取消所有选择
   const handleBgClick = () => {
-  //  setSelectedNodeId ("");
-  modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, '')
+    //  setSelectedNodeId ("");
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, '')
   };
 
   // 按键事件
@@ -447,7 +471,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
       <NodeInfoCard selectedNodeId={selectedNodeId} />
 
-      <div className="minimap-container" style={{bottom: bottom, right: right}}>
+      <div className="minimap-container" style={{ bottom: bottom, right: right }}>
         <MiniMap
           graph={svgRef.current}
           outputSVG={outputSVGRef.current}
