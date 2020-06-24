@@ -74,7 +74,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     labelText: {
       fontWeight: 'inherit',
-      flexGrow: 1,
+      // flexGrow: 1,
+      padding: '0px 5px'
     },
     container: {
       marginTop: theme.spacing(2),
@@ -195,11 +196,11 @@ export default function NodeSelector() {
           label={
             <div className={classes.labelRoot}>
             {getLabelContainer(node)}
-            {/* <Typography variant="body2"  className={classes.labelText} onClick={(e) => toggleExpanded(e, node.id)}> */}
-            <span className={classes.labelText} onClick={(e) => toggleExpanded(e, node.id)}>
-              {node.displayedName}
-            </span>
-            {/* </Typography> */}
+            <Typography variant="body2"  style={{flexGrow: 1}}>
+              <span className={classes.labelText} onClick={(e) => toggleExpanded(e, node.id)}>
+                {node.displayedName}
+              </span>
+            </Typography>
             {node.visibility ? <img src={Delete} onClick={() => handleChange(node.id)}/>:<img src={Add} onClick={() => handleChange(node.id)}/>}
           </div>
           }
