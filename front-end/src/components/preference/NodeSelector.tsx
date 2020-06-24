@@ -15,6 +15,8 @@ import Rect from './rect.png'
 import Circle from './circle.png'
 import Delete from './delete.png'
 import Add from './add.png'
+import Open from './open.png'
+import Close from './close.png'
 import Typography from "@material-ui/core/Typography";
 import TreeView from "@material-ui/lab/TreeView";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -75,7 +77,7 @@ const useStyles = makeStyles((theme: Theme) =>
     labelText: {
       fontWeight: 'inherit',
       // flexGrow: 1,
-      padding: '0px 5px'
+      padding: '0px 5px',
     },
     container: {
       marginTop: theme.spacing(2),
@@ -133,17 +135,18 @@ export default function NodeSelector() {
       },
     });
   };
-  const toggleExpanded = (e, id) => {
-    if(document.getElementsByClassName("highligh").length > 0) document.getElementsByClassName("highligh")[0].classList.remove("highligh")
-    e.target.classList.add("highligh")
+  const toggleExpanded = (id) => {
     let nodeId = id.replace(/-/g, "/");
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, nodeId)
-    // d3.select(`g .focus`).classed('focus',false);
-    // d3.select(`g #${id}`).classed('focus',true);
     modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
       nodeId: id,
     });
   };
+  const highligt  = (e, id) => {
+    if(document.getElementsByClassName("highligh").length > 0) document.getElementsByClassName("highligh")[0].classList.remove("highligh")
+    e.target.classList.add("highligh");
+    let nodeId = id.replace(/-/g, "/");
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, nodeId)
+  }
   const handleSearchChange= (searchText: string) => {
     let nodeMap = {}  //这边为浅拷贝所以不行？？咋办
     // let nodeMap = useProcessedGraph().nodeMap;
@@ -196,11 +199,12 @@ export default function NodeSelector() {
           label={
             <div className={classes.labelRoot}>
             {getLabelContainer(node)}
-            <Typography variant="body2"  style={{flexGrow: 1}}>
-              <span className={classes.labelText} onClick={(e) => toggleExpanded(e, node.id)}>
+            <Typography variant="body2"  style={{ flexGrow: 1 }}>
+              <span className={classes.labelText} onClick={(e) => highligt(e, node.id)}>
                 {node.displayedName}
               </span>
             </Typography>
+            {(node.type === NodeType.GROUP || node.type === NodeType.LAYER) ? <img src={Open} onClick={() => toggleExpanded(node.id)}/>:null}
             {node.visibility ? <img src={Delete} onClick={() => handleChange(node.id)}/>:<img src={Add} onClick={() => handleChange(node.id)}/>}
           </div>
           }
