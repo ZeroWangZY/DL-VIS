@@ -305,7 +305,7 @@ export const generateNode = (
     constVals: node.type === NodeType.OPERTATION ? constVals : null,
     expand: false,
     width: node.type === NodeType.OPERTATION ? 30 : 120,
-    height: node.type === NodeType.OPERTATION ? 20 : 40 + childNum * 5, //简单子节点数量编码
+    height: node.type === NodeType.OPERTATION ? 20 : 40 + 4 * Math.floor(Math.sqrt(childNum)), //简单子节点数量编码
     ports: ports,
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp
