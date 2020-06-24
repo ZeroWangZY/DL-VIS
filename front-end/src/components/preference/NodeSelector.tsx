@@ -228,7 +228,7 @@ export default function NodeSelector() {
 
   return (
     <div className={classes.container}>
-      <Typography>Node Filter</Typography>
+      {/* <Typography>Node Filter</Typography> */}
       <Paper component="form" className={classes.search} variant="outlined">
       {/* <div className={classes.search}> */}
       <IconButton aria-label="search">

@@ -109,6 +109,23 @@ const useStyles = makeStyles((theme: Theme) =>
       top: theme.spacing(8),
       right: 1,
     },
+    drawerInnerRight: {
+      flexShrink: 0,
+    },
+    drawerPaperInnerRight: {
+      width: `calc(${drawerWidth}-1px)`,
+      height: 200,
+      position: 'relative',
+      left: 0,
+      top: 293,
+    },
+    drawerPaperInnerRightShift: {
+      transition: theme.transitions.create("top", {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      top: 40,
+    },
     drawerBottom: {
       flexShrink: 0,
     },
@@ -149,7 +166,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
       padding: theme.spacing(0, 1),
       ...theme.mixins.toolbar,
-      justifyContent: "flex-end",
+      justifyContent: "flex-start",
     },
     content: {
       flexGrow: 1,
@@ -230,7 +247,7 @@ function a11yProps(index: any, pos: Position) {
   };
 }
 
-type Anchor = 'left' | 'bottom' | 'right';
+type Anchor = 'left' | 'bottom' | 'right' | 'innerRight';
 
 const AppEntry: React.FC = () => {
   const classes = useStyles();
@@ -241,6 +258,7 @@ const AppEntry: React.FC = () => {
     left: true,
     bottom: true,
     right: true,
+    innerRight: true,
   });
 
   const toggleDrawer = (anchor: Anchor, open: boolean) => (
@@ -253,8 +271,7 @@ const AppEntry: React.FC = () => {
     ) {
       return;
     }
-    console.log('toggle');
-    console.log('click'+anchor+open);
+    console.log('state', state)
     setState({ ...state, [anchor]: open });
   };
 
@@ -331,9 +348,9 @@ const AppEntry: React.FC = () => {
             paper: classes.drawerPaperLeft,
           }}
         >
-          <div className={classes.drawerHeader}>
-            <Typography style={{ width: "100%", paddingLeft: theme.spacing(6) }} variant="h6" noWrap>
-              控制面板
+          <div className={classes.drawerHeader} style={{minHeight: 40, height: 40}}>
+            <Typography style={{ width: "100%", paddingLeft: theme.spacing(6) }} variant="body2" noWrap>
+              节点信息
             </Typography>
             <IconButton onClick={toggleDrawer("left", false)}>
               {theme.direction === "ltr" ? (
@@ -349,8 +366,8 @@ const AppEntry: React.FC = () => {
           <Divider /> */}
           <GraphSelector />
           <Divider />
-          <PreprocessingPluginsSelector />
-          <Divider />
+          {/* <PreprocessingPluginsSelector />
+          <Divider /> */}
           <NodeSelector />
           {/* <Divider />
           <Diagnosis />
@@ -403,7 +420,45 @@ const AppEntry: React.FC = () => {
             paper: classes.drawerPaperRight,
           }}
         >
-          <Tabs value={value['right']} onChange={toggleTab('right')} 
+          <div className={classes.drawerHeader} style={{minHeight: 40, height: 40}}>
+            <Typography style={{ paddingLeft: theme.spacing(2) }} variant="body2" noWrap>
+              节点属性
+            </Typography>
+            <IconButton style={{marginLeft: 222}} onClick={toggleDrawer("right", false)}>
+              <ChevronRightIcon />
+            </IconButton>
+          </div>
+          <Divider />
+          <div
+          className={classes.drawerPaperInnerRight}
+          // variant="persistent"
+          // anchor="bottom"
+          // open={state['innerRight']}
+          // classes={{
+          //   paper: clsx(classes.drawerPaperInnerRight, {[classes.drawerPaperInnerRightShift]: !state['innerRight']})
+          // }}
+        >
+          <div className={classes.drawerHeader} style={{minHeight: 40, height: 40}}>
+            <Typography style={{paddingLeft: theme.spacing(2) }} variant="body2" noWrap>
+              图例
+            </Typography>
+            <IconButton style={{marginLeft: `calc(100% - 93px)`}} onClick={toggleDrawer("right", false)}>
+              {state['innerRight'] ? <ExpandMoreIcon /> : ExpandLessIcon}
+            </IconButton>
+          </div>
+          <Divider />
+          {/* 图例内容 */}
+        </div>
+        {/* <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          onClick={toggleDrawer("innerRight", true)}
+          edge="start"
+          className={clsx({[classes.menuButtoninnerRight]: true || state["innerRight"] && classes.hide})}
+        >
+          <ExpandLessIcon />
+        </IconButton> */}
+          {/* <Tabs value={value['right']} onChange={toggleTab('right')} 
             classes={{indicator: classes.indicator}}
             className={classes.tabsStyle}
             aria-label="info panel">
@@ -418,7 +473,7 @@ const AppEntry: React.FC = () => {
           </TabPanel>
           <TabPanel value={value['right']} index={1} pos={'right'}>
             Item Two
-          </TabPanel>
+          </TabPanel> */}
         </Drawer>
         
         {/* --------------------------end of 右侧抽屉------------------------------ */}
