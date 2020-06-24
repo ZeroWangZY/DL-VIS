@@ -28,12 +28,13 @@ let arrowFillColor = styles.arrow_fill_color;
 let visNodeMap = {};
 let hiddenEdgeMap = new Map();
 let visModuleConnectionMap = new Map();
+let modules = new Set();
 export async function produceLayoutGraph(
   visGraph: VisGraph,
   layoutOptions: LayoutOptions = { networkSimplex: true }
 ): Promise<LayoutGraph> {
   const { visNodes, visEdges, visModuleEdges } = visGraph;
-  ({ visNodeMap, hiddenEdgeMap, visModuleConnectionMap } = visGraph);
+  ({ visNodeMap, hiddenEdgeMap, visModuleConnectionMap, modules } = visGraph);
   //groups存储每个节点的儿子
   groups = { root: new Set() };
   layoutNodeIdMap = { root: "" };
@@ -275,8 +276,8 @@ function idConverter(index: number): string {
 
 function isPort(target: BaseNode, source: BaseNode): boolean[] {
   return [
-    target["expanded"] || visModuleConnectionMap.get(target.id)["in"].size > 0,
-    source["expanded"] || visModuleConnectionMap.get(source.id)["out"].size > 0,
+    target["expanded"] || modules.has(target.id),
+    source["expanded"] || modules.has(target.id),
   ];
 }
 
