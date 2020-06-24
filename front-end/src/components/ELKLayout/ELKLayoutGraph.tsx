@@ -1,13 +1,34 @@
 import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
 import "./ELKLayoutGraph.less";
-import styles from "../../CSSVariables/CSSVariables.less"
+import styles from "../../CSSVariables/CSSVariables.less";
 import * as d3 from "d3";
-import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
-import { NodeType, Attribute, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
-import { useGlobalConfigurations, modifyGlobalConfigurations } from '../../store/global-configuration'
+import {
+  useProcessedGraph,
+  modifyProcessedGraph,
+  ProcessedGraphModificationType,
+} from "../../store/processedGraph";
+import {
+  NodeType,
+  Attribute,
+  LayerType,
+  DataType,
+  RawEdge,
+  GroupNode,
+  LayerNode,
+  GroupNodeImp,
+  LayerNodeImp,
+  DataNodeImp,
+  OperationNode,
+  OperationNodeImp,
+  ModuleEdge,
+} from "../../common/graph-processing/stage2/processed-graph";
+import {
+  useGlobalConfigurations,
+  modifyGlobalConfigurations,
+} from "../../store/global-configuration";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import { useStyledGraph } from "../../store/styledGraph";
-import { ModifyLineData } from '../../types/layerLevel'
+import { ModifyLineData } from "../../types/layerLevel";
 import { useHistory, useLocation } from "react-router-dom";
 import { modifyData } from "../../store/layerLevel";
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard";
@@ -31,13 +52,17 @@ interface Props {
 }
 
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
-  const { iteration, bottom, right } = props
+  const { iteration, bottom, right } = props;
 
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
-  const { diagnosisMode, isHiddenInterModuleEdges, selectedNodeId } = useGlobalConfigurations();
+  const {
+    diagnosisMode,
+    isHiddenInterModuleEdges,
+    selectedNodeId,
+  } = useGlobalConfigurations();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -168,13 +193,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
                 outputNode: oldNode.outputNode,
                 parent: oldNode.parent,
                 opts,
-<<<<<<< HEAD
                 isModule: oldNode.isModule,
                 parentModule: oldNode.parentModule,
-              }
-=======
               },
->>>>>>> feat: 在VisGraph中增加挖孔式边绑定的属性
             }
           );
         } else if (currentNodetype === NodeType.LAYER) {
@@ -197,14 +218,10 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
                 outputNode: oldNode.outputNode,
                 parent: oldNode.parent,
                 opts,
-<<<<<<< HEAD
                 isModule: oldNode.isModule,
                 parentModule: oldNode.parentModule,
                 layerType: LayerType[currentLayertype],
-              }
-=======
               },
->>>>>>> feat: 在VisGraph中增加挖孔式边绑定的属性
             }
           );
         }
@@ -300,7 +317,10 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   // 点击空白处取消所有选择
   const handleBgClick = () => {
     //  setSelectedNodeId ("");
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, '')
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+      ""
+    );
   };
 
   // 按键事件
@@ -426,11 +446,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     setTransform({
       x: 0,
       y: 0,
-      k: 1
-    })
+      k: 1,
+    });
     const outputG = d3.select(outputRef.current);
-    outputG.attr('transform', 'translate(0,0) scale(1)')
-    updateZoomofD3(d3.zoomIdentity)
+    outputG.attr("transform", "translate(0,0) scale(1)");
+    updateZoomofD3(d3.zoomIdentity);
   }
 
   useEffect(() => {
@@ -518,7 +538,10 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
       <NodeInfoCard selectedNodeId={selectedNodeId} />
 
-      <div className="minimap-container" style={{ bottom: bottom, right: right }}>
+      <div
+        className="minimap-container"
+        style={{ bottom: bottom, right: right }}
+      >
         <MiniMap
           graph={svgRef.current}
           outputSVG={outputSVGRef.current}
@@ -545,7 +568,12 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleEnterLayer={handleEnterLayer}
       />
       <img
-        style={{ position: "absolute", left: 10, bottom: 10, cursor: "pointer" }}
+        style={{
+          position: "absolute",
+          left: 10,
+          bottom: 10,
+          cursor: "pointer",
+        }}
         src={process.env.PUBLIC_URL + "/assets/canvas-back-to-right.png"}
         onClick={canvasBackToRight}
       />
