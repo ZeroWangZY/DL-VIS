@@ -271,9 +271,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
 
       function ended() {
+        const [offsetX, offsetY] = [d3.event.x - x, d3.event.y - y];
         if (
-          Math.abs(d3.event.x - x) < antiShakeDistance ||
-          Math.abs(d3.event.y - y) < antiShakeDistance
+          Math.abs(offsetX) < antiShakeDistance ||
+          Math.abs(offsetY) < antiShakeDistance
         ) {
           return;
         }
@@ -285,8 +286,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         nodeId.split("-").forEach((id) => {
           toEditNode = toEditNode[id];
         });
-        toEditNode["x"] = d3.event.x;
-        toEditNode["y"] = d3.event.y;
+        toEditNode["x"] = toEditNode["x"] + offsetX;
+        toEditNode["y"] = toEditNode["y"] + offsetY;
         editLayoutGraph();
       }
     }
