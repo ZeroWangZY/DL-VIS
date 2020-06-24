@@ -13,6 +13,7 @@ export interface GlobalConfigurations {
   shouldOptimizeProcessedGraph: boolean;
   currentStep: number;
   currentLayout: LayoutType;
+  selectedNodeId: string
 }
 
 export enum LayoutType {
@@ -32,4 +33,5 @@ export enum GlobalConfigurationsModificationType {
   TOGGLE_SHOULD_MERGE_EDGE,
   TOGGLE_PROCESSED_GRAPH_OPTIMIZER,
   SET_CURRENT_SEPT,
+  SET_SELECTEDNODE
 }

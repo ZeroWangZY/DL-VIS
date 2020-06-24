@@ -14,14 +14,15 @@ import {
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
 import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
+import { useGlobalConfigurations, modifyGlobalConfigurations } from '../../store/global-configuration'
+import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import { LineGroup } from '../LineCharts/index'
 import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
-import { useGlobalConfigurations } from "../../store/global-configuration";
 import convURL from '../../icon/conv.png';
 
 interface Props {
-  setSelectedNodeId: { (nodeId: string | string[]): void };
-  selectedNodeId: string | string[] | null;
+  // setSelectedNodeId: { (nodeId: string): void };
+  // selectedNodeId: string | null;
   handleRightClick: { (e: any): void };
   currentNotShowLineChartID: string[];
   iteration: number;
@@ -44,8 +45,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     iteration,
     selectedAuxiliaryNodeId,
     setSelectedAuxiliaryNodeId } = props;
-  const { diagnosisMode, isHiddenInterModuleEdges } = useGlobalConfigurations();
   const graphForLayout = useProcessedGraph();
+  const { diagnosisMode, isHiddenInterModuleEdges, selectedNodeId } = useGlobalConfigurations();
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
@@ -76,13 +77,9 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   let clickAuxiliaryNode = false;
   const handleClick = (id) => {
-    if (clickAuxiliaryNode === true) {
-      clickAuxiliaryNode = false;
-      return;
-    }
-    let nodeId = id // .replace(/-/g, "/");
-    setSelectedAuxiliaryNodeId("");
-    setSelectedNodeId(nodeId);
+    let nodeId = id.replace(/-/g, "/");
+    // setSelectedNodeId(nodeId);
+    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, nodeId)
   };
 
   const handleClickAuxiliaryNode = (paramOrConstId: string, auxiliaryNodes: any[]) => {
@@ -216,6 +213,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               ? "elk-label-container focus"
               : "elk-label-container"
           }
+          id={nodeId}
           width={rectWidth}
           height={rectHeight}
           transform={`translate(-${rectWidth / 2}, -${
@@ -237,7 +235,38 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
     }
   }
+  const getLabel = (node)  => {
+      if (node.data.expand){
+        return(
+          <text dominantBaseline={"baseline"} y={`${-node.style.rectHeight / 2}`} style={{ fontSize: 10 }}>
+              {node.data.label}
+          </text>
+        )
+      }else if (node.data.type === NodeType.OPERTATION){
+        return(
+          <text dominantBaseline={"baseline"} y={`${-node.style.rectHeight / 4 - 3}`} style={{ fontSize: 10 }}>
+              {node.data.label}
+          </text>
+      )}else{
+        return(
+            <foreignObject
+               x={-node.style.rectWidth / 2}
+               y={-node.style.rectHeight / 2}
+               width={ node.style.rectWidth}
+               height={node.style.rectHeight}
+               >
+               <div className="label">
+                {node.data.label}
+                 {!node.data.expand &&
+                  (node.data.type === NodeType.GROUP ||
+                   node.data.type === NodeType.LAYER) &&
+                  "+"}
+                </div>
+             </foreignObject>
+        )
+      } 
 
+  }
   useEffect(() => {
     //目前仅支持拖拽叶节点
     d3.selectAll("g .node").on(".drag", null);
@@ -351,7 +380,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         </text>
                       </div>
                     </foreignObject>
-                  )}
+                  )} */}
                 </g>
               </g>
             );

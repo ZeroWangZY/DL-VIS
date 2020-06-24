@@ -4,7 +4,8 @@ import styles from "../../CSSVariables/CSSVariables.less"
 import * as d3 from "d3";
 import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { NodeType, Attribute, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNodeImp, LayerNodeImp, DataNodeImp, OperationNode, OperationNodeImp, ModuleEdge } from '../../common/graph-processing/stage2/processed-graph'
-import { useGlobalConfigurations } from '../../store/global-configuration'
+import { useGlobalConfigurations, modifyGlobalConfigurations } from '../../store/global-configuration'
+import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import { useStyledGraph } from "../../store/styledGraph";
 import { ModifyLineData } from '../../types/layerLevel'
 import { useHistory, useLocation } from "react-router-dom";
@@ -32,12 +33,11 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
-  const { diagnosisMode, isHiddenInterModuleEdges } = useGlobalConfigurations();
+  const { diagnosisMode, isHiddenInterModuleEdges, selectedNodeId } = useGlobalConfigurations();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | string[] | null>(null);
-  const [selectedAuxiliaryNodeId, setSelectedAuxiliaryNodeId] = useState("");
-
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const handleChangeTransform = function (transform) {
     if (transform === null || transform === undefined) return;
@@ -253,13 +253,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
   }
   // 点击空白处取消所有选择
   const handleBgClick = () => {
-    // let selectedG = d3.select(svgRef.current).selectAll("g.selected");
-    node = d3.select(".nodes").selectAll(".node");
-    node.classed("selected", false);
-    node.classed("previouslySelected", false);
-
-    setSelectedAuxiliaryNodeId("");
-    setSelectedNodeId("");
+  //  setSelectedNodeId ("");
+  modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, '')
   };
 
   // 按键事件
@@ -441,8 +436,8 @@ const ELKLayoutGraph: React.FC<{ iteration: number, elklayoutRef: any }> = (prop
         <svg id="output-svg" ref={outputSVGRef}>
           <g className="output" id="output-g" ref={outputRef}>
             <ELKLayoutNode
-              selectedNodeId={selectedNodeId}
-              setSelectedNodeId={setSelectedNodeId}
+              // selectedNodeId={selectedNodeId}
+              // setSelectedNodeId={setSelectedNodeId}
               handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}

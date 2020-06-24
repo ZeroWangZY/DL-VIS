@@ -20,6 +20,7 @@ let globalConfigurations: GlobalConfigurations = {
   shouldMergeEdge: false,
   currentLayout: LayoutType.ELK_FOR_TF,
   currentStep: null,
+  selectedNodeId: null
 };
 
 const broadcast = () => {
@@ -83,6 +84,11 @@ export const modifyGlobalConfigurations = (
     case GlobalConfigurationsModificationType.SET_CURRENT_SEPT:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         currentStep: payload,
+      });
+      break;
+    case GlobalConfigurationsModificationType.SET_SELECTEDNODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        selectedNodeId: payload,
       });
       break;
     default:
