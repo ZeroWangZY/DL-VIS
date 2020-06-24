@@ -309,7 +309,7 @@ const AppEntry: React.FC = () => {
             {/* <Typography variant="h6" noWrap>
               Mindspore可视分析
             </Typography> */}
-            <img src={require('../../public/logo-mindspore.png')} alt='log'/>
+            <img src={process.env.PUBLIC_URL + 'logo-mindspore.png'} alt='log'/>
           </Toolbar>
         </AppBar>
         <IconButton

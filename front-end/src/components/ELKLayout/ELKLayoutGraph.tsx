@@ -30,11 +30,7 @@ interface Props {
 }
 
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
-  let iteration = props.iteration;
-  const elklayoutRef = props.elklayoutRef;
-  let bottom = props.bottom;
-  let right = props.right;
-  const styledGraph = useStyledGraph();
+  const {iteration , bottom, right} = props
 
   const history = useHistory();
   const svgRef = useRef();
@@ -360,18 +356,16 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     zoomofD3.transform(d3.select(svgRef.current), transform)
   }
 
-  useImperativeHandle(elklayoutRef, () => ({
-    canvasBackToRight() {
-      setTransform({
-        x: 0,
-        y: 0,
-        k: 1
-      })
-      const outputG = d3.select(outputRef.current);
-      outputG.attr('transform', 'translate(0,0) scale(1)')
-      updateZoomofD3(d3.zoomIdentity)
-    }
-  }))
+  function canvasBackToRight() {
+    setTransform({
+      x: 0,
+      y: 0,
+      k: 1
+    })
+    const outputG = d3.select(outputRef.current);
+    outputG.attr('transform', 'translate(0,0) scale(1)')
+    updateZoomofD3(d3.zoomIdentity)
+  }
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -478,6 +472,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleLineChartToggle={handleLineChartToggle}
         handleModifyNodetype={handleModifyNodetype}
         handleEnterLayer={handleEnterLayer}
+      />
+      <img
+        style={{ position: "absolute", left: 10, bottom: 10, cursor: "pointer" }}
+        src={process.env.PUBLIC_URL + "/assets/canvas-back-to-right.png"}
+        onClick={canvasBackToRight}
       />
     </div>
   );
