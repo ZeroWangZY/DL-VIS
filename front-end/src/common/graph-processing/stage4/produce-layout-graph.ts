@@ -290,7 +290,7 @@ export const generateNode = (
     id4Style: layoutNodeIdMap[node.id],
     parent: node.parent,
     label: node.displayedName,
-    shape: node.type === NodeType.OPERTATION ? "ellipse" : "rect",
+    shape: node.type === NodeType.OPERATION ? "ellipse" : "rect",
     class:
       `nodeitem-${node.type}` +
       (node.type === NodeType.LAYER
@@ -301,11 +301,11 @@ export const generateNode = (
       algorithm: "layered",
       //   portConstraints: "FIXED_SIDE",
     },
-    parameters: node.type === NodeType.OPERTATION ? parameters : null,
-    constVals: node.type === NodeType.OPERTATION ? constVals : null,
+    parameters: node.type === NodeType.OPERATION ? parameters : null,
+    constVals: node.type === NodeType.OPERATION ? constVals : null,
     expand: false,
-    width: node.type === NodeType.OPERTATION ? 30 : 120,
-    height: node.type === NodeType.OPERTATION ? 20 : (node.type === NodeType.LAYER ? 120 : 40 + 4 * Math.floor(Math.sqrt(leafNum))), //简单子节点数量编码
+    width: node.type === NodeType.OPERATION ? 30 : 120,
+    height: node.type === NodeType.OPERATION ? 20 : (node.type === NodeType.LAYER ? 120 : 40 + 4 * Math.floor(Math.sqrt(leafNum))), //简单子节点数量编码
     ports: ports,
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp

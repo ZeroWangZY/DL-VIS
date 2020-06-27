@@ -83,7 +83,7 @@ const layerRecognition = (hGraph: ProcessedGraph): void => {
     if (node.leafOperationNodeCount <= 6) {
       for (let childNodeId of node.children) {
         const childNode = nodeMap[childNodeId]
-        if (childNode.type === NodeType.OPERTATION) {
+        if (childNode.type === NodeType.OPERATION) {
           if ((childNode as OperationNode).operationType === "Conv2D") {
             const newNode = new LayerNodeImp({
               id: node.id, layerType: LayerType.CONV,
@@ -182,7 +182,7 @@ function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
   const { nodeMap } = processedGraph
   const results: OperationNode[] = []
   for (const node of Object.values(nodeMap)) {
-    // if (node.type === NodeType.OPERTATION) {
+    // if (node.type === NodeType.OPERATION) {
     //   let isFirstInputOperationNode = true
     //   for (const input of node.inputNode) {
     //     if (nodeMap[input].type !== NodeType.DATA) {

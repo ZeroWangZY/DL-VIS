@@ -174,7 +174,7 @@ export default function NodeSelector() {
       setGraph(result as ProcessedGraph)
   }
   const getLabelContainer = (node) => {
-    if(node.type=== NodeType.OPERTATION) { //ellipse
+    if(node.type=== NodeType.OPERATION) { //ellipse
       // return  <RadioButtonUncheckedIcon color="inherit" className={classes.labelIcon}/>
       return <img src={Ellipse} className={classes.labelIcon}/>
     }else if(node.type=== NodeType.GROUP || node.type=== NodeType.LAYER){    //rect

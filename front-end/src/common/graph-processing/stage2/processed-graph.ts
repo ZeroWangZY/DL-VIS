@@ -1,4 +1,4 @@
-export enum NodeType { OPERTATION, LAYER, GROUP, DATA }
+export enum NodeType { OPERATION, LAYER, GROUP, DATA }
 export enum LayerType {
   CONV = "CONV",
   RNN = "RNN",
@@ -122,7 +122,7 @@ export class OperationNodeImp implements OperationNode {
   constructor({ id, attributes, op, opts = {} }: { id: string; attributes?: Attribute[]; op: string; opts?: OptionsDef }) {
     this.id = id;
     this.displayedName = opts.displayedName || id;
-    this.type = NodeType.OPERTATION;
+    this.type = NodeType.OPERATION;
     this.parent = "";
     this.operationType = op;
     this.outModuleConnection = new Set()
@@ -325,7 +325,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
   }
   getInModuleConnection(nodeId: string): Set<NodeId> {
     let node = this.nodeMap[nodeId]
-    if (node.type === NodeType.OPERTATION || node.type === NodeType.DATA) {
+    if (node.type === NodeType.OPERATION || node.type === NodeType.DATA) {
       return node.inModuleConnection
     }
     if (node.belongModule === null) {
@@ -343,7 +343,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
     while (queue.length > 0) {
       const id = queue.shift()
       const tempNode = this.nodeMap[id]
-      if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERTATION) {
+      if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERATION) {
         retSet = new Set([...retSet, ...tempNode.inModuleConnection])
       }
       if (tempNode.type === NodeType.GROUP || tempNode.type === NodeType.LAYER) {
@@ -356,7 +356,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
 
   getOutModuleConnection(nodeId: string): Set<string> {
     let node = this.nodeMap[nodeId]
-    if (node.type === NodeType.OPERTATION || node.type === NodeType.DATA) {
+    if (node.type === NodeType.OPERATION || node.type === NodeType.DATA) {
       return node.outModuleConnection
     }
     if (node.belongModule === null) {
@@ -374,7 +374,7 @@ export class ProcessedGraphImp implements ProcessedGraph {
     while (queue.length > 0) {
       const id = queue.shift()
       const tempNode = this.nodeMap[id]
-      if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERTATION) {
+      if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERATION) {
         retSet = new Set([...retSet, ...tempNode.outModuleConnection])
       }
       if (tempNode.type === NodeType.GROUP || tempNode.type === NodeType.LAYER) {

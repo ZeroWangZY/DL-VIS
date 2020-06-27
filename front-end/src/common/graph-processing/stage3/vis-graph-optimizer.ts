@@ -114,7 +114,7 @@ function _findSubgraphsFromStartHubNode(startHubNode: NodeId, endHubNodes: Set<N
       step++
     }
     let isValidSubGraph = true
-    nodes.forEach(n => { if (nodeMap[n].type !== NodeType.OPERTATION) { isValidSubGraph = false } })
+    nodes.forEach(n => { if (nodeMap[n].type !== NodeType.OPERATION) { isValidSubGraph = false } })
     if (!isValidSubGraph) continue
     if (nodes.size > 0) {
       retSet.add({ edges, nodes })
@@ -149,7 +149,7 @@ function _findSubgraphsFromEndHubNode(endHubNode: NodeId, edgeMap: EdgeMap, node
       step++
     }
     let isValidSubGraph = true
-    nodes.forEach(n => { if (nodeMap[n].type !== NodeType.OPERTATION) { isValidSubGraph = false } })
+    nodes.forEach(n => { if (nodeMap[n].type !== NodeType.OPERATION) { isValidSubGraph = false } })
     if (!isValidSubGraph) continue
     if (nodes.size > 0) {
       retSet.add({ edges, nodes })
@@ -166,13 +166,13 @@ function _getNodeHash(nodeId: NodeId, nodeMap: VisNodeMap): number {
   retHash = (retHash + genHash(node.operationType)) % BIG_PRIMITIVE
   node.inputNode.forEach(input => {
     retHash = (retHash + genHash(nodeMap[input].type.toString())) % BIG_PRIMITIVE
-    if (nodeMap[input].type === NodeType.OPERTATION) {
+    if (nodeMap[input].type === NodeType.OPERATION) {
       retHash = (retHash + genHash("in" + (nodeMap[input] as OperationNode).operationType)) % BIG_PRIMITIVE
     }
   })
   node.outputNode.forEach(output => {
     retHash = (retHash + genHash(nodeMap[output].type.toString())) % BIG_PRIMITIVE
-    if (nodeMap[output].type === NodeType.OPERTATION) {
+    if (nodeMap[output].type === NodeType.OPERATION) {
       retHash = (retHash + genHash("out" + (nodeMap[output] as OperationNode).operationType)) % BIG_PRIMITIVE
     }
   })

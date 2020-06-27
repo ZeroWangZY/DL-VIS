@@ -235,7 +235,7 @@ function processGroupNode(pGraph: ProcessedGraph, inputInfo: Map<string, string>
 
   function countNodeNumInSubGraph(id) { // 深度遍历nodeMap[id]的子节点。记录所有叶子节点OperationNode的个数
     let subNode = nodeMap[id];
-    if (subNode.type === NodeType.OPERTATION ||
+    if (subNode.type === NodeType.OPERATION ||
       (subNode.type === NodeType.DATA && (subNode as DataNode).dataType !== DataType.CONST && (subNode as DataNode).dataType !== DataType.OUTPUT)) {
       leafOperationNodeCount++;
       return;
@@ -254,7 +254,7 @@ function processGroupNode(pGraph: ProcessedGraph, inputInfo: Map<string, string>
 function processedOutputNode(pGraph: ProcessedGraph) {
   const { nodeMap } = pGraph
   for (const node of Object.values(nodeMap)) {
-    if (node.type !== NodeType.OPERTATION) continue
+    if (node.type !== NodeType.OPERATION) continue
     for (const input of node.inputNode) {
       const inputNode = nodeMap[input]
       inputNode.outputNode.add(node.id)

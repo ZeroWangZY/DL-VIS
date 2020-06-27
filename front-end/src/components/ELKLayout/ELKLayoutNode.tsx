@@ -152,7 +152,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     rectHeight
   ) => {
     let focused = (node.id === selectedNodeId);
-    if (node.type === NodeType.OPERTATION) {
+    if (node.type === NodeType.OPERATION) {
       // OPERATION
       return (
         <g>
@@ -334,7 +334,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       d.style.rectHeight
                     )}
 
-                  {d.data.type === NodeType.OPERTATION && (
+                  {d.data.type === NodeType.OPERATION && (
                     <text
                       dominantBaseline={"baseline"}
                       y={`${-d.style.rectHeight / 4 - 3}`}
@@ -345,7 +345,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   )}
 
                   {!showLineChart(d.data) &&
-                    d.data.type !== NodeType.OPERTATION && (
+                    d.data.type !== NodeType.OPERATION && (
                       <foreignObject
                         x={-d.style.rectWidth / 2}
                         y={-d.style.rectHeight / 2}

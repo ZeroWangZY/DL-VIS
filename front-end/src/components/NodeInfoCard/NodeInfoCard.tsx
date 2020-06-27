@@ -62,7 +62,7 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
     if (selectedNode === undefined || selectedNode === null) return [];
 
     let parameters = [], constVals = [];
-    if (selectedNode.type === NodeType.OPERTATION) {
+    if (selectedNode.type === NodeType.OPERATION) {
       (selectedNode as OperationNodeImp).auxiliary.forEach((id) => {
         if ((nodeMap[id] as DataNodeImp).dataType === DataType.PARAMETER)
           parameters.push((nodeMap[id] as DataNodeImp).id);
@@ -131,7 +131,7 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
           </Typography>
         ))}
 
-        {selectedNode.type === NodeType.OPERTATION && (
+        {selectedNode.type === NodeType.OPERATION && (
           <>
             <Typography className={classes.title}>
               {"Attribute: (" +
