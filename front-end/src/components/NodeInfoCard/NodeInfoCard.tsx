@@ -52,8 +52,6 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
     selectedNode = nodeMap[selectedNodeId];
   }
 
-  console.log(selectedNode);
-
   const getDisplayedName = (nodeId) => {
     if (isStackedNode) return visNodeMap[nodeId].displayedName;
     return nodeMap[nodeId].displayedName;

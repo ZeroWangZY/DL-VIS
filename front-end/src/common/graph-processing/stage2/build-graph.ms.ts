@@ -78,7 +78,8 @@ function buildModule(hGraph: ProcessedGraph): void {
 }
 
 function _buildGraph(rGraph: RawGraph): ProcessedGraph {
-  const inputInfo: Set<string> = new Set(); // 包含所有的input信息
+  const inputInfo: Map<string, string> = new Map(); // 包含所有的input信息 target: source
+
   const pGraph = new ProcessedGraphImp();
   const rNodes = rGraph.node;
   const { nodeMap } = pGraph
@@ -132,7 +133,8 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
 
       if (!parameterNode && !constValNode) {
         pNode.inputNode.add(newId);
-        inputInfo.add(input.name + "_Input2_" + rNode.name)
+
+        inputInfo.set(input.name, rNode.name); // target: source
         pGraph.rawEdges.push({
           source: newId,
           target: rNode.name
@@ -194,7 +196,7 @@ function processOperationNode(rGraph: RawGraph, pGraph: ProcessedGraph) {
   }
 }
 
-function processGroupNode(pGraph: ProcessedGraph, inputInfo: Set<string>) {
+function processGroupNode(pGraph: ProcessedGraph, inputInfo: Map<string, string>) {
   const nodeMap = pGraph.nodeMap;
   let nodeIds = Object.keys(nodeMap);
   let leafOperationNodeCount = 0;
@@ -221,8 +223,7 @@ function processGroupNode(pGraph: ProcessedGraph, inputInfo: Set<string>) {
     // 处理group节点的输入输出
     (node as GroupNode).inputNode = new Set();
     (node as GroupNode).outputNode = new Set();
-    inputInfo.forEach((info) => {
-      let [source, target] = (info as string).split("_Input2_");
+    inputInfo.forEach((target, source) => {
       if (childOperationNode.has(source) && !childOperationNode.has(target)) { // 则为外部输入节点
         (node as GroupNode).outputNode.add(nodeMap[target].id);
       }
