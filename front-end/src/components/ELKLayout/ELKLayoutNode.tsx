@@ -223,7 +223,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         ></rect>
       );
     } else if (node.type === NodeType.LAYER) {
-      console.log(focused);
       // LAYER
       if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
         return <LayerNodeContainer width={rectWidth} height={rectHeight} layerType={LayerType.FC} focused={focused} />;
@@ -340,7 +339,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       y={`${-d.style.rectHeight / 4 - 3}`}
                       style={{ fontSize: 10 }}
                     >
-                      {d.data.label}
+                      {/* {d.data.label} */}
+                      {(d.data.label as string).length <= 12
+                        ? d.data.label
+                        : d.data.label.slice(0, 12) + "..."}
                     </text>
                   )}
 

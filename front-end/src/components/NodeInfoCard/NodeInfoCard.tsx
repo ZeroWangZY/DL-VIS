@@ -22,6 +22,7 @@ const useStyles = makeStyles({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "left",
+    wordBreak: "break-word",
   },
   content: {
     fontSize: 16,
@@ -79,9 +80,7 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
             backgroundColor: "RGB(233,233,233)",
           }}
         >
-          {(selectedNode.displayedName as string).length <= 25
-            ? selectedNode.displayedName
-            : selectedNode.displayedName.slice(0, 25) + "..."}
+          {selectedNode.displayedName}
         </Typography>
         {selectedNode.type === NodeType.GROUP ||
           (selectedNode.type === NodeType.LAYER && (
