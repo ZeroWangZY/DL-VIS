@@ -114,9 +114,9 @@ export const generateNodeStyles = (
             id4Style: node.id4Style,
             parent: node.parent,
             parameters:
-              node.type === NodeType.OPERTATION ? node.parameters : null,
+              node.type === NodeType.OPERATION ? node.parameters : null,
             constVals:
-              node.type === NodeType.OPERTATION ? node.constVals : null,
+              node.type === NodeType.OPERATION ? node.constVals : null,
             label: node.label,
             expand: node.expand,
             isStacked: node.isStacked,

@@ -392,9 +392,9 @@ export const generateNode = (
     parameters: node.type === NodeType.OPERATION ? parameters : null,
     constVals: node.type === NodeType.OPERATION ? constVals : null,
     expand: false,
-    width: node.type === NodeType.OPERTATION ? 30 : 120,
+    width: node.type === NodeType.OPERATION ? 30 : 120,
     height:
-      node.type === NodeType.OPERTATION
+      node.type === NodeType.OPERATION
         ? 20
         : node.type === NodeType.LAYER
         ? 120

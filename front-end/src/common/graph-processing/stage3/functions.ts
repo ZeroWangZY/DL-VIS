@@ -3,7 +3,7 @@ import { ModuleConnection, VisEdge, HiddenEdge } from "./vis-graph.type"
 
 function getInModuleConnection(nodeId: string, nodeMap: NodeMap): Set<NodeId> {
   let node = nodeMap[nodeId]
-  if (node.type === NodeType.OPERTATION || node.type === NodeType.DATA) {
+  if (node.type === NodeType.OPERATION || node.type === NodeType.DATA) {
     return node.inModuleConnection
   }
   if (node.belongModule === null) {
@@ -21,7 +21,7 @@ function getInModuleConnection(nodeId: string, nodeMap: NodeMap): Set<NodeId> {
   while (queue.length > 0) {
     const id = queue.shift()
     const tempNode = nodeMap[id]
-    if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERTATION) {
+    if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERATION) {
       retSet = new Set([...retSet, ...tempNode.inModuleConnection])
     }
     if (tempNode.type === NodeType.GROUP || tempNode.type === NodeType.LAYER) {
@@ -34,7 +34,7 @@ function getInModuleConnection(nodeId: string, nodeMap: NodeMap): Set<NodeId> {
 
 function getOutModuleConnection(nodeId: string, nodeMap: NodeMap): Set<string> {
   let node = nodeMap[nodeId]
-  if (node.type === NodeType.OPERTATION || node.type === NodeType.DATA) {
+  if (node.type === NodeType.OPERATION || node.type === NodeType.DATA) {
     return node.outModuleConnection
   }
   if (node.belongModule === null) {
@@ -52,7 +52,7 @@ function getOutModuleConnection(nodeId: string, nodeMap: NodeMap): Set<string> {
   while (queue.length > 0) {
     const id = queue.shift()
     const tempNode = nodeMap[id]
-    if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERTATION) {
+    if (tempNode.type === NodeType.DATA || tempNode.type === NodeType.OPERATION) {
       retSet = new Set([...retSet, ...tempNode.outModuleConnection])
     }
     if (tempNode.type === NodeType.GROUP || tempNode.type === NodeType.LAYER) {
