@@ -4,7 +4,7 @@ import ELKLayoutGraph from "./ELKLayoutGraph";
 import * as d3 from "d3";
 
 interface Props {
-  bottom: number; 
+  bottom: number;
   right: number;
 }
 

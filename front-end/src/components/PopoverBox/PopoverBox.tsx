@@ -26,6 +26,9 @@ interface Props {
   handleLineChartToggle: { (e: any): void };
   handleModifyNodetype: { (): void };
   handleEnterLayer: { (): void };
+  isPathFindingMode?: boolean;
+  handleSetStart?: { (): void };
+  handleSetEnd?: { (): void }
 }
 
 const PopoverBox: React.FC<Props> = (props: Props) => {
@@ -43,7 +46,10 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
     currentShowLineChart,
     handleLineChartToggle,
     handleModifyNodetype,
-    handleEnterLayer
+    handleEnterLayer,
+    isPathFindingMode,
+    handleSetStart,
+    handleSetEnd
   } = props;
 
   return (
@@ -61,126 +67,29 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
           horizontal: 'left',
         }}
       >
-        <Card>
+        {isPathFindingMode ? <Card>
           <CardContent style={{ width: 190 }}>
             <Typography
-              // variant="h5"
-              // component="h2"
               style={{
                 fontSize: 16,
                 fontWeight: "bold",
                 marginBottom: 10,
                 textAlign: 'center'
               }}
+            >Path Finding Options
+          </Typography><Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              style={{
+                width: '100%',
+                fontSize: 14,
+                marginBottom: 5
+              }}
+              onClick={handleSetStart}
             >
-              Modification Options
-            </Typography>
-            {currentNodetype < 0 ?
-              <div id="group-aggre-container">
-                <TextField
-                  id="group-name-input"
-                  label="Group Name"
-                  variant="filled"
-                  size="small"
-                  style={{
-                    width: '100%',
-                    marginBottom: 10
-                  }}
-                />
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  style={{
-                    width: '100%',
-                    fontSize: 14,
-                    marginBottom: 5
-                  }}
-                  onClick={handleAggregate}
-                >
-                  Aggregate
-                </Button>
-              </div> :
-              <div id="type-modify-container">
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  style={{
-                    width: '100%',
-                    fontSize: 14,
-                    marginBottom: 10
-                  }}
-                  onClick={handleUngroup}
-                >
-                  Ungroup
-                </Button>
-                <div id="nodetype-modify-container">
-                  <InputLabel id="nodetype-selector" style={{ fontSize: 10 }}>Node Type</InputLabel>
-                  <Select
-                    value={currentNodetype}
-                    onChange={handleNodetypeChange}
-                    style={{
-                      width: '100%',
-                      marginBottom: 10,
-                      fontSize: 14
-                    }}
-                  >
-                    <MenuItem value={NodeType.LAYER}>layer Node</MenuItem>
-                    <MenuItem value={NodeType.GROUP}>group Node</MenuItem>
-                  </Select>
-                </div>
-                {currentNodetype === NodeType.LAYER &&
-                  <div id="layertype-modify-container">
-                    <InputLabel id="layertype-selector" style={{ fontSize: 10 }}>Layer Type</InputLabel>
-                    <Select
-                      value={currentLayertype}
-                      onChange={handleLayertypeChange}
-                      style={{
-                        width: '100%',
-                        marginBottom: 10,
-                        fontSize: 14
-                      }}
-                    >
-                      <MenuItem value={LayerType.CONV}>CONV</MenuItem>
-                      <MenuItem value={LayerType.RNN}>RNN</MenuItem>
-                      <MenuItem value={LayerType.FC}>FC</MenuItem>
-                      <MenuItem value={LayerType.OTHER}>OTHER</MenuItem>
-                    </Select>
-                  </div>
-                }
-                {currentNodetype === NodeType.LAYER &&
-                  <div id="showLineChart-modify-container">
-                    <InputLabel id="showLineChart-selector" style={{ fontSize: 10 }}>Show LineChart</InputLabel>
-                    <Select
-                      value={currentShowLineChart}
-                      onChange={handleLineChartToggle}
-                      style={{
-                        width: '100%',
-                        marginBottom: 10,
-                        fontSize: 14
-                      }}
-                    >
-                      <MenuItem value={"true"}>true</MenuItem>
-                      <MenuItem value={"false"}>false</MenuItem>
-                    </Select>
-                  </div>
-                }
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  style={{
-                    width: '100%',
-                    fontSize: 14,
-                    marginBottom: 5
-                  }}
-                  onClick={handleModifyNodetype}
-                >
-                  Apply
-                </Button>
-              </div>
-            }
+              Set as start
+          </Button>
             <Button
               variant="outlined"
               color="primary"
@@ -190,24 +99,172 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
                 fontSize: 14,
                 marginBottom: 5
               }}
-              onClick={handleEnterLayer}
+              onClick={handleSetEnd}
             >
-              Layer-level
-                </Button>
+              Set as end
+          </Button>
             <Button
               variant="outlined"
               color="primary"
               size="small"
               style={{
                 width: '100%',
-                fontSize: 14
+                fontSize: 14,
+                marginBottom: 5
               }}
               onClick={handleClosePopover}
             >
               Cancel
-            </Button>
+          </Button>
           </CardContent>
         </Card>
+          : <Card>
+            <CardContent style={{ width: 190 }}>
+              <Typography
+                // variant="h5"
+                // component="h2"
+                style={{
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  marginBottom: 10,
+                  textAlign: 'center'
+                }}
+              >
+                Modification Options
+            </Typography>
+              {currentNodetype < 0 ?
+                <div id="group-aggre-container">
+                  <TextField
+                    id="group-name-input"
+                    label="Group Name"
+                    variant="filled"
+                    size="small"
+                    style={{
+                      width: '100%',
+                      marginBottom: 10
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    style={{
+                      width: '100%',
+                      fontSize: 14,
+                      marginBottom: 5
+                    }}
+                    onClick={handleAggregate}
+                  >
+                    Aggregate
+                </Button>
+                </div> :
+                <div id="type-modify-container">
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    style={{
+                      width: '100%',
+                      fontSize: 14,
+                      marginBottom: 10
+                    }}
+                    onClick={handleUngroup}
+                  >
+                    Ungroup
+                </Button>
+                  <div id="nodetype-modify-container">
+                    <InputLabel id="nodetype-selector" style={{ fontSize: 10 }}>Node Type</InputLabel>
+                    <Select
+                      value={currentNodetype}
+                      onChange={handleNodetypeChange}
+                      style={{
+                        width: '100%',
+                        marginBottom: 10,
+                        fontSize: 14
+                      }}
+                    >
+                      <MenuItem value={NodeType.LAYER}>layer Node</MenuItem>
+                      <MenuItem value={NodeType.GROUP}>group Node</MenuItem>
+                    </Select>
+                  </div>
+                  {currentNodetype === NodeType.LAYER &&
+                    <div id="layertype-modify-container">
+                      <InputLabel id="layertype-selector" style={{ fontSize: 10 }}>Layer Type</InputLabel>
+                      <Select
+                        value={currentLayertype}
+                        onChange={handleLayertypeChange}
+                        style={{
+                          width: '100%',
+                          marginBottom: 10,
+                          fontSize: 14
+                        }}
+                      >
+                        <MenuItem value={LayerType.CONV}>CONV</MenuItem>
+                        <MenuItem value={LayerType.RNN}>RNN</MenuItem>
+                        <MenuItem value={LayerType.FC}>FC</MenuItem>
+                        <MenuItem value={LayerType.OTHER}>OTHER</MenuItem>
+                      </Select>
+                    </div>
+                  }
+                  {currentNodetype === NodeType.LAYER &&
+                    <div id="showLineChart-modify-container">
+                      <InputLabel id="showLineChart-selector" style={{ fontSize: 10 }}>Show LineChart</InputLabel>
+                      <Select
+                        value={currentShowLineChart}
+                        onChange={handleLineChartToggle}
+                        style={{
+                          width: '100%',
+                          marginBottom: 10,
+                          fontSize: 14
+                        }}
+                      >
+                        <MenuItem value={"true"}>true</MenuItem>
+                        <MenuItem value={"false"}>false</MenuItem>
+                      </Select>
+                    </div>
+                  }
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    style={{
+                      width: '100%',
+                      fontSize: 14,
+                      marginBottom: 5
+                    }}
+                    onClick={handleModifyNodetype}
+                  >
+                    Apply
+                </Button>
+                </div>
+              }
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  marginBottom: 5
+                }}
+                onClick={handleEnterLayer}
+              >
+                Layer-level
+                </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                style={{
+                  width: '100%',
+                  fontSize: 14
+                }}
+                onClick={handleClosePopover}
+              >
+                Cancel
+            </Button>
+            </CardContent>
+          </Card>}
       </Popover>
     </div>
   );

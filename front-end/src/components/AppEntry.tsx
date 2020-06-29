@@ -277,7 +277,6 @@ const AppEntry: React.FC = () => {
 
   // minimap
  const minimapPosition = (rightState: boolean, bottomState: boolean) => {
-   console.log(rightState, bottomState)
    let right = 0, bottom = 0;
    if (rightState && bottomState) {
      right = drawerWidth + 5;

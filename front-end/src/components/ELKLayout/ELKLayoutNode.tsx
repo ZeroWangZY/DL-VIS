@@ -31,6 +31,9 @@ interface Props {
   currentNotShowLineChartID: string[];
   iteration: number;
   layoutModificationMode: boolean;
+  isPathFindingMode: boolean;
+  startNodeId: string;
+  endNodeId: string;
 }
 
 const antiShakeDistance = 2;
@@ -40,7 +43,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { handleRightClick, currentNotShowLineChartID, iteration, layoutModificationMode } = props;
+  const { handleRightClick, currentNotShowLineChartID, iteration, layoutModificationMode, isPathFindingMode, startNodeId, endNodeId } = props;
   const graphForLayout = useProcessedGraph();
   const {
     diagnosisMode,
@@ -301,9 +304,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             const linkedEdges = `.${d.data.id4Style} .hover`;
             return (
               <g
-                className={`node ${d.data.class} ${
-                  d.data.expand ? "expanded-node" : "child-node"
-                  }`}
+                className={`node ${d.data.class} ${d.data.expand ? "expanded-node" : "child-node"}` +
+                  `${(d.data.id4Style == startNodeId && isPathFindingMode) ? " startNode" : ""}` +
+                  `${(d.data.id4Style == endNodeId && isPathFindingMode) ? " endNode" : ""}`
+                }
                 id={d.data.id4Style}
                 data-id={d.data.id}
                 key={d.key}

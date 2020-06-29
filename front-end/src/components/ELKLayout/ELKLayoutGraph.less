@@ -39,6 +39,24 @@
     left: 8px;
 }
 
+/* 路径模式节点高亮 */
+.node.startNode.expanded-node rect.elk-label-container {
+    stroke-width: 3px !important;
+    stroke: red !important;
+}
+.node.startNode .elk-label-container {
+    stroke-width: 3px !important;
+    stroke: red !important;
+}
+.node.endNode.expanded-node rect.elk-label-container {
+    stroke-width: 3px !important;
+    stroke: red !important;
+}
+.node.endNode .elk-label-container {
+    stroke-width: 3px !important;
+    stroke: red !important;
+}
+
 .node rect, ellipse, circle {
     fill: #fff;
     stroke-width: 1px;
@@ -149,6 +167,11 @@ rect.behind-text {
 
 .behind-text {
     stroke: none !important
+}
+
+.highlightPath path{
+    stroke: red !important;
+    stroke-width: 3px !important;
 }
 
 :export {

@@ -26,6 +26,7 @@ import NodeInfoCard from "../NodeInfoCard/NodeInfoCard";
 import MiniMap from "../MiniMap/MiniMap";
 import PopoverBox from "../PopoverBox/PopoverBox";
 import { fetchAndGetLayerInfo } from "../../common/model-level/snaphot";
+import InteractiveIcon from "../InteractiveIcon/InteractiveIcon";
 
 import ELK from "elkjs/lib/elk.bundled.js";
 import ELKLayoutEdge from "./ELKLayoutEdge";
@@ -44,6 +45,7 @@ interface Props {
 
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const { iteration, bottom, right } = props;
+  const iconHeight = 27, iconPadding = 5, firstIconBottom = bottom - 20;//左下角交互图标高度，图标上下间隔，最下面一个图标距离底边的距离
 
   const history = useHistory();
   const svgRef = useRef();
@@ -73,7 +75,86 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const [layoutModificationMode, setLayoutModificationMode] = useState<boolean>(
     false
   );
-  const [pathSearchMode, setPathSearchMode] = useState<boolean>(false);
+  //路径选取模式相关功能：
+  const [isPathFindingMode, setIsPathFindingMode] = useState(false);
+  const togglePathFindingMode = () => {
+    setIsPathFindingMode(!isPathFindingMode);
+  }
+  const [startNodeId, setStartNodeId] = useState<string>(null);
+  const [endNodeId, setEndNodeId] = useState<string>(null);
+  const [editingNodeId, setEditingNodeId] = useState<string>(null);
+  const [highlightPath, setHighlightPath] = useState<Set<string>>(new Set());
+  enum classOfEdge { edgePath, startId, endId };
+  let passNodesIds = [];
+  let pathFoundFlag = false;
+  const classForPath: Set<string> = new Set;
+  function generateClassForPath() {
+    const copyOfPassNodesIds = passNodesIds.slice();
+    copyOfPassNodesIds.unshift(startNodeId);
+    copyOfPassNodesIds.push(endNodeId);
+    for (let i = 0; i < copyOfPassNodesIds.length - 1; i++) {
+      classForPath.add(`${copyOfPassNodesIds[i]} ${copyOfPassNodesIds[i + 1]}`);
+    }
+  }
+  function findPath(startId, endId) {
+    const relatedEdges = document.querySelectorAll(`.${startId}`);
+    const forwardEdges = Array.from(relatedEdges).filter((edge) => {
+      return edge.classList[classOfEdge["startId"]] == startId;
+    });
+    const forwardNodes = new Set();
+    if (forwardEdges.length) {
+      forwardEdges.forEach((edge) => {
+        forwardNodes.add(edge.classList[classOfEdge["endId"]]);
+      });
+    } else {
+      passNodesIds.pop();
+      return;
+    }
+    forwardNodes.forEach((node) => {
+      if (passNodesIds.includes(node)) {//是个环
+        return;
+      }
+      if (node == endId) {
+        pathFoundFlag = true;
+        generateClassForPath();
+        return;
+      } else if (node == startId) {//是个环
+        return;
+      } else {
+        passNodesIds.push(node);
+        findPath(node, endId);
+      }
+    });
+    passNodesIds.pop();
+    return pathFoundFlag;
+  }
+  useEffect(() => {
+    if (startNodeId && endNodeId) {
+      pathFoundFlag = false;
+      if (findPath(startNodeId, endNodeId)) {
+        setHighlightPath(classForPath);
+      } else {
+        setHighlightPath(new Set());
+        alert("Path not found!");
+      };
+    }
+  }, [startNodeId, endNodeId])
+  const handleSetStart = () => {
+    if (editingNodeId == endNodeId) {
+      setEndNodeId(null);
+      setHighlightPath(new Set());
+    }
+    setStartNodeId(editingNodeId);
+    handleClosePopover();
+  }
+  const handleSetEnd = () => {
+    if (editingNodeId == startNodeId) {
+      setStartNodeId(null);
+      setHighlightPath(new Set());
+    }
+    setEndNodeId(editingNodeId);
+    handleClosePopover();
+  }
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -236,43 +317,49 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   // 1. 当前没有选中的节点，右击一个节点，如果为group node或者layer node，则可以修改节点类型或者进行ungroup
   // 2. 当前有选中的节点，右击，可以选择是否聚合
   const handleRightClick = (e) => {
-    // console.log("right click")
     e.preventDefault();
-    let selectedG = d3.select(svgRef.current).selectAll("g.selected");
-    // 如果当前没有选中任何节点，或者只选中了一个，则表示选中当前右击的节点进行修改
-    if (selectedG.nodes().length <= 1 && e.target) {
-      let clickNode;
-      if (!selectedG.nodes().length) {
-        let tempNode = e.target.parentNode;
-        while (
-          !tempNode.getAttribute("class") ||
-          tempNode.getAttribute("class").indexOf("nodeitem") < 0
-        ) {
-          tempNode = tempNode.parentNode;
+    if (!isPathFindingMode) {//路径模式未开启，可以编辑节点类型
+      let selectedG = d3.select(svgRef.current).selectAll("g.selected");
+      // 如果当前没有选中任何节点，或者只选中了一个，则表示选中当前右击的节点进行修改
+      if (selectedG.nodes().length <= 1 && e.target) {
+        let clickNode;
+        if (!selectedG.nodes().length) {
+          let tempNode = e.target.parentNode;
+          while (
+            !tempNode.getAttribute("class") ||
+            tempNode.getAttribute("class").indexOf("nodeitem") < 0
+          ) {
+            tempNode = tempNode.parentNode;
+          }
+          clickNode = tempNode;
+        } else {
+          clickNode = selectedG.node();
         }
-        clickNode = tempNode;
-      } else {
-        clickNode = selectedG.node();
-      }
-      let nodeId = d3.select(clickNode).attr("data-id");
-      let node = graphForLayout.nodeMap[nodeId];
-      if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
-        alert(
-          "Node type modification and ungroup operation can only be applied to group node or layer node!"
-        );
-      } else {
-        d3.select(clickNode).classed("selected", true);
-        setCurrentNodetype(node.type);
-        if (node.type === NodeType.LAYER) {
-          setCurrentLayertype((node as LayerNode).layerType);
+        let nodeId = d3.select(clickNode).attr("data-id");
+        let node = graphForLayout.nodeMap[nodeId];
+        if (node.type !== NodeType.GROUP && node.type !== NodeType.LAYER) {
+          alert(
+            "Node type modification and ungroup operation can only be applied to group node or layer node!"
+          );
+        } else {
+          d3.select(clickNode).classed("selected", true);
+          setCurrentNodetype(node.type);
+          if (node.type === NodeType.LAYER) {
+            setCurrentLayertype((node as LayerNode).layerType);
+          }
+          setAnchorEl(e.target);
         }
+      } else {
+        // 已有选中节点，则选项为聚合
         setAnchorEl(e.target);
+        setCurrentNodetype(-1);
+        setCurrentLayertype(null);
       }
-    } else {
-      // 已有选中节点，则选项为聚合
+    } else {//路径模式开启，处理点选逻辑
+      setCurrentNodetype(0);//设置一下currentNodeType，否则默认为-1表示选中了多个节点，会影响路径模式下的popover
+      e.currentTarget.classList.add("selected");
+      setEditingNodeId(e.currentTarget.getAttribute("id"));
       setAnchorEl(e.target);
-      setCurrentNodetype(-1);
-      setCurrentLayertype(null);
     }
   };
   // 关闭popover
@@ -313,7 +400,13 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       GlobalConfigurationsModificationType.SET_SELECTEDNODE,
       ""
     );
+    cleanPathFinding();
   };
+  function cleanPathFinding() {
+    setStartNodeId(null);
+    setEndNodeId(null);
+    setHighlightPath(new Set());
+  }
 
   // 按键事件
   // 按下ctrl开始刷选
@@ -397,9 +490,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         bounding.y - svgBoundingClientRect.y + bounding.height * 0.5;
       let inExtent =
         extent[0][0] <= xCenter &&
-        xCenter < extent[1][0] &&
-        extent[0][1] <= yCenter &&
-        yCenter < extent[1][1]
+          xCenter < extent[1][0] &&
+          extent[0][1] <= yCenter &&
+          yCenter < extent[1][1]
           ? 1
           : 0;
       const previouslySelected =
@@ -496,10 +589,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     );
   };
 
-  const handleSearchPath = () => {
-    setPathSearchMode(!pathSearchMode);
-  };
-
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
       <svg id="elk-svg" ref={svgRef} style={{ height: "100%" }}>
@@ -535,9 +624,15 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
               layoutModificationMode={layoutModificationMode}
+              isPathFindingMode={isPathFindingMode}
+              startNodeId={startNodeId}
+              endNodeId={endNodeId}
             />
             <ELKLayoutPort />
-            <ELKLayoutEdge />
+            <ELKLayoutEdge
+              highlightPath={highlightPath}
+              isPathFindingMode={isPathFindingMode}
+            />
           </g>
         </svg>
         <g id="gBrushHolder"></g>
@@ -573,63 +668,41 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleLineChartToggle={handleLineChartToggle}
         handleModifyNodetype={handleModifyNodetype}
         handleEnterLayer={handleEnterLayer}
+        isPathFindingMode={isPathFindingMode}
+        handleSetStart={handleSetStart}
+        handleSetEnd={handleSetEnd}
       />
-
-      <div
+      <InteractiveIcon
         id="modify-switch"
         className={
-          layoutModificationMode
-            ? "interactive-on-button"
-            : "interactive-button"
+          layoutModificationMode ? "interactive-on-button" : "interactive-button"
         }
-        style={{ position: "relative", left: 12, bottom: 400 }}
-      >
-        <img
-          style={{ height: "16px", width: "24px" }}
-          src={process.env.PUBLIC_URL + "/assets/layout-modify.svg"}
-          onClick={handleLayoutModify}
-        />
-      </div>
-
-      <div
+        position={{ left: 10, bottom: firstIconBottom }}
+        src={process.env.PUBLIC_URL + "/assets/layout-modify.svg"}
+        handleClicked={handleLayoutModify} />
+      <InteractiveIcon
         id="search-switch"
         className={
-          pathSearchMode ? "interactive-on-button" : "interactive-button"
+          isPathFindingMode ? "interactive-on-button" : "interactive-button"
         }
-        style={{ position: "relative", left: 12, bottom: 389 }}
-      >
-        <img
-          style={{ height: "16px", width: "24px" }}
-          src={process.env.PUBLIC_URL + "/assets/path-search.svg"}
-          onClick={handleSearchPath}
-        />
-      </div>
-
-      <div
+        position={{ left: 10, bottom: firstIconBottom + iconHeight + iconPadding }}
+        src={process.env.PUBLIC_URL + "/assets/path-search.svg"}
+        handleClicked={togglePathFindingMode} />
+      <InteractiveIcon
         id="reset-switch"
         className="interactive-button"
-        style={{ position: "relative", left: 12, bottom: 378 }}
-      >
-        <img
-          style={{ height: "14px", width: "20px" }}
-          src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
-          onClick={canvasBackToRight}
-        />
-      </div>
-
-      <div
+        position={{ left: 10, bottom: firstIconBottom + 2 * (iconHeight + iconPadding) }}
+        src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
+        handleClicked={canvasBackToRight} />
+      <InteractiveIcon
         id="display-switch"
         className={
-          diagnosisMode ?  "interactive-on-button":"interactive-button"
+          diagnosisMode ? "interactive-on-button" : "interactive-button"
         }
-        style={{ position: "relative", left: 12, bottom: 367 }}
-      >
-        <img
-          style={{ height: "14px", width: "20px" }}
-          src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
-          onClick={handleDisplaySwitch}
-        />
-      </div>
+        position={{ left: 10, bottom: firstIconBottom + 3 * (iconHeight + iconPadding) }}
+        src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
+        handleClicked={handleDisplaySwitch} />
+
     </div>
   );
 };
