@@ -154,7 +154,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-      }`,
+        }`,
       originalSource: layoutNodeIdMap[originalSource],
       originalTarget: layoutNodeIdMap[originalTarget],
       sources: [outPort ? source + "-out-port" : source],
@@ -175,7 +175,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-      }`,
+        }`,
       originalSource: layoutNodeIdMap[source],
       originalTarget: layoutNodeIdMap[target],
       sources: [outPort ? source + "-out-port" : source],
@@ -397,8 +397,8 @@ export const generateNode = (
       node.type === NodeType.OPERATION
         ? 20
         : node.type === NodeType.LAYER
-        ? 120
-        : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
+          ? 120
+          : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     ports: ports,
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp,
@@ -520,6 +520,8 @@ function genLabel(id) {
       layoutOptions: {
         "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
       },
+      width: 10.0,
+      height: 15.0
     },
   ];
 }
