@@ -12,6 +12,7 @@ import { VisGraph, StackedOpNodeImp } from "../stage3/vis-graph.type";
 import {
   ElkNodeMap,
   LayoutNode,
+  PortType,
   LayoutOptions,
   LayoutGraph,
   LayoutGraphImp,
@@ -154,11 +155,11 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-        }`,
+      }`,
       originalSource: layoutNodeIdMap[originalSource],
       originalTarget: layoutNodeIdMap[originalTarget],
-      sources: [outPort ? source + "-out-port" : source],
-      targets: [inPort ? target + "-in-port" : target],
+      sources: [outPort !== PortType.None ? source + "-out-port" : source],
+      targets: [inPort !== PortType.None ? target + "-in-port" : target],
       arrowheadStyle: "fill: #333; stroke: #333;",
       arrowhead: "vee",
     };
@@ -175,7 +176,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-        }`,
+      }`,
       originalSource: layoutNodeIdMap[source],
       originalTarget: layoutNodeIdMap[target],
       sources: [outPort ? source + "-out-port" : source],
@@ -275,10 +276,18 @@ function idConverter(index: number): string {
   return "no" + index;
 }
 
-function isPort(target: BaseNode, source: BaseNode): boolean[] {
+function isPort(target: BaseNode, source: BaseNode): PortType[] {
   return [
-    target["expanded"] || modules.has(target.id),
-    source["expanded"] || modules.has(target.id),
+    modules.has(target.id)
+      ? PortType.Module
+      : target["expanded"]
+      ? PortType.Expanded
+      : PortType.None,
+    modules.has(source.id)
+      ? PortType.Module
+      : source["expanded"]
+      ? PortType.Expanded
+      : PortType.None,
   ];
 }
 
@@ -328,7 +337,7 @@ export const generateNode = (
   fixedNodeHeight: boolean,
 ): LayoutNode => {
   let ports = [];
-  if (inPort) {
+  if (inPort !== PortType.None) {
     ports.push({
       id: node.id + "-in-port",
       properties: {
@@ -336,7 +345,7 @@ export const generateNode = (
       },
     });
   }
-  if (outPort) {
+  if (outPort !== PortType.None) {
     ports.push({
       id: node.id + "-out-port",
       layoutOptions: {
@@ -402,6 +411,7 @@ export const generateNode = (
           ? 120
           : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     ports: ports,
+    isModulePorts: [inPort === PortType.Module, outPort === PortType.Module],
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp,
   };
@@ -442,8 +452,12 @@ function processNodes(
               id4Style: `${layoutNodeIdMap[source]}->${layoutNodeIdMap[target]}`,
               originalSource: layoutNodeIdMap[originalSource],
               originalTarget: layoutNodeIdMap[originalTarget],
-              sources: [outPort ? source + "-out-port" : source],
-              targets: [inPort ? target + "-in-port" : target],
+              sources: [
+                outPort !== PortType.None ? source + "-out-port" : source,
+              ],
+              targets: [
+                inPort !== PortType.None ? target + "-in-port" : target,
+              ],
               arrowheadStyle:
                 "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
               arrowhead: "vee",
@@ -463,7 +477,7 @@ function processNodes(
             originalSource: layoutNodeIdMap[originalSource],
             originalTarget: layoutNodeIdMap[originalTarget],
             sources: [parentId + "-in-port"],
-            targets: [inPort ? target + "-in-port" : target],
+            targets: [inPort !== PortType.None ? target + "-in-port" : target],
             arrowheadStyle:
               "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
             arrowhead: "vee",
@@ -482,7 +496,9 @@ function processNodes(
             id4Style: `__${i}__${layoutNodeIdMap[source]}-${layoutNodeIdMap[parentId]}`,
             originalSource: layoutNodeIdMap[originalSource],
             originalTarget: layoutNodeIdMap[originalTarget],
-            sources: [outPort ? source + "-out-port" : source],
+            sources: [
+              outPort !== PortType.None ? source + "-out-port" : source,
+            ],
             targets: [parentId + "-out-port"],
             arrowheadStyle: "fill: #333; stroke: #333;",
             arrowhead: "vee",
@@ -524,7 +540,7 @@ function genLabel(id) {
         "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
       },
       width: 10.0,
-      height: 15.0
+      height: 15.0,
     },
   ];
 }

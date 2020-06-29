@@ -10,6 +10,11 @@ export interface LayoutOptions {
   fixedNodeHeight?: boolean;
 }
 
+export enum PortType {
+  Module,
+  Expanded,
+  None,
+}
 export interface LayoutNode extends ElkNode {
   //仅供后续styleGraph使用，包含了层次信息:...-grandParent-parent-child-grandChild-...
   id4Style?: string;
@@ -23,6 +28,7 @@ export interface LayoutNode extends ElkNode {
       target: /*和id4Style一致*/ string;
     }>;
   };
+  isModulePorts?: [boolean, boolean];
   parent?: string;
   label?: string;
   shape?: string;

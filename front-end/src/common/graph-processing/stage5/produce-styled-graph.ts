@@ -115,8 +115,7 @@ export const generateNodeStyles = (
             parent: node.parent,
             parameters:
               node.type === NodeType.OPERATION ? node.parameters : null,
-            constVals:
-              node.type === NodeType.OPERATION ? node.constVals : null,
+            constVals: node.type === NodeType.OPERATION ? node.constVals : null,
             label: node.label,
             expand: node.expand,
             isStacked: node.isStacked,
@@ -148,7 +147,8 @@ export const generateNodeStyles = (
       },
     });
     const [inPort, outPort] = node.ports;
-    if (inPort !== undefined) {
+    const [isinPortModule, isoutPortModule] = node.isModulePorts;
+    if (isinPortModule) {
       portStyles.push({
         key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         data: {
@@ -164,7 +164,7 @@ export const generateNodeStyles = (
         },
       });
     }
-    if (outPort !== undefined) {
+    if (isoutPortModule) {
       portStyles.push({
         key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         data: {
@@ -243,10 +243,16 @@ const drawArcPath = (lineData, linksCountMap, ofs) => {
     nowPoint = lineData[i];
     preStrokeWidth =
       linksCountMap[
-        `${firstPoint.x-ofs.x}-${firstPoint.y-ofs.y}-${prePoint.x-ofs.x}-${prePoint.y-ofs.y}`
+        `${firstPoint.x - ofs.x}-${firstPoint.y - ofs.y}-${
+          prePoint.x - ofs.x
+        }-${prePoint.y - ofs.y}`
       ];
     nextStrokeWidth =
-      linksCountMap[`${prePoint.x-ofs.x}-${prePoint.y-ofs.y}-${nowPoint.x-ofs.x}-${nowPoint.y-ofs.y}`];
+      linksCountMap[
+        `${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x}-${
+          nowPoint.y - ofs.y
+        }`
+      ];
     pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)];
     if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
       path.push({
