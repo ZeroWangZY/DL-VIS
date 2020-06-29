@@ -7,7 +7,7 @@ import {
 
 let listeners = [];
 let globalConfigurations: GlobalConfigurations = {
-  diagnosisMode: true,
+  diagnosisMode: false,
   conceptualGraphMode: false,
   preprocessingPlugins: {
     pruneByOutput: false,

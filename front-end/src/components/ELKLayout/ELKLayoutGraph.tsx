@@ -9,18 +9,9 @@ import {
 } from "../../store/processedGraph";
 import {
   NodeType,
-  Attribute,
   LayerType,
-  DataType,
-  RawEdge,
   GroupNode,
   LayerNode,
-  GroupNodeImp,
-  LayerNodeImp,
-  DataNodeImp,
-  OperationNode,
-  OperationNodeImp,
-  ModuleEdge,
 } from "../../common/graph-processing/stage2/processed-graph";
 import {
   useGlobalConfigurations,
@@ -54,17 +45,11 @@ interface Props {
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const { iteration, bottom, right } = props;
 
-  const [interactmode,setInterMode] = useState(0);
-
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
-  const {
-    diagnosisMode,
-    isHiddenInterModuleEdges,
-    selectedNodeId,
-  } = useGlobalConfigurations();
+  const { diagnosisMode, selectedNodeId } = useGlobalConfigurations();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -84,6 +69,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const [currentNotShowLineChartID, setCurrentNotShowLineChartID] = useState(
     []
   );
+
+  const [layoutModificationMode, setLayoutModificationMode] = useState<boolean>(
+    false
+  );
+  const [pathSearchMode, setPathSearchMode] = useState<boolean>(false);
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -133,8 +123,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           },
         });
       }
-    } 
-  }
+    }
+  };
 
   // ungroup一个group node or layer node
   const handleUngroup = () => {
@@ -451,11 +441,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       k: 1,
     });
     const outputG = d3.select(outputRef.current);
-    outputG.attr('transform', 'translate(0,0) scale(1)')
-    updateZoomofD3(d3.zoomIdentity)
-    
-    if(interactmode != 4) setInterMode(4)
-    else setInterMode(0);
+    outputG.attr("transform", "translate(0,0) scale(1)");
+    updateZoomofD3(d3.zoomIdentity);
   }
 
   useEffect(() => {
@@ -495,46 +482,23 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       .on("end", brushend);
 
     setBgRectHeight(svgHeight);
-    
   }, []);
 
   const isPopoverOpen = Boolean(anchorEl);
 
-  useEffect(()=>{
-
-    d3.select("#display-switch").attr("class","interactive-button");
-    d3.select("#search-switch").attr("class","interactive-button");
-    d3.select("#modify-switch").attr("class","interactive-button");
-    d3.select("#reset-switch").attr("class","interactive-button");
-    if(interactmode==1){
-      d3.select("#modify-switch").attr("class","interactive-on-button");
-    }
-    else if(interactmode==2){
-      d3.select("#display-switch").attr("class","interactive-on-button");
-    }
-    else if(interactmode==3){
-      d3.select("#search-switch").attr("class","interactive-on-button");
-    }
-    else if(interactmode==4){
-      d3.select("#reset-switch").attr("class","interactive-on-button");
-    }
-  })
-
   const handleLayoutModify = () => {
-    if(interactmode != 1) setInterMode(1)
-    else setInterMode(0);
-  }
+    setLayoutModificationMode(!layoutModificationMode);
+  };
 
   const handleDisplaySwitch = () => {
-    if(interactmode != 2) setInterMode(2);
-    else setInterMode(0);
-      modifyGlobalConfigurations(GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE,'');
-  }
-  
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE
+    );
+  };
+
   const handleSearchPath = () => {
-    if(interactmode != 3) setInterMode(3);
-    else setInterMode(0);
-  }
+    setPathSearchMode(!pathSearchMode);
+  };
 
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
@@ -570,7 +534,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
-              interactmode={interactmode}
+              layoutModificationMode={layoutModificationMode}
             />
             <ELKLayoutPort />
             <ELKLayoutEdge />
@@ -611,38 +575,61 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleEnterLayer={handleEnterLayer}
       />
 
-      <div id = "modify-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 400}}>
+      <div
+        id="modify-switch"
+        className={
+          layoutModificationMode
+            ? "interactive-on-button"
+            : "interactive-button"
+        }
+        style={{ position: "relative", left: 12, bottom: 400 }}
+      >
         <img
-          style={{ height:"16px",width:"24px"}}
+          style={{ height: "16px", width: "24px" }}
           src={process.env.PUBLIC_URL + "/assets/layout-modify.svg"}
           onClick={handleLayoutModify}
         />
       </div>
 
-      <div id = "search-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 389}}>
+      <div
+        id="search-switch"
+        className={
+          pathSearchMode ? "interactive-on-button" : "interactive-button"
+        }
+        style={{ position: "relative", left: 12, bottom: 389 }}
+      >
         <img
-          style={{ height:"16px",width:"24px"}}
+          style={{ height: "16px", width: "24px" }}
           src={process.env.PUBLIC_URL + "/assets/path-search.svg"}
           onClick={handleSearchPath}
         />
       </div>
 
-      <div id = "reset-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 378}}>
+      <div
+        id="reset-switch"
+        className="interactive-button"
+        style={{ position: "relative", left: 12, bottom: 378 }}
+      >
         <img
-          style={{ height:"14px",width:"20px"}}
+          style={{ height: "14px", width: "20px" }}
           src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
           onClick={canvasBackToRight}
         />
       </div>
 
-      <div id = "display-switch" className="interactive-button" style={{ position: "relative", left: 12, bottom: 367}}>
+      <div
+        id="display-switch"
+        className={
+          diagnosisMode ?  "interactive-on-button":"interactive-button"
+        }
+        style={{ position: "relative", left: 12, bottom: 367 }}
+      >
         <img
-          style={{ height:"14px",width:"20px"}}
+          style={{ height: "14px", width: "20px" }}
           src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
           onClick={handleDisplaySwitch}
         />
       </div>
-
     </div>
   );
 };
