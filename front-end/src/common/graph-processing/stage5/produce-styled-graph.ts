@@ -68,7 +68,7 @@ export const generateEdgeStyles = (
         originalSource: link.originalSource,
         originalTarget: link.originalTarget,
         lineData: hoverPath(linkData),
-        drawData: drawArcPath(linkData, linksCountMap),
+        drawData: drawArcPath(linkData, linksCountMap, ofs),
         junctionPoints:
           junctionPoints === undefined
             ? []
@@ -219,7 +219,7 @@ function ofsLinks(edges: Array<LayoutEdge>) {
   return xyMap;
 }
 
-const drawArcPath = (lineData, linksCountMap) => {
+const drawArcPath = (lineData, linksCountMap, ofs) => {
   let preStrokeWidth =
     linksCountMap[
       `${lineData[0].x}-${lineData[0].y}-${lineData[1].x}-${lineData[1].y}`
@@ -243,10 +243,10 @@ const drawArcPath = (lineData, linksCountMap) => {
     nowPoint = lineData[i];
     preStrokeWidth =
       linksCountMap[
-        `${firstPoint.x}-${firstPoint.y}-${prePoint.x}-${prePoint.y}`
+        `${firstPoint.x-ofs.x}-${firstPoint.y-ofs.y}-${prePoint.x-ofs.x}-${prePoint.y-ofs.y}`
       ];
     nextStrokeWidth =
-      linksCountMap[`${prePoint.x}-${prePoint.y}-${nowPoint.x}-${nowPoint.y}`];
+      linksCountMap[`${prePoint.x-ofs.x}-${prePoint.y-ofs.y}-${nowPoint.x-ofs.x}-${nowPoint.y-ofs.y}`];
     pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)];
     if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
       path.push({
