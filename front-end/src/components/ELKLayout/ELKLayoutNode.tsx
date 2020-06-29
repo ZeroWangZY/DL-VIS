@@ -315,8 +315,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 onClick={() => handleClick(d.data.id)}
                 onDoubleClick={() => toggleExpanded(d.data.id)}
                 onMouseEnter={() => {
-                  svg
-                    .selectAll(linkedEdges)
+                  d3.selectAll(linkedEdges)
                     .transition()
                     .style("stroke", hoverEdgePathStrokeColor)
                     .style("stroke-width", hoverEdgePathStrokeWidth);
