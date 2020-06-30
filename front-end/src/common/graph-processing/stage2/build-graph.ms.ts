@@ -423,7 +423,7 @@ function buildModule(hGraph: ProcessedGraph): void {
     }
   }
   // modulesId是按边数由大到小排序的，所以父module一定在子module前面,因此嵌套的子module赋值belongModule时会覆盖之前的
-  hGraph.modules.forEach(_moduleId => {
+  Array.from(hGraph.modules).sort().forEach(_moduleId => {
     if (hGraph.modules.has(nodeMap[_moduleId].parent)) {
       const moduleNode = nodeMap[_moduleId] as GroupNode;
       moduleNode.parentModule = nodeMap[_moduleId].parent;

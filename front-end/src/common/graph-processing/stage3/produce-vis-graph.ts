@@ -160,13 +160,6 @@ function isInterModule(
   nodeId2: NodeId,
   nodeMap: NodeMap
 ): boolean {
-  const node1BelongModule = nodeMap[nodeId1].belongModule,
-    node2BelongModule = nodeMap[nodeId2].belongModule;
-  if (
-    !node1BelongModule ||
-    !node2BelongModule ||
-    node1BelongModule === node2BelongModule
-  )
-    return false;
-  return true;
+  const node1 = nodeMap[nodeId1]
+  return node1.outModuleConnection.has(nodeId2)
 }
