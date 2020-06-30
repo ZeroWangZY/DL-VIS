@@ -6,7 +6,7 @@ import * as d3 from "d3";
 
 const ELKLayoutPort: React.FC = () => {
   const styledGraph = useStyledGraph();
-  const svg = d3.select("#output-svg");
+  const hoverEdges = d3.select("#output-svg").select(".hoverEdges");
   const fill = "#6791A7",
     stroke = "#666666",
     strokeWidth = "1";
@@ -31,14 +31,13 @@ const ELKLayoutPort: React.FC = () => {
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
-                    if (!svg.selectAll(`.${edgeName}`).empty()) {
-                      svg
-                        .select(".hoverEdges")
+                    if (!hoverEdges.selectAll(`.${edgeName}`).empty()) {
+                      hoverEdges
                         .selectAll(`.${edgeName}`)
                         .select("path")
                         .transition()
                         .attr("fill", "none")
-                        .style("stroke", "#000066")
+                        .style("stroke", "#3186FF88")
                         .style("stroke-width", "2");
                       continue;
                     }
@@ -62,16 +61,16 @@ const ELKLayoutPort: React.FC = () => {
                       .split(", ")
                       .map((v) => parseInt(v));
                     const targetBox = { x, y, width, height };
-                    let x1 = sourceBox.x + sourceBox.width / 2,
-                      y1 = sourceBox.y,
-                      x2 = targetBox.x + targetBox.width / 2,
-                      y2 = targetBox.y;
-                    if (d.data.type === "in") {
-                      x1 -= sourceBox.width;
-                      x2 -= targetBox.width;
+                    let sign = 1; //1:右连接，2：左连接
+                    if (source.length < target.length) {
+                      sign = -1;
                     }
-                    svg
-                      .select(".hoverEdges")
+                    let x1 = sourceBox.x + (sign * sourceBox.width) / 2,
+                      y1 = sourceBox.y,
+                      x2 = targetBox.x + (sign * targetBox.width) / 2,
+                      y2 = targetBox.y;
+
+                    hoverEdges
                       .append("g")
                       .attr("class", `edgePath hoverEdge ${edgeName}`)
                       .append("path")
@@ -85,7 +84,7 @@ const ELKLayoutPort: React.FC = () => {
                         ])
                       )
                       .attr("fill", "none")
-                      .style("stroke", "#000066")
+                      .style("stroke", "#3186FF88")
                       .style("stroke-width", "2");
                   }
                 }}

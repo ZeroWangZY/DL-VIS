@@ -13,6 +13,7 @@ export interface LayoutOptions {
 export enum PortType {
   Module,
   hasHiddenEdge,
+  HiddenPort,
   Expanded,
   None,
 }

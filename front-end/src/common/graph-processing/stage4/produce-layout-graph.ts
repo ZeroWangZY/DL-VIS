@@ -181,8 +181,8 @@ export async function produceLayoutGraph(
       }`,
       originalSource: layoutNodeIdMap[source],
       originalTarget: layoutNodeIdMap[target],
-      sources: [outPort ? source + "-out-port" : source],
-      targets: [inPort ? target + "-in-port" : target],
+      sources: [outPort !== PortType.None ? source + "-out-port" : source],
+      targets: [inPort !== PortType.None ? target + "-in-port" : target],
       arrowheadStyle:
         "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
       arrowhead: "vee",
@@ -282,15 +282,23 @@ function isPort(target: BaseNode, source: BaseNode): PortType[] {
   return [
     modules.has(target.id)
       ? PortType.Module
-      : hiddenEdgeMap.has(target.id)
+      : hiddenEdgeMap.has(target.id) &&
+        hiddenEdgeMap.get(target.id)["in"].size > 0
       ? PortType.hasHiddenEdge
+      : hiddenEdgeMap.has(target.id) &&
+        hiddenEdgeMap.get(target.id)["in"].size === 0
+      ? PortType.HiddenPort
       : target["expanded"]
       ? PortType.Expanded
       : PortType.None,
     modules.has(source.id)
       ? PortType.Module
-      : hiddenEdgeMap.has(source.id)
+      : hiddenEdgeMap.has(source.id) &&
+        hiddenEdgeMap.get(source.id)["out"].size > 0
       ? PortType.hasHiddenEdge
+      : hiddenEdgeMap.has(source.id) &&
+        hiddenEdgeMap.get(source.id)["in"].size === 0
+      ? PortType.HiddenPort
       : source["expanded"]
       ? PortType.Expanded
       : PortType.None,
