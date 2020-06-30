@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import AppEntry from './components/AppEntry'
+import AppEntry from "./components/PageLayout/AppEntry";
 
 const App: React.FC = () => {
   return (

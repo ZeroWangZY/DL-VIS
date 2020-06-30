@@ -1,0 +1,17 @@
+.layout-vertical {
+  position: relative;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  > * {
+    position: relative;
+    border-bottom: 1px solid #ccc;
+    box-sizing: border-box;
+    // transition: margin ease-in-out 0.3s;
+  }
+}

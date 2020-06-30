@@ -39,19 +39,21 @@ const arrowStrokeColor = styles.arrow_stroke_color;
 const arrowFillColor = styles.arrow_fill_color;
 interface Props {
   iteration: number;
-  bottom: number;
-  right: number;
 }
 
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
-  const { iteration, bottom, right } = props;
-  const iconHeight = 27, iconPadding = 5, firstIconBottom = bottom - 20;//左下角交互图标高度，图标上下间隔，最下面一个图标距离底边的距离
+  const { iteration } = props;
+  const iconHeight = 27, iconPadding = 5, firstIconBottom = 20;//左下角交互图标高度，图标上下间隔，最下面一个图标距离底边的距离
 
   const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
-  const { diagnosisMode, selectedNodeId } = useGlobalConfigurations();
+  const {
+    diagnosisMode,
+    isHiddenInterModuleEdges,
+    selectedNodeId,
+  } = useGlobalConfigurations();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -640,10 +642,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
       <NodeInfoCard selectedNodeId={selectedNodeId} />
 
-      <div
-        className="minimap-container"
-        style={{ bottom: bottom, right: right }}
-      >
+      <div className="minimap-container">
         <MiniMap
           graph={svgRef.current}
           outputSVG={outputSVGRef.current}

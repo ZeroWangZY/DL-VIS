@@ -1,9 +1,6 @@
-#info-card {
-  position: fixed;
-  top: 100px;
-  right: 30px;
+.info-card {
+  margin: 10px 0 0 10px;
 }
-
 
 .info-card.root {
   opacity: 0.9;

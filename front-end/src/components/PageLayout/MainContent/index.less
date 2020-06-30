@@ -1,0 +1,101 @@
+.vertical-bottom-wrapper {
+  display: relative;
+  .expand-btn {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    z-index: 1;
+    cursor: pointer;
+    // 美化
+    font-weight: 600;
+    border-radius: 5px 5px 0 0;
+    // width: 50px;
+    height: 24px;
+    padding: 0 5px;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #fff;
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+    img {
+      height: 16px;
+      vertical-align: middle;
+    }
+  }
+}
+
+.hor-right-wrapper {
+  display: relative;
+  .expand-btn {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    z-index: 1;
+    cursor: pointer;
+    // 美化
+    font-weight: 600;
+    border-radius: 5px 0 0 5px;
+    width: 24px;
+    padding: 5px 0;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #fff;
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+    img {
+      width: 16px;
+      line-height: 24px;
+    }
+  }
+}
+
+.legend-wrapper {
+  display: relative;
+  .expand-btn {
+    position: absolute;
+    right: 0;
+    top: -32px;
+    z-index: 1;
+    cursor: pointer;
+    // 美化
+    font-weight: normal;
+    border-radius: 0;
+    border-bottom: 1px solid #ccc;
+    border-top: 1px solid #ccc;
+    width: 200px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    background-color: #fff;
+    color: #333;
+    padding: 0;
+    &:hover {
+      background-color: #fff;
+    }
+    .btn {
+      padding-left: 100px;
+      img {
+        height: 16px;
+        vertical-align: middle;
+      }
+    }
+    .legend-title {
+      padding-right: 10px;
+      font-size: 14px;
+    }
+  }
+}
+
+.info-wrapper {
+  .panel-title {
+    text-align: center;
+    font-size: 14px;
+    line-height: 20px;
+    padding-top: 15px;
+  }
+  .info-card {
+    margin-top: 10px;
+  }
+}

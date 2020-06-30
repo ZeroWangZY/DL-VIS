@@ -14,9 +14,10 @@
 }
 
 #elk-svg {
-    width: 100%;
-    overflow: hidden;
-    user-select: none;
+  width: 100%;
+  overflow: hidden;
+  user-select: none;
+  fill: white;
 }
 
 .nodeitem-1.layertype-FC text::before{
@@ -34,9 +35,9 @@
 }
 
 .nodeitem-1 .my-label text {
-    color: red;
-    position: relative;
-    left: 8px;
+  color: red;
+  position: relative;
+  left: 8px;
 }
 
 /* 路径模式节点高亮 */
@@ -64,44 +65,44 @@
 }
 
 .node rect.elk-label-container {
-    rx: 5;
-    ry: 5;
+  rx: 5;
+  ry: 5;
 }
 
 .nodeitem text {
-    cursor: auto;
+  cursor: auto;
 }
 
 rect.behind-text {
-    opacity: 1;
+  opacity: 1;
 }
 
 .node.expanded-node rect.elk-label-container {
-    fill: #b2b2b2;
-    fill-opacity: 0.2;
-    stroke-width: 1px;
-    stroke: #c7c7c7;
+  fill: #b2b2b2;
+  fill-opacity: 0.2;
+  stroke-width: 1px;
+  stroke: #c7c7c7;
 }
 
 .node.expanded-node rect.elk-label-container.focus {
-    stroke-width: 3px;
-    stroke: @focus_node_stroke_color;
+  stroke-width: 3px;
+  stroke: @focus_node_stroke_color;
 }
 
 .node .elk-label-container.focus {
-    stroke-width: 3px;
-    stroke: @focus_node_stroke_color;
+  stroke-width: 3px;
+  stroke: @focus_node_stroke_color;
 }
 
-.node circle.focus{
-    stroke: @focus_node_stroke_color;
+.node circle.focus {
+  stroke: @focus_node_stroke_color;
 }
 
 /* 选中样式 */
 
 .selected .elk-label-container {
-    fill: @selected_node_fill_color;
-    stroke: @selected_node_stroke_color;
+  fill: @selected_node_fill_color;
+  stroke: @selected_node_stroke_color;
 }
 
 .selected .CONV-layer-label-g rect {
@@ -125,48 +126,48 @@ rect.behind-text {
 }
 
 .cluster rect {
-    fill: #eee;
-    fill-opacity: 0.6;
-    stroke-width: 1px;
-    stroke: #333;
+  fill: #eee;
+  fill-opacity: 0.6;
+  stroke-width: 1px;
+  stroke: #333;
 }
 
 .cluster .label {
-    font-style: italic;
+  font-style: italic;
 }
 
 .my-label text {
-    text-anchor: middle;
-    cursor: pointer;
+  text-anchor: middle;
+  cursor: pointer;
 }
 
 .my-label .label {
-    padding: 5px;
-    position: relative;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  padding: 5px;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .edgePath .hover {
-    /* stroke: ; */
-    stroke-width: 1;
-    fill: none;
+  /* stroke: ; */
+  stroke-width: 1;
+  fill: none;
 }
 
 .edgePath path {
-    stroke: #999999;
-    /* stroke-width: 1; */
-    fill: none;
+  stroke: #999999;
+  /* stroke-width: 1; */
+  fill: none;
 }
 
 .edgePath circle {
-    stroke: #999999;
-    fill: #999999;
+  stroke: #999999;
+  fill: #999999;
 }
 
 .behind-text {
-    stroke: none !important
+  stroke: none !important;
 }
 
 .highlightPath path{
@@ -175,5 +176,13 @@ rect.behind-text {
 }
 
 :export {
-    iconSize: @iconSize;
+  iconSize: @iconSize;
+}
+
+.minimap-container {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  border: 1px solid #e6ebf5;
 }

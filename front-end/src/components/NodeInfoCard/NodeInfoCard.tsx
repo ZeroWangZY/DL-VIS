@@ -14,18 +14,18 @@ import {
   OperationNodeImp,
   DataNodeImp,
 } from "../../common/graph-processing/stage2/processed-graph";
-import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type"
+import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
 import { useVisGraph } from "../../store/visGraph";
 
 const useStyles = makeStyles({
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     textAlign: "left",
     wordBreak: "break-word",
   },
   content: {
-    fontSize: 16,
+    fontSize: 14,
     // marginBottom: 10,
     textAlign: "left",
   },
@@ -38,15 +38,22 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
   const visGraph = useVisGraph();
   const processedGraph = useProcessedGraph();
   const classes = useStyles();
-  if (!selectedNodeId || !visGraph || !visGraph.visNodeMap || !processedGraph || !processedGraph.nodeMap)
-    return (<div></div>);
+  if (
+    !selectedNodeId ||
+    !visGraph ||
+    !visGraph.visNodeMap ||
+    !processedGraph ||
+    !processedGraph.nodeMap
+  )
+    return <div></div>;
 
   const { nodeMap } = processedGraph;
   const { visNodeMap } = visGraph;
 
   let selectedNode = null; // selectedNodes包含所有选中节点
   let isStackedNode = false;
-  if (visNodeMap[selectedNodeId] instanceof StackedOpNodeImp) { // 选中堆叠子图
+  if (visNodeMap[selectedNodeId] instanceof StackedOpNodeImp) {
+    // 选中堆叠子图
     isStackedNode = true;
     selectedNode = visNodeMap[selectedNodeId];
   } else if (selectedNodeId !== null) { // 传入的参数是string
@@ -180,14 +187,14 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
       </CardContent>
     )
     return contents;
-  }
+  };
 
   const getStackedNodeContents = (selectedNode): any[] => {
     let contents = [];
     if (selectedNode === undefined || selectedNode === null) return [];
 
     contents.push(
-      <CardContent style={{ padding: 0 }} key={selectedNode.displayedName}>
+      <div className="info-content">
         <Typography
           className={classes.title}
           style={{
@@ -209,17 +216,17 @@ const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
               : getDisplayedName(d).slice(0, 25) + "..."}
           </Typography>
         ))}
-      </CardContent>
-    )
+      </div>
+    );
 
     return contents;
-  }
+  };
 
   return (
     <div className={"info-card"}>
-      <Card className={"info-card root"}>
-        {isStackedNode ? getStackedNodeContents(selectedNode) : getContents(selectedNode)}
-      </Card>
+      {isStackedNode
+        ? getStackedNodeContents(selectedNode)
+        : getContents(selectedNode)}
     </div>
   );
 };

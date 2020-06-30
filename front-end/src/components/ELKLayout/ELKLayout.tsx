@@ -8,16 +8,13 @@ interface Props {
   right: number;
 }
 
-const ELKLayout: React.FC<Props> = (props: Props) => {
-  const [iteration, setIteration] = useState(0)
-  
-  let handleSubmitIteration = function (iteration: number) {
-    setIteration(iteration);
-  };
-  
+// const ELKLayout: React.FC<Props> = (props: Props) => {
+const ELKLayout: React.FC = () => {
+  const [iteration, setIteration] = useState(0);
+
   return (
     <div className="elk-container">
-      <ELKLayoutGraph iteration={iteration} bottom={props.bottom} right={props.right} />
+      <ELKLayoutGraph iteration={iteration} />
     </div>
   );
 };
