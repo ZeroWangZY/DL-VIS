@@ -3,6 +3,8 @@
 @StrokeAndWidth:{
   stroke: #999999;
   stroke-width: 1px;
+  rx: 5;
+  ry: 5;
 }
 
 @rectFocused: {
@@ -10,41 +12,41 @@
   stroke-width: 3px;
 }
 
-.nodeitem-1 .FC-layer-label-container {
+.nodeitem-1 rect.FC-layer-label-container {
   fill: @rnn_layer_bg_color;
   @StrokeAndWidth();
 }
 
-.nodeitem-1 .FC-layer-label-container.focus{
+.nodeitem-1 rect.FC-layer-label-container.focus{
   @rectFocused();
 }
 
 /* conv */
-.nodeitem-1 .CONV-layer-label-container {
+.nodeitem-1 rect.CONV-layer-label-container {
   fill: @conv_layer_bg_color;
   @StrokeAndWidth();
 }
 
-.nodeitem-1 .CONV-layer-label-container.focus{
+.nodeitem-1 rect.CONV-layer-label-container.focus{
   @rectFocused();
 }
 
 /* RNN */
-.nodeitem-1 .RNN-layer-label-container{
+.nodeitem-1 rect.RNN-layer-label-container{
   fill: @rnn_layer_bg_color;
   @StrokeAndWidth();
 }
 
-.nodeitem-1 .RNN-layer-label-container.focus{
+.nodeitem-1 rect.RNN-layer-label-container.focus{
   @rectFocused();
 }
 
 /* other */
-.nodeitem-1 .OTHER-layer-label-container{
+.nodeitem-1 rect.OTHER-layer-label-container{
   fill: @other_layer_bg_color;
   @StrokeAndWidth();
 }
 
-.nodeitem-1 .OTHER-layer-label-container.focus{
+.nodeitem-1 rect.OTHER-layer-label-container.focus{
   @rectFocused();
 }

@@ -195,7 +195,8 @@ export async function produceLayoutGraph(
     innerLeftLinkMap,
     innerRightLinkMap,
     visNodes,
-    newNodes
+    newNodes,
+    layoutOptions.fixedNodeHeight,
   );
 
   //将node数组建立索引，加速drag的查询
@@ -323,7 +324,8 @@ export const generateNode = (
   node: BaseNode,
   inPort: boolean,
   outPort: boolean,
-  leafNum: number
+  leafNum: number,
+  fixedNodeHeight: boolean,
 ): LayoutNode => {
   let ports = [];
   if (inPort) {
@@ -396,7 +398,7 @@ export const generateNode = (
     height:
       node.type === NodeType.OPERATION
         ? 20
-        : node.type === NodeType.LAYER
+        : (node.type === NodeType.LAYER && fixedNodeHeight)
           ? 120
           : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     ports: ports,
@@ -410,7 +412,8 @@ function processNodes(
   innerLeftLinkMap,
   innerRightLinkMap,
   displayedNodes,
-  newNodes
+  newNodes,
+  fixedNodeHeight,
 ): Array<LayoutNode> {
   const processChildren = (nodeId, newNode, newNodes): void => {
     if (groups.hasOwnProperty(nodeId)) {
@@ -424,7 +427,7 @@ function processNodes(
         const [inPort, outPort] = isPort(visNodeMap[id], visNodeMap[id]);
         let leafNum =
           node.type == NodeType.GROUP ? node.leafOperationNodeCount : 0;
-        let child = generateNode(node, inPort, outPort, leafNum);
+        let child = generateNode(node, inPort, outPort, leafNum, fixedNodeHeight);
         processChildren(id, child, children);
         let source = id;
         if (linkMap.hasOwnProperty(source)) {
@@ -504,8 +507,8 @@ function processNodes(
       continue;
     }
     const [inPort, outPort] = isPort(visNodeMap[nodeId], visNodeMap[nodeId]);
-    let leafNum = node.type == NodeType.GROUP ? node.leafOperationNodeCount : 0;
-    let newNode = generateNode(node, inPort, outPort, leafNum);
+    let leafNum = (node.type == NodeType.GROUP || node.type == NodeType.LAYER) ? node.leafOperationNodeCount : 0;
+    let newNode = generateNode(node, inPort, outPort, leafNum, fixedNodeHeight);
     processChildren(nodeId, newNode, newNodes);
   }
   return newNodes;

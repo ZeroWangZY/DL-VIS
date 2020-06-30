@@ -26,6 +26,7 @@ export default function useGraphPipeline() {
   const processedGraph = useProcessedGraph()
   const visGraph = useVisGraph()
   const layoutGraph = useLayoutGraph()
+  const { diagnosisMode } = useGlobalConfigurations();
 
   const isTfGraph =
     currentLayout === LayoutType.DAGRE_FOR_TF ||
@@ -72,13 +73,13 @@ export default function useGraphPipeline() {
   // VisGraph --> layoutGraph
   useEffect(() => {
     if (!visGraph) return;
-    const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, mergeEdge: shouldMergeEdge });
+    const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, mergeEdge: shouldMergeEdge, fixedNodeHeight: diagnosisMode });
     lGraph.then(result => {
       console.log(result)
       setLayoutGraph(result);
     })
 
-  }, [visGraph, shouldMergeEdge]);
+  }, [visGraph, shouldMergeEdge, diagnosisMode]);
 
   // layoutGraph --> StyledGraph
   useEffect(() => {
