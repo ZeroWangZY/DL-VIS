@@ -32,6 +32,14 @@ const ELKLayoutPort: React.FC = () => {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
                     if (!svg.selectAll(`.${edgeName}`).empty()) {
+                      svg
+                        .select(".hoverEdges")
+                        .selectAll(`.${edgeName}`)
+                        .select("path")
+                        .transition()
+                        .attr("fill", "none")
+                        .style("stroke", "#000066")
+                        .style("stroke-width", "2");
                       continue;
                     }
                     let x = 0,
