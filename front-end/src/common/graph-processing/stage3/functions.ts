@@ -73,56 +73,21 @@ export function getModuleConnection(nodeId: NodeId, nodeMap: NodeMap): ModuleCon
     let inModuleConnection = getInModuleConnection(nodeId, nodeMap);
     let outModuleConnection = getOutModuleConnection(nodeId, nodeMap);
     inModuleConnection.forEach(d => {
-      let targetNode = nodeMap[d];
-      let targetModule = targetNode.belongModule;
-      if (!targetModule) {
-        targetNode = targetNode as GroupNode;
-        if (targetNode.isModule) {
-          targetModule = d;
-        }
-      }
-      displayedInModuleConnection.add(targetModule)
+      displayedInModuleConnection.add(d)
     })
     outModuleConnection.forEach(d => {
-      let targetNode = nodeMap[d];
-      let targetModule = targetNode.belongModule;
-      if (!targetModule) {
-        targetNode = targetNode as GroupNode;
-        if (targetNode.isModule) {
-          targetModule = d;
-        }
-      }
-      displayedOutModuleConnection.add(targetModule)
+      displayedOutModuleConnection.add(d)
     })
+
   } else if (!node.expanded && node.parentModule) { // 如果是没有展开的 并且是嵌套的module节点,有小短线
     let inModuleConnection = getInModuleConnection(nodeId, nodeMap);
     let outModuleConnection = getOutModuleConnection(nodeId, nodeMap);
     const nodeBelongModule = node.belongModule;
     inModuleConnection.forEach(d => {
-      let targetNode = nodeMap[d];
-      let targetModule = targetNode.belongModule;
-      if (!targetModule) {
-        targetNode = targetNode as GroupNode;
-        if (targetNode.isModule) {
-          targetModule = d;
-        }
-      }
-      if (!isSameScope(nodeBelongModule, targetModule, nodeMap)) {
-        displayedInModuleConnection.add(targetModule);
-      }
+      displayedInModuleConnection.add(d);
     })
     outModuleConnection.forEach(d => {
-      let targetNode = nodeMap[d];
-      let targetModule = targetNode.belongModule;
-      if (!targetModule) {
-        targetNode = targetNode as GroupNode;
-        if (targetNode.isModule) {
-          targetModule = d;
-        }
-      }
-      if (!isSameScope(nodeBelongModule, targetModule, nodeMap)) {
-        displayedOutModuleConnection.add(targetModule)
-      }
+      displayedOutModuleConnection.add(d)
     })
   }
   return {
