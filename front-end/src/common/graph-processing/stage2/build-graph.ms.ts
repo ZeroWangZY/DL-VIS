@@ -317,84 +317,16 @@ export function buildMsGraph(rGraph: RawGraph): ProcessedGraph {
 }
 
 function getModulesId(hGraph: ProcessedGraph): Set<NodeId> {
-  const { nodeMap, rawEdges, rootNode } = hGraph;
-  let edgeMap = new Map();
-
-  // 先初始化edgeMap的所有键,对于同一层的每一对group node,把其id用"-"相连作为键一起作为键,暂时不分source和target
-  // 维护两个队列，parent和children是相对的
-  let groupNodeQueueParent = [], groupNodeQueueChildren = [];
-  let groupNodeQueueParentTmp = [];
-  groupNodeQueueParent = groupNodeQueueParent.concat(Array.from(rootNode.children));
-  let flag = true; // 是否继续层次遍历添加key，如果遍历到的层节点全为叶节点，则停止遍历
-  while (flag) {
-    groupNodeQueueChildren= [];// 上一层的children是这一层的parent
-    groupNodeQueueParentTmp = [];// 存储要填到到map中的节点
-    while (groupNodeQueueParent.length) {
-      const parent = groupNodeQueueParent.shift();
-      const node = nodeMap[parent];
-      if (node instanceof GroupNodeImp || node instanceof LayerNodeImp) {
-        groupNodeQueueChildren = groupNodeQueueChildren.concat(Array.from(node.children));
-        groupNodeQueueParentTmp.push(parent);
-      }
-    }
-    // 如果还有children，说明要添加这一层的parent
-    if (groupNodeQueueChildren.length) {
-      addKeysToEdgeMap(edgeMap, groupNodeQueueParentTmp);
-      groupNodeQueueParent = [...groupNodeQueueChildren];
-    } else { //如果遍历到的这层节点已经没有叶节点 则停止遍历
-      flag = false;
+  const MODULE_PATTERN = new Set(["Gradients", "Default"])
+  const { nodeMap } = hGraph;
+  const retSet = new Set<NodeId>()
+  for(const nodeId of Object.keys(nodeMap)){
+    if(MODULE_PATTERN.has(nodeId)){
+      retSet.add(nodeId)
     }
   }
-  
-  // 遍历rawEdges，更新edgeMap的值
-  rawEdges.forEach(({source, target}) => {
-    let sourceNode = nodeMap[source], targetNode = nodeMap[target];
-    let sourceParentArray = [], targetParentArray = [];
-
-    while (sourceNode.parent !== ROOT_SCOPE) {
-      sourceParentArray.push(sourceNode.parent);
-      sourceNode = nodeMap[sourceNode.parent];
-    }
-    while (targetNode.parent !== ROOT_SCOPE) {
-      targetParentArray.push(targetNode.parent);
-      targetNode = nodeMap[targetNode.parent];
-    }
-
-    // 更新edgeMap的值
-    for (let i = 0; i < sourceParentArray.length; i++) {
-      for (let j = 0; j < targetParentArray.length; j++) {
-        const source = sourceParentArray[i], target = targetParentArray[j];
-        const key1 = `${source}-${target}`, key2 = `${target}-${source}`;
-        if(edgeMap.has(key1)) {
-          edgeMap.set(key1, edgeMap.get(key1) + 1);
-        } else if (edgeMap.has(key2)) {
-          edgeMap.set(key2, edgeMap.get(key2) + 1);
-        }
-      }
-    }
-  })
-  
-  // edgeMap按值从大到小排个序
-  let edgeMapSortedArray = Array.from(edgeMap);
-  edgeMapSortedArray.sort((a, b) => (b[1] - a[1]));
-
-  // console.log(edgeMapSortedArray)
-  // 根据threshold决定module
-  let modulesId = new Set<NodeId>();
-  for (let sortedItem of edgeMapSortedArray) {
-    // 如果比threshold低，结束遍历
-    if (sortedItem[1] < MODULE_EDGE_NUMBER_THRESHOLD) {
-      break;
-    }
-    const module1 = sortedItem[0].split("-")[0] as NodeId, module2 = sortedItem[0].split("-")[1] as NodeId;
-    // 如果不在同一个scope下，不添加
-    if (nodeMap[module1].parent === nodeMap[module2].parent) {
-      modulesId.add(module1);
-      modulesId.add(module2);
-    }
-  }
-  // console.log(modulesId)
-  return modulesId;
+  if(retSet.size === 2) return retSet
+  return new Set()
 }
 
 // 对于同一层的group node，两两的id作为键
@@ -412,6 +344,7 @@ function buildModule(hGraph: ProcessedGraph): void {
   const { nodeMap } = hGraph;
   
   const modulesId = getModulesId(hGraph);
+  console.log(modulesId)
   // 初始化图的modules和节点的isModule、belongModule、isNested属性
   for (const modulePattern of modulesId) {
   // for (const modulePattern of MODULE_PATTERN) { // 测试用例

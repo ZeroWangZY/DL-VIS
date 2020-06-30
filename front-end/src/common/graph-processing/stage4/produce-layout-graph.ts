@@ -345,8 +345,8 @@ function generateLayoutNodeIdFromGroups(layoutNodeIdMap: any): void {
 
 export const generateNode = (
   node: BaseNode,
-  inPort: boolean,
-  outPort: boolean,
+  inPort: PortType,
+  outPort: PortType,
   leafNum: number,
   fixedNodeHeight: boolean,
 ): LayoutNode => {
@@ -426,8 +426,6 @@ export const generateNode = (
         : (node.type === NodeType.LAYER && fixedNodeHeight)
           ? 120
           : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
-    ports: ports,
-    isModulePorts: [inPort === PortType.Module, outPort === PortType.Module],
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp,
   };
