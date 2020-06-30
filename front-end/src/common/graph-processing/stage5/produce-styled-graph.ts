@@ -4,6 +4,7 @@ import {
   LayoutNode,
   LayoutEdge,
   LayoutGraph,
+  PortType,
 } from "../stage4/layout-graph.type";
 import {
   Style,
@@ -17,8 +18,8 @@ import { link } from "fs";
 
 let nodeKeyMap = {},
   linkKeyMap = {};
-const portWidth = 7,
-  portHeight = 15;
+const portWidth = 5,
+  portHeight = 12;
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
@@ -147,8 +148,8 @@ export const generateNodeStyles = (
       },
     });
     const [inPort, outPort] = node.ports;
-    const [isinPortModule, isoutPortModule] = node.isModulePorts;
-    if (isinPortModule) {
+    const [inPortType, outPortType] = node.portType;
+    if (inPortType === PortType.Module) {
       portStyles.push({
         key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         data: {
@@ -163,8 +164,25 @@ export const generateNodeStyles = (
           rectHeight: spring(portHeight),
         },
       });
+    } else if (inPortType === PortType.hasHiddenEdge) {
+      portStyles.push({
+        key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        data: {
+          type: "in",
+          id4Style: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+          hiddenEdges: node.hiddenEdges["in"],
+        },
+        style: {
+          gNodeTransX: spring(ofs.x + node.x + inPort.x - 0.6 * portWidth),
+          gNodeTransY: spring(
+            ofs.y + node.y + inPort.y - (0.6 * portHeight) / 2
+          ),
+          rectWidth: spring(0.6 * portWidth),
+          rectHeight: spring(0.6 * portHeight),
+        },
+      });
     }
-    if (isoutPortModule) {
+    if (outPortType === PortType.Module) {
       portStyles.push({
         key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         data: {
@@ -177,6 +195,23 @@ export const generateNodeStyles = (
           gNodeTransY: spring(ofs.y + node.y + outPort.y - portHeight / 2),
           rectWidth: spring(portWidth),
           rectHeight: spring(portHeight),
+        },
+      });
+    } else if (outPortType === PortType.hasHiddenEdge) {
+      portStyles.push({
+        key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        data: {
+          type: "out",
+          id4Style: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+          hiddenEdges: node.hiddenEdges["out"],
+        },
+        style: {
+          gNodeTransX: spring(ofs.x + node.x + outPort.x),
+          gNodeTransY: spring(
+            ofs.y + node.y + outPort.y - (0.6 * portHeight) / 2
+          ),
+          rectWidth: spring(0.6 * portWidth),
+          rectHeight: spring(0.6 * portHeight),
         },
       });
     }

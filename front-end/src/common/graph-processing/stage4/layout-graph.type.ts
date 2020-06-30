@@ -12,6 +12,7 @@ export interface LayoutOptions {
 
 export enum PortType {
   Module,
+  hasHiddenEdge,
   Expanded,
   None,
 }
@@ -28,7 +29,7 @@ export interface LayoutNode extends ElkNode {
       target: /*和id4Style一致*/ string;
     }>;
   };
-  isModulePorts?: [boolean, boolean];
+  portType?: [PortType, PortType];
   parent?: string;
   label?: string;
   shape?: string;

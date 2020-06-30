@@ -27,6 +27,7 @@ const ELKLayoutPort: React.FC = () => {
                 id={d.data.id4Style}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onMouseEnter={() => {
+                  console.log(d.data.hiddenEdges);
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
@@ -53,11 +54,12 @@ const ELKLayoutPort: React.FC = () => {
                       .split(", ")
                       .map((v) => parseInt(v));
                     const targetBox = { x, y, width, height };
-                    let x1 = d.style.gNodeTransX + d.style.rectWidth / 2,
-                      y1 = d.style.gNodeTransY + d.style.rectHeight / 2,
+                    let x1 = sourceBox.x + sourceBox.width / 2,
+                      y1 = sourceBox.y,
                       x2 = targetBox.x + targetBox.width / 2,
                       y2 = targetBox.y;
                     if (d.data.type === "in") {
+                      x1 -= sourceBox.width;
                       x2 -= targetBox.width;
                     }
                     svg

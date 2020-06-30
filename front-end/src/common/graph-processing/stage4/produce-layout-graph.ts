@@ -36,6 +36,7 @@ export async function produceLayoutGraph(
 ): Promise<LayoutGraph> {
   const { visNodes, visEdges, visModuleEdges } = visGraph;
   ({ visNodeMap, hiddenEdgeMap, visModuleConnectionMap, modules } = visGraph);
+  console.log(visGraph);
   //groups存储每个节点的儿子
   groups = { root: new Set() };
   layoutNodeIdMap = { root: "" };
@@ -55,6 +56,7 @@ export async function produceLayoutGraph(
 
   generateLayoutNodeIdFromGroups(layoutNodeIdMap);
 
+  console.log(layoutNodeIdMap);
   for (let i = 0; i < visEdges.length; i++) {
     const edge = visEdges[i];
     if (edge.source in nodeLinkMap) {
@@ -280,11 +282,15 @@ function isPort(target: BaseNode, source: BaseNode): PortType[] {
   return [
     modules.has(target.id)
       ? PortType.Module
+      : hiddenEdgeMap.has(target.id)
+      ? PortType.hasHiddenEdge
       : target["expanded"]
       ? PortType.Expanded
       : PortType.None,
     modules.has(source.id)
       ? PortType.Module
+      : hiddenEdgeMap.has(source.id)
+      ? PortType.hasHiddenEdge
       : source["expanded"]
       ? PortType.Expanded
       : PortType.None,
@@ -386,7 +392,9 @@ export const generateNode = (
   return {
     id: node.id,
     id4Style: layoutNodeIdMap[node.id],
+    ports,
     hiddenEdges,
+    portType: [inPort, outPort],
     parent: node.parent,
     label: node.displayedName,
     shape: node.type === NodeType.OPERATION ? "ellipse" : "rect",
