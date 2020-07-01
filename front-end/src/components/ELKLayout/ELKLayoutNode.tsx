@@ -318,7 +318,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   d3.selectAll(linkedEdges)
                     .transition()
                     .style("stroke", hoverEdgePathStrokeColor)
-                    .style("stroke-width", hoverEdgePathStrokeWidth);
+                    .style("stroke-width", hoverEdgePathStrokeWidth)
+                    .style("stroke-linecap", "round");
                 }}
                 onMouseLeave={() => {
                   d3.selectAll(linkedEdges)

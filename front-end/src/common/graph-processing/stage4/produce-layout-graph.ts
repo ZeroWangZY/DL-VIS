@@ -158,6 +158,7 @@ export async function produceLayoutGraph(
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
       }`,
+      isModuleEdge: inPort === PortType.Module && outPort === PortType.Module,
       originalSource: layoutNodeIdMap[originalSource],
       originalTarget: layoutNodeIdMap[originalTarget],
       sources: [outPort !== PortType.None ? source + "-out-port" : source],
@@ -179,6 +180,7 @@ export async function produceLayoutGraph(
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
       }`,
+      isModuleEdge: inPort === PortType.Module && outPort === PortType.Module,
       originalSource: layoutNodeIdMap[source],
       originalTarget: layoutNodeIdMap[target],
       sources: [outPort !== PortType.None ? source + "-out-port" : source],
@@ -199,7 +201,7 @@ export async function produceLayoutGraph(
     innerRightLinkMap,
     visNodes,
     newNodes,
-    layoutOptions.fixedNodeHeight,
+    layoutOptions.fixedNodeHeight
   );
 
   //将node数组建立索引，加速drag的查询
@@ -348,7 +350,7 @@ export const generateNode = (
   inPort: PortType,
   outPort: PortType,
   leafNum: number,
-  fixedNodeHeight: boolean,
+  fixedNodeHeight: boolean
 ): LayoutNode => {
   let ports = [];
   if (inPort !== PortType.None) {
@@ -423,9 +425,9 @@ export const generateNode = (
     height:
       node.type === NodeType.OPERATION
         ? 20
-        : (node.type === NodeType.LAYER && fixedNodeHeight)
-          ? 120
-          : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
+        : node.type === NodeType.LAYER && fixedNodeHeight
+        ? 120
+        : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp,
   };
@@ -437,7 +439,7 @@ function processNodes(
   innerRightLinkMap,
   displayedNodes,
   newNodes,
-  fixedNodeHeight,
+  fixedNodeHeight
 ): Array<LayoutNode> {
   const processChildren = (nodeId, newNode, newNodes): void => {
     if (groups.hasOwnProperty(nodeId)) {
@@ -451,7 +453,13 @@ function processNodes(
         const [inPort, outPort] = isPort(visNodeMap[id], visNodeMap[id]);
         let leafNum =
           node.type == NodeType.GROUP ? node.leafOperationNodeCount : 0;
-        let child = generateNode(node, inPort, outPort, leafNum, fixedNodeHeight);
+        let child = generateNode(
+          node,
+          inPort,
+          outPort,
+          leafNum,
+          fixedNodeHeight
+        );
         processChildren(id, child, children);
         let source = id;
         if (linkMap.hasOwnProperty(source)) {
@@ -464,6 +472,8 @@ function processNodes(
             let edge = {
               id: `${source}-${target}`,
               id4Style: `${layoutNodeIdMap[source]}->${layoutNodeIdMap[target]}`,
+              isModuleEdge:
+                inPort === PortType.Module && outPort === PortType.Module,
               originalSource: layoutNodeIdMap[originalSource],
               originalTarget: layoutNodeIdMap[originalTarget],
               sources: [
@@ -488,6 +498,7 @@ function processNodes(
           let edge = {
             id: `__${i}__${parentId}-${target}`,
             id4Style: `__${i}__${layoutNodeIdMap[parentId]}->${layoutNodeIdMap[target]}`,
+            isModuleEdge: false,
             originalSource: layoutNodeIdMap[originalSource],
             originalTarget: layoutNodeIdMap[originalTarget],
             sources: [parentId + "-in-port"],
@@ -508,6 +519,7 @@ function processNodes(
           let edge = {
             id: `__${i}__${source}-${parentId}`,
             id4Style: `__${i}__${layoutNodeIdMap[source]}-${layoutNodeIdMap[parentId]}`,
+            isModuleEdge: false,
             originalSource: layoutNodeIdMap[originalSource],
             originalTarget: layoutNodeIdMap[originalTarget],
             sources: [
@@ -537,7 +549,10 @@ function processNodes(
       continue;
     }
     const [inPort, outPort] = isPort(visNodeMap[nodeId], visNodeMap[nodeId]);
-    let leafNum = (node.type == NodeType.GROUP || node.type == NodeType.LAYER) ? node.leafOperationNodeCount : 0;
+    let leafNum =
+      node.type == NodeType.GROUP || node.type == NodeType.LAYER
+        ? node.leafOperationNodeCount
+        : 0;
     let newNode = generateNode(node, inPort, outPort, leafNum, fixedNodeHeight);
     processChildren(nodeId, newNode, newNodes);
   }

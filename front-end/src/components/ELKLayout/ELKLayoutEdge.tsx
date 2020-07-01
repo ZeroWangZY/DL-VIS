@@ -18,7 +18,12 @@ const ELKLayoutEdge: React.FC<{
         {(interpolatedStyles) => (
           <g className="edgePaths">
             {interpolatedStyles.map((d) => (
-              <g className={"edgePath"} key={d.key}>
+              <g
+                className={`edgePath ${
+                  d.data.isModuleEdge ? "moduleEdge" : ""
+                }`}
+                key={d.key}
+              >
                 {d.data.drawData.map((link, i) => (
                   <path
                     d={link.d}

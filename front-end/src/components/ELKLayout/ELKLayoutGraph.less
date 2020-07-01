@@ -3,15 +3,15 @@
 
 @iconSize: 12px;
 
-@IconsStyle:{
-    content:"";
-    background-size: @iconSize @iconSize;
-    width: @iconSize;
-    height: @iconSize;
-    position: absolute;
-    left: -17px;
-    top: 2px;
-}
+@IconsStyle: {
+  content: "";
+  background-size: @iconSize @iconSize;
+  width: @iconSize;
+  height: @iconSize;
+  position: absolute;
+  left: -17px;
+  top: 2px;
+};
 
 #elk-svg {
   width: 100%;
@@ -20,18 +20,18 @@
   fill: white;
 }
 
-.nodeitem-1.layertype-FC text::before{
-    background:url("@{icons}/fc.svg");
-    @IconsStyle();
+.nodeitem-1.layertype-FC text::before {
+  background: url("@{icons}/fc.svg");
+  @IconsStyle();
 }
 
-.nodeitem-1.layertype-CONV text::before{
-    background: url("@{icons}/conv.svg");
-    @IconsStyle();
+.nodeitem-1.layertype-CONV text::before {
+  background: url("@{icons}/conv.svg");
+  @IconsStyle();
 }
-.nodeitem-1.layertype-RNN text::before{
-    background: url("@{icons}/rnn.svg");
-    @IconsStyle();
+.nodeitem-1.layertype-RNN text::before {
+  background: url("@{icons}/rnn.svg");
+  @IconsStyle();
 }
 
 .nodeitem-1 .my-label text {
@@ -42,26 +42,28 @@
 
 /* 路径模式节点高亮 */
 .node.startNode.expanded-node rect.elk-label-container {
-    stroke-width: 3px !important;
-    stroke: red !important;
+  stroke-width: 3px !important;
+  stroke: red !important;
 }
 .node.startNode .elk-label-container {
-    stroke-width: 3px !important;
-    stroke: red !important;
+  stroke-width: 3px !important;
+  stroke: red !important;
 }
 .node.endNode.expanded-node rect.elk-label-container {
-    stroke-width: 3px !important;
-    stroke: red !important;
+  stroke-width: 3px !important;
+  stroke: red !important;
 }
 .node.endNode .elk-label-container {
-    stroke-width: 3px !important;
-    stroke: red !important;
+  stroke-width: 3px !important;
+  stroke: red !important;
 }
 
-.node rect, ellipse, circle {
-    fill: #fff;
-    stroke-width: 1px;
-    stroke: #808080;
+.node rect,
+ellipse,
+circle {
+  fill: #fff;
+  stroke-width: 1px;
+  stroke: #808080;
 }
 
 .node rect.elk-label-container {
@@ -106,23 +108,23 @@ rect.behind-text {
 }
 
 .selected .CONV-layer-label-g rect {
-    fill: @selected_node_fill_color;
-    stroke: @selected_node_stroke_color;
+  fill: @selected_node_fill_color;
+  stroke: @selected_node_stroke_color;
 }
 
 .selected .FC-layer-label-g rect {
-    fill: @selected_node_fill_color;
-    stroke: @selected_node_stroke_color;
+  fill: @selected_node_fill_color;
+  stroke: @selected_node_stroke_color;
 }
 
 .selected .RNN-layer-label-g rect {
-    fill: @selected_node_fill_color;
-    stroke: @selected_node_stroke_color;
+  fill: @selected_node_fill_color;
+  stroke: @selected_node_stroke_color;
 }
 
 .selected .OTHER-layer-label-g rect {
-    fill: @selected_node_fill_color;
-    stroke: @selected_node_stroke_color;
+  fill: @selected_node_fill_color;
+  stroke: @selected_node_stroke_color;
 }
 
 .cluster rect {
@@ -161,6 +163,13 @@ rect.behind-text {
   fill: none;
 }
 
+.moduleEdge path {
+  stroke: #ff931e;
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+}
+
 .edgePath circle {
   stroke: #999999;
   fill: #999999;
@@ -170,9 +179,9 @@ rect.behind-text {
   stroke: none !important;
 }
 
-.highlightPath path{
-    stroke: red !important;
-    stroke-width: 3px !important;
+.highlightPath path {
+  stroke: red !important;
+  stroke-width: 3px !important;
 }
 
 :export {

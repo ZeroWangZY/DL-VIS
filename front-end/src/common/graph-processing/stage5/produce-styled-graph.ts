@@ -62,14 +62,16 @@ export const generateEdgeStyles = (
           }))),
       { x: ofs.x + endPoint.x, y: ofs.y + endPoint.y },
     ];
+    const ofs_x = 3; //控制和port重叠的问题
     styles.push({
       key: `${id4Style}_${linkKeyMap[id4Style]}`,
       data: {
         id4Style: link.id4Style,
+        isModuleEdge: link.isModuleEdge,
         originalSource: link.originalSource,
         originalTarget: link.originalTarget,
-        lineData: hoverPath(linkData),
-        drawData: drawArcPath(linkData, linksCountMap, ofs),
+        lineData: hoverPath(ofs_x,linkData),
+        drawData: drawArcPath(ofs_x,linkData, linksCountMap, ofs),
         junctionPoints:
           junctionPoints === undefined
             ? []
@@ -254,7 +256,7 @@ function ofsLinks(edges: Array<LayoutEdge>) {
   return xyMap;
 }
 
-const drawArcPath = (lineData, linksCountMap, ofs) => {
+const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
   let preStrokeWidth =
     linksCountMap[
       `${lineData[0].x}-${lineData[0].y}-${lineData[1].x}-${lineData[1].y}`
@@ -271,7 +273,7 @@ const drawArcPath = (lineData, linksCountMap, ofs) => {
   let firstPoint;
   let path = [];
   let nextStrokeWidth;
-  let pathBuff = [`M${lineData[0].x} ${lineData[0].y}`];
+  let pathBuff = [`M${lineData[0].x + ofs_x} ${lineData[0].y}`];
   for (let i = 2; i < lineData.length; i++) {
     firstPoint = lineData[i - 2];
     prePoint = lineData[i - 1];
@@ -302,7 +304,7 @@ const drawArcPath = (lineData, linksCountMap, ofs) => {
     }
   }
   //最后一段path
-  pathBuff.push(`L ${nowPoint.x} ${nowPoint.y}`);
+  pathBuff.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
   path.push({
     d: pathBuff.join(" "),
     strokeWidth: nextStrokeWidth,
@@ -310,13 +312,13 @@ const drawArcPath = (lineData, linksCountMap, ofs) => {
   });
   return path;
 };
-const hoverPath = (lineData) => {
+const hoverPath = (ofs_x, lineData) => {
   if (lineData.length < 3)
-    return `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x} ${lineData[1].y}`;
+    return `M${lineData[0].x+ofs_x} ${lineData[0].y} L${lineData[1].x-ofs_x} ${lineData[1].y}`;
   let prePoint;
   let nowPoint;
   let firstPoint;
-  let path = [`M${lineData[0].x} ${lineData[0].y}`];
+  let path = [`M${lineData[0].x+ofs_x} ${lineData[0].y}`];
   for (let i = 2; i < lineData.length; i++) {
     firstPoint = lineData[i - 2];
     prePoint = lineData[i - 1];
@@ -324,7 +326,7 @@ const hoverPath = (lineData) => {
     //根据点位置判断弧度方向
     path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)];
   }
-  path.push(`L ${nowPoint.x} ${nowPoint.y}`);
+  path.push(`L ${nowPoint.x-ofs_x} ${nowPoint.y}`);
   return path.join(" ");
 };
 function pointToPath(firstPoint, prePoint, nowPoint) {

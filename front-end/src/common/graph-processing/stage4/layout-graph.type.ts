@@ -44,6 +44,7 @@ export interface LayoutNode extends ElkNode {
 
 export interface LayoutEdge extends ElkEdge {
   id4Style?: string; //仅供后续styleGraph使用，包含了层次信息:...-grandParent-parent-child-grandChild-...
+  isModuleEdge?: boolean;
   originalSource?: /*和id4Style一致*/ string;
   originalTarget?: /*和id4Style一致*/ string;
   sources?: string[];

@@ -37,8 +37,9 @@ const ELKLayoutPort: React.FC = () => {
                         .select("path")
                         .transition()
                         .attr("fill", "none")
-                        .style("stroke", "#3186FF88")
-                        .style("stroke-width", "2");
+                        .style("stroke", "#3186FF")
+                        .style("stroke-width", "2")
+                        .style("stroke-linecap", "round");
                       continue;
                     }
                     let x = 0,
@@ -65,9 +66,10 @@ const ELKLayoutPort: React.FC = () => {
                     if (source.length < target.length) {
                       sign = -1;
                     }
-                    let x1 = sourceBox.x + (sign * sourceBox.width) / 2,
+                    const ofs_x = 1;
+                    let x1 = sourceBox.x + sign * (sourceBox.width / 2) + ofs_x,
                       y1 = sourceBox.y,
-                      x2 = targetBox.x + (sign * targetBox.width) / 2,
+                      x2 = targetBox.x + sign * (targetBox.width / 2) - ofs_x,
                       y2 = targetBox.y;
 
                     hoverEdges
@@ -84,8 +86,9 @@ const ELKLayoutPort: React.FC = () => {
                         ])
                       )
                       .attr("fill", "none")
-                      .style("stroke", "#3186FF88")
-                      .style("stroke-width", "2");
+                      .style("stroke", "#3186FFAA")
+                      .style("stroke-width", "2")
+                      .style("stroke-linecap", "round");
                   }
                 }}
                 onMouseLeave={() => {

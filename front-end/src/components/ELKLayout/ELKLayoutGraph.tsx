@@ -608,7 +608,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           <marker
             id="arrowhead"
             viewBox="0 0 10 10"
-            refX="9"
+            refX="5"
             refY="5"
             markerUnits="userSpaceOnUse"
             markerWidth="8"
