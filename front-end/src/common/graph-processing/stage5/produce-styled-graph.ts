@@ -71,7 +71,7 @@ export const generateEdgeStyles = (
         originalSource: link.originalSource,
         originalTarget: link.originalTarget,
         lineData: hoverPath(ofs_x,linkData),
-        drawData: drawArcPath(ofs_x,linkData, linksCountMap, ofs),
+        drawData: strokeWidthAdaption(drawArcPath(ofs_x,linkData, linksCountMap, ofs)),
         junctionPoints:
           junctionPoints === undefined
             ? []
@@ -259,7 +259,7 @@ function ofsLinks(edges: Array<LayoutEdge>) {
 const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
   let preStrokeWidth =
     linksCountMap[
-      `${lineData[0].x}-${lineData[0].y}-${lineData[1].x}-${lineData[1].y}`
+      `${lineData[0].x - ofs.x}-${lineData[0].y - ofs.y}-${lineData[1].x - ofs.x}-${lineData[1].y - ofs.y}`
     ];
   if (lineData.length < 3)
     return [
@@ -372,3 +372,11 @@ const textSize = (text: string): number => {
   document.body.removeChild(span);
   return width;
 };
+
+function strokeWidthAdaption(links){
+  for(const link of links){
+    console.log(link)
+    link.strokeWidth = Math.sqrt(link.strokeWidth) * 2
+  }
+  return links
+}
