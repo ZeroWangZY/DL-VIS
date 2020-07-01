@@ -43,7 +43,9 @@ interface Props {
 
 const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const { iteration } = props;
-  const iconHeight = 27, iconPadding = 5, firstIconBottom = 20;//左下角交互图标高度，图标上下间隔，最下面一个图标距离底边的距离
+  const iconHeight = 25,
+    iconPadding = 5,
+    firstIconBottom = 30; //左下角交互图标高度，图标上下间隔，最下面一个图标距离底边的距离
 
   const history = useHistory();
   const svgRef = useRef();
@@ -81,15 +83,19 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const [isPathFindingMode, setIsPathFindingMode] = useState(false);
   const togglePathFindingMode = () => {
     setIsPathFindingMode(!isPathFindingMode);
-  }
+  };
   const [startNodeId, setStartNodeId] = useState<string>(null);
   const [endNodeId, setEndNodeId] = useState<string>(null);
   const [editingNodeId, setEditingNodeId] = useState<string>(null);
   const [highlightPath, setHighlightPath] = useState<Set<string>>(new Set());
-  enum classOfEdge { edgePath, startId, endId };
+  enum classOfEdge {
+    edgePath,
+    startId,
+    endId,
+  }
   let passNodesIds = [];
   let pathFoundFlag = false;
-  const classForPath: Set<string> = new Set;
+  const classForPath: Set<string> = new Set();
   function generateClassForPath() {
     const copyOfPassNodesIds = passNodesIds.slice();
     copyOfPassNodesIds.unshift(startNodeId);
@@ -113,14 +119,16 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       return;
     }
     forwardNodes.forEach((node) => {
-      if (passNodesIds.includes(node)) {//是个环
+      if (passNodesIds.includes(node)) {
+        //是个环
         return;
       }
       if (node == endId) {
         pathFoundFlag = true;
         generateClassForPath();
         return;
-      } else if (node == startId) {//是个环
+      } else if (node == startId) {
+        //是个环
         return;
       } else {
         passNodesIds.push(node);
@@ -138,9 +146,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       } else {
         setHighlightPath(new Set());
         alert("Path not found!");
-      };
+      }
     }
-  }, [startNodeId, endNodeId])
+  }, [startNodeId, endNodeId]);
   const handleSetStart = () => {
     if (editingNodeId == endNodeId) {
       setEndNodeId(null);
@@ -148,7 +156,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     }
     setStartNodeId(editingNodeId);
     handleClosePopover();
-  }
+  };
   const handleSetEnd = () => {
     if (editingNodeId == startNodeId) {
       setStartNodeId(null);
@@ -156,7 +164,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     }
     setEndNodeId(editingNodeId);
     handleClosePopover();
-  }
+  };
 
   let ctrlKey, // 刷选用ctrl不用shift，因为在d3 brush中已经赋予了shift含义（按住shift表示会固定刷取的方向），导致二维刷子刷不出来
     shiftKey, // 单选用shift
@@ -320,7 +328,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   // 2. 当前有选中的节点，右击，可以选择是否聚合
   const handleRightClick = (e) => {
     e.preventDefault();
-    if (!isPathFindingMode) {//路径模式未开启，可以编辑节点类型
+    if (!isPathFindingMode) {
+      //路径模式未开启，可以编辑节点类型
       let selectedG = d3.select(svgRef.current).selectAll("g.selected");
       // 如果当前没有选中任何节点，或者只选中了一个，则表示选中当前右击的节点进行修改
       if (selectedG.nodes().length <= 1 && e.target) {
@@ -357,8 +366,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         setCurrentNodetype(-1);
         setCurrentLayertype(null);
       }
-    } else {//路径模式开启，处理点选逻辑
-      setCurrentNodetype(0);//设置一下currentNodeType，否则默认为-1表示选中了多个节点，会影响路径模式下的popover
+    } else {
+      //路径模式开启，处理点选逻辑
+      setCurrentNodetype(0); //设置一下currentNodeType，否则默认为-1表示选中了多个节点，会影响路径模式下的popover
       e.currentTarget.classList.add("selected");
       setEditingNodeId(e.currentTarget.getAttribute("id"));
       setAnchorEl(e.target);
@@ -492,9 +502,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         bounding.y - svgBoundingClientRect.y + bounding.height * 0.5;
       let inExtent =
         extent[0][0] <= xCenter &&
-          xCenter < extent[1][0] &&
-          extent[0][1] <= yCenter &&
-          yCenter < extent[1][1]
+        xCenter < extent[1][0] &&
+        extent[0][1] <= yCenter &&
+        yCenter < extent[1][1]
           ? 1
           : 0;
       const previouslySelected =
@@ -674,34 +684,48 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       <InteractiveIcon
         id="modify-switch"
         className={
-          layoutModificationMode ? "interactive-on-button" : "interactive-button"
+          layoutModificationMode
+            ? "interactive-on-button"
+            : "interactive-button"
         }
         position={{ left: 10, bottom: firstIconBottom }}
         src={process.env.PUBLIC_URL + "/assets/layout-modify.svg"}
-        handleClicked={handleLayoutModify} />
+        handleClicked={handleLayoutModify}
+      />
       <InteractiveIcon
         id="search-switch"
         className={
           isPathFindingMode ? "interactive-on-button" : "interactive-button"
         }
-        position={{ left: 10, bottom: firstIconBottom + iconHeight + iconPadding }}
+        position={{
+          left: 10,
+          bottom: firstIconBottom + iconHeight + iconPadding,
+        }}
         src={process.env.PUBLIC_URL + "/assets/path-search.svg"}
-        handleClicked={togglePathFindingMode} />
+        handleClicked={togglePathFindingMode}
+      />
       <InteractiveIcon
         id="reset-switch"
         className="interactive-button"
-        position={{ left: 10, bottom: firstIconBottom + 2 * (iconHeight + iconPadding) }}
+        position={{
+          left: 10,
+          bottom: firstIconBottom + 2 * (iconHeight + iconPadding),
+        }}
         src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
-        handleClicked={canvasBackToRight} />
+        handleClicked={canvasBackToRight}
+      />
       <InteractiveIcon
         id="display-switch"
         className={
           diagnosisMode ? "interactive-on-button" : "interactive-button"
         }
-        position={{ left: 10, bottom: firstIconBottom + 3 * (iconHeight + iconPadding) }}
+        position={{
+          left: 10,
+          bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
+        }}
         src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
-        handleClicked={handleDisplaySwitch} />
-
+        handleClicked={handleDisplaySwitch}
+      />
     </div>
   );
 };
