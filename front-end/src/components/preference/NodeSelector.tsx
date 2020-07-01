@@ -30,6 +30,7 @@ import {
   DataNodeImp,
   ProcessedGraph,
   OperationNodeImp,
+  LayerNodeImp,
 } from "../../common/graph-processing/stage2/processed-graph";
 import * as d3 from "d3";
 import {
@@ -144,13 +145,13 @@ export default function NodeSelector() {
       nodeId: id,
     });
   };
-  const highligt  = (e, id) => {
-    if(document.getElementsByClassName("highligh").length > 0) document.getElementsByClassName("highligh")[0].classList.remove("highligh")
+  const highligt = (e, id) => {
+    if (document.getElementsByClassName("highligh").length > 0) document.getElementsByClassName("highligh")[0].classList.remove("highligh")
     e.target.classList.add("highligh");
     let nodeId = id.replace(/-/g, "/");
     modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, nodeId)
   }
-  const handleSearchChange= (searchText: string) => {
+  const handleSearchChange = (searchText: string) => {
     let nodeMap = {}  //这边为浅拷贝所以不行？？咋办
     // let nodeMap = useProcessedGraph().nodeMap;
     function search(searchText: string, groupNode: GroupNode) {
@@ -180,7 +181,7 @@ export default function NodeSelector() {
     setGraph(result as ProcessedGraph);
   };
   const getLabelContainer = (node) => {
-    if(node.type=== NodeType.OPERATION) { //ellipse
+    if (node.type === NodeType.OPERATION) { //ellipse
       // return  <RadioButtonUncheckedIcon color="inherit" className={classes.labelIcon}/>
       return <img src={Ellipse} className={classes.labelIcon} />;
     } else if (node.type === NodeType.GROUP || node.type === NodeType.LAYER) {
@@ -218,8 +219,8 @@ export default function NodeSelector() {
               {node.visibility ? (
                 <img src={Delete} onClick={() => handleChange(node.id)} />
               ) : (
-                <img src={Add} onClick={() => handleChange(node.id)} />
-              )}
+                  <img src={Add} onClick={() => handleChange(node.id)} />
+                )}
             </div>
           }
           classes={{
@@ -230,9 +231,9 @@ export default function NodeSelector() {
             "--tree-view-color": "#c7000b",
             "--tree-view-bg-color": "none",
           }}
-          onMouseOver={() => {}}
+          onMouseOver={() => { }}
         >
-          {node.type === NodeType.GROUP || node.type === NodeType.LAYER
+          {(node.type === NodeType.GROUP && (node as GroupNodeImp).expanded) || (node.type === NodeType.LAYER && (node as LayerNodeImp).expanded)
             ? genEleRecursively(node as GroupNode)
             : null}
         </TreeItem>

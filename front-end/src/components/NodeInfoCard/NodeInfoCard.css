@@ -1,5 +1,7 @@
 .info-card {
   margin: 10px 0 0 10px;
+  overflow-y: scroll;
+  max-height: 250px;
 }
 
 .info-card.root {
@@ -20,7 +22,6 @@
 .Grid-cell {
   flex: 1;
   text-align: left;
-
   word-wrap: break-word;
   word-break: break-all;
 }
