@@ -36,7 +36,6 @@ export async function produceLayoutGraph(
 ): Promise<LayoutGraph> {
   const { visNodes, visEdges, visModuleEdges } = visGraph;
   ({ visNodeMap, hiddenEdgeMap, visModuleConnectionMap, modules } = visGraph);
-  console.log(visGraph);
   //groups存储每个节点的儿子
   groups = { root: new Set() };
   layoutNodeIdMap = { root: "" };
@@ -204,6 +203,7 @@ export async function produceLayoutGraph(
     layoutOptions.fixedNodeHeight
   );
 
+  console.log(newNodes);
   //将node数组建立索引，加速drag的查询
   let newElkNodeMap: ElkNodeMap = {};
   generateElkNodeMap(newNodes, newElkNodeMap);
@@ -280,30 +280,24 @@ function idConverter(index: number): string {
   return "no" + index;
 }
 
+function _isPort(node: BaseNode, mode: string): PortType {
+  return  modules.has(node.id)
+  ? PortType.Module
+  : hiddenEdgeMap.has(node.id) &&
+    hiddenEdgeMap.get(node.id)[mode].size > 0
+  ? PortType.hasHiddenEdge
+  : hiddenEdgeMap.has(node.id) &&
+    hiddenEdgeMap.get(node.id)[mode].size === 0
+  ? PortType.HiddenPort
+  : node["expanded"]
+  ? PortType.Expanded
+  : PortType.None
+}
+
 function isPort(target: BaseNode, source: BaseNode): PortType[] {
   return [
-    modules.has(target.id)
-      ? PortType.Module
-      : hiddenEdgeMap.has(target.id) &&
-        hiddenEdgeMap.get(target.id)["in"].size > 0
-      ? PortType.hasHiddenEdge
-      : hiddenEdgeMap.has(target.id) &&
-        hiddenEdgeMap.get(target.id)["in"].size === 0
-      ? PortType.HiddenPort
-      : target["expanded"]
-      ? PortType.Expanded
-      : PortType.None,
-    modules.has(source.id)
-      ? PortType.Module
-      : hiddenEdgeMap.has(source.id) &&
-        hiddenEdgeMap.get(source.id)["out"].size > 0
-      ? PortType.hasHiddenEdge
-      : hiddenEdgeMap.has(source.id) &&
-        hiddenEdgeMap.get(source.id)["in"].size === 0
-      ? PortType.HiddenPort
-      : source["expanded"]
-      ? PortType.Expanded
-      : PortType.None,
+    _isPort(target, "in"),
+    _isPort(source, "out")
   ];
 }
 
