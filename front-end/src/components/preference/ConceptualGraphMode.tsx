@@ -4,6 +4,8 @@ import {
   Theme,
   createStyles,
   withStyles,
+  createMuiTheme,
+  ThemeProvider,
 } from "@material-ui/core/styles";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch, { SwitchClassKey, SwitchProps } from "@material-ui/core/Switch";
@@ -93,6 +95,19 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function ConceptualGraphMode() {
   const classes = useStyles();
+  const theme = createMuiTheme({
+    typography: {
+      fontFamily: [
+        "Helvetica Neue",
+        "Helvetica",
+        "PingFang SC",
+        "Hiragino Sans GB",
+        "Microsoft YaHei",
+        "Arial",
+        "sans-serif",
+      ].join(","),
+    },
+  });
   const { conceptualGraphMode } = useGlobalConfigurations();
   const handleChange = () => {
     modifyGlobalConfigurations(
@@ -106,7 +121,11 @@ export default function ConceptualGraphMode() {
         control={
           <IOSSwitch checked={conceptualGraphMode} onChange={handleChange} />
         }
-        label={<Typography variant="body2">概念图模式</Typography>}
+        label={
+          <ThemeProvider theme={theme}>
+            <Typography variant="body2">概念图模式</Typography>
+          </ThemeProvider>
+        }
       />
     </div>
   );

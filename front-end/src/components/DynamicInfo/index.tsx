@@ -6,6 +6,8 @@ import {
   createStyles,
   makeStyles,
   Theme,
+  createMuiTheme,
+  ThemeProvider,
 } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
 import Snaphot from "../Snaphot/Snaphot";
@@ -83,90 +85,106 @@ export default () => {
     };
   }
 
+  const fontTheme = createMuiTheme({
+    typography: {
+      fontFamily: [
+        "Helvetica Neue",
+        "Helvetica",
+        "PingFang SC",
+        "Hiragino Sans GB",
+        "Microsoft YaHei",
+        "Arial",
+        "sans-serif",
+      ].join(","),
+    },
+  });
+
   return (
     <div className="">
-      <Tabs
-        value={value["outerBottom"]}
-        onChange={toggleTab("outerBottom")}
-        classes={{ indicator: classes.indicator }}
-        className={classes.tabsStyle}
-        aria-label="dynamic info panel"
-      >
-        <Tab
-          style={{
-            paddingLeft: theme.spacing(3),
-            color: value["outerBottom"] === 0 ? "#00a5a7" : "#333",
-          }}
-          className={classes.tabStyle}
-          label="Model level"
-          {...a11yProps(0, "outerBottom")}
-        />
-        <Tab
-          style={{ color: value["outerBottom"] === 1 ? "#00a5a7" : "#333" }}
-          className={classes.tabStyle}
-          label="Layer level"
-          {...a11yProps(1, "outerBottom")}
-        />
-      </Tabs>
-      <TabPanel value={value["outerBottom"]} index={0} pos={"outerBottom"}>
-        <Snaphot />
-      </TabPanel>
-      <TabPanel value={value["outerBottom"]} index={1} pos={"outerBottom"}>
-        {/* layer level 的tab */}
+      <ThemeProvider theme={fontTheme}>
         <Tabs
-          value={value["innerBottom"]}
-          onChange={toggleTab("innerBottom")}
-          className={classes.innerTabsStyle}
+          value={value["outerBottom"]}
+          onChange={toggleTab("outerBottom")}
           classes={{ indicator: classes.indicator }}
-          aria-label="info panel"
+          className={classes.tabsStyle}
+          aria-label="dynamic info panel"
         >
           <Tab
             style={{
               paddingLeft: theme.spacing(3),
-              color: value["innerBottom"] === 0 ? "#00a5a7" : "#333",
+              color: value["outerBottom"] === 0 ? "#00a5a7" : "#333",
             }}
-            className={classes.itabStyle}
-            label="loss"
-            {...a11yProps(0, "innerBottom")}
+            className={classes.tabStyle}
+            label="Model level"
+            {...a11yProps(0, "outerBottom")}
           />
           <Tab
-            style={{
-              color: value["innerBottom"] === 1 ? "#00a5a7" : "#333",
-            }}
-            className={classes.itabStyle}
-            label="accuracy"
-            {...a11yProps(1, "innerBottom")}
-          />
-          <Tab
-            style={{
-              color: value["innerBottom"] === 2 ? "#00a5a7" : "#333",
-            }}
-            className={classes.itabStyle}
-            label="activation"
-            {...a11yProps(2, "innerBottom")}
-          />
-          <Tab
-            style={{
-              color: value["innerBottom"] === 3 ? "#00a5a7" : "#333",
-            }}
-            className={classes.itabStyle}
-            label="gradient"
-            {...a11yProps(3, "innerBottom")}
+            style={{ color: value["outerBottom"] === 1 ? "#00a5a7" : "#333" }}
+            className={classes.tabStyle}
+            label="Layer level"
+            {...a11yProps(1, "outerBottom")}
           />
         </Tabs>
-        <TabPanel value={value["innerBottom"]} index={0} pos={"innerBottom"}>
-          Item One
+        <TabPanel value={value["outerBottom"]} index={0} pos={"outerBottom"}>
+          <Snaphot />
         </TabPanel>
-        <TabPanel value={value["innerBottom"]} index={1} pos={"innerBottom"}>
-          Item Two
+        <TabPanel value={value["outerBottom"]} index={1} pos={"outerBottom"}>
+          {/* layer level 的tab */}
+          <Tabs
+            value={value["innerBottom"]}
+            onChange={toggleTab("innerBottom")}
+            className={classes.innerTabsStyle}
+            classes={{ indicator: classes.indicator }}
+            aria-label="info panel"
+          >
+            <Tab
+              style={{
+                paddingLeft: theme.spacing(3),
+                color: value["innerBottom"] === 0 ? "#00a5a7" : "#333",
+              }}
+              className={classes.itabStyle}
+              label="loss"
+              {...a11yProps(0, "innerBottom")}
+            />
+            <Tab
+              style={{
+                color: value["innerBottom"] === 1 ? "#00a5a7" : "#333",
+              }}
+              className={classes.itabStyle}
+              label="accuracy"
+              {...a11yProps(1, "innerBottom")}
+            />
+            <Tab
+              style={{
+                color: value["innerBottom"] === 2 ? "#00a5a7" : "#333",
+              }}
+              className={classes.itabStyle}
+              label="activation"
+              {...a11yProps(2, "innerBottom")}
+            />
+            <Tab
+              style={{
+                color: value["innerBottom"] === 3 ? "#00a5a7" : "#333",
+              }}
+              className={classes.itabStyle}
+              label="gradient"
+              {...a11yProps(3, "innerBottom")}
+            />
+          </Tabs>
+          <TabPanel value={value["innerBottom"]} index={0} pos={"innerBottom"}>
+            Item One
+          </TabPanel>
+          <TabPanel value={value["innerBottom"]} index={1} pos={"innerBottom"}>
+            Item Two
+          </TabPanel>
+          <TabPanel value={value["innerBottom"]} index={2} pos={"innerBottom"}>
+            Item Two
+          </TabPanel>
+          <TabPanel value={value["innerBottom"]} index={3} pos={"innerBottom"}>
+            Item Two
+          </TabPanel>
         </TabPanel>
-        <TabPanel value={value["innerBottom"]} index={2} pos={"innerBottom"}>
-          Item Two
-        </TabPanel>
-        <TabPanel value={value["innerBottom"]} index={3} pos={"innerBottom"}>
-          Item Two
-        </TabPanel>
-      </TabPanel>
+      </ThemeProvider>
     </div>
   );
 };

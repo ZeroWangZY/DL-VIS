@@ -1,6 +1,12 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
+import {
+  makeStyles,
+  Theme,
+  createStyles,
+  createMuiTheme,
+  ThemeProvider,
+} from "@material-ui/core/styles";
 // import Crop169Icon from '@material-ui/icons/Crop169';
 // import DonutLargeRoundedIcon from '@material-ui/icons/DonutLargeRounded';
 // import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
@@ -10,13 +16,13 @@ import InputBase from "@material-ui/core/InputBase";
 import SearchIcon from "@material-ui/icons/Search";
 import IconButton from "@material-ui/core/IconButton";
 // import BackspaceOutlinedIcon from '@material-ui/icons/BackspaceOutlined';
-import Ellipse from './ellipse.png'
-import Rect from './rect.png'
-import Circle from './circle.png'
-import Delete from './delete.png'
-import Add from './add.png'
-import Open from './open.png'
-import Close from './close.png'
+import Ellipse from "./ellipse.png";
+import Rect from "./rect.png";
+import Circle from "./circle.png";
+import Delete from "./delete.png";
+import Add from "./add.png";
+import Open from "./open.png";
+import Close from "./close.png";
 import Typography from "@material-ui/core/Typography";
 import TreeView from "@material-ui/lab/TreeView";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -49,6 +55,7 @@ declare module "csstype" {
   interface Properties {
     "--tree-view-color"?: string;
     "--tree-view-bg-color"?: string;
+    "--tree-view-font-color"?: string;
   }
 }
 const useStyles = makeStyles((theme: Theme) =>
@@ -60,7 +67,7 @@ const useStyles = makeStyles((theme: Theme) =>
         color: "var(--tree-view-color)",
       },
       "&:focus > $content, &$selected > $content": {
-        backgroundColor: `var(--tree-view-bg-color, ${theme.palette.grey[400]})`,
+        backgroundColor: `var(--tree-view-bg-color, --tree-view-font-color)`,
         // color: 'var(--tree-view-color)',
       },
       "&:focus > $content $label, &:hover > $content $label, &$selected > $content $label": {
@@ -68,7 +75,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     content: {
-      color: theme.palette.text.secondary,
+      color: "var(--tree-view-font-color)",
       paddingRight: theme.spacing(1),
       fontWeight: theme.typography.fontWeightMedium,
       "$expanded > &": {
@@ -93,7 +100,7 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "end",
       margin: "auto",
       width: 320,
-      height: 40,
+      height: 32,
     },
     treeView: {
       margin: theme.spacing(1),
@@ -146,13 +153,19 @@ export default function NodeSelector() {
     });
   };
   const highligt = (e, id) => {
-    if (document.getElementsByClassName("highligh").length > 0) document.getElementsByClassName("highligh")[0].classList.remove("highligh")
+    if (document.getElementsByClassName("highligh").length > 0)
+      document
+        .getElementsByClassName("highligh")[0]
+        .classList.remove("highligh");
     e.target.classList.add("highligh");
     let nodeId = id.replace(/-/g, "/");
-    modifyGlobalConfigurations(GlobalConfigurationsModificationType.SET_SELECTEDNODE, nodeId)
-  }
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+      nodeId
+    );
+  };
   const handleSearchChange = (searchText: string) => {
-    let nodeMap = {}  //这边为浅拷贝所以不行？？咋办
+    let nodeMap = {}; //这边为浅拷贝所以不行？？咋办
     // let nodeMap = useProcessedGraph().nodeMap;
     function search(searchText: string, groupNode: GroupNode) {
       if (groupNode === null || groupNode === undefined) return;
@@ -181,7 +194,8 @@ export default function NodeSelector() {
     setGraph(result as ProcessedGraph);
   };
   const getLabelContainer = (node) => {
-    if (node.type === NodeType.OPERATION) { //ellipse
+    if (node.type === NodeType.OPERATION) {
+      //ellipse
       // return  <RadioButtonUncheckedIcon color="inherit" className={classes.labelIcon}/>
       return <img src={Ellipse} className={classes.labelIcon} />;
     } else if (node.type === NodeType.GROUP || node.type === NodeType.LAYER) {
@@ -230,6 +244,7 @@ export default function NodeSelector() {
           style={{
             "--tree-view-color": "#c7000b",
             "--tree-view-bg-color": "none",
+            "--tree-view-font-color": "#333",
           }}
           onMouseOver={() => { }}
         >
@@ -241,30 +256,58 @@ export default function NodeSelector() {
     });
   };
 
+  const theme = createMuiTheme({
+    typography: {
+      fontFamily: [
+        "Helvetica Neue",
+        "Helvetica",
+        "PingFang SC",
+        "Hiragino Sans GB",
+        "Microsoft YaHei",
+        "Arial",
+        "sans-serif",
+      ].join(","),
+      htmlFontSize: 18.2857,
+    },
+    palette: {
+      primary: {
+        main: "#333",
+      },
+    },
+  });
+
   return (
     <div className={classes.container}>
       {/* <Typography>Node Filter</Typography> */}
-      <Paper component="form" className={classes.search} variant="outlined">
-        {/* <div className={classes.search}> */}
-        <IconButton aria-label="search">
-          <SearchIcon />
-        </IconButton>
-        <InputBase
-          placeholder="Search"
-          inputProps={{ "aria-label": "search" }}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            handleSearchChange(event.target.value)
-          }
-        />
-        {/* </div> */}
-      </Paper>
-      <TreeView
-        className={classes.treeView}
-        defaultCollapseIcon={<ExpandMoreIcon />}
-        defaultExpandIcon={<ChevronRightIcon />}
-      >
-        {genEleRecursively(graph.rootNode)}
-      </TreeView>
+      <ThemeProvider theme={theme}>
+        <Paper
+          component="form"
+          className={classes.search}
+          variant="outlined"
+          style={{ color: "primary" }}
+        >
+          {/* <div className={classes.search}> */}
+          <IconButton aria-label="search">
+            <SearchIcon />
+          </IconButton>
+          <InputBase
+            placeholder="Search"
+            inputProps={{ "aria-label": "search" }}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              handleSearchChange(event.target.value)
+            }
+          />
+          {/* </div> */}
+        </Paper>
+        <TreeView
+          style={{ color: "primary" }}
+          className={classes.treeView}
+          defaultCollapseIcon={<ExpandMoreIcon />}
+          defaultExpandIcon={<ChevronRightIcon />}
+        >
+          {genEleRecursively(graph.rootNode)}
+        </TreeView>
+      </ThemeProvider>
     </div>
   );
 }
