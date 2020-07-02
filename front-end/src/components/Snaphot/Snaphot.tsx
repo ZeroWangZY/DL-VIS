@@ -16,7 +16,7 @@ const Snaphot: React.FC = () => {
   //   console.log("svgRef", svgRef);
   // const svgNode = d3.select('.lineChart-container').node() as HTMLElement;
 
-  const [svgWidth, setSvgWidth] = useState(1687);
+  const [svgWidth, setSvgWidth] = useState(1800);
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
