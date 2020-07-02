@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Children } from "react";
 import { useState, useEffect } from "react";
 import {
   makeStyles,
@@ -37,7 +37,9 @@ import {
   ProcessedGraph,
   OperationNodeImp,
   LayerNodeImp,
+  ROOT_SCOPE,
 } from "../../common/graph-processing/stage2/processed-graph";
+import { StackedOpNode, StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type"
 import * as d3 from "d3";
 import {
   useProcessedGraph,
@@ -48,6 +50,7 @@ import {
   useGlobalConfigurations,
   modifyGlobalConfigurations,
 } from "../../store/global-configuration";
+import { useVisGraph } from "../../store/visGraph";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import "./NodeSelector.css";
 // import {ProcessedGraph} from "../../store/processedGraph";
@@ -137,11 +140,56 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function NodeSelector() {
   const classes = useStyles();
   const processedGraph = useProcessedGraph();
+  const visGraph = useVisGraph();
   // const { selectedNodeId } = useGlobalConfigurations();
   const [graph, setGraph] = useState(processedGraph);
   useEffect(() => {
     setGraph(processedGraph);
   }, [processedGraph]);
+
+  const [subTree, setSubTree] = useState(new Map<NodeId, Set<NodeId>>())
+
+  useEffect(() => {
+    if (!visGraph) return
+    const { visNodes, visNodeMap, rootNode } = visGraph;
+
+    const visNodeSet = new Set(visNodes)
+    const resTree = new Map<NodeId, Set<NodeId>>()
+    resTree.set(ROOT_SCOPE, new Set(rootNode.children))
+    const queue = Array.from(rootNode.children)
+    while (queue.length > 0) {
+      const nodeId = queue.shift()
+      const node = visNodeMap[nodeId]
+      if (node.type === NodeType.GROUP || node.type === NodeType.LAYER) {
+        for (const child of (node as GroupNode).children) {
+          const childNode = visNodeMap[child]
+          if (visNodeSet.has(child) || !childNode.visibility) {
+            queue.push(child)
+            if (resTree.get(nodeId)) {
+              resTree.get(nodeId).add(child)
+            } else {
+              resTree.set(nodeId, new Set([child]))
+            }
+          }
+        }
+      }
+    }
+
+    for (const nodeId of visNodes) {
+      const node = visNodeMap[nodeId]
+      if (node instanceof StackedOpNodeImp) {
+        resTree.get(node.parent).add(nodeId)
+      }
+    }
+
+    setSubTree(resTree)
+  }, [visGraph])
+
+  if (!visGraph || !processedGraph) return (<div />);
+
+  const { visNodes, visNodeMap, rootNode } = visGraph;
+
+
   const handleChange = (nodeId: NodeId) => {
     const node = graph.nodeMap[nodeId];
     modifyProcessedGraph(ProcessedGraphModificationType.MODIFY_NODE_ATTR, {
@@ -199,47 +247,47 @@ export default function NodeSelector() {
     setGraph(result as ProcessedGraph);
   };
   const getLabelContainer = (node) => {
-    if (node.type === NodeType.OPERATION) {
-      //ellipse
-      // return  <RadioButtonUncheckedIcon color="inherit" className={classes.labelIcon}/>
+    if (node instanceof StackedOpNodeImp) { // TODO : 换成堆叠子图的图标
+      return <img src={Rect} className={classes.labelIcon} />;
+    } else if (node.type === NodeType.OPERATION) {
       return <img src={Ellipse} className={classes.labelIcon} />;
     } else if (node.type === NodeType.GROUP || node.type === NodeType.LAYER) {
-      //rect
-      // return  <Crop169Icon color="inherit" className={classes.labelIcon}/>
       return <img src={Rect} className={classes.labelIcon} />;
     } else if (node.type === NodeType.DATA) {
-      //circle
-      // return  <DonutLargeRoundedIcon color="inherit" className={classes.labelIcon}/>
       return <img src={Circle} className={classes.labelIcon} />;
     }
     return "";
   };
-  const genEleRecursively = (groupNode: GroupNode) => {
-    if (groupNode === null || groupNode === undefined) return;
-    return Array.from(groupNode.children).map((nodeId: NodeId, index) => {
-      const node = graph.nodeMap[nodeId];
-      if (!node) return;
+
+  const genElement = (childNodes: Set<string>) => {
+    if (!childNodes) return;
+
+    return Array.from(childNodes).map((nodeId: NodeId, index) => {
+      const visNode = visNodeMap[nodeId];
+      if (!visNode) return;
       return (
         <TreeItem
-          key={node.id}
-          className={node.visibility ? classes.backColor : classes.greyColor}
-          nodeId={node.id}
+          key={visNode.id}
+          className={visNode.visibility ? classes.backColor : classes.greyColor}
+          nodeId={visNode.id}
           label={
             <div className={classes.labelRoot}>
-              {getLabelContainer(node)}
-              {/* <Typography variant="body2"  className={classes.labelText} onClick={(e) => toggleExpanded(e, node.id)}> */}
+              {getLabelContainer(visNode)}
               <span
                 className={classes.labelText}
-                onClick={(e) => toggleExpanded(node.id)}
+                onClick={(e) => toggleExpanded(visNode.id)}
               >
-                {node.displayedName}
+                {visNode.displayedName}
               </span>
-              {/* </Typography> */}
-              {node.visibility ? (
-                <img src={Delete} onClick={() => handleChange(node.id)} />
-              ) : (
-                <img src={Add} onClick={() => handleChange(node.id)} />
-              )}
+              {!(visNode instanceof StackedOpNodeImp) &&
+                (
+                  visNode.visibility ? (
+                    <img src={Delete} onClick={() => handleChange(visNode.id)} />
+                  ) : (
+                      <img src={Add} onClick={() => handleChange(visNode.id)} />
+                    )
+                )
+              }
             </div>
           }
           classes={{
@@ -249,18 +297,16 @@ export default function NodeSelector() {
           style={{
             "--tree-view-color": "#c7000b",
             "--tree-view-bg-color": "none",
-            "--tree-view-font-color": "#333",
           }}
-          onMouseOver={() => {}}
+          onMouseOver={() => { }}
         >
-          {(node.type === NodeType.GROUP && (node as GroupNodeImp).expanded) ||
-          (node.type === NodeType.LAYER && (node as LayerNodeImp).expanded)
-            ? genEleRecursively(node as GroupNode)
+          {(visNode.type === NodeType.GROUP && (visNode as GroupNodeImp).expanded) || (visNode.type === NodeType.LAYER && (visNode as LayerNodeImp).expanded)
+            ? genElement(subTree.get(visNode.id))
             : null}
         </TreeItem>
       );
     });
-  };
+  }
 
   const theme = createMuiTheme({
     typography: {
@@ -305,16 +351,14 @@ export default function NodeSelector() {
           />
           {/* </div> */}
         </Paper>
-        <div className={classes.treeView}>
-          <TreeView
-            style={{ color: "primary" }}
-            // className={classes.treeView}
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
-          >
-            {genEleRecursively(graph.rootNode)}
-          </TreeView>
-        </div>
+        <TreeView
+          style={{ color: "primary" }}
+          className={classes.treeView}
+          defaultCollapseIcon={<ExpandMoreIcon />}
+          defaultExpandIcon={<ChevronRightIcon />}
+        >
+          {genElement(subTree.get(ROOT_SCOPE))}
+        </TreeView>
       </ThemeProvider>
     </div>
   );

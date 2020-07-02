@@ -375,7 +375,7 @@ const textSize = (text: string): number => {
 
 function strokeWidthAdaption(links){
   for(const link of links){
-    console.log(link)
+    // console.log(link)
     link.strokeWidth = Math.sqrt(link.strokeWidth) * 2
   }
   return links
