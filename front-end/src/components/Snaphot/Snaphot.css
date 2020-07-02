@@ -1,13 +1,17 @@
 .lineChart-container {
-    height: 300px;
-    width: 100%;
-    /* background-color: brown */
+  height: 300px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* width: 100%; */
+  /* background-color: brown */
 }
 .area {
-    clip-path: url(#clip);
+  clip-path: url(#clip);
 }
 .zoom {
-    /* cursor: move; */
-    fill: none;
-    pointer-events: all
+  /* cursor: move; */
+  fill: none;
+  pointer-events: all;
 }
