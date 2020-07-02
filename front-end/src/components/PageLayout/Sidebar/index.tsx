@@ -5,6 +5,7 @@ import GraphSelector from "../../preference/GraphSelector";
 import NodeSelector from "../../preference/NodeSelector";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 
 export interface PropTypes {
   onHide(): void;
@@ -18,11 +19,16 @@ export const Sidebar: React.FC<PropTypes> = ({
   visibility,
 }) => {
   return (
+    <Router>
     <div className="sidebar-wrapper">
       <div className="panel-title">节点信息</div>
       <div className="vis-graphselector">
         {/* <Divider /> */}
-        <GraphSelector />
+        <Switch>      
+          <Route path='/:graphName' component={GraphSelector}/> 
+          <Route path='' component={GraphSelector}/> 
+        </Switch>
+
       </div>
       {/* <Divider /> */}
       <NodeSelector />
@@ -34,6 +40,7 @@ export const Sidebar: React.FC<PropTypes> = ({
         )}
       </div>
     </div>
+    </Router>
   );
 };
 

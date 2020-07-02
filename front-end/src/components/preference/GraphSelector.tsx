@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme: Theme) =>
       minWidth: 120,
       width: "80%",
     },
-  })
+  }) 
 );
 
 interface GraphMetadata {
@@ -40,13 +40,16 @@ interface GraphMetadata {
   description?: string;
 }
 
-export default function GraphSelector() {
+ 
+
+const GraphSelector = (props) => {
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [msGraphMetadatas, setMsGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   useGraphPipeline();
+
 
   const {
     preprocessingPlugins,
@@ -58,10 +61,21 @@ export default function GraphSelector() {
     currentLayout === LayoutType.DAGRE_FOR_TF ||
     currentLayout === LayoutType.TENSORBOARD ||
     currentLayout === LayoutType.ELK_FOR_TF;
-
+ 
   const isMsGraph =
     currentLayout === LayoutType.DAGRE_FOR_MS ||
     currentLayout === LayoutType.ELK_FOR_MS;
+
+  //根据url中的图参数确定当前选择的显示图
+  useEffect(() => {
+    msGraphMetadatas.forEach(function(value,index,array){
+      if(array[index].name==props.match.params.graphName){
+        setCurrentMsGraphIndex(index);
+      }
+    })
+    
+  });
+  
 
   const handleTfGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
@@ -176,3 +190,7 @@ export default function GraphSelector() {
     </div>
   );
 }
+
+export default GraphSelector;
+
+

@@ -11,7 +11,6 @@ interface Props {
 // const ELKLayout: React.FC<Props> = (props: Props) => {
 const ELKLayout: React.FC = () => {
   const [iteration, setIteration] = useState(0);
-
   return (
     <div className="elk-container">
       <ELKLayoutGraph iteration={iteration} />

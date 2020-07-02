@@ -46,7 +46,7 @@ export default () => {
                 )}
               </div>
             </div>
-          );
+          ); 
         }}
         renderTopChild={() => (
           <FlexHorContainer
