@@ -201,21 +201,20 @@ export default function NodeSelector() {
     });
   };
   const toggleExpanded = (id) => {
-    let nodeId = id.replace(/-/g, "/");
     modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
       nodeId: id,
     });
   };
-  const highligt = (e, id) => {
-    if (document.getElementsByClassName("highligh").length > 0)
-      document
-        .getElementsByClassName("highligh")[0]
-        .classList.remove("highligh");
-    e.target.classList.add("highligh");
-    let nodeId = id.replace(/-/g, "/");
+  const highlight = (e, id) => {
+    // if (document.getElementsByClassName("highligh").length > 0)
+    //   document
+    //     .getElementsByClassName("highligh")[0]
+    //     .classList.remove("highligh");
+    // e.target.classList.add("highligh");
+    // let nodeId = id.replace(/-/g, "/");
     modifyGlobalConfigurations(
       GlobalConfigurationsModificationType.SET_SELECTEDNODE,
-      nodeId
+      id,
     );
   };
   const handleSearchChange = (searchText: string) => {
@@ -276,7 +275,8 @@ export default function NodeSelector() {
               {getLabelContainer(visNode)}
               <span
                 className={classes.labelText}
-                onClick={(e) => toggleExpanded(visNode.id)}
+                onClick={(e) => highlight(e, visNode.id)}
+                onDoubleClick={(e) => toggleExpanded(visNode.id)}
               >
                 {visNode.displayedName}
               </span>
