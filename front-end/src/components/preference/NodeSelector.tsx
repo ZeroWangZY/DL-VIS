@@ -20,6 +20,7 @@ import Ellipse from "./ellipse.png";
 import Rect from "./rect.png";
 import Circle from "./circle.png";
 import Delete from "./delete.png";
+import Stacked from "./stacked.png";
 import Add from "./add.png";
 import Open from "./open.png";
 import Close from "./close.png";
@@ -248,7 +249,7 @@ export default function NodeSelector() {
   };
   const getLabelContainer = (node) => {
     if (node instanceof StackedOpNodeImp) { // TODO : 换成堆叠子图的图标
-      return <img src={Rect} className={classes.labelIcon} />;
+      return <img src={Stacked} className={classes.labelIcon} />;
     } else if (node.type === NodeType.OPERATION) {
       return <img src={Ellipse} className={classes.labelIcon} />;
     } else if (node.type === NodeType.GROUP || node.type === NodeType.LAYER) {
