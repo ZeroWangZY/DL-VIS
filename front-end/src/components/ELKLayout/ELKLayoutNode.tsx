@@ -52,7 +52,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
-  const { shouldMergeEdge } = useGlobalConfigurations();
 
   const [lineChartData, setLineChartData] = useState(new Map());
   let _lineChartData = new Map();
@@ -113,7 +112,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const editLayoutGraph = (): void => {
     const lGraph = produceLayoutGraph(visGraph, {
       networkSimplex: false,
-      mergeEdge: shouldMergeEdge,
     });
     lGraph.then((result) => {
       setLayoutGraph(result);

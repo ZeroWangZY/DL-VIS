@@ -17,7 +17,6 @@ let globalConfigurations: GlobalConfigurations = {
   },
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
-  shouldMergeEdge: false,
   currentLayout: LayoutType.ELK_FOR_MS,
   currentStep: null,
   selectedNodeId: null
@@ -74,11 +73,6 @@ export const modifyGlobalConfigurations = (
     case GlobalConfigurationsModificationType.TOGGLE_PROCESSED_GRAPH_OPTIMIZER:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         shouldOptimizeProcessedGraph: !globalConfigurations.shouldOptimizeProcessedGraph,
-      });
-      break;
-    case GlobalConfigurationsModificationType.TOGGLE_SHOULD_MERGE_EDGE:
-      globalConfigurations = Object.assign({}, globalConfigurations, {
-        shouldMergeEdge: !globalConfigurations.shouldMergeEdge,
       });
       break;
     case GlobalConfigurationsModificationType.SET_CURRENT_SEPT:

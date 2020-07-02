@@ -20,7 +20,7 @@ import { LayoutType } from "../../store/global-configuration.type";
 
 
 export default function useGraphPipeline() {
-  const { shouldOptimizeProcessedGraph, currentLayout, shouldMergeEdge, conceptualGraphMode } = useGlobalConfigurations();
+  const { shouldOptimizeProcessedGraph, currentLayout, conceptualGraphMode } = useGlobalConfigurations();
   const msRawGraph = useMsRawGraph()
   const tfRawGraph = useTfRawGraph()
   const processedGraph = useProcessedGraph()
@@ -73,13 +73,13 @@ export default function useGraphPipeline() {
   // VisGraph --> layoutGraph
   useEffect(() => {
     if (!visGraph) return;
-    const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, mergeEdge: shouldMergeEdge, fixedNodeHeight: diagnosisMode });
+    const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, fixedNodeHeight: diagnosisMode });
     lGraph.then(result => {
       console.log(result)
       setLayoutGraph(result);
     })
 
-  }, [visGraph, shouldMergeEdge, diagnosisMode]);
+  }, [visGraph, diagnosisMode]);
 
   // layoutGraph --> StyledGraph
   useEffect(() => {

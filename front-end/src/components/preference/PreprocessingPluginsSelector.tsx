@@ -121,7 +121,6 @@ export default function PreprocessingPluginsSelector() {
     preprocessingPlugins,
     isHiddenInterModuleEdges,
     shouldOptimizeProcessedGraph,
-    shouldMergeEdge,
     currentLayout,
   } = useGlobalConfigurations();
 
@@ -148,11 +147,6 @@ export default function PreprocessingPluginsSelector() {
   const toggleProcessedGraphOptimizer = () => {
     modifyGlobalConfigurations(
       GlobalConfigurationsModificationType.TOGGLE_PROCESSED_GRAPH_OPTIMIZER
-    );
-  };
-  const toggleMergeEdge = () => {
-    modifyGlobalConfigurations(
-      GlobalConfigurationsModificationType.TOGGLE_SHOULD_MERGE_EDGE
     );
   };
 
@@ -189,18 +183,6 @@ export default function PreprocessingPluginsSelector() {
                 />
               }
               label={"Variable重命名"}
-            />
-          )}
-          {isElkLayout && (
-            <FormControlLabel
-              className={classes.FormControlLabelStyle}
-              control={
-                <IOSSwitch
-                  checked={shouldMergeEdge}
-                  onChange={toggleMergeEdge}
-                />
-              }
-              label={"ELK布局边合并"}
             />
           )}
           <FormControlLabel

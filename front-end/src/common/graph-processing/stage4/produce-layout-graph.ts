@@ -160,8 +160,8 @@ export async function produceLayoutGraph(
       isModuleEdge: inPort === PortType.Module && outPort === PortType.Module,
       originalSource: layoutNodeIdMap[originalSource],
       originalTarget: layoutNodeIdMap[originalTarget],
-      sources: [outPort !== PortType.None ? source + "-out-port" : source],
-      targets: [inPort !== PortType.None ? target + "-in-port" : target],
+      sources: [source + "-out-port"],
+      targets: [target + "-in-port"],
       arrowheadStyle: "fill: #333; stroke: #333;",
       arrowhead: "vee",
     };
@@ -182,8 +182,8 @@ export async function produceLayoutGraph(
       isModuleEdge: inPort === PortType.Module && outPort === PortType.Module,
       originalSource: layoutNodeIdMap[source],
       originalTarget: layoutNodeIdMap[target],
-      sources: [outPort !== PortType.None ? source + "-out-port" : source],
-      targets: [inPort !== PortType.None ? target + "-in-port" : target],
+      sources: [source + "-out-port"],
+      targets: [target + "-in-port"],
       arrowheadStyle:
         "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
       arrowhead: "vee",
@@ -219,7 +219,7 @@ async function generateLayout(
   elkNodeMap,
   layoutOptions: LayoutOptions
 ): Promise<LayoutGraph> {
-  const { networkSimplex, mergeEdge } = layoutOptions;
+  const { networkSimplex } = layoutOptions;
   const elk = new ELK();
   let elkLayout: Promise<ElkNode> = elk.layout(
     {
@@ -239,7 +239,7 @@ async function generateLayout(
         "org.eclipse.elk.portAlignment.west": "CENTER",
         "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
         // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
-        "org.eclipse.elk.layered.mergeEdges": mergeEdge.toString(),
+        // "org.eclipse.elk.layered.mergeEdges": mergeEdge.toString(),
         "org.eclipse.elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
         // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
         "org.eclipse.elk.interactive": "true",
@@ -347,22 +347,22 @@ export const generateNode = (
   fixedNodeHeight: boolean
 ): LayoutNode => {
   let ports = [];
-  if (inPort !== PortType.None) {
+  // if (inPort !== PortType.None) {
     ports.push({
       id: node.id + "-in-port",
       properties: {
         "port.side": "WEST",
       },
     });
-  }
-  if (outPort !== PortType.None) {
+  // }
+  // if (outPort !== PortType.None) {
     ports.push({
       id: node.id + "-out-port",
       layoutOptions: {
         "port.side": "EAST",
       },
     });
-  }
+  // }
   let parameters: DataNodeImp[] = [],
     constVals: DataNodeImp[] = [];
   if (node instanceof OperationNodeImp) {
@@ -471,10 +471,10 @@ function processNodes(
               originalSource: layoutNodeIdMap[originalSource],
               originalTarget: layoutNodeIdMap[originalTarget],
               sources: [
-                outPort !== PortType.None ? source + "-out-port" : source,
+                source + "-out-port",
               ],
               targets: [
-                inPort !== PortType.None ? target + "-in-port" : target,
+                target + "-in-port",
               ],
               arrowheadStyle:
                 "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
@@ -496,7 +496,7 @@ function processNodes(
             originalSource: layoutNodeIdMap[originalSource],
             originalTarget: layoutNodeIdMap[originalTarget],
             sources: [parentId + "-in-port"],
-            targets: [inPort !== PortType.None ? target + "-in-port" : target],
+            targets: [target + "-in-port"],
             arrowheadStyle:
               "fill: `${arrowFillColor}`; stroke: `${arrowStrokeColor}`",
             arrowhead: "vee",
@@ -517,7 +517,7 @@ function processNodes(
             originalSource: layoutNodeIdMap[originalSource],
             originalTarget: layoutNodeIdMap[originalTarget],
             sources: [
-              outPort !== PortType.None ? source + "-out-port" : source,
+              source + "-out-port",
             ],
             targets: [parentId + "-out-port"],
             arrowheadStyle: "fill: #333; stroke: #333;",

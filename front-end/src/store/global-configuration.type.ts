@@ -9,7 +9,6 @@ export interface GlobalConfigurations {
     renameVariable: boolean;
   };
   isHiddenInterModuleEdges: boolean;
-  shouldMergeEdge: boolean;
   shouldOptimizeProcessedGraph: boolean;
   currentStep: number;
   currentLayout: LayoutType;

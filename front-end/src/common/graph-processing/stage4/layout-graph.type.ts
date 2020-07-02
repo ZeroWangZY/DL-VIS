@@ -6,7 +6,6 @@ export interface ElkNodeMap {
 
 export interface LayoutOptions {
   networkSimplex?: boolean;
-  mergeEdge?: boolean;
   fixedNodeHeight?: boolean;
 }
 
