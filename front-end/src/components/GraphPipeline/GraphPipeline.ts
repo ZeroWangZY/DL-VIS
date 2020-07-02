@@ -20,7 +20,7 @@ import { LayoutType } from "../../store/global-configuration.type";
 
 
 export default function useGraphPipeline() {
-  const { shouldOptimizeProcessedGraph, currentLayout, shouldMergeEdge } = useGlobalConfigurations();
+  const { shouldOptimizeProcessedGraph, currentLayout, shouldMergeEdge, conceptualGraphMode } = useGlobalConfigurations();
   const msRawGraph = useMsRawGraph()
   const tfRawGraph = useTfRawGraph()
   const processedGraph = useProcessedGraph()
@@ -41,7 +41,7 @@ export default function useGraphPipeline() {
   useEffect(() => {
     if (isMsGraph && msRawGraph) {
       const hGraph = buildMsGraph(msRawGraph);
-      if (shouldOptimizeProcessedGraph) {
+      if (conceptualGraphMode) {
         const processedGraphOptimizer = new ProcessedGraphOptimizer();
         processedGraphOptimizer.optimize(hGraph);
       }
@@ -50,14 +50,14 @@ export default function useGraphPipeline() {
 
     if (isTfGraph && tfRawGraph) {
       buildGraph(tfRawGraph).then((pGraph) => {
-        if (shouldOptimizeProcessedGraph) {
+        if (conceptualGraphMode) {
           const processedGraphOptimizer = new ProcessedGraphOptimizer();
           processedGraphOptimizer.optimize(pGraph);
         }
         setProcessedGraph(pGraph);
       });
     }
-  }, [msRawGraph, tfRawGraph, shouldOptimizeProcessedGraph]);
+  }, [msRawGraph, tfRawGraph, conceptualGraphMode]);
 
   // ProcessedGraph --> VisGraph
   useEffect(() => {
