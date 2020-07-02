@@ -90,6 +90,11 @@ const useStyles = makeStyles((theme: Theme) =>
       flexGrow: 1,
     },
     container: {
+      position: "absolute",
+      top: "125px",
+      bottom: 0,
+      display: "flex",
+      flexDirection: "column",
       // marginTop: theme.spacing(2),
       // height: "100%"
     },
@@ -104,7 +109,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     treeView: {
       margin: theme.spacing(1),
-      height: "800px",
+      // height: "800px",
       flexGrow: 1,
       width: 350,
       textAlign: "left",
@@ -233,8 +238,8 @@ export default function NodeSelector() {
               {node.visibility ? (
                 <img src={Delete} onClick={() => handleChange(node.id)} />
               ) : (
-                  <img src={Add} onClick={() => handleChange(node.id)} />
-                )}
+                <img src={Add} onClick={() => handleChange(node.id)} />
+              )}
             </div>
           }
           classes={{
@@ -246,9 +251,10 @@ export default function NodeSelector() {
             "--tree-view-bg-color": "none",
             "--tree-view-font-color": "#333",
           }}
-          onMouseOver={() => { }}
+          onMouseOver={() => {}}
         >
-          {(node.type === NodeType.GROUP && (node as GroupNodeImp).expanded) || (node.type === NodeType.LAYER && (node as LayerNodeImp).expanded)
+          {(node.type === NodeType.GROUP && (node as GroupNodeImp).expanded) ||
+          (node.type === NodeType.LAYER && (node as LayerNodeImp).expanded)
             ? genEleRecursively(node as GroupNode)
             : null}
         </TreeItem>
@@ -299,14 +305,16 @@ export default function NodeSelector() {
           />
           {/* </div> */}
         </Paper>
-        <TreeView
-          style={{ color: "primary" }}
-          className={classes.treeView}
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
-        >
-          {genEleRecursively(graph.rootNode)}
-        </TreeView>
+        <div className={classes.treeView}>
+          <TreeView
+            style={{ color: "primary" }}
+            // className={classes.treeView}
+            defaultCollapseIcon={<ExpandMoreIcon />}
+            defaultExpandIcon={<ChevronRightIcon />}
+          >
+            {genEleRecursively(graph.rootNode)}
+          </TreeView>
+        </div>
       </ThemeProvider>
     </div>
   );

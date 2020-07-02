@@ -27,8 +27,9 @@ const FlexHorContainer: React.FC<PropTypes> = ({
         style={{
           marginTop: topVis ? 0 : `-${fixedHeight}`,
           ...(stretchItem === "top"
-            ? { flex: 1 }
+            ? { bottom: bottomVis ? fixedHeight : 0 }
             : {
+                bottom: "unset",
                 minHeight: fixedHeight,
                 maxHeight: fixedHeight,
                 height: fixedHeight,
@@ -42,8 +43,9 @@ const FlexHorContainer: React.FC<PropTypes> = ({
         style={{
           marginBottom: bottomVis ? 0 : `-${fixedHeight}`,
           ...(stretchItem === "bottom"
-            ? { flex: 1 }
+            ? { top: topVis ? fixedHeight : 0 }
             : {
+                top: "unset",
                 minHeight: fixedHeight,
                 maxHeight: fixedHeight,
                 height: fixedHeight,

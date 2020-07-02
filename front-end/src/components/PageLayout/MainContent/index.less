@@ -52,12 +52,13 @@
   }
 }
 
+@expand-btn-height: 32px;
 .legend-wrapper {
   display: relative;
   .expand-btn {
     position: absolute;
     right: 0;
-    top: -32px;
+    top: -@expand-btn-height;
     z-index: 1;
     cursor: pointer;
     // 美化
@@ -90,6 +91,15 @@
 }
 
 .info-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: @expand-btn-height;
+
   .panel-title {
     text-align: center;
     font-size: 14px;
@@ -98,5 +108,7 @@
   }
   .info-card {
     margin-top: 10px;
+    flex: 1;
+    overflow: auto;
   }
 }
