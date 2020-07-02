@@ -92,6 +92,16 @@ const useStyles = makeStyles((theme: Theme) =>
     labelText: {
       fontWeight: "inherit",
       flexGrow: 1,
+      userSelect: "none",
+    },
+    selectedLabelText: {
+      fontWeight: "inherit",
+      // flexGrow: 1,
+      userSelect: "none",
+      color: "white",
+      backgroundColor: "#c7000b",
+      paddingLeft: "5px",
+      paddingRight: "5px",
     },
     container: {
       position: "absolute",
@@ -124,6 +134,9 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
       padding: theme.spacing(0.5, 0),
     },
+    lastImg: { // 右对齐
+      marginLeft: "auto",
+    },
     backColor: {
       opacity: 1,
     },
@@ -141,8 +154,9 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function NodeSelector() {
   const classes = useStyles();
   const processedGraph = useProcessedGraph();
+  const { selectedNodeId } = useGlobalConfigurations();
   const visGraph = useVisGraph();
-  // const { selectedNodeId } = useGlobalConfigurations();
+
   const [graph, setGraph] = useState(processedGraph);
   useEffect(() => {
     setGraph(processedGraph);
@@ -274,18 +288,20 @@ export default function NodeSelector() {
             <div className={classes.labelRoot}>
               {getLabelContainer(visNode)}
               <span
-                className={classes.labelText}
+                className={visNode.id === selectedNodeId ? classes.selectedLabelText : classes.labelText}
                 onClick={(e) => highlight(e, visNode.id)}
                 onDoubleClick={(e) => toggleExpanded(visNode.id)}
               >
-                {visNode.displayedName}
+                {visNode.displayedName.length > 25
+                  ? visNode.displayedName.slice(0, 25) + "..."
+                  : visNode.displayedName}
               </span>
               {!(visNode instanceof StackedOpNodeImp) &&
                 (
                   visNode.visibility ? (
-                    <img src={Delete} onClick={() => handleChange(visNode.id)} />
+                    <img className={classes.lastImg} src={Delete} onClick={() => handleChange(visNode.id)} />
                   ) : (
-                      <img src={Add} onClick={() => handleChange(visNode.id)} />
+                      <img className={classes.lastImg} src={Add} onClick={() => handleChange(visNode.id)} />
                     )
                 )
               }
