@@ -37,6 +37,7 @@ window["ELK"] = ELK;
 
 const arrowStrokeColor = styles.arrow_stroke_color;
 const arrowFillColor = styles.arrow_fill_color;
+const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
 interface Props {
   iteration: number;
 }
@@ -502,9 +503,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         bounding.y - svgBoundingClientRect.y + bounding.height * 0.5;
       let inExtent =
         extent[0][0] <= xCenter &&
-        xCenter < extent[1][0] &&
-        extent[0][1] <= yCenter &&
-        yCenter < extent[1][1]
+          xCenter < extent[1][0] &&
+          extent[0][1] <= yCenter &&
+          yCenter < extent[1][1]
           ? 1
           : 0;
       const previouslySelected =
@@ -619,6 +620,22 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               d="M 0 0 L 10 5 L 0 10 L 4 5 z"
               fill={arrowFillColor}
               stroke={arrowStrokeColor}
+            ></path>
+          </marker>
+          <marker
+            id="arrowheadHovered"
+            viewBox="0 0 10 10"
+            refX="5"
+            refY="5"
+            markerUnits="userSpaceOnUse"
+            markerWidth="8"
+            markerHeight="6"
+            orient="auto"
+          >
+            <path
+              d="M 0 0 L 10 5 L 0 10 L 4 5 z"
+              fill={hoverEdgePathStrokeColor}
+              stroke={hoverEdgePathStrokeColor}
             ></path>
           </marker>
         </defs>

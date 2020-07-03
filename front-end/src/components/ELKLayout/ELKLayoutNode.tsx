@@ -38,6 +38,7 @@ interface Props {
 
 const antiShakeDistance = 2;
 const svg = d3.select("#output-svg");
+const maxLabelLength = 10;
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
@@ -137,9 +138,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         >
           <div>
             <text>
-              {node.label.length <= 10
-                ? node.label
-                : node.label.slice(0, 10) + "..."}
+              {node.label.slice(0, maxLabelLength) + (node.label.length > maxLabelLength ? "..." : "")}
             </text>
           </div>
         </foreignObject>
@@ -244,12 +243,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     d3.selectAll("g .node").on(".drag", null);
     let selectionNodes = d3.selectAll("g .child-node");
     if (selectionNodes.size() === 0) return;
-    
-    if(layoutModificationMode){
+
+    if (layoutModificationMode) {
       selectionNodes.call(d3.drag().on("start", dragStarted));
     }
     else return;
-    
+
     function dragStarted(): void {
       let node = d3.select(this).classed("dragging", true);
       d3.event.on("drag", dragged).on("end", ended);
@@ -317,13 +316,15 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                     .transition()
                     .style("stroke", hoverEdgePathStrokeColor)
                     .style("stroke-width", hoverEdgePathStrokeWidth)
-                    .style("stroke-linecap", "round");
+                    .style("stroke-linecap", "round")
+                    .style("marker-end", "url(#arrowheadHovered)")
                 }}
                 onMouseLeave={() => {
                   d3.selectAll(linkedEdges)
                     .transition()
                     .style("stroke", "none")
-                    .style("stroke-width", "1");
+                    .style("stroke-width", "1")
+                    .style("marker-end", "none");
                 }}
                 onContextMenu={(e) => handleRightClick(e)}
               >
@@ -349,9 +350,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       style={{ fontSize: 10 }}
                     >
                       {/* {d.data.label} */}
-                      {(d.data.label as string).length <= 12
-                        ? d.data.label
-                        : d.data.label.slice(0, 12) + "..."}
+                      {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
                     </text>
                   )}
 
@@ -366,7 +365,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         <div className="label">
                           <text>
                             {/* 增加一层text是为了让伪类中的before生效；否则不展示layerNode折线图的时候，图标不会显示 */}
-                            {d.data.label}
+                            {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
                           </text>
                         </div>
                       </foreignObject>

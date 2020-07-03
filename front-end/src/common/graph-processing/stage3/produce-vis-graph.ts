@@ -43,9 +43,8 @@ export function produceVisGraph(
     nodeMap,
     visModuleConnectionMap
   );
-  console.log(hiddenEdgeMap);
   return new VisGraphImp(
-    nodeMap,
+    Object.assign({}, nodeMap),
     rootNode,
     visEdges,
     visNodes,

@@ -162,12 +162,14 @@ export default function NodeSelector() {
     setGraph(processedGraph);
   }, [processedGraph]);
 
-  const [subTree, setSubTree] = useState(new Map<NodeId, Set<NodeId>>())
+  const [subTree, setSubTree] = useState(new Map<NodeId, Set<NodeId>>());
+  const [visNodes, setVisNodes] = useState([]);
+  const [visNodeMap, setVisNodeMap] = useState({});
 
   useEffect(() => {
     if (!visGraph) return
     const { visNodes, visNodeMap, rootNode } = visGraph;
-
+    const nodeMap = visGraph.visNodeMap;
     const visNodeSet = new Set(visNodes)
     const resTree = new Map<NodeId, Set<NodeId>>()
     resTree.set(ROOT_SCOPE, new Set(rootNode.children))
@@ -197,13 +199,12 @@ export default function NodeSelector() {
       }
     }
 
+    setVisNodes(visGraph.visNodes);
+    setVisNodeMap(visGraph.visNodeMap);
     setSubTree(resTree)
   }, [visGraph])
 
   if (!visGraph || !processedGraph) return (<div />);
-
-  const { visNodes, visNodeMap, rootNode } = visGraph;
-
 
   const handleChange = (nodeId: NodeId) => {
     const node = graph.nodeMap[nodeId];
@@ -278,7 +279,7 @@ export default function NodeSelector() {
 
     return Array.from(childNodes).map((nodeId: NodeId, index) => {
       const visNode = visNodeMap[nodeId];
-      if (!visNode) return;
+      // if (!visNode) return (<div />);
       return (
         <TreeItem
           key={visNode.id}
@@ -371,6 +372,7 @@ export default function NodeSelector() {
         <TreeView
           style={{ color: "primary" }}
           className={classes.treeView}
+          defaultExpanded={visNodes}
           defaultCollapseIcon={<ExpandMoreIcon />}
           defaultExpandIcon={<ChevronRightIcon />}
         >
