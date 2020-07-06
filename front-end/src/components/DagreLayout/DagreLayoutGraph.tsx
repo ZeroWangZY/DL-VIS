@@ -1086,7 +1086,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         </g>
       </svg>
 
-      <NodeInfoCard selectedNodeId={selectedNodeId} />
+      <NodeInfoCard />
 
       <div className="minimap-container">
         <MiniMap

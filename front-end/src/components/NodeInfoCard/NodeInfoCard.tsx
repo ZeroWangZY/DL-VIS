@@ -14,6 +14,10 @@ import {
   OperationNodeImp,
   DataNodeImp,
 } from "../../common/graph-processing/stage2/processed-graph";
+import {
+  useGlobalConfigurations,
+  modifyGlobalConfigurations,
+} from "../../store/global-configuration";
 import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
 import { useVisGraph } from "../../store/visGraph";
 
@@ -31,10 +35,11 @@ const useStyles = makeStyles({
   },
 });
 
-const NodeInfoCard: React.FC<{ selectedNodeId: string | null }> = (props: {
-  selectedNodeId;
-}) => {
-  const { selectedNodeId } = props;
+const NodeInfoCard: React.FC = () => {
+  const {
+    selectedNodeId,
+  } = useGlobalConfigurations();
+
   const visGraph = useVisGraph();
   const processedGraph = useProcessedGraph();
   const classes = useStyles();

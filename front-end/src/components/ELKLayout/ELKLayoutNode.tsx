@@ -83,10 +83,11 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   }, [styledGraph]);
 
   const handleClick = (id) => {
-    modifyGlobalConfigurations(
-      GlobalConfigurationsModificationType.SET_SELECTEDNODE,
-      id
-    );
+    if (selectedNodeId !== id)
+      modifyGlobalConfigurations(
+        GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+        id
+      );
   };
 
   let elkNodeMap = {};

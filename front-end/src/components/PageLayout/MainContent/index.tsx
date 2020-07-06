@@ -14,11 +14,6 @@ import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
 
 export default () => {
-  const {
-    // diagnosisMode,
-    // isHiddenInterModuleEdges,
-    selectedNodeId,
-  } = useGlobalConfigurations();
 
   return (
     <Router>
@@ -39,14 +34,14 @@ export default () => {
                     alt="收起"
                   />
                 ) : (
-                  <img
-                    src={process.env.PUBLIC_URL + "/assets/up.svg"}
-                    alt="展开"
-                  />
-                )}
+                    <img
+                      src={process.env.PUBLIC_URL + "/assets/up.svg"}
+                      alt="展开"
+                    />
+                  )}
               </div>
             </div>
-          ); 
+          );
         }}
         renderTopChild={() => (
           <FlexHorContainer
@@ -74,11 +69,11 @@ export default () => {
                       alt="收起"
                     />
                   ) : (
-                    <img
-                      src={process.env.PUBLIC_URL + "/assets/left.svg"}
-                      alt="展开"
-                    />
-                  )}
+                      <img
+                        src={process.env.PUBLIC_URL + "/assets/left.svg"}
+                        alt="展开"
+                      />
+                    )}
                 </div>
                 <FlexVerContainer
                   fixedHeight="280px"
@@ -86,7 +81,7 @@ export default () => {
                   renderTopChild={() => (
                     <div className="info-wrapper">
                       <div className="panel-title">节点属性</div>
-                      <NodeInfoCard selectedNodeId={selectedNodeId} />
+                      <NodeInfoCard />
                     </div>
                   )}
                   renderBottomChild={(onHide, onShow, visibility) => (
@@ -106,11 +101,11 @@ export default () => {
                               alt="收起"
                             />
                           ) : (
-                            <img
-                              src={process.env.PUBLIC_URL + "/assets/up-b.svg"}
-                              alt="展开"
-                            />
-                          )}
+                              <img
+                                src={process.env.PUBLIC_URL + "/assets/up-b.svg"}
+                                alt="展开"
+                              />
+                            )}
                         </span>
                       </div>
                     </div>

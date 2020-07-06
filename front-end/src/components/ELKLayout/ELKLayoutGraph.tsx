@@ -409,10 +409,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   // 点击空白处取消所有选择
   const handleBgClick = () => {
     //  setSelectedNodeId ("");
-    modifyGlobalConfigurations(
-      GlobalConfigurationsModificationType.SET_SELECTEDNODE,
-      ""
-    );
+    if (selectedNodeId !== "")
+      modifyGlobalConfigurations(
+        GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+        ""
+      );
     cleanPathFinding();
   };
   function cleanPathFinding() {
@@ -667,7 +668,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         <g id="gBrushHolder"></g>
       </svg>
 
-      <NodeInfoCard selectedNodeId={selectedNodeId} />
+      <NodeInfoCard />
 
       <div className="minimap-container">
         <MiniMap
