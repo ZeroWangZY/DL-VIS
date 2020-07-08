@@ -94,7 +94,26 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   if (layoutGraph) {
     elkNodeMap = layoutGraph.elkNodeMap;
   }
-  const toggleExpanded = (id): void => {
+
+  const showHighlightedLine = (linkedEdges): void => {
+    d3.selectAll(linkedEdges)
+      .transition()
+      .style("stroke", hoverEdgePathStrokeColor)
+      .style("stroke-width", hoverEdgePathStrokeWidth)
+      .style("stroke-linecap", "round")
+      .style("marker-end", "url(#arrowheadHovered)")
+  }
+
+  const offHighlightedLine = (linkedEdges): void => {
+    d3.selectAll(linkedEdges) // 取消所有高亮的边
+      .transition()
+      .style("stroke", "none")
+      .style("stroke-width", "1")
+      .style("marker-end", "none");
+  }
+
+  const toggleExpanded = (id, linkedEdges): void => {
+    offHighlightedLine(linkedEdges);
     modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
       nodeId: id,
     });
@@ -311,21 +330,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onClick={() => handleClick(d.data.id)}
-                onDoubleClick={() => toggleExpanded(d.data.id)}
+                onDoubleClick={() => toggleExpanded(d.data.id, linkedEdges)}
                 onMouseEnter={() => {
-                  d3.selectAll(linkedEdges)
-                    .transition()
-                    .style("stroke", hoverEdgePathStrokeColor)
-                    .style("stroke-width", hoverEdgePathStrokeWidth)
-                    .style("stroke-linecap", "round")
-                    .style("marker-end", "url(#arrowheadHovered)")
+                  showHighlightedLine(linkedEdges)
                 }}
                 onMouseLeave={() => {
-                  d3.selectAll(linkedEdges)
-                    .transition()
-                    .style("stroke", "none")
-                    .style("stroke-width", "1")
-                    .style("marker-end", "none");
+                  offHighlightedLine(linkedEdges)
                 }}
                 onContextMenu={(e) => handleRightClick(e)}
               >
