@@ -57,9 +57,9 @@ export const generateEdgeStyles = (
       ...(bendPoints === undefined
         ? []
         : bendPoints.map((point) => ({
-            x: ofs.x + point.x,
-            y: ofs.y + point.y,
-          }))),
+          x: ofs.x + point.x,
+          y: ofs.y + point.y,
+        }))),
       { x: ofs.x + endPoint.x, y: ofs.y + endPoint.y },
     ];
     const ofs_x = 3; //控制和port重叠的问题
@@ -70,15 +70,15 @@ export const generateEdgeStyles = (
         isModuleEdge: link.isModuleEdge,
         originalSource: link.originalSource,
         originalTarget: link.originalTarget,
-        lineData: hoverPath(ofs_x,linkData),
-        drawData: strokeWidthAdaption(drawArcPath(ofs_x,linkData, linksCountMap, ofs)),
+        lineData: hoverPath(ofs_x, linkData),
+        drawData: strokeWidthAdaption(drawArcPath(ofs_x, linkData, linksCountMap, ofs)),
         junctionPoints:
           junctionPoints === undefined
             ? []
             : junctionPoints.map((point) => ({
-                x: ofs.x + point.x,
-                y: ofs.y + point.y,
-              })),
+              x: ofs.x + point.x,
+              y: ofs.y + point.y,
+            })),
       },
       style: {
         startPointX: spring(ofs.x + startPoint.x),
@@ -111,35 +111,35 @@ export const generateNodeStyles = (
       key: `${id4Style}_${nodeKeyMap[id4Style]}`,
       data: node.hasOwnProperty("label")
         ? {
-            class: node.class,
-            type: node.type,
-            id: node.id,
-            id4Style: node.id4Style,
-            parent: node.parent,
-            parameters:
-              node.type === NodeType.OPERATION ? node.parameters : null,
-            constVals: node.type === NodeType.OPERATION ? node.constVals : null,
-            label: node.label,
-            expand: node.expand,
-            isStacked: node.isStacked,
-            textWidth:
-              textSize(
-                node.label +
-                  (!node.expand &&
-                  (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
-                    ? "+"
-                    : "")
-              ) + 2,
-          }
+          class: node.class,
+          type: node.type,
+          id: node.id,
+          id4Style: node.id4Style,
+          parent: node.parent,
+          parameters:
+            node.type === NodeType.OPERATION ? node.parameters : null,
+          constVals: node.type === NodeType.OPERATION ? node.constVals : null,
+          label: node.label,
+          expand: node.expand,
+          isStacked: node.isStacked,
+          textWidth:
+            textSize(
+              node.label +
+              (!node.expand &&
+                (node.type === NodeType.GROUP || node.type === NodeType.LAYER)
+                ? "+"
+                : "")
+            ) + 2,
+        }
         : {
-            class: "dummy",
-            type: "dummy",
-            id: node.id,
-            id4Style: node.id4Style,
-            parent: node.parent,
-            label: node.id,
-            expand: node.expand,
-          },
+          class: "dummy",
+          type: "dummy",
+          id: node.id,
+          id4Style: node.id4Style,
+          parent: node.parent,
+          label: node.id,
+          expand: node.expand,
+        },
       style: {
         gNodeTransX: spring(ofs.x + node.x + node.width / 2),
         gNodeTransY: spring(ofs.y + node.y + node.height / 2),
@@ -259,12 +259,12 @@ function ofsLinks(edges: Array<LayoutEdge>) {
 const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
   let preStrokeWidth =
     linksCountMap[
-      `${lineData[0].x - ofs.x}-${lineData[0].y - ofs.y}-${lineData[1].x - ofs.x}-${lineData[1].y - ofs.y}`
+    `${lineData[0].x - ofs.x}-${lineData[0].y - ofs.y}-${lineData[1].x - ofs.x}-${lineData[1].y - ofs.y}`
     ];
   if (lineData.length < 3)
     return [
       {
-        d: `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x} ${lineData[1].y}`,
+        d: `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x - ofs_x} ${lineData[1].y}`,
         strokeWidth: preStrokeWidth,
       },
     ];
@@ -273,22 +273,22 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
   let firstPoint;
   let path = [];
   let nextStrokeWidth;
-  let pathBuff = [`M${lineData[0].x + ofs_x} ${lineData[0].y}`];
+  let pathBuff = [`M${lineData[0].x} ${lineData[0].y}`];
   for (let i = 2; i < lineData.length; i++) {
     firstPoint = lineData[i - 2];
     prePoint = lineData[i - 1];
     nowPoint = lineData[i];
     preStrokeWidth =
       linksCountMap[
-        `${firstPoint.x - ofs.x}-${firstPoint.y - ofs.y}-${
-          prePoint.x - ofs.x
-        }-${prePoint.y - ofs.y}`
+      `${firstPoint.x - ofs.x}-${firstPoint.y - ofs.y}-${
+      prePoint.x - ofs.x
+      }-${prePoint.y - ofs.y}`
       ];
     nextStrokeWidth =
       linksCountMap[
-        `${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x}-${
-          nowPoint.y - ofs.y
-        }`
+      `${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x}-${
+      nowPoint.y - ofs.y
+      }`
       ];
     pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)];
     if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
@@ -314,11 +314,11 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
 };
 const hoverPath = (ofs_x, lineData) => {
   if (lineData.length < 3)
-    return `M${lineData[0].x+ofs_x} ${lineData[0].y} L${lineData[1].x-ofs_x} ${lineData[1].y}`;
+    return `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x - ofs_x} ${lineData[1].y}`;
   let prePoint;
   let nowPoint;
   let firstPoint;
-  let path = [`M${lineData[0].x+ofs_x} ${lineData[0].y}`];
+  let path = [`M${lineData[0].x} ${lineData[0].y}`];
   for (let i = 2; i < lineData.length; i++) {
     firstPoint = lineData[i - 2];
     prePoint = lineData[i - 1];
@@ -326,7 +326,7 @@ const hoverPath = (ofs_x, lineData) => {
     //根据点位置判断弧度方向
     path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)];
   }
-  path.push(`L ${nowPoint.x-ofs_x} ${nowPoint.y}`);
+  path.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
   return path.join(" ");
 };
 function pointToPath(firstPoint, prePoint, nowPoint) {
@@ -373,8 +373,8 @@ const textSize = (text: string): number => {
   return width;
 };
 
-function strokeWidthAdaption(links){
-  for(const link of links){
+function strokeWidthAdaption(links) {
+  for (const link of links) {
     // console.log(link)
     link.strokeWidth = Math.sqrt(link.strokeWidth) * 2
   }
