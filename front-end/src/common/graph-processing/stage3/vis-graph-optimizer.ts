@@ -6,9 +6,7 @@ import {
   StackedOpNode,
 } from "./vis-graph.type";
 import {
-  NodeDef,
   NodeId,
-  NodeMap,
   OperationNode,
   NodeType,
 } from "../stage2/processed-graph";
@@ -159,7 +157,6 @@ function _findSubgraphsFromEndHubNode(
   const retSet = new Set<Subgraph>();
   const consideredNodes = new Set<NodeId>();
 
-  console.log(endHubNode);
   const startNodes = edgeMap.get(endHubNode).inEdges;
 
   for (const startNode of startNodes) {
@@ -256,6 +253,72 @@ function _detectSimilarSubgraph(
     }
   }
   return subgraphMap;
+}
+
+function updateHiddenEdgeMap(visGraph) {
+  const stackedNodes = [];
+  for (let node in visGraph.visNodeMap) {
+    if (visGraph.visNodeMap[node] instanceof StackedOpNodeImp) {
+      stackedNodes.push(visGraph.visNodeMap[node]);
+    }
+  }
+  //更新hiddenEdgeMap中的节点id为堆叠节点id
+  visGraph.hiddenEdgeMap.forEach((edgeInfo) => {
+    edgeInfo.in.forEach((edge) => {
+      stackedNodes.forEach((stackedNode) => {
+        if (stackedNode.nodesContained.has(edge.source)) {
+          edge.source = stackedNode.id;
+        }
+        if (stackedNode.nodesContained.has(edge.target)) {
+          edge.target = stackedNode.id;
+        }
+      })
+    })
+    edgeInfo.out.forEach((edge) => {
+      stackedNodes.forEach((stackedNode) => {
+        if (stackedNode.nodesContained.has(edge.source)) {
+          edge.source = stackedNode.id;
+        }
+        if (stackedNode.nodesContained.has(edge.target)) {
+          edge.target = stackedNode.id;
+        }
+      })
+    })
+  });
+
+  //遍历堆叠节点中的每个节点以找出与该堆叠节点相关的线
+  stackedNodes.forEach((stackedNode) => {
+    let inEdges = new Set();
+    let outEdges = new Set();
+    for (let node of stackedNode.nodesContained) {
+      if (visGraph.hiddenEdgeMap.get(node)) {
+        visGraph.hiddenEdgeMap.get(node).in.forEach((edgeInfo) => {
+          inEdges.add(edgeInfo.source + "-->" + edgeInfo.target);
+        })
+        visGraph.hiddenEdgeMap.get(node).out.forEach((edgeInfo) => {
+          outEdges.add(edgeInfo.source + "-->" + edgeInfo.target);
+        })
+        visGraph.hiddenEdgeMap.delete(node);
+      }
+    }
+    //添加堆叠节点相关信息至hiddenEdgeMap
+    let newInEdges = new Set();
+    let newOutEdges = new Set();
+    if (inEdges.size) {
+      inEdges.forEach((edge: string) => {
+        newInEdges.add({ source: edge.split("-->")[0], target: edge.split("-->")[1] });
+      });
+    }
+    if (outEdges.size) {
+      outEdges.forEach((edge: string) => {
+        newOutEdges.add({ source: edge.split("-->")[0], target: edge.split("-->")[1] });
+      });
+    }
+    let valueForHiddenEdgeMap = { in: newInEdges, out: newOutEdges }
+    if (newInEdges.size || newOutEdges.size) {
+      visGraph.hiddenEdgeMap.set(stackedNode.id, valueForHiddenEdgeMap)
+    }
+  })
 }
 
 function _stackSimilarSubgraphs(
@@ -361,7 +424,6 @@ function _stackSimilarSubgraphs(
 function stackFrequentSubgraph(visGraph: VisGraph) {
   const { visEdges, visNodes, visNodeMap } = visGraph;
   let edgeMap = _buildEdgeMap(visNodes, visEdges);
-  console.log("before: ", visNodes.length);
 
   for (let i = 0; i < 3; i++) {
     // 进行3遍扫描
@@ -429,7 +491,7 @@ function stackFrequentSubgraph(visGraph: VisGraph) {
     }
   }
 
-  console.log("after: ", visNodes.length);
+  updateHiddenEdgeMap(visGraph);
 }
 
 export default class VisGraphOptimizer {

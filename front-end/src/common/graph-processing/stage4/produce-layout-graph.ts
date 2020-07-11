@@ -55,7 +55,6 @@ export async function produceLayoutGraph(
 
   generateLayoutNodeIdFromGroups(layoutNodeIdMap);
 
-  console.log(layoutNodeIdMap);
   for (let i = 0; i < visEdges.length; i++) {
     const edge = visEdges[i];
     if (edge.source in nodeLinkMap) {
@@ -203,7 +202,6 @@ export async function produceLayoutGraph(
     layoutOptions.fixedNodeHeight
   );
 
-  console.log(newNodes);
   //将node数组建立索引，加速drag的查询
   let newElkNodeMap: ElkNodeMap = {};
   generateElkNodeMap(newNodes, newElkNodeMap);

@@ -75,7 +75,6 @@ export default function useGraphPipeline() {
     if (!visGraph) return;
     const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, fixedNodeHeight: diagnosisMode });
     lGraph.then(result => {
-      console.log(result)
       setLayoutGraph(result);
     })
 

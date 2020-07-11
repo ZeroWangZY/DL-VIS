@@ -344,7 +344,6 @@ function buildModule(hGraph: ProcessedGraph): void {
   const { nodeMap } = hGraph;
   
   const modulesId = getModulesId(hGraph);
-  console.log(modulesId)
   // 初始化图的modules和节点的isModule、belongModule、isNested属性
   for (const modulePattern of modulesId) {
   // for (const modulePattern of MODULE_PATTERN) { // 测试用例
