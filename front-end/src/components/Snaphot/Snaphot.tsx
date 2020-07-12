@@ -157,7 +157,7 @@ const Snaphot: React.FC = () => {
           className="focus"
           transform={`translate(${margin.left},${margin.top})`}
         >
-          {clickNumber && (
+          {clickNumber !== null && (
             <line
               x1={clickNumber}
               x2={clickNumber}
