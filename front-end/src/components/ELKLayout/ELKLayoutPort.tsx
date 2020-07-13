@@ -27,7 +27,6 @@ const ELKLayoutPort: React.FC = () => {
                 id={d.data.id4Style}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onMouseEnter={() => {
-                  console.log(d.data.hiddenEdges);
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
@@ -35,7 +34,6 @@ const ELKLayoutPort: React.FC = () => {
                       hoverEdges
                         .selectAll(`.${edgeName}`)
                         .select("path")
-                        .transition()
                         .attr("fill", "none")
                         .style("stroke", "#3186FF")
                         .style("stroke-width", "2")
@@ -92,7 +90,21 @@ const ELKLayoutPort: React.FC = () => {
                   }
                 }}
                 onMouseLeave={() => {
-                  d3.selectAll(".hoverEdge").transition().remove();
+                  d3.selectAll(".hoverEdge").remove();
+                  for (let i = 0; i < d.data.hiddenEdges.length; i++) {
+                    const { source, target } = d.data.hiddenEdges[i];
+                    const edgeName = `${source}to${target}`;
+                    if (!hoverEdges.selectAll(`.${edgeName}`).empty()) {
+                      hoverEdges
+                        .selectAll(`.${edgeName}`)
+                        .select("path")
+                        .attr("fill", "none")
+                        .style("stroke", "#ff931e")
+                        .style("stroke-width", "3")
+                        .style("stroke-linecap", "round");
+                      continue;
+                    }
+                  }
                 }}
               >
                 {d.data.type === "in" ? (
@@ -105,14 +117,14 @@ const ELKLayoutPort: React.FC = () => {
                     strokeWidth={strokeWidth}
                   ></rect>
                 ) : (
-                  <rect
-                    width={d.style.rectWidth / 2}
-                    height={d.style.rectHeight}
-                    fill={fill}
-                    stroke={stroke}
-                    strokeWidth={strokeWidth}
-                  ></rect>
-                )}
+                    <rect
+                      width={d.style.rectWidth / 2}
+                      height={d.style.rectHeight}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={strokeWidth}
+                    ></rect>
+                  )}
                 <rect
                   width={d.style.rectWidth}
                   height={d.style.rectHeight}
