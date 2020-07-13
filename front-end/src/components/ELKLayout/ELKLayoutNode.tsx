@@ -23,6 +23,11 @@ import {
   modifyGlobalConfigurations,
 } from "../../store/global-configuration";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { LineGroup } from "../LineCharts/index";
 import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
 
@@ -46,10 +51,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   const { handleRightClick, currentNotShowLineChartID, iteration, layoutModificationMode, isPathFindingMode, startNodeId, endNodeId } = props;
   const graphForLayout = useProcessedGraph();
-  const {
-    diagnosisMode,
-    selectedNodeId,
-  } = useGlobalConfigurations();
+  const { diagnosisMode } = useGlobalConfigurations();
+  const { selectedNodeId } = useGlobalStates();
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
@@ -84,8 +87,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   const handleClick = (id) => {
     if (selectedNodeId !== id)
-      modifyGlobalConfigurations(
-        GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+      modifyGlobalStates(
+        GlobalStatesModificationType.SET_SELECTEDNODE,
         id
       );
   };

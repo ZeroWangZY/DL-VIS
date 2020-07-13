@@ -1,18 +1,13 @@
-import axios from 'axios';
+import fireAjax from './base'
 
-const URL_ROOT = ' ';
+export const fetchActivations = (params) => fireAjax('POST', '', params);
 
-export  function fireAjax (method, URL, data) {
-  if (method === 'POST') {
-    return axios
-      .post(URL_ROOT + URL, data)
-      .then(({ data }) => ({ data: data.data }))
-      .catch(error => {
-        throw error;
-      });
-  } else if (method === 'GET') {
-      //get
-  }
+interface fetchNodeScalarsParams {
+  "graph_name": string,
+  "node_id": string[],
+  "start_step": number,
+  "end_step": number
 }
-
-export const fetchActivations = params => fireAjax('POST', '', params);
+export const fetchNodeScalars =
+  (params: fetchNodeScalarsParams): Promise<{ data }> =>
+    fireAjax('GET', '/api/get_node_scalars', params);

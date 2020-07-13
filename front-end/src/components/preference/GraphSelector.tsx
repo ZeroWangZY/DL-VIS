@@ -19,7 +19,13 @@ import { setTfRawGraph } from "../../store/rawGraph.tf";
 import { fetchLocalMsGraph } from "../../api";
 import { setMsRawGraph } from "../../store/rawGraph.ms";
 import useGraphPipeline from "../GraphPipeline/GraphPipeline";
+import fetchBackendData from "../FetchBackendData/FetchBackendData";
 import Typography from "@material-ui/core/Typography";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -31,7 +37,7 @@ const useStyles = makeStyles((theme: Theme) =>
       minWidth: 120,
       width: "80%",
     },
-  }) 
+  })
 );
 
 interface GraphMetadata {
@@ -40,7 +46,7 @@ interface GraphMetadata {
   description?: string;
 }
 
- 
+
 
 const GraphSelector = (props) => {
   const classes = useStyles();
@@ -49,7 +55,7 @@ const GraphSelector = (props) => {
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   useGraphPipeline();
-
+  fetchBackendData();
 
   const {
     preprocessingPlugins,
@@ -61,21 +67,21 @@ const GraphSelector = (props) => {
     currentLayout === LayoutType.DAGRE_FOR_TF ||
     currentLayout === LayoutType.TENSORBOARD ||
     currentLayout === LayoutType.ELK_FOR_TF;
- 
+
   const isMsGraph =
     currentLayout === LayoutType.DAGRE_FOR_MS ||
     currentLayout === LayoutType.ELK_FOR_MS;
 
   //根据url中的图参数确定当前选择的显示图
   useEffect(() => {
-    msGraphMetadatas.forEach(function(value,index,array){
-      if(array[index].name==props.match.params.graphName){
+    msGraphMetadatas.forEach(function (value, index, array) {
+      if (array[index].name == props.match.params.graphName) {
         setCurrentMsGraphIndex(index);
       }
     })
-    
+
   });
-  
+
 
   const handleTfGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
@@ -103,6 +109,12 @@ const GraphSelector = (props) => {
 
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
+    if (msGraphMetadatas[currentMsGraphIndex].name)
+      modifyGlobalStates(
+        GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+        msGraphMetadatas[currentMsGraphIndex].name
+      );
+
     fetchLocalMsGraph(msGraphMetadatas[currentMsGraphIndex].name).then(
       (RawData) => {
         let parsedGraph = RawData.data.data; // 处理
@@ -110,7 +122,6 @@ const GraphSelector = (props) => {
           const msGraphOptimizer = new MsRawGraphOptimizer();
           msGraphOptimizer.optimize(parsedGraph);
         }
-
         setMsRawGraph(parsedGraph);
       }
     );

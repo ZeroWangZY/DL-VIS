@@ -18,8 +18,7 @@ let globalConfigurations: GlobalConfigurations = {
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
   currentLayout: LayoutType.ELK_FOR_MS,
-  currentStep: null,
-  selectedNodeId: null
+
 };
 
 const broadcast = () => {
@@ -74,18 +73,6 @@ export const modifyGlobalConfigurations = (
       globalConfigurations = Object.assign({}, globalConfigurations, {
         shouldOptimizeProcessedGraph: !globalConfigurations.shouldOptimizeProcessedGraph,
       });
-      break;
-    case GlobalConfigurationsModificationType.SET_CURRENT_SEPT:
-      globalConfigurations = Object.assign({}, globalConfigurations, {
-        currentStep: payload,
-      });
-      break;
-    case GlobalConfigurationsModificationType.SET_SELECTEDNODE:
-      globalConfigurations = Object.assign({}, globalConfigurations, {
-        selectedNodeId: payload,
-      });
-      break;
-    default:
       break;
   }
   broadcast();

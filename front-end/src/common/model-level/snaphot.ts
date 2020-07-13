@@ -1,10 +1,10 @@
-import  { fetchSnaphot,fetchLayerInfo } from '../../api/modelLevel'
+import { fetchSnaphot, fetchLayerInfo, fetchModelScalars } from '../../api/modelLevel'
 import { GroupNodeImp, LayerNodeImp } from '../graph-processing/stage2/processed-graph'
 
 export const fetchAndComputeSnaphot = async () => {
     let data = await fetchSnaphot()
-    let line = data.data.slice(0,1000).map(d => {
-        return{
+    let line = data.data.slice(0, 1000).map(d => {
+        return {
             x: d.STEP,
             y: d.TRAIN_LOSS
         }
@@ -12,10 +12,52 @@ export const fetchAndComputeSnaphot = async () => {
     return { id: 'snapshot', data: line, color: '#9ecae1' }
 }
 
+export const fetchAndComputeModelScalars = async (graph_name: string, start_step: number, end_step: number) => {
+    // TODO: graph_name可以是传入的graph_name
+    let data = await fetchModelScalars({ graph_name: "lenet", start_step: start_step, end_step: end_step });
+
+    let trainLoss = [],
+        testLoss = [],
+        trainAccuracy = [],
+        testAccuracy = [],
+        learningRate = [];
+
+    data.data.data.map(d => {
+        trainLoss.push({
+            x: d.step,
+            y: d.train_loss
+        })
+        testLoss.push({
+            x: d.step,
+            y: d.test_loss
+        })
+        trainAccuracy.push({
+            x: d.step,
+            y: d.train_accuracy
+        })
+        testAccuracy.push({
+            x: d.step,
+            y: d.test_accuracy
+        })
+        learningRate.push({
+            x: d.step,
+            y: d.learning_rate
+        })
+
+    })
+    return [
+        { id: `trainLoss`, data: trainLoss, color: "#C71585" },
+        { id: `testLoss`, data: testLoss, color: "#DC143C" },
+        { id: `trainAccuracy`, data: trainAccuracy, color: "#4B0082" },
+        { id: `testAccuracy`, data: testAccuracy, color: "#0000FF" },
+        { id: `learningRate`, data: learningRate, color: "#32CD32" },
+    ]
+}
+
 export const fetchAndGetLayerInfo = async (params, nodeId, graphData) => {
     //查找内部节点输出点
     let output = nodeId
-    while(graphData.nodeMap[output] instanceof GroupNodeImp || graphData.nodeMap[output] instanceof LayerNodeImp){
+    while (graphData.nodeMap[output] instanceof GroupNodeImp || graphData.nodeMap[output] instanceof LayerNodeImp) {
         let innerGraph = graphData.getInnerGraph(output)
         let g = new Graph(innerGraph);
         output = g.topSort()
@@ -23,7 +65,7 @@ export const fetchAndGetLayerInfo = async (params, nodeId, graphData) => {
     params['NODE_ARRAY'] = [`${output}:0`]
     //请求
     let data = await fetchLayerInfo(params)
-    let mean = [] , max = [], min = []
+    let mean = [], max = [], min = []
     data.data.map(d => {
         mean.push({
             x: d.STEP,
@@ -52,7 +94,7 @@ function Graph(graph) {
     for (let i = 0; i < this.vertices.length; i++) {
         this.adj[this.vertices[i]] = [];
     }
-    for(let i = 0; i < this.edges.length; i++){
+    for (let i = 0; i < this.edges.length; i++) {
         let source = this.edges[i].source
         let target = this.edges[i].target
         this.adj[source].push(target);
@@ -60,7 +102,7 @@ function Graph(graph) {
     this.topSort = topSort;
     this.topSortHelper = topSortHelper
 }
-function topSort(){
+function topSort() {
     let stack = [];
     let visited = {};
     for (let i = 0; i < this.vertices.length; i++) {
@@ -71,7 +113,7 @@ function topSort(){
             this.topSortHelper(this.vertices[i], visited, stack);
         }
     }
-   return stack[0]
+    return stack[0]
 }
 function topSortHelper(v, visited, stack) {
     visited[v] = true;

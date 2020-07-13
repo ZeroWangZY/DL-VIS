@@ -53,6 +53,12 @@ import {
 } from "../../store/global-configuration";
 import { useVisGraph } from "../../store/visGraph";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
+
 import "./NodeSelector.css";
 // import {ProcessedGraph} from "../../store/processedGraph";
 declare module "csstype" {
@@ -154,7 +160,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function NodeSelector() {
   const classes = useStyles();
   const processedGraph = useProcessedGraph();
-  const { selectedNodeId } = useGlobalConfigurations();
+  const { selectedNodeId } = useGlobalStates();
   const visGraph = useVisGraph();
 
   const [graph, setGraph] = useState(processedGraph);
@@ -227,8 +233,8 @@ export default function NodeSelector() {
     //     .classList.remove("highligh");
     // e.target.classList.add("highligh");
     // let nodeId = id.replace(/-/g, "/");
-    modifyGlobalConfigurations(
-      GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_SELECTEDNODE,
       id,
     );
   };

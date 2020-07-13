@@ -18,6 +18,11 @@ import {
   modifyGlobalConfigurations,
 } from "../../store/global-configuration";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { useStyledGraph } from "../../store/styledGraph";
 import { ModifyLineData } from "../../types/layerLevel";
 import { useHistory, useLocation } from "react-router-dom";
@@ -55,8 +60,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const {
     diagnosisMode,
     isHiddenInterModuleEdges,
-    selectedNodeId,
   } = useGlobalConfigurations();
+  const { selectedNodeId } = useGlobalStates();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -410,8 +415,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const handleBgClick = () => {
     //  setSelectedNodeId ("");
     if (selectedNodeId !== "")
-      modifyGlobalConfigurations(
-        GlobalConfigurationsModificationType.SET_SELECTEDNODE,
+      modifyGlobalStates(
+        GlobalStatesModificationType.SET_SELECTEDNODE,
         ""
       );
     cleanPathFinding();

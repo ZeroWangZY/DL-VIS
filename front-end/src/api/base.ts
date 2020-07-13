@@ -1,4 +1,5 @@
 import axios from 'axios';
+import qs from 'qs'
 
 const URL_ROOT = '';
 
@@ -15,6 +16,9 @@ export default function fireAjax(method, URL, data?) {
       .get(URL_ROOT + URL, {
         params: {
           ...data
+        },
+        paramsSerializer: params => {
+          return qs.stringify(params, { indices: false })
         }
       })
       .then(({ data }) => ({ data: data }))

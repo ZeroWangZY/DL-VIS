@@ -10,9 +10,7 @@ export interface GlobalConfigurations {
   };
   isHiddenInterModuleEdges: boolean;
   shouldOptimizeProcessedGraph: boolean;
-  currentStep: number;
   currentLayout: LayoutType;
-  selectedNodeId: string
 }
 
 export enum LayoutType {
@@ -31,6 +29,4 @@ export enum GlobalConfigurationsModificationType {
   TOGGLE_IS_HIDDEN_INTER_MODULE_EDGES,
   TOGGLE_SHOULD_MERGE_EDGE,
   TOGGLE_PROCESSED_GRAPH_OPTIMIZER,
-  SET_CURRENT_SEPT,
-  SET_SELECTEDNODE
 }

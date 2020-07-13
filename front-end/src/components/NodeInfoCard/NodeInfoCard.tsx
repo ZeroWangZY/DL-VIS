@@ -18,6 +18,10 @@ import {
   useGlobalConfigurations,
   modifyGlobalConfigurations,
 } from "../../store/global-configuration";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
 import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
 import { useVisGraph } from "../../store/visGraph";
 
@@ -36,9 +40,7 @@ const useStyles = makeStyles({
 });
 
 const NodeInfoCard: React.FC = () => {
-  const {
-    selectedNodeId,
-  } = useGlobalConfigurations();
+  const { selectedNodeId } = useGlobalStates();
 
   const visGraph = useVisGraph();
   const processedGraph = useProcessedGraph();
