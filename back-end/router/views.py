@@ -10,11 +10,12 @@ from graph.data_access.loaders.data_loader import DataLoader
 from graph.data_access.common.enums import PluginNameEnum
 from graph.data_access.proto_files import anf_ir_pb2
 from google.protobuf import json_format
+import random
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
+
+
 # print("summary path is: {}".format(SUMMARY_DIR))
-
-
 
 
 # print("summary path is: {}".format(SUMMARY_DIR))
@@ -41,12 +42,14 @@ def getMiddleResult(request):
         nodeidDic.add(item)
 
     # print(nodeidDic)
-    
+
     for row in cursor:
-        if(row[3] in nodeidDic):
-            result.append({"STEP" : row[1], "NODE_ID": row[2], "NODE_NAME": row[3], "ACTIVATION_MIN" : row[4], "ACTIVATION_MAX": row[5], "ACTIVATION_MEAN": row[6]})
-    
+        if (row[3] in nodeidDic):
+            result.append({"STEP": row[1], "NODE_ID": row[2], "NODE_NAME": row[3], "ACTIVATION_MIN": row[4],
+                           "ACTIVATION_MAX": row[5], "ACTIVATION_MEAN": row[6]})
+
     return HttpResponse(json.dumps(result), content_type="application/json")
+
 
 def getLoss(request):
     conn = sqlite3.connect(SUMMARY_DIR + '/test.db')
@@ -55,13 +58,16 @@ def getLoss(request):
     cursor = c.execute("SELECT * from LOSS_TABLE")
     result = []
     for row in cursor:
-        result.append({"STEP" : row[1], "TRAIN_LOSS": row[2], "TRAIN_ACCURACY": row[3], "TEST_LOSS" : row[4], "TEST_ACCURACY": row[5]})
-    
+        result.append({"STEP": row[1], "TRAIN_LOSS": row[2], "TRAIN_ACCURACY": row[3], "TEST_LOSS": row[4],
+                       "TEST_ACCURACY": row[5]})
+
     return HttpResponse(json.dumps(result), content_type="application/json")
 
+
 def getPb(request):
-    file_read = open(SUMMARY_DIR + '/model.pbtxt',"r+")
+    file_read = open(SUMMARY_DIR + '/model.pbtxt', "r+")
     return HttpResponse(file_read, content_type="application/octet-stream")
+
 
 def get_graph(request):
     data_loader = None
@@ -86,6 +92,7 @@ def get_graph(request):
         response.status_code = 500
         return response
 
+
 def get_local_ms_graph(request):
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
@@ -97,6 +104,47 @@ def get_local_ms_graph(request):
             "data": json.loads(json_format.MessageToJson(model.graph))
         }), content_type="application/json")
 
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
+
+def get_model_scalars(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        start_step = int(request.GET.get('start_step', default='0'))
+        end_step = int(request.GET.get('end_step', default='10'))
+        res = []
+        for i in range(start_step, end_step):
+            res.append({
+                "step": i,
+                "train_loss": random.random(),
+                "test_loss": random.random(),
+                "train_accuracy": random.random(),
+                "test_accuracy": random.random(),
+                "learning_rate": random.random() / 100
+            })
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": res
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
+
+def get_metadata(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": {
+                "max_step": 500,
+                "is_training": True
+            }
+        }), content_type="application/json")
     return HttpResponse(json.dumps({
         "message": "method undefined",
         "data": None

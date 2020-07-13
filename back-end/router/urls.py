@@ -23,5 +23,8 @@ urlpatterns = [
     path('api/tf/modellevel/snaphot', views.getLoss),
     path('api/tf/getPbtxt', views.getPb),
     path('api/ms/get_graph', views.get_graph),
-    path('api/get_local_ms_graph', views.get_local_ms_graph)
+    path('api/get_local_ms_graph', views.get_local_ms_graph),
+
+    path('api/get_model_scalars', views.get_model_scalars),
+    path('api/get_metadata', views.get_metadata)
 ]
