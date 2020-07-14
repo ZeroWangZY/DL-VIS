@@ -113,17 +113,33 @@ def get_local_ms_graph(request):
 def get_model_scalars(request):
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
-        start_step = int(request.GET.get('start_step', default='0'))
+        start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
         res = []
+        last_value = [random.random(), random.random(), random.random(), random.random(), 0.1]
         for i in range(start_step, end_step):
+            for j in range(len(last_value)):
+                if j == 4:
+                    last_value[j] = last_value[j] * 0.98
+                    continue
+                if j == 0 or j == 1:
+                    last_value[j] = last_value[j] + (random.random() - 0.7) / (5 / last_value[j])
+                    if last_value[j] < 0:
+                        last_value[j] = 0.01
+                    continue
+                if j == 2 or j == 3:
+                    last_value[j] = last_value[j] + (random.random() - 0.3) / (10 * last_value[j])
+                    if last_value[j] > 1:
+                        last_value[j] = 0.96
+                    continue
+
             res.append({
                 "step": i,
-                "train_loss": random.random(),
-                "test_loss": random.random(),
-                "train_accuracy": random.random(),
-                "test_accuracy": random.random(),
-                "learning_rate": random.random() / 100
+                "train_loss": last_value[0],
+                "test_loss": last_value[1],
+                "train_accuracy": last_value[2],
+                "test_accuracy": last_value[3],
+                "learning_rate": last_value[4],
             })
         return HttpResponse(json.dumps({
             "message": "success",
@@ -144,6 +160,42 @@ def get_metadata(request):
                 "max_step": 500,
                 "is_training": True
             }
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
+
+def get_node_scalars(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_ids = request.GET.getlist('node_id')
+        start_step = int(request.GET.get('start_step', default='1'))
+        end_step = int(request.GET.get('end_step', default='10'))
+        res = {}
+        for node_id in node_ids:
+            data = []
+            last_value = [random.random(), random.random(), random.random(), random.random(), random.random(),
+                          random.random()]
+            for i in range(start_step, end_step):
+                for j in range(len(last_value)):
+                    last_value[j] = last_value[j] + random.random() / 20 - 0.5 / 20
+                    if last_value[j] < 0:
+                        last_value[j] = 0.01
+                data.append({
+                    "step": i,
+                    "activation_min": last_value[0],
+                    "activation_max": last_value[1],
+                    "activation_mean": last_value[2],
+                    "gradient_min": last_value[3],
+                    "gradient_max": last_value[4],
+                    "gradient_mean": last_value[5]
+                })
+            res[node_id] = data
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": res
         }), content_type="application/json")
     return HttpResponse(json.dumps({
         "message": "method undefined",

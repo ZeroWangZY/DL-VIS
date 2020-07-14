@@ -26,5 +26,6 @@ urlpatterns = [
     path('api/get_local_ms_graph', views.get_local_ms_graph),
 
     path('api/get_model_scalars', views.get_model_scalars),
-    path('api/get_metadata', views.get_metadata)
+    path('api/get_metadata', views.get_metadata),
+    path('api/get_node_scalars', views.get_node_scalars)
 ]

@@ -20,9 +20,10 @@
 
 ## 后端
 
-1. 启动服务：`npm run start:server`
-2. 跑测试：`npm run test:server`
-3. 代码检查 & 格式化: `npm run lint:server`
+启动服务：
+进入back-end
+`python manage.py runserver --logdir logs`
+
 
 
 ## 部署
