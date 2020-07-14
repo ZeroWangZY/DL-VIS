@@ -1,0 +1,3492 @@
+<!--
+Copyright 2019 Huawei Technologies Co., Ltd.All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<template>
+  <!--cl-graph-manage -->
+  <div class="cl-graph-manage">
+    <div class="graph-p32">
+      <div class="guide-content"
+           v-if="guide.show">
+        <el-popover placement="top-start"
+                    ref="popover"
+                    :style="{ position: 'absolute', top: guide.top, left: guide.left }"
+                    :title="guide.title"
+                    width="370"
+                    v-model="guide.show">
+          <i class="el-icon-close"
+             @click="closeUserGuide"></i>
+          <div v-for="item in guide.content"
+               :key="item"
+               class="guide-span">{{ item }}</div>
+          <div class="step-pic">
+            <img :src="require(`@/assets/images/graph-stepimg${guide.step}.svg`)" />
+          </div>
+
+          <el-button type="primary"
+                     @click="guideNext">{{
+            guide.step === 3 ? $t('graph.finish') : $t('graph.next')
+          }}</el-button>
+        </el-popover>
+        <div class="step"
+             v-show="guide.step == 1">
+          <img src="@/assets/images/graph-step1.svg"
+               alt="" />
+        </div>
+        <div class="step"
+             v-show="guide.step == 2">
+          <img src="@/assets/images/graph-step2.svg"
+               alt="" />
+        </div>
+        <div class="step"
+             v-show="guide.step == 3">
+          <img src="@/assets/images/graph-step3.svg"
+               alt="" />
+        </div>
+      </div>
+      <div class="cl-title cl-graph-title">
+        <div class="cl-title-left">
+          {{ $t('graph.titleText') }}
+          <span @click="showUserGuide"
+                class="guide">
+            <i class="guide-icon"></i>
+            {{$t('graph.guide')}}
+          </span>
+        </div>
+        <div class="cl-title-right">
+          <div class="cl-close-btn"
+               @click="jumpToTrainDashboard">
+            <img src="@/assets/images/close-page.png" />
+          </div>
+        </div>
+      </div>
+      <div class="cl-content">
+        <div id="graphs">
+          <div class="cl-graph"
+               :class="fullScreen ? 'full-screen' : ''">
+            <!-- graph -->
+            <div class="graph-container"
+                 :class="rightShow ? '' : 'all'">
+              <!-- No data is displayed. -->
+              <div class="image-noData"
+                   v-if="!loading.show && !Object.keys(allGraphData).length">
+                <div>
+                  <img :src="require('@/assets/images/nodata.png')"
+                       alt="" />
+                </div>
+                <div class="noData-text">{{ $t('public.noData') }}</div>
+              </div>
+              <!-- Operation button column -->
+              <div class="operate-button-list">
+                <!-- Download button. -->
+                <div :title="$t('graph.fullScreen')"
+                     class="full-screen-button"
+                     @click="toggleScreen"></div>
+                <div :title="$t('graph.downloadPic')"
+                     class="download-button"
+                     @click="downLoadSVG"></div>
+              </div>
+              <div id="graph"
+                   class="graph"
+                   v-loading.fullscreen.lock="loading.show"
+                   element-loading-background="rgba(0, 0, 0, 0.3)"
+                   :element-loading-text="loading.info"></div>
+            </div>
+            <!-- Right column -->
+            <div id="sidebar"
+                 :class="rightShow ? '' : 'right-hide'">
+              <div class="toggle-right"
+                   @click="toggleRight">
+                <i :class="rightShow ? 'icon-toggle' : 'icon-toggle icon-left'"></i>
+              </div>
+              <!-- Search box -->
+              <el-select @change="fileChange"
+                         @visible-change="getSelectList"
+                         :popper-append-to-body="false"
+                         class="search"
+                         v-model="fileSearchBox.value">
+                <el-option v-for="item in fileSearchBox.suggestions"
+                           :key="item.value"
+                           :title="item.value"
+                           :label="item.value"
+                           :value="item.value">
+                </el-option>
+              </el-select>
+              <!-- Search box -->
+              <Autocomplete class="search"
+                            v-model="searchBox.value"
+                            :disabled="!fileSearchBox.value"
+                            :fetch-suggestions="searchNodesNames"
+                            :placeholder="$t('graph.inputNodeName')"
+                            :popper-append-to-body="false"
+                            clearable
+                            @select="querySingleNode"
+                            @blur="selectBoxVisibleTriggle"
+                            @focus="selectBoxVisibleTriggle"
+                            select-when-unmatched></Autocomplete>
+              <!-- Functional Area -->
+              <div id="small-container">
+                <div id="small-resize">
+                  <div id="small-map"></div>
+                  <div id="inside-box"></div>
+                </div>
+              </div>
+              <!-- Node information -->
+              <div :class="
+                  showLegend
+                    ? 'node-info-con node-info-container'
+                    : 'node-info-con node-info-container-long'
+                ">
+                <div class="title">
+                  {{ $t('graph.nodeInfo') }}
+                  <img :src="require('@/assets/images/all-drop-down.png')"
+                       fun="fold"
+                       hidden
+                       alt="" />
+                  <img :src="require('@/assets/images/all-uptake.png')"
+                       fun="fold"
+                       hidden
+                       alt="" />
+                </div>
+                <div class="node-info"
+                     v-show="selectedNode.show">
+                  <div class="items">
+                    <div class="label item">{{ $t('graph.name') }}</div>
+                    <div class="value">
+                      <span class="cl-display-block"
+                            @dblclick="nodeNameClick">{{ selectedNode.title }}</span>
+                    </div>
+                  </div>
+                  <div class="items"
+                       v-if="selectedNode.countShow">
+                    <div class="label item">{{ $t('graph.count') }}</div>
+                    <div class="value items-over">{{ selectedNode.count }}</div>
+                  </div>
+                  <div class="items"
+                       v-if="!selectedNode.countShow">
+                    <div class="label item">{{ $t('graph.type') }}</div>
+                    <div class="value items-over">{{ selectedNode.type }}</div>
+                  </div>
+                  <div class="items itemHeight"
+                       v-if="!selectedNode.countShow">
+                    <div class="item">
+                      {{ $t('graph.attr') }} ({{
+                        selectedNode.info.attributes.length
+                      }})
+                    </div>
+                  </div>
+                  <ul v-if="selectedNode.info && !selectedNode.countShow"
+                      class="item-content hover"
+                      :class="
+                      selectedNode.info.attributes.length > 2
+                        ? 'item-min2'
+                        : selectedNode.info.attributes.length > 0
+                        ? 'item-min'
+                        : ''
+                    ">
+                    <li v-for="item in selectedNode.info.attributes"
+                        :key="item.name">
+                      <div class="key">
+                        {{ item.name }}
+                      </div>
+                      <div class="input cl-input-value">
+                        <pre>{{ item.value }}</pre>
+                      </div>
+                    </li>
+                  </ul>
+                  <div class="items itemHeight">
+                    <div class="item">
+                      {{ $t('graph.inputs') }} (
+                      {{
+                        selectedNode.info.input.length +
+                          selectedNode.info.inputControl.length
+                      }})
+                    </div>
+                  </div>
+                  <ul v-if="selectedNode.info"
+                      class="item-content hover"
+                      :class="
+                      selectedNode.info.input.length > 1
+                        ? 'item-min2'
+                        : selectedNode.info.input.length > 0
+                        ? 'item-min'
+                        : ''
+                    ">
+                    <li v-for="item in selectedNode.info.input"
+                        :key="item.$index"
+                        @click="querySingleNode({ value: item.name })"
+                        class="pointer">
+                      <div class="input">{{ item.name }}</div>
+                      <div class="size">{{ item.value }}</div>
+                      <div class="clear"></div>
+                    </li>
+                    <li class="control-list"
+                        v-if="
+                        selectedNode.info &&
+                          selectedNode.info.inputControl.length
+                      ">
+                      <div class="dependence-title"
+                           @click="toggleControl('input')"
+                           :class="selectedNode.showControl.input ? '' : 'hide'">
+                        <img :src="require('@/assets/images/all-uptake.png')"
+                             alt="" />
+                        {{ $t('graph.controlDependencies') }}
+                      </div>
+                      <ul v-show="selectedNode.showControl.input">
+                        <li v-for="item in selectedNode.info.inputControl"
+                            :key="item.$index"
+                            @click="querySingleNode({ value: item.name })"
+                            class="pointer">
+                          <div class="input">{{ item.name }}</div>
+                          <div class="size">{{ item.value }}</div>
+                          <div class="clear"></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                  <div class="items">
+                    <div class="item">
+                      {{ $t('graph.outputs') }} (
+                      {{
+                        selectedNode.info.output.length +
+                          selectedNode.info.outputControl.length
+                      }})
+                    </div>
+                  </div>
+                  <ul v-if="selectedNode.info"
+                      class="item-content hover"
+                      :class="
+                      selectedNode.info.output.length > 1
+                        ? 'item-min2'
+                        : selectedNode.info.output.length > 0
+                        ? 'item-min'
+                        : ''
+                    ">
+                    <li v-for="item in selectedNode.info.output"
+                        :key="item.$index"
+                        @click="querySingleNode({ value: item.name })"
+                        class="pointer">
+                      <div class="input">{{ item.name }}</div>
+                      <div class="size">{{ item.value }}</div>
+                      <div class="clear"></div>
+                    </li>
+                    <li class="control-list"
+                        v-if="
+                        selectedNode.info &&
+                          selectedNode.info.outputControl.length
+                      ">
+                      <div class="dependence-title"
+                           @click="toggleControl('output')"
+                           :class="selectedNode.showControl.output ? '' : 'hide'">
+                        <img :src="require('@/assets/images/all-uptake.png')"
+                             alt="" />
+                        {{ $t('graph.controlDependencies') }}
+                      </div>
+                      <ul v-show="selectedNode.showControl.output">
+                        <li v-for="item in selectedNode.info.outputControl"
+                            :key="item.$index"
+                            @click="querySingleNode({ value: item.name })"
+                            class="pointer">
+                          <div class="input">{{ item.name }}</div>
+                          <div class="size">{{ item.value }}</div>
+                          <div class="clear"></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                  <div class="items"
+                       v-if="selectedNode.info && selectedNode.info.output_i !== 0">
+                    <div class="label item">{{ $t('graph.outputs_i') }}</div>
+                    <span class="value">{{ selectedNode.info.output_i }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Legend -->
+              <div class="legend"
+                   v-if="!fullScreen">
+                <div class="title">
+                  {{ $t('graph.legend') }}
+                  <img :src="require('@/assets/images/all-drop-down.png')"
+                       v-show="!showLegend"
+                       @click="foldLegend"
+                       alt="" />
+                  <img :src="require('@/assets/images/all-uptake.png')"
+                       v-show="showLegend"
+                       @click="foldLegend"
+                       alt="" />
+                </div>
+                <div v-show="showLegend"
+                     class="legend-content">
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/name-scope.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.nameSpace')">
+                      {{ $t('graph.nameSpace') }}
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/polymetric.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.polymetric')">
+                      {{ $t('graph.polymetric') }}
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/virtual-node.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.virtualNode')">
+                      {{ $t('graph.virtualNode') }}
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/operator-node.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.operatorNode')">
+                      {{ $t('graph.operatorNode') }}
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/constant-node.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.constantNode')">
+                      {{ $t('graph.constantNode') }}
+                    </div>
+                  </div>
+                  <br>
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/data-flow.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.dataFlowEdge')">
+                      {{ $t('graph.dataFlowEdge') }}
+                    </div>
+                  </div>
+                  <div class="legend-item">
+                    <div class="pic">
+                      <img :src="require('@/assets/images/control-dep.png')"
+                           alt="" />
+                    </div>
+                    <div class="legend-text"
+                         :title="$t('graph.controllDepEdge')">
+                      {{ $t('graph.controllDepEdge') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import Autocomplete from '@/components/autocomplete';
+import CommonProperty from '@/common/common-property.js';
+import RequestService from '@/services/request-service';
+import {select, selectAll, zoom} from 'd3';
+import 'd3-graphviz';
+const d3 = {select, selectAll, zoom};
+export default {
+  data() {
+    return {
+      clickScope: {}, // Information about the node that is clicked for the first time.
+      smallResize: {}, // The container of display area box.
+      insideBox: {}, // Basic information about the display area box
+      graph: {}, // Basic information about graph0 in svg
+      graphSmall: {}, // Basic information about graph0 in the thumbnail
+      svg: {}, // Basic information about svg
+      eventSmall: {}, // Relative position of the thumbnail in the thumbnail click event
+      // Which mouse button is triggered when the thumbnail is clicked. -1 indicates that no click event is triggered,
+      // 0 indicates the left key, 1 indicates the middle key, and 2 means right key.
+      clickSmall: false,
+      allGraphData: {}, // graph Original input data
+      firstFloorNodes: [], // ID array of the first layer node.
+      // Information about the selected node
+      selectedNode: {
+        info: {
+          inputControl: [],
+          input: [],
+          outputControl: [],
+          output: [],
+          attributes: [],
+        },
+        showControl: {
+          input: true,
+          output: true,
+        },
+      },
+      // Training job id
+      trainJobID: '',
+      frameSpace: 25, // Distance between the namespace border and the internal node
+      nodesCountLimit: 1500, // Maximum number of sub-nodes in a namespace.
+      maxChainNum: 70,
+      curColorIndex: 0,
+      // Node search box
+      searchBox: {
+        value: '',
+        suggestions: [],
+      },
+      fileSearchBox: {
+        value: '',
+        suggestions: [],
+      },
+      showLegend: true, // Display Legend
+      // Controls whether the loading is displayed.
+      loading: {
+        show: false,
+        info: '',
+      },
+      scaleRange: [0.0001, 10000], // graph zooms in and zooms out.
+      rightShow: true, // Check whether the right side bar is displayed.
+      fullScreen: false, // Display Full Screen
+      totalMemory: 16777216 * 2, // Memory size of the graph plug-in
+      graphviz: null,
+      graphvizTemp: null,
+      initOver: false,
+      guide: {
+        show: false,
+        step: 1,
+        top: '0%',
+        left: '0%',
+        content: [
+          this.$t('graph.guideContent11'),
+          this.$t('graph.guideContent12'),
+          this.$t('graph.guideContent13'),
+          this.$t('graph.guideContent14'),
+        ],
+        title: '',
+      },
+      viewBox: {
+        max: 10000,
+        scale: {x: 1, y: 1},
+      },
+    };
+  },
+  computed: {},
+  watch: {
+    guide: {
+      handler(newVal) {
+        if (newVal.step === 1) {
+          this.guide.top = '20%';
+          this.guide.left = '48%';
+        } else if (newVal.step === 2) {
+          this.guide.top = '47%';
+          this.guide.left = '62%';
+        } else if (newVal.step === 3) {
+          this.guide.top = '45%';
+          this.guide.left = '52%';
+        }
+        this.guide.title = this.$t(`graph.guideTitle${newVal.step}`);
+      },
+      deep: true,
+    },
+  },
+  mounted() {
+    // Judging from the training job overview.
+    if (!this.$route.query || !this.$route.query.train_id) {
+      this.trainJobID = '';
+      this.$message.error(this.$t('trainingDashboard.invalidId'));
+      document.title = `${this.$t('graph.titleText')}-MindInsight`;
+      return;
+    }
+    const showGuide = window.localStorage.getItem('graphShowGuide');
+    if (!showGuide) {
+      this.guide.show = true;
+      window.localStorage.setItem('graphShowGuide', true);
+    }
+
+    this.trainJobID = this.$route.query.train_id;
+    document.title = `${decodeURIComponent(this.trainJobID)}-${this.$t(
+        'graph.titleText',
+    )}-MindInsight`;
+    this.getDatavisualPlugins();
+    window.onresize = () => {
+      if (this.graph.dom) {
+        this.initSvg();
+        this.initGraphRectData();
+      }
+    };
+  },
+  destroyed() {
+    window.onresize = document.onmouseup = null;
+    const smallContainer = document.querySelector('#small-container');
+    if (smallContainer) {
+      smallContainer.onmousemove = null;
+      smallContainer.onmousedown = null;
+      smallContainer.onmousewheel = null;
+    }
+  },
+  methods: {
+    showUserGuide() {
+      this.guide.content = [
+        this.$t('graph.guideContent11'),
+        this.$t('graph.guideContent12'),
+        this.$t('graph.guideContent13'),
+        this.$t('graph.guideContent14'),
+      ];
+      this.guide.show = true;
+      this.guide.step = 1;
+    },
+    closeUserGuide() {
+      this.guide.show = false;
+    },
+    guideNext() {
+      if (this.guide.step < 3) {
+        this.guide.step++;
+        switch (this.guide.step) {
+          case 2:
+            this.guide.content = [this.$t('graph.guideContent2')];
+            break;
+          case 3:
+            this.guide.content = [this.$t('graph.guideContent3')];
+            break;
+          default:
+            break;
+        }
+      } else if (this.guide.step >= 3) {
+        this.guide.show = false;
+      }
+    },
+    /**
+     * Initializing the graph
+     * @param {String} dot dot statement encapsulated in graph data
+     */
+    initGraph(dot) {
+      this.graphviz = d3
+          .select('#graph')
+          .graphviz({useWorker: false, totalMemory: this.totalMemory})
+          .zoomScaleExtent(this.scaleRange)
+          .dot(dot)
+          .attributer(this.attributer)
+          .render(() => {
+            this.initSvg();
+            this.afterInitGraph();
+          });
+      // Generate the dom of the submap.
+      if (!d3.select('#graphTemp').size()) {
+        d3.select('body')
+            .append('div')
+            .attr('id', 'graphTemp')
+            .attr('style', 'visibility: collapse');
+      }
+      // Stores the dom of all the sorted subgraphs.
+      if (!d3.select('#subgraphTemp').size()) {
+        d3.select('body')
+            .append('div')
+            .attr('id', 'subgraphTemp')
+            .attr('style', 'visibility: collapse');
+      }
+    },
+    initSvg() {
+      this.svg.dom = document.querySelector('#graph svg');
+      this.svg.rect = this.svg.dom.getBoundingClientRect();
+      const viewBoxData = this.svg.dom.getAttribute('viewBox').split(' ');
+      this.viewBox.scale.x = 1;
+      this.svg.originSize = {width: viewBoxData[2], height: viewBoxData[3]};
+      if (viewBoxData[2] > this.viewBox.max) {
+        this.viewBox.scale.x = viewBoxData[2] / this.viewBox.max;
+        viewBoxData[2] = this.viewBox.max;
+      }
+
+      this.viewBox.scale.y = 1;
+      if (viewBoxData[3] > this.viewBox.max) {
+        this.viewBox.scale.y = viewBoxData[3] / this.viewBox.max;
+        viewBoxData[3] = this.viewBox.max;
+      }
+      this.svg.dom.setAttribute('viewBox', viewBoxData.join(' '));
+      this.svg.viewWidth = viewBoxData[2];
+      this.svg.viewHeight = viewBoxData[3];
+    },
+    /**
+     * Add the location attribute to each node to facilitate the obtaining of node location parameters.
+     */
+    afterInitGraph() {
+      setTimeout(() => {
+        if (this.graphviz) {
+          this.graphviz._data = null;
+          this.graphviz._dictionary = null;
+          this.graphviz = null;
+        }
+
+        if (this.graphvizTemp) {
+          this.graphvizTemp._data = null;
+          this.graphvizTemp._dictionary = null;
+          this.graphvizTemp = null;
+        }
+      }, 100);
+      this.fitGraph('graph');
+      this.transplantChildrenDom();
+      const svg = document.querySelector('#subgraphTemp svg');
+      if (svg) {
+        svg.remove();
+      }
+      this.$nextTick(() => {
+        this.loading.show = false;
+      });
+      const elements = d3
+          .select('#graph')
+          .selectAll('g.node, g.edge')
+          .nodes();
+      elements.forEach((ele) => {
+        if (!ele.hasAttribute('transform')) {
+          ele.setAttribute('transform', 'translate(0,0)');
+        }
+        // The title value needs to be manually set for the virtual node.
+        if (Array.prototype.includes.call(ele.classList, 'plain')) {
+          const title = ele.querySelector('title');
+          title.textContent = title.textContent.split('^')[0];
+        }
+      });
+      d3.selectAll('g.edge>title').remove();
+      // The graph generated by the plug-in has a useless title and needs to be deleted.
+      document.querySelector('#graph g#graph0 title').remove();
+      this.initGraphRectData();
+      this.startApp();
+    },
+    /**
+     * Initialization method executed after the graph rendering is complete
+     */
+    startApp() {
+      const nodes = d3.selectAll('g.node, g.cluster');
+      nodes.on('click', (target, index, nodesList) => {
+        // The target value of the element converted from the HTML attribute of the variable is null.
+        const clickNode = nodesList[index];
+        const nodeId = clickNode.id;
+        const nodeClass = clickNode.classList.value;
+        setTimeout(() => {
+          this.clickScope = {
+            id: nodeId,
+            class: nodeClass,
+          };
+        }, 10);
+        setTimeout(() => {
+          this.clickScope = {};
+        }, 1000);
+        this.selectedNode.name = nodeId;
+        this.selectNode(false);
+        if (!event || !event.type || event.type !== 'click') {
+          return;
+        }
+        event.stopPropagation();
+        event.preventDefault();
+      });
+      // namespaces Expansion or Reduction
+      nodes.on('dblclick', (target, index, nodesList) => {
+        // The target of the element converted from the HTML attribute of the variable is empty and
+        // needs to be manually encapsulated.
+        const clickNode = nodesList[index];
+        const nodeId = clickNode.id;
+        const nodeClass = clickNode.classList.value;
+        let name = nodeId;
+        this.selectedNode.more =
+          name.indexOf('more...') !== -1 &&
+          document
+              .querySelector(`#graph g[id="${name}"]`)
+              .attributes.class.value.indexOf('plain') === -1;
+
+        const unfoldFlag =
+          (nodeClass.includes('aggregation') ||
+            nodeClass.includes('cluster') ||
+            this.selectedNode.more) &&
+          (!this.clickScope.id ||
+            (this.clickScope.id && nodeId === this.clickScope.id));
+
+        if (this.selectedNode.more) {
+          const changePage = name.includes('right') ? 1 : -1;
+          const parentId = document.querySelector(`#graph g[id="${name}"]`)
+              .parentNode.id;
+          name = parentId.replace('_unfold', '');
+          this.allGraphData[name].index += changePage;
+        }
+        if (unfoldFlag) {
+          this.dealDoubleClick(name);
+        } else if (this.clickScope.id) {
+          this.selectedNode.name = this.clickScope.id;
+          this.selectNode(false);
+        }
+        if (!event || !event.type || event.type !== 'dblclick') {
+          return;
+        }
+        event.stopPropagation();
+        event.preventDefault();
+      });
+      this.initZooming();
+      if (this.selectedNode.name) {
+        this.selectNode(true);
+      }
+    },
+    /**
+     * Initializing the graph zoom
+     */
+    initZooming() {
+      const graphBox = this.graph.dom.getBBox();
+      const padding = 4;
+      const minDistance = 20;
+      const pointer = {start: {x: 0, y: 0}, end: {x: 0, y: 0}};
+      const zoom = d3
+          .zoom()
+          .on('start', () => {
+            pointer.start.x = event.x;
+            pointer.start.y = event.y;
+          })
+          .on('zoom', () => {
+            const transformData = this.getTransformData(this.graph.dom);
+            let tempStr = '';
+            let change = {};
+            let scale = transformData.scale[0];
+            const graphRect = this.graph.dom.getBoundingClientRect();
+            const transRate = graphBox.width / graphRect.width;
+            if (event.type === 'mousemove') {
+              pointer.end.x = event.x;
+              pointer.end.y = event.y;
+              let tempX = pointer.end.x - pointer.start.x;
+              let tempY = pointer.end.y - pointer.start.y;
+              const paddingTrans = Math.max(
+                  (padding / transRate) * scale,
+                  minDistance,
+              );
+              if (
+                graphRect.left + paddingTrans + tempX >=
+              this.svg.rect.left + this.svg.rect.width
+              ) {
+                tempX = Math.min(tempX, 0);
+              }
+              if (
+                graphRect.left + graphRect.width - paddingTrans + tempX <=
+              this.svg.rect.left
+              ) {
+                tempX = Math.max(tempX, 0);
+              }
+              if (
+                graphRect.top + paddingTrans + tempY >=
+              this.svg.rect.top + this.svg.rect.height
+              ) {
+                tempY = Math.min(tempY, 0);
+              }
+              if (
+                graphRect.top + graphRect.height - paddingTrans + tempY <=
+              this.svg.rect.top
+              ) {
+                tempY = Math.max(tempY, 0);
+              }
+
+              change = {
+                x: tempX * transRate * scale,
+                y: tempY * transRate * scale,
+              };
+              pointer.start.x = pointer.end.x;
+              pointer.start.y = pointer.end.y;
+            } else if (event.type === 'wheel') {
+              const wheelDelta = event.wheelDelta;
+              const rate = Math.abs(wheelDelta / 100);
+              scale =
+              wheelDelta > 0
+                ? transformData.scale[0] * rate
+                : transformData.scale[0] / rate;
+
+              scale = Math.max(this.scaleRange[0], scale, this.graph.minScale);
+              scale = Math.min(this.scaleRange[1], scale);
+              change = {
+                x:
+                (graphRect.x + padding / transRate - event.x) *
+                transRate *
+                (scale - transformData.scale[0]),
+                y:
+                (graphRect.bottom - padding / transRate - event.y) *
+                transRate *
+                (scale - transformData.scale[0]),
+              };
+            }
+
+            this.graph.transform = {
+              x: transformData.translate[0] + change.x,
+              y: transformData.translate[1] + change.y,
+              k: scale,
+            };
+            this.graph.transRate =
+            graphRect.width / graphBox.width / this.graph.transform.k;
+
+            tempStr = `translate(${this.graph.transform.x},${this.graph.transform.y}) scale(${this.graph.transform.k})`;
+            this.graph.dom.setAttribute('transform', tempStr);
+            this.setInsideBoxData();
+            event.stopPropagation();
+            event.preventDefault();
+          });
+
+      const svg = d3.select('#graph svg');
+      svg.on('.zoom', null);
+      svg.call(zoom);
+      svg.on('dblclick.zoom', null);
+      svg.on('wheel.zoom', null);
+
+      const graph0 = d3.select('#graph #graph0');
+      graph0.on('.zoom', null);
+      graph0.call(zoom);
+    },
+    /**
+     * Double-click the processing to be performed on the node to expand or narrow the namespace or aggregation node.
+     * @param {String} name Name of the current node (also the ID of the node)
+     */
+    dealDoubleClick(name) {
+      name = name.replace('_unfold', '');
+      if (this.allGraphData[name].isUnfold) {
+        this.selectedNode.name = name;
+        this.deleteNamespace(name);
+      } else {
+        this.queryGraphData(name);
+      }
+    },
+    /**
+     * Default method of the graph rendering adjustment. Set the node format.
+     * @param {Object} datum Object of the current rendering element.
+     * @param {Number} index Indicates the subscript of the current rendering element.
+     * @param {Array} nodes An array encapsulated with the current rendering element.
+     */
+    attributer(datum, index, nodes) {
+      const isChild =
+        datum.tag === 'ellipse' ||
+        datum.tag === 'circle' ||
+        (datum.tag === 'polygon' && datum.attributes.stroke !== 'transparent');
+      if (datum.tag === 'svg') {
+        const width = '100%';
+        const height = '100%';
+        datum.attributes.width = width;
+        datum.attributes.height = height;
+      } else if (isChild) {
+        datum.attributes.stroke = 'rgb(167, 167, 167)';
+      }
+    },
+    /**
+     * When the value of graph is too large, enlarge the value of graph.
+     * Otherwise, the node cannot be clearly displayed.
+     * @param {String} id Indicates the ID of the graph diagram.
+     */
+    fitGraph(id) {
+      const graph = document.getElementById(id);
+      const maxShowWidth = graph.offsetWidth * 1.5;
+      const maxShowHeight = graph.offsetHeight * 1.5;
+      const graphDom = document.querySelector(`#${id} #graph0`);
+      const box = graphDom.getBBox();
+      let transformStr = '';
+      const graphTransformData = this.getTransformData(graphDom);
+      if (box.width > maxShowWidth || box.height > maxShowHeight) {
+        const scale = Math.max(
+            box.width / maxShowWidth / this.viewBox.scale.x,
+            box.height / maxShowHeight / this.viewBox.scale.y,
+        );
+        const translate = {x: (box.width - maxShowWidth) / 2};
+
+        if (!this.selectedNode.name) {
+          graphTransformData.translate[0] = translate.x;
+        }
+        graphTransformData.scale[0] = scale;
+      } else {
+        graphTransformData.translate = [-box.x, -box.y];
+      }
+      if (id === 'graph' && this.selectedNode.more) {
+        graphTransformData.scale[0] = this.graph.transform.k;
+      }
+      Object.keys(graphTransformData).forEach((key) => {
+        transformStr += `${key}(${graphTransformData[key].join(',')}) `;
+      });
+      graphDom.setAttribute('transform', transformStr.trim());
+    },
+    /**
+     * Expand a namespace.
+     * @param {String} name Nodes to be expanded or zoomed out
+     * @param {Boolean} toUnfold Expand the namespace.
+     */
+    layoutNamescope(name, toUnfold) {
+      setTimeout(() => {
+        const dotStr = this.packageNamescope(name);
+        this.graphvizTemp = d3
+            .select('#graphTemp')
+            .graphviz({useWorker: false, totalMemory: this.totalMemory})
+            .dot(dotStr)
+            .zoomScaleExtent(this.scaleRange)
+            .attributer((datum, index, nodes) => {
+              if (
+                datum.tag === 'polygon' &&
+              datum.attributes.stroke !== 'transparent'
+              ) {
+                datum.attributes.stroke = 'rgb(167, 167, 167)';
+              }
+            })
+            .render(() => {
+              this.fitGraph('graphTemp');
+              this.dealNamescopeTempGraph(name);
+            });
+      }, 20);
+    },
+    /**
+     * To obtain graph data, initialize and expand the namespace or aggregate nodes.
+     * @param {String} name Name of the current node.
+     * @param {String} type Type of the current node.
+     */
+    queryGraphData(name) {
+      const namescopeChildLimit = 3500;
+      const independentLayout = this.allGraphData[name]
+        ? this.allGraphData[name].independent_layout
+        : false;
+      const params = {
+        name: name,
+        train_id: this.trainJobID,
+        tag: this.fileSearchBox.value,
+      };
+      this.loading.info = this.$t('graph.queryLoading');
+      this.loading.show = true;
+      RequestService.queryGraphData(params)
+          .then(
+              (response) => {
+                if (response && response.data && response.data.nodes) {
+                  // If the namespace to be expanded is larger than the maximum number of subnodes,
+                  // an error is reported and the namespace is highlighted.
+                  const nodesCountLimit = name
+                ? this.nodesCountLimit
+                : namescopeChildLimit;
+                  if (
+                    !independentLayout &&
+                response.data.nodes.length > nodesCountLimit
+                  ) {
+                    this.$message.error(this.$t('graph.tooManyNodes'));
+                    this.packageDataToObject(name, false);
+                    this.loading.show = false;
+                  } else {
+                    const nodes = JSON.parse(JSON.stringify(response.data.nodes));
+                    if (nodes && nodes.length) {
+                      this.packageDataToObject(name, true, nodes);
+                      // If the name is empty, it indicates the outermost layer.
+                      if (!name) {
+                        const dot = this.packageGraphData();
+                        this.initGraph(dot);
+                      } else {
+                        if (this.allGraphData[name].type === 'aggregation_scope') {
+                          this.dealAggregationNodes(name);
+                          if (
+                            this.allGraphData[name].maxChainNum > this.maxChainNum
+                          ) {
+                            this.$message.error(this.$t('graph.tooManyChain'));
+                            this.allGraphData[name].isUnfold = true;
+                            this.selectedNode.name = name;
+                            this.loading.show = false;
+                            this.deleteNamespace(name);
+                            return;
+                          }
+                        }
+                        this.allGraphData[name].isUnfold = true;
+                        this.selectedNode.name = `${name}_unfold`;
+                        this.layoutNamescope(name, true);
+                      }
+                    } else {
+                      this.initGraphRectData();
+                      this.loading.show = false;
+                    }
+                  }
+                }
+              },
+              (error) => {
+                this.loading.show = false;
+              },
+          )
+          .catch((error) => {
+          // A non-Google Chrome browser may not work properly.
+            this.loading.show = false;
+            if (error && error.includes('larger than maximum 65535 allowed')) {
+              this.$message.error(this.$t('graph.dataTooLarge'));
+            } else {
+              this.$bus.$emit('showWarmText', true);
+            }
+            if (name && this.allGraphData[name]) {
+              this.allGraphData[name].isUnfold = false;
+              this.allGraphData[name].children = [];
+              this.allGraphData[name].size = [];
+              this.allGraphData[name].html = '';
+            }
+          });
+    },
+    /**
+     * To obtain datavisual plugins
+     */
+    getDatavisualPlugins() {
+      const params = {
+        train_id: this.trainJobID,
+      };
+      RequestService.getDatavisualPlugins(params)
+          .then((res) => {
+            this.fileSearchBox.suggestions = [];
+            if (
+              !res ||
+            !res.data ||
+            !res.data.plugins ||
+            !res.data.plugins.graph ||
+            !res.data.plugins.graph.length
+            ) {
+              this.initOver = true;
+              return;
+            }
+            const tags = res.data.plugins.graph;
+            let hasFileSearchValue = false;
+            tags.forEach((k) => {
+              this.fileSearchBox.suggestions.push({
+                value: k,
+              });
+              hasFileSearchValue =
+              k === this.fileSearchBox.value || hasFileSearchValue;
+            });
+            if (!this.initOver) {
+              this.initOver = true;
+              this.fileSearchBox.value = tags.length ? tags[0] : '';
+              this.queryGraphData();
+            } else if (!hasFileSearchValue) {
+              this.fileSearchBox.value = '';
+            }
+          })
+          .catch(() => {
+            this.fileSearchBox.suggestions = [];
+            this.initOver = true;
+            this.loading.show = false;
+          });
+    },
+    /**
+     * Process the data returned by the background interface.
+     * @param {String} name Node name
+     */
+    dealAggregationNodes(name) {
+      // A maximum of 10 subnodes can be displayed on an aggregation node.
+      const aggregationNodeLimit = 10;
+      const idsGroup = [];
+      let maxChainNum = 1;
+
+      this.allGraphData[name].children.forEach((key) => {
+        const ids = this.getAssociatedNode(key, `${name}/`);
+        if (ids.length) {
+          idsGroup.push(ids);
+        }
+        const chainNum = this.dealChainingData(key, `${name}/`);
+        maxChainNum = Math.max(...chainNum, maxChainNum);
+      });
+
+      const idsList = [];
+      let temp = [];
+      for (let i = 0; i < idsGroup.length; i++) {
+        if (idsGroup[i].length > aggregationNodeLimit) {
+          idsList.push(idsGroup[i]);
+        } else {
+          if (temp.length + idsGroup[i].length <= aggregationNodeLimit) {
+            temp = temp.concat(idsGroup[i]);
+          } else {
+            if (temp.length) {
+              idsList.push(temp);
+              temp = [].concat(idsGroup[i]);
+            }
+          }
+        }
+        if (i === idsGroup.length - 1 && temp.length) {
+          idsList.push(temp);
+        }
+      }
+
+      this.allGraphData[name].childIdsList = idsList;
+      this.allGraphData[name].index = 0;
+      this.allGraphData[name].maxChainNum = maxChainNum;
+    },
+
+    dealChainingData(name, prefix) {
+      const node = this.allGraphData[name];
+      if (!node.chained) {
+        node.chained = true;
+        let temp = [];
+        Object.keys(node.input).forEach((key) => {
+          if (key.includes(prefix)) {
+            temp = temp.concat(this.dealChainingData(key, prefix));
+          }
+        });
+
+        if (temp.length) {
+          node.chainNum = [...new Set(temp.map((i) => i + 1))];
+        }
+      }
+      return node.chainNum;
+    },
+
+    getAssociatedNode(name, prefix) {
+      const node = this.allGraphData[name];
+      let ids = [];
+
+      if (!node.grouped) {
+        node.grouped = true;
+        ids.push(node.name);
+        Object.keys(node.input).forEach((i) => {
+          if (i.startsWith(prefix)) {
+            if (!this.allGraphData[i].grouped) {
+              const idsTemp = this.getAssociatedNode(i, prefix);
+              ids = ids.concat(idsTemp);
+            }
+          }
+        });
+        Object.keys(node.output).forEach((i) => {
+          if (i.startsWith(prefix)) {
+            if (!this.allGraphData[i].grouped) {
+              const idsTemp = this.getAssociatedNode(i, prefix);
+              ids = ids.concat(idsTemp);
+            }
+          }
+        });
+      }
+
+      return ids;
+    },
+    /**
+     * Encapsulates graph data into dot data.
+     * @return {String} dot string for packing graph data
+     */
+    packageGraphData() {
+      const nodes = this.getChildNodesByName();
+      const initSetting =
+        'node[style="filled";fontsize="10px"];edge[fontsize="5px";];';
+      return `digraph {${initSetting}${this.packageNodes(
+          nodes,
+      )}${this.packageEdges(nodes)}}`;
+    },
+    /**
+     * Encapsulates node data into dot data.
+     * @param {Array} nodes Nodes of the node to be expanded.
+     * @param {String} name Name of the node to be expanded.
+     * @return {String} dot String that are packed into all nodes
+     */
+    packageNodes(nodes, name) {
+      let tempStr = '';
+      nodes.forEach((node) => {
+        const name = node.name.split('/').pop();
+        // Different types of nodes are generated for different data types.
+        if (node.type === 'aggregation_scope') {
+          tempStr +=
+            `<${node.name}>[id="${node.name}";` +
+            `label="${name}";class="aggregation";` +
+            `${
+              node.isUnfold
+                ? `shape="polygon";width=${node.size[0]};` +
+                  `height=${node.size[1]};fixedsize=true;`
+                : 'shape="octagon";'
+            }];`;
+        } else if (node.type === 'name_scope') {
+          const fillColor = CommonProperty.graphColorArr[this.curColorIndex];
+          this.curColorIndex = this.curColorIndex % 4;
+          this.curColorIndex++;
+          tempStr +=
+            `<${node.name}>[id="${node.name}";fillcolor="${fillColor}";` +
+            `shape="polygon";label="${name}";class="cluster";` +
+            `${
+              node.isUnfold
+                ? `width=${node.size[0]};height=${node.size[1]};fixedsize=true;`
+                : ''
+            }];`;
+        } else if (node.type === 'Const') {
+          tempStr +=
+            `<${node.name}>[id="${node.name}";label="${name}\n\n\n";` +
+            `shape="circle";width="0.14";height="0.14";fixedsize=true;];`;
+        } else {
+          tempStr +=
+            `<${node.name}>[id="${node.name}";shape="ellipse";` +
+            `label="${name}";];`;
+        }
+        // A maximum of five virtual nodes can be displayed. Other virtual nodes are displayed in XXXmore.
+        // The ID of the omitted aggregation node is analogNodesInput||analogNodeOutput^nodeId.
+        // After the namespace or aggregation node is expanded, the virtual node does not need to be displayed.
+        if (!this.allGraphData[node.name].isUnfold) {
+          let keys = Object.keys(node.proxy_input || {});
+          let target = node.name;
+          let source = '';
+          let isConst = false;
+          for (let i = 0; i < Math.min(5, keys.length); i++) {
+            source = keys[i];
+            isConst = !!(
+              this.allGraphData[keys[i]] &&
+              this.allGraphData[keys[i]].type === 'Const'
+            );
+            const nodeStr = isConst
+              ? `shape="circle";width="0.14";height="0.14";fixedsize=true;` +
+                `label="${source.split('/').pop()}\n\n\n";`
+              : `shape="Mrecord";label="${source.split('/').pop()}";`;
+
+            tempStr +=
+              `<${source}^${target}>[id="${source}^${target}";` +
+              `${nodeStr}class="plain"];`;
+          }
+          if (keys.length > 5) {
+            tempStr +=
+              `<analogNodesInput^${target}>[id="analogNodesInput^` +
+              `${target}";label="${keys.length - 5} more...";shape="Mrecord";` +
+              `class="plain";];`;
+          }
+
+          keys = Object.keys(node.proxy_output || {});
+          source = node.name;
+          for (let i = 0; i < Math.min(5, keys.length); i++) {
+            target = keys[i];
+            isConst = !!(
+              this.allGraphData[keys[i]] &&
+              this.allGraphData[keys[i]].type === 'Const'
+            );
+            const nodeStr = isConst
+              ? `shape="circle";width="0.14";height="0.14";fixedsize=true;` +
+                `label="${target.split('/').pop()}\n\n\n";`
+              : `shape="Mrecord";label="${target.split('/').pop()}";`;
+
+            tempStr +=
+              `<${target}^${source}>[id="${target}^${source}";` +
+              `${nodeStr}class="plain";];`;
+          }
+          if (keys.length > 5) {
+            tempStr +=
+              `<analogNodesOutput^${source}>[id="analogNodesOutput^` +
+              `${source}";shape="Mrecord";label="${keys.length - 5} more...";` +
+              `class="plain";];`;
+          }
+        }
+      });
+      return tempStr;
+    },
+    /**
+     * Encapsulates node data into dot data.
+     * @param {Array} nodes Nodes of the node to be expanded.
+     * @param {String} name Name of the node to be expanded.
+     * @return {String} dot string packaged by all edges
+     */
+    packageEdges(nodes, name) {
+      let tempStr = '';
+      const edges = [];
+      // Construct the input and output virtual nodes and optimize the connection.
+      const analogNodesInputId = `analogNodesInputOf${name}`;
+      const analogNodesOutputId = `analogNodesOutputOf${name}`;
+      let needAnalogInput = false;
+      let needAnalogOutput = false;
+      const unfoldIndependentScope = name
+        ? this.allGraphData[name].independent_layout
+        : false;
+      nodes.forEach((node) => {
+        // No input cable is required for the aggregation node and nodes in the aggregation node without namescoope.
+        // When only aggregation nodes are encapsulated, input cables do not need to be considered.
+        if (!unfoldIndependentScope) {
+          const input = node.input || {};
+          const keys = Object.keys(input);
+          keys.forEach((key) => {
+            if (input[key] && !input[key].independent_layout) {
+              // Cannot connect to the sub-nodes in the aggregation node and cannot be directly connected to the
+              // aggregation node. It can only connect to the outer namespace of the aggregation node.
+              // If there is no namespace in the outer layer, you do not need to connect cables.
+              // Other connections are normal.
+              const source =
+                this.findChildNamescope(key, name) ||
+                (key ? analogNodesInputId : '');
+              let target = node.name;
+              if (node.independent_layout) {
+                const list = node.name.split('/');
+                list.splice(list.length - 2, 2);
+                target = `${list.join('/')}_unfold`;
+              }
+              // The namespace is not nested.
+              if (
+                source &&
+                target &&
+                !target.includes(source.replace('_unfold', '') + '/') &&
+                !source.includes(target.replace('_unfold', '') + '/')
+              ) {
+                if (!name || (name && source.startsWith(`${name}/`))) {
+                  const obj = {
+                    source: source,
+                    target: target,
+                    shape: input[key].shape,
+                    edge_type: input[key].edge_type,
+                    data_type: input[key].data_type,
+                    count: 1,
+                  };
+                  edges.push(obj);
+                } else {
+                  // If it is connected to the outside of the namespace,
+                  // it is connected to the virtual input and output node of the namespace.
+                  // The connection line of the aggregation node is connected to the namespace of the aggregation node.
+                  // If the namespace to be opened is to be opened, you need to delete it.
+                  if (target.replace('_unfold', '') !== name) {
+                    const obj = {
+                      source: analogNodesInputId,
+                      target: target,
+                      shape: input[key].shape,
+                      edge_type: input[key].edge_type,
+                      data_type: input[key].data_type,
+                      count: 1,
+                    };
+                    edges.push(obj);
+                    needAnalogInput = true;
+                  }
+                }
+              }
+            }
+          });
+          // When the namespace is opened,
+          // the line connected to the namespace is connected to the virtual input and output node of the namespace.
+          // The aggregation node and its subnodes do not need to consider the situation where the output is connected
+          // to the virtual output node.
+          if (!node.independent_layout) {
+            Object.keys(node.output || {}).forEach((key) => {
+              if (!node.output[key].independent_layout) {
+                const source = node.name;
+                const target =
+                  this.findChildNamescope(key, name) || analogNodesOutputId;
+                if (source && target) {
+                  if (
+                    name &&
+                    !target.startsWith(`${name}/`) &&
+                    source !== name
+                  ) {
+                    const obj = {
+                      source: source,
+                      target: analogNodesOutputId,
+                      shape: node.output[key].shape,
+                      edge_type: node.output[key].edge_type,
+                      data_type: node.output[key].data_type,
+                      count: 1,
+                    };
+                    edges.push(obj);
+                    needAnalogOutput = true;
+                  }
+                }
+              }
+            });
+          }
+        }
+        // Virtual node data
+        // The expanded namespace or aggregation node does not need to display virtual nodes.
+        if (!this.allGraphData[node.name].isUnfold) {
+          let keys = Object.keys(node.proxy_input || {});
+          for (let i = 0; i < Math.min(5, keys.length); i++) {
+            const target = node.name;
+            const source = keys[i];
+            const obj = {
+              source: `${source}^${target}`,
+              target: target,
+              shape: node.proxy_input[keys[i]].shape,
+              edge_type: node.proxy_input[keys[i]].edge_type,
+              data_type: node.proxy_input[keys[i]].data_type,
+              count: 1,
+            };
+            edges.push(obj);
+          }
+          if (keys.length > 5) {
+            const obj = {
+              source: `analogNodesInput^${node.name}`,
+              target: node.name,
+              shape: [],
+              edge_type: '',
+              data_type: '',
+              count: 1,
+            };
+            edges.push(obj);
+          }
+
+          keys = Object.keys(node.proxy_output || {});
+          for (let i = 0; i < Math.min(5, keys.length); i++) {
+            const source = node.name;
+            const target = keys[i];
+            const obj = {
+              source: source,
+              target: `${target}^${source}`,
+              shape: node.proxy_output[keys[i]].shape,
+              edge_type: node.proxy_output[keys[i]].edge_type,
+              data_type: node.proxy_output[keys[i]].data_type,
+              count: 1,
+            };
+            edges.push(obj);
+          }
+          if (keys.length > 5) {
+            const obj = {
+              source: node.name,
+              target: `analogNodesOutput^${node.name}`,
+              shape: [],
+              edge_type: '',
+              data_type: '',
+              count: 1,
+            };
+            edges.push(obj);
+          }
+        }
+      });
+
+      // Add the virtual input/output node. The aggregation node does not need to be configured.
+      if (name && !this.allGraphData[name].independent_layout) {
+        if (needAnalogInput) {
+          tempStr +=
+            `{rank=min;<${analogNodesInputId}>[shape="circle";` +
+            `id="${analogNodesInputId}";fixedsize=true;width=0.02;label="";` +
+            `class="edge-point"]};`;
+        }
+        if (needAnalogOutput) {
+          tempStr +=
+            `{rank=max;<${analogNodesOutputId}>[shape="circle";` +
+            `id="${analogNodesOutputId}";width=0.02;fixedsize=true;` +
+            `label="";class="edge-point"]};`;
+        }
+      }
+
+      this.uniqueEdges(edges);
+      edges.forEach((edge) => {
+        const suffix = edge.edge_type === 'control' ? '_control' : '';
+        tempStr +=
+          `<${edge.source}>-><${edge.target}>[id="${edge.source}->` +
+          `${edge.target}${suffix}";label="${this.getEdgeLabel(edge)}";` +
+          `${edge.edge_type === 'control' ? 'style=dashed' : ''}];`;
+      });
+      return tempStr;
+    },
+    /**
+     * Obtain the label of the edge
+     * @param {Object} edge Edge Object
+     * @return {String} Edge label
+     */
+    getEdgeLabel(edge) {
+      // The label is not displayed on the control edge
+      if (edge.edge_type === 'control') {
+        return '';
+      }
+      let label = '';
+      if (!edge.count || edge.count === 1) {
+        if (edge.shape && edge.shape.length) {
+          const flag = edge.shape.some((i) => {
+            return typeof i !== 'number';
+          });
+          if (flag) {
+            label = `tuple(${edge.shape.length} items)`;
+          } else {
+            label = `${edge.data_type} ${edge.shape.join('×')}`;
+          }
+        }
+      } else {
+        label = `${edge.count}tensors`;
+      }
+      return label;
+    },
+    /**
+     * Obtains the subnode data of the namespace through the namespace name.
+     * @param {String} name Namespace name.
+     * @return {Array} Subnode array of the namespace.
+     */
+    getChildNodesByName(name) {
+      let nodes = [];
+      if (name) {
+        const node = this.allGraphData[name];
+        const nameList =
+          node.type === 'aggregation_scope'
+            ? node.childIdsList[node.index]
+            : node.children;
+
+        nodes = nameList.map((i) => {
+          return this.allGraphData[i];
+        });
+
+        if (node.type === 'aggregation_scope') {
+          const idsList = node.childIdsList;
+
+          if (idsList && idsList.length > 1) {
+            if (node.index > 0) {
+              let ellipsisNodesNumLeft = 0;
+              for (let j = 0; j < node.index; j++) {
+                ellipsisNodesNumLeft += idsList[j].length;
+              }
+
+              const ellipsisNodeL = {
+                name: `${name}/left/${ellipsisNodesNumLeft} more...`,
+                attr: {},
+                input: {},
+                output: {},
+                proxy_input: {},
+                proxy_output: {},
+                type: '',
+              };
+              this.allGraphData[ellipsisNodeL.name] = ellipsisNodeL;
+              nodes.unshift(ellipsisNodeL);
+            }
+
+            if (node.index < idsList.length - 1) {
+              let ellipsisNodesNumRight = 0;
+              for (let j = node.index + 1; j < idsList.length; j++) {
+                ellipsisNodesNumRight += idsList[j].length;
+              }
+
+              const ellipsisNodeR = {
+                name: `${name}/right/${ellipsisNodesNumRight} more...`,
+                attr: {},
+                input: {},
+                output: {},
+                proxy_input: {},
+                proxy_output: {},
+                type: '',
+              };
+              this.allGraphData[ellipsisNodeR.name] = ellipsisNodeR;
+              nodes.push(ellipsisNodeR);
+            }
+          }
+        }
+      } else {
+        nodes = this.firstFloorNodes.map((i) => {
+          return this.allGraphData[i];
+        });
+      }
+
+      return nodes;
+    },
+    /**
+     * Find the node path that exists in the current namescoope through the node path.
+     * @param {String} name Target node name
+     * @param {String} namescope Namespace Name
+     * @return {String} Namespace node of the namespace.
+     */
+    findChildNamescope(name, namescope) {
+      if (!namescope) {
+        return name.split('/')[0];
+      } else {
+        if (name.startsWith(namescope)) {
+          const length = namescope.split('/').length;
+          return name
+              .split('/')
+              .slice(0, length + 1)
+              .join('/');
+        } else {
+          return null;
+        }
+      }
+    },
+    /**
+     * Multiple edges with the same source and target are combined into one.
+     * @param {Array} edges Array of edge data.
+     */
+    uniqueEdges(edges) {
+      for (let i = 0; i < edges.length - 1; i++) {
+        for (let j = i + 1; j < edges.length; j++) {
+          const isSame =
+            edges[i].source === edges[j].source &&
+            edges[i].target === edges[j].target &&
+            edges[i].edge_type === edges[j].edge_type;
+          if (isSame) {
+            edges[i].count += edges[j].count;
+            edges.splice(j--, 1);
+          }
+        }
+      }
+    },
+    /**
+     * 1. Encapsulating the namespace generated by the graphTemp dom
+     * 2. Replace the corresponding node in graphTemp with the existing namespace node in subgraphTemp.
+     * 3. Move the namespace dom generated in graphTemp to subgraphTemp for storage.
+     * 4. Use graphTemp to generate the dom of the new namespace.
+     * @param {String} name Name of the namespace to be expanded.
+     */
+    dealNamescopeTempGraph(name) {
+      const type = this.allGraphData[name].type;
+      const classText =
+        type === 'aggregation_scope'
+          ? 'node cluster aggregation'
+          : 'node cluster';
+      const idStr = '#graphTemp #graph0 ';
+      let fillColor = type === 'aggregation_scope' ? '#fff2d4' : '#ffe4d6';
+      const curColorIndex = (name.split('/').length - 1) % 4;
+      if (type === 'name_scope') {
+        fillColor = CommonProperty.graphColorArr[curColorIndex];
+      }
+
+      const graphTemp = d3.select(idStr).node();
+      let boxTemp = graphTemp.getBBox();
+
+      // Create a namespace node and add it to graphTemp.
+      const g = d3
+          .select(idStr)
+          .insert('g')
+          .attr('id', `${name}_unfold`)
+          .attr('class', classText)
+          .attr('style', `fill:${fillColor};`);
+      g.append('title').text(name);
+      g.node().appendChild(
+          d3
+              .select('#graphTemp #graph0>text')
+              .attr('y', boxTemp.y - 10)
+              .node(),
+      );
+      // Move all the subnodes of the namespace to the created namespace node.
+      Array.prototype.forEach.call(
+          document.querySelector(idStr).querySelectorAll('g'),
+          (node) => {
+            if (node.id !== g.node().id) {
+            // The title of all virtual nodes needs to be reset.
+              if (Array.prototype.includes.call(node.classList, 'plain')) {
+                const title = node.querySelector('title');
+                title.textContent = title.textContent.split('^')[0];
+              }
+              node.setAttribute('transform', 'translate(0,0)');
+              g.node().appendChild(node);
+            }
+          },
+      );
+      // Add a rectangle to the created namespace node as the border of the namespace.
+      g.insert('rect', 'title')
+          .attr('style', `fill:${fillColor};`)
+          .attr('stroke', 'rgb(167, 167, 167)')
+          .attr('x', g.node().getBBox().x - this.frameSpace)
+          .attr('y', g.node().getBBox().y - this.frameSpace)
+          .attr('width', g.node().getBBox().width + this.frameSpace * 2)
+          .attr('height', g.node().getBBox().height + this.frameSpace * 2);
+
+      boxTemp = d3
+          .select(`${idStr}g[id="${name}_unfold"]`)
+          .node()
+          .getBBox();
+      // After the namespace dom is successfully encapsulated, set the related data of the data object.
+      this.allGraphData[name].isUnfold = true;
+      this.allGraphData[name].size = [boxTemp.width / 72, boxTemp.height / 72];
+
+      if (d3.select(`#subgraphTemp svg`).size()) {
+        // Migrate the dom file in subgraph to the new namescope file.
+        const nodeTemp = document.querySelector('#subgraphTemp #graph0 g');
+        const name = nodeTemp.id.replace('_unfold', '');
+        const node = document.querySelector(`#graphTemp g[id="${name}"]`);
+        const box = node.getBBox();
+        const boxTemp = nodeTemp.getBBox();
+        const translateStr = `translate(${box.x - boxTemp.x},${box.y -
+          boxTemp.y})`;
+        nodeTemp.setAttribute('transform', translateStr);
+        node.parentNode.appendChild(nodeTemp);
+        document.querySelector('#subgraphTemp svg').remove();
+        node.remove();
+      }
+      // Delete unnecessary g nodes from graphTemp.
+      const domList = document.querySelector('#graphTemp #graph0').children;
+      for (let i = 0; i < domList.length; i++) {
+        if (domList[i].id !== `${name}_unfold`) {
+          domList[i--].remove();
+        }
+      }
+
+      this.generateIOBus(name);
+      // Move the DOM station in graphTemp to subgraph, and then graphTemp continue to lay out the outer graph.
+      document
+          .querySelector('#subgraphTemp')
+          .appendChild(document.querySelector('#graphTemp svg'));
+      this.transplantChildrenDom(name);
+      this.layoutController(name);
+    },
+    /**
+     * Move the namespace dom generated in graphTemp to subgraphTemp for storage.
+     * @param {String} name Name of the namespace to be expanded.
+     */
+    transplantChildrenDom(name) {
+      let nameList = [];
+      let idStr = '#subgraphTemp ';
+      if (name) {
+        nameList = this.allGraphData[name].children;
+      } else {
+        idStr = '#graph ';
+        nameList = this.firstFloorNodes;
+      }
+      nameList.forEach((i) => {
+        const nodeData = this.allGraphData[i];
+        const flag =
+          (nodeData.type === 'name_scope' ||
+            nodeData.type === 'aggregation_scope') &&
+          nodeData.isUnfold;
+        if (flag) {
+          // Place the dom character string in graphTemp and then move it to the corresponding node of subgraphTemp.
+          document.querySelector('#graphTemp').innerHTML = nodeData.html;
+          const node = document.querySelector(`${idStr}g[id="${i}"]`);
+          const nodeTemp = document.querySelector(
+              `#graphTemp #graph0 g[id="${i}_unfold"]`,
+          );
+          if (node && nodeTemp) {
+            const box = node.getBBox();
+            const boxTemp = nodeTemp.getBBox();
+            const translateStr = `translate(${box.x - boxTemp.x},${box.y -
+              boxTemp.y})`;
+            nodeTemp.setAttribute('transform', translateStr);
+            node.parentNode.appendChild(nodeTemp);
+            node.remove();
+          }
+          document.querySelector('#graphTemp svg').remove();
+        }
+      });
+      if (name) {
+        this.allGraphData[name].html = document.querySelector(
+            `#subgraphTemp svg`,
+        ).outerHTML;
+      }
+    },
+    /**
+     * Add the input and output buses of the namespace.
+     * @param {String} name Name of the namespace to be expanded.
+     */
+    generateIOBus(name) {
+      if (d3.select(`#graphTemp g[id="analogNodesInputOf${name}"]`).size()) {
+        this.generateEdge(
+            {source: `${name}_unfold`, target: `analogNodesInputOf${name}`},
+            name,
+            'input',
+        );
+      }
+      if (d3.select(`#graphTemp g[id="analogNodesOutputOf${name}"]`).size()) {
+        this.generateEdge(
+            {source: `analogNodesOutputOf${name}`, target: `${name}_unfold`},
+            name,
+            'output',
+        );
+      }
+    },
+    /**
+     * Encapsulates the data of the namespace to be expanded.
+     * @param {String} name Name of the namespace to be expanded.
+     * @return {String} dot string that is used to package the data of the namespace.
+     */
+    packageNamescope(name) {
+      const nodes = this.getChildNodesByName(name);
+      const nodeStr = this.packageNodes(nodes, name);
+      const edgeStr = this.packageEdges(nodes, name);
+      const initSetting =
+        `node[style="filled";fontsize="10px";];` + `edge[fontsize="5px";];`;
+      const dotStr =
+        `digraph {${initSetting}label="${name.split('/').pop()}";` +
+        `${nodeStr}${edgeStr}}`;
+      return dotStr;
+    },
+    /**
+     * Close the expanded namespace.
+     * @param {String} name The name of the namespace to be closed.
+     */
+    deleteNamespace(name) {
+      this.loading.info = this.$t('graph.searchLoading');
+      this.loading.show = true;
+      if (!this.selectedNode.more) {
+        this.packageDataToObject(name, false);
+        this.layoutController(name);
+      } else {
+        this.allGraphData[name].isUnfold = true;
+        this.selectedNode.name = `${name}_unfold`;
+        this.layoutNamescope(name, true);
+      }
+    },
+    /**
+     * Controls the invoking method of the next step.
+     * @param {String} name Name of the namespace to be expanded.
+     */
+    layoutController(name) {
+      if (!this.loading.show) {
+        this.loading.info = this.$t('graph.searchLoading');
+        this.loading.show = true;
+      }
+      if (name.includes('/')) {
+        const subPath = name
+            .split('/')
+            .slice(0, -1)
+            .join('/');
+        this.layoutNamescope(subPath, true);
+      } else {
+        const svg = document.querySelector('#graph svg');
+        if (svg) {
+          svg.remove();
+        }
+        const dot = this.packageGraphData();
+        this.initGraph(dot);
+      }
+    },
+    /**
+     * Generate a edge in graph.
+     * @param {Object} edge Edge data
+     * @param {String} name Namespace to which the edge belongs.
+     * @param {String} port Indicates the input/output type of a edge.
+     */
+    generateEdge(edge, name, port) {
+      const points = this.getEdgePoints(edge, port);
+      const text = this.getEdgeLabel(edge);
+      const g = d3
+          .select(`#graphTemp g#graph0${name ? ` g[id="${name}_unfold"]` : ''}`)
+          .append('g')
+          .attr(
+              'id',
+              `${edge.source.replace('_unfold', '')}->${edge.target.replace(
+                  '_unfold',
+                  '',
+              )}`,
+          )
+          .attr('class', 'edge');
+      g.append('title').text(text);
+      // Because the edges need to be highlighted, marker requires one side of each side.
+      const marker = g.append(`marker`);
+      marker
+          .attr('id', `${name + port}marker`)
+          .attr('refX', 6)
+          .attr('refY', 3)
+          .attr('markerWidth', 8)
+          .attr('markerHeight', 6)
+          .attr('orient', 'auto');
+      marker
+          .append('path')
+          .attr('d', 'M1,1 L1,5 L6,3 z')
+          .attr('fill', 'rgb(167, 167, 167)')
+          .attr('stroke', 'rgb(167, 167, 167)');
+      g.append('path')
+          .attr('stroke', 'rgb(167, 167, 167)')
+          .attr('stroke-width', 1)
+          .attr(
+              'stroke-dasharray',
+              `${edge.edge_type === 'control' ? '5,2' : '0'}`,
+          )
+          .attr('marker-end', `url(#${name + port}marker)`)
+          .attr(
+              'd',
+              `M${points[0].x},${points[0].y}L${points[1].x},${points[1].y}`,
+          );
+      g.append('text')
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'Times,serif')
+          .attr('font-size', '5px')
+          .attr('fill', '#000000')
+          .attr('x', (points[0].x + points[1].x) / 2)
+          .attr('y', (points[0].y + points[1].y) / 2)
+          .text(text);
+    },
+    /**
+     * Obtain the location data of the source and target edges.
+     * @param {Object} edge Edge data
+     * @param {String} port Indicates the input/output type of a edge.
+     * @return {Array} Coordinate array of the start point and end point of the edge.
+     */
+    getEdgePoints(edge, port) {
+      const source = d3
+          .select(`#graphTemp g[id="${edge.source}"]`)
+          .node()
+          .getBBox();
+      const target = d3
+          .select(`#graphTemp g[id="${edge.target}"]`)
+          .node()
+          .getBBox();
+      source.points = this.getBoxPoints(source);
+      target.points = this.getBoxPoints(target);
+      // The input bus is at the top of the namespace, and the output bus is at the bottom of the namespace.
+      if (port === 'input') {
+        return [source.points.top, target.points.top];
+      } else {
+        return [source.points.bottom, target.points.bottom];
+      }
+    },
+    /**
+     * Obtains the coordinates of the top and button in the node box.
+     * @param {Object} box Edge data
+     * @return {Object} Object that contains the top and bottom coordinates of the box.
+     */
+    getBoxPoints(box) {
+      const points = {
+        top: {
+          x: box.x + box.width / 2,
+          y: box.y,
+        },
+        bottom: {
+          x: box.x + box.width / 2,
+          y: box.y + box.height,
+        },
+      };
+      return points;
+    },
+    /**
+     * Obtains the transform data of a node.
+     * @param {Object} node Node dom data
+     * @return {Object} transform data of a node
+     */
+    getTransformData(node) {
+      if (!node) {
+        return {};
+      }
+      const transformData = node.getAttribute('transform');
+      const attrObj = [];
+      if (transformData) {
+        const lists = transformData.trim().split(' ');
+        lists.forEach((item) => {
+          item = item.trim();
+          if (item) {
+            const index1 = item.indexOf('(');
+            const index2 = item.indexOf(')');
+            const params = item
+                .substring(index1 + 1, index2)
+                .split(',')
+                .map((i) => {
+                  return parseFloat(i) || 0;
+                });
+            attrObj[item.substring(0, index1)] = params;
+          }
+        });
+      }
+      return attrObj;
+    },
+    /**
+     * Selecting a node
+     * @param {Boolean} needFocus Whether to focus on the node
+     */
+    selectNode(needFocus = false) {
+      window.getSelection().removeAllRanges();
+      d3.selectAll(
+          '.node polygon, .node ellipse, .node rect, .node path',
+      ).classed('selected', false);
+      const path = this.selectedNode.name.split('^');
+      const node = {};
+      let id = path[0].replace('_unfold', '');
+      id = this.allGraphData[id].isUnfold ? `${id}_unfold` : id;
+      node.eld3 = d3.select(`#graph g[id="${id}"]`);
+      node.el = node.eld3.node();
+      this.graph.dom.style.transition = '';
+
+      const needDelay = path.length > 1;
+      if ((needFocus || needDelay) && node.el) {
+        this.selectNodePosition(id, needDelay);
+      }
+      node.eld3
+          .select('polygon, rect, ellipse, path')
+          .classed('selected', true);
+      this.highlightProxyNodes(id.replace('_unfold', ''));
+      this.setNodeData();
+    },
+    highlightProxyNodes(nodeId) {
+      const proxyNodes = d3
+          .selectAll('#graph g.node')
+          .nodes()
+          .filter((node) => {
+            const id = node.id.split('^')[0].replace('_unfold', '');
+            return id === nodeId;
+          });
+      const childTagType = ['polygon', 'ellipse', 'path', 'rect'];
+      proxyNodes.forEach((i) => {
+        if (i.childNodes) {
+          i.childNodes.forEach((k) => {
+            if (childTagType.includes(k.tagName)) {
+              k.setAttribute('class', 'selected');
+            }
+          });
+        }
+      });
+    },
+    /**
+     * The node information of the selected node is displayed and highlighted.
+     */
+    setNodeData() {
+      this.selectedNode.info = {
+        input: [],
+        inputControl: [],
+        output: [],
+        outputControl: [],
+        attributes: [],
+      };
+      this.selectedNode.showControl = {
+        input: true,
+        output: true,
+      };
+
+      const path = this.selectedNode.name.split('^');
+      const selectedNode = this.allGraphData[path[0].replace('_unfold', '')];
+
+      if (selectedNode && !selectedNode.name.includes('more...')) {
+        this.selectedNode.show = true;
+        this.selectedNode.name = selectedNode.name;
+        this.selectedNode.title = selectedNode.name.replace('_unfold', '');
+        this.selectedNode.type =
+          selectedNode.type === 'name_scope' ||
+          selectedNode.type === 'aggregation_scope'
+            ? ''
+            : selectedNode.type;
+        this.selectedNode.countShow =
+          selectedNode.type === 'name_scope' ||
+          selectedNode.type === 'aggregation_scope';
+        this.selectedNode.count = selectedNode.subnode_count;
+        this.selectedNode.info.attributes = JSON.parse(
+            JSON.stringify(selectedNode.attr),
+        );
+
+        Object.keys(selectedNode.input).forEach((key) => {
+          const value = this.getEdgeLabel(selectedNode.input[key]);
+          if (selectedNode.input[key].edge_type !== 'control') {
+            this.selectedNode.info.input.push({
+              name: key,
+              value: value,
+            });
+          } else {
+            this.selectedNode.info.inputControl.push({
+              name: key,
+              value: value,
+            });
+          }
+        });
+
+        Object.keys(selectedNode.output).forEach((key) => {
+          const value = this.getEdgeLabel(selectedNode.output[key]);
+          if (selectedNode.output[key].edge_type !== 'control') {
+            this.selectedNode.info.output.push({
+              name: key,
+              scope: selectedNode.output[key].scope,
+              value: value,
+            });
+          } else {
+            this.selectedNode.info.outputControl.push({
+              name: key,
+              scope: selectedNode.output[key].scope,
+              value: value,
+            });
+          }
+        });
+        this.selectedNode.info.output_i = selectedNode.output_i;
+        this.highLightEdges(selectedNode);
+      } else {
+        this.selectedNode.show = false;
+        this.selectedNode.name = '';
+        this.selectedNode.title = '';
+        this.selectedNode.type = '';
+      }
+    },
+    /**
+     * The position is offset to the current node in the center of the screen.
+     * @param {String} nodeId Selected Node id
+     * @param {Boolean} needDelay Delay required
+     */
+    selectNodePosition(nodeId, needDelay) {
+      const nodeDom = document.querySelector(`#graph0 g[id="${nodeId}"]`);
+      const nodeRect = nodeDom.getBoundingClientRect();
+
+      const graph = {};
+      graph.rect = this.graph.dom.getBoundingClientRect();
+      graph.initWidth = graph.rect.width / this.graph.transform.k;
+      graph.initHeight = graph.rect.height / this.graph.transform.k;
+
+      const screenChange = {
+        x:
+          nodeRect.left +
+          nodeRect.width / 2 -
+          (this.svg.rect.left + this.svg.rect.width / 2),
+        y:
+          nodeRect.top +
+          nodeRect.height / 2 -
+          (this.svg.rect.top + this.svg.rect.height / 2),
+      };
+
+      this.graph.transform.x -=
+        screenChange.x * (this.svg.originSize.width / graph.initWidth);
+      this.graph.transform.y -=
+        screenChange.y * (this.svg.originSize.height / graph.initHeight);
+
+      this.graph.dom.setAttribute(
+          'transform',
+          `translate(${this.graph.transform.x},` +
+          `${this.graph.transform.y}) scale(${this.graph.transform.k})`,
+      );
+
+      const transitionTime = Math.min(
+          Math.abs(screenChange.x) * 2,
+          Math.abs(screenChange.y) * 2,
+        needDelay ? 800 : 0,
+      );
+
+      this.graph.dom.style.transition = `${transitionTime / 1000}s`;
+      this.graph.dom.style['transition-timing-function'] = 'linear';
+
+      setTimeout(() => {
+        this.graph.dom.style.transition = '';
+      }, transitionTime);
+      let end = 0;
+      this.setInsideBoxData();
+      const timer = setInterval(() => {
+        this.setInsideBoxData();
+        end += 1;
+        if (end > transitionTime) {
+          clearInterval(timer);
+        }
+      }, 1);
+    },
+    /**
+     * Highlight the input and output cables related to the selected node.
+     * @param {Object} node Data of the selected node
+     */
+    highLightEdges(node) {
+      // Click an operator or namespace to highlight the connection between the operator or namespace and the node and
+      // virtual node.
+      // Click the aggregation node or its subnodes to highlight the connection between the node and the virtual
+      // node and the connection between the namespace and other nodes.
+      const edges = {};
+      const input = node.input || {};
+      const output = node.output || {};
+      const name = this.findExsitNode(node.name);
+      // Connects to the edge of the actual node.
+      if (name && !node.independent_layout) {
+        Object.keys(input).forEach((key) => {
+          const source = this.findExsitNode(key);
+          if (source) {
+            edges[`${source}->${name}`] = {
+              source: source,
+              target: name,
+              edge_type: input[key].edge_type || '',
+            };
+          }
+        });
+        Object.keys(output).forEach((key) => {
+          const target = this.findExsitNode(key);
+          if (target) {
+            edges[`${name}->${target}`] = {
+              source: name,
+              target: target,
+              edge_type: output[key].edge_type || '',
+            };
+          }
+        });
+      }
+
+      if (!node.isUnfold) {
+        // Connects to the edge of a virtual node.
+        let keys = Object.keys(node.proxy_input || {});
+        for (let i = 0; i < Math.min(5, keys.length); i++) {
+          const nameTemp = `${keys[i]}^${node.name}`;
+          edges[`${nameTemp}->${node.name}`] = {
+            source: nameTemp,
+            target: node.name,
+            edge_type: node.proxy_input[keys[i]].edge_type || '',
+          };
+        }
+        if (keys.length > 5) {
+          const nameTemp = `analogNodesInput^${node.name}`;
+          edges[`${nameTemp}->${node.name}`] = {
+            source: nameTemp,
+            target: node.name,
+            edge_type: '',
+          };
+        }
+        keys = Object.keys(node.proxy_output || {});
+        for (let i = 0; i < Math.min(5, keys.length); i++) {
+          const nameTemp = `${keys[i]}^${node.name}`;
+          edges[`${node.name}->${nameTemp}`] = {
+            source: node.name,
+            target: nameTemp,
+            edge_type: node.proxy_output[keys[i]].edge_type || '',
+          };
+        }
+        if (keys.length > 5) {
+          const nameTemp = `analogNodesOutput^${node.name}`;
+          edges[`${node.name}->${nameTemp}`] = {
+            source: node.name,
+            target: nameTemp,
+            edge_type: '',
+          };
+        }
+      }
+
+      // The line of the virtual node does not need to be managed.
+      const edgesList = {};
+      Object.keys(edges).forEach((key) => {
+        if (key.includes('^')) {
+          edgesList[key] = edges[key];
+        } else {
+          const suffix = edges[key].edge_type === 'control' ? '_control' : '';
+          const [source, target] = key.split('->');
+          const list = [];
+          const sourceList = source.split('/');
+          const targetList = target.split('/');
+          const lengthMin = Math.min(sourceList.length, targetList.length);
+          let commonIndex = -1;
+          // Find the same prefix.
+          for (let i = 0; i < lengthMin; i++) {
+            if (
+              sourceList.slice(0, i + 1).join('/') ===
+              targetList.slice(0, i + 1).join('/')
+            ) {
+              commonIndex = i;
+            }
+          }
+          // To split the side into several sections
+          for (let i = commonIndex + 2; i < sourceList.length; i++) {
+            const source = sourceList.slice(0, i + 1).join('/');
+            const target = sourceList.slice(0, i).join('/');
+            list.push(`${source}->analogNodesOutputOf${target}${suffix}`);
+            list.push(`analogNodesOutputOf${target}->${target}`);
+          }
+          list.push(
+              `${sourceList.slice(0, commonIndex + 2).join('/')}->` +
+              `${targetList.slice(0, commonIndex + 2).join('/')}${suffix}`,
+          );
+          for (let i = commonIndex + 2; i < targetList.length; i++) {
+            const source = targetList.slice(0, i).join('/');
+            const target = targetList.slice(0, i + 1).join('/');
+            list.push(`${source}->analogNodesInputOf${source}`);
+            list.push(`analogNodesInputOf${source}->${target}${suffix}`);
+          }
+          // Deduplication and encapsulation of data
+          for (let i = 0; i < list.length; i++) {
+            const [sourceTemp, targetTemp] = list[i].split('->');
+            // Remove the situation where the aggregation node and node are in the same namespace.
+            if (
+              !(
+                sourceTemp.startsWith(targetTemp + '/') ||
+                targetTemp.startsWith(sourceTemp + '/')
+              )
+            ) {
+              edgesList[`${sourceTemp}->${targetTemp}`] = {
+                source: sourceTemp,
+                target: targetTemp,
+                edge_type: edges[key].edge_type,
+              };
+            }
+          }
+        }
+      });
+
+      d3.selectAll('#graph g.edge').classed('highlighted', false);
+      Object.keys(edgesList).forEach((key) => {
+        d3.select(`#graph g[id="${key}"]`).classed('highlighted', true);
+      });
+    },
+    /**
+     * Find the existing namespace based on the node name.
+     * @param {String} name Data of the selected node
+     * @return {String} Find the existing node by name.
+     */
+    findExsitNode(name) {
+      let subPsth = '';
+      const paths = name.split('/');
+      for (let i = paths.length; i > 0; i--) {
+        const path = paths.slice(0, i).join('/');
+        if (this.allGraphData[path]) {
+          subPsth = path;
+          break;
+        }
+      }
+      if (subPsth && this.allGraphData[subPsth]) {
+        // The virtual node and its subnodes need to return their namespaces.
+        if (this.allGraphData[subPsth].independent_layout) {
+          subPsth = subPsth
+              .split('/')
+              .slice(0, -1)
+              .join('/');
+        }
+      }
+      return subPsth;
+    },
+    /**
+     * Processes its own and corresponding child node data when expanding or closing namespaces.
+     * @param {String} name Data of the selected node
+     * @param {Boolean} toUnfold Expand or Not
+     * @param {Array} nodes Node array
+     */
+    packageDataToObject(name, toUnfold, nodes) {
+      // If there is no name, it indicates the first layer.
+      if (!name) {
+        this.allGraphData = {};
+        this.firstFloorNodes = [];
+        nodes.forEach((node) => {
+          node.isUnfold = false;
+          node.children = [];
+          node.size = [];
+          node.html = '';
+          this.allGraphData[node.name] = node;
+          this.firstFloorNodes.push(node.name);
+        });
+      } else {
+        // Expand the namespace and encapsulate its child node data.
+        if (toUnfold) {
+          this.allGraphData[name].isUnfold = true;
+          nodes.forEach((node) => {
+            node.isUnfold = false;
+            node.children = [];
+            node.size = [];
+            node.html = '';
+            node.grouped = false;
+            node.chained = false;
+            node.chainNum = [1];
+            this.allGraphData[node.name] = node;
+            this.allGraphData[name].children.push(node.name);
+          });
+        } else {
+          // Close the namespace and delete all child node data.
+          const allChildren = Object.keys(this.allGraphData).filter((key) => {
+            return key.startsWith(`${name}/`);
+          });
+          allChildren.forEach((key) => {
+            delete this.allGraphData[key];
+          });
+
+          this.allGraphData[name].isUnfold = false;
+          this.allGraphData[name].children = [];
+          this.allGraphData[name].size = [];
+          this.allGraphData[name].html = '';
+        }
+      }
+    },
+    /**
+     * The drop-down list box of the search drop-down list box is controlled.
+     * @param {Object} event Operation event of a component.
+     */
+    selectBoxVisibleTriggle(event) {
+      setTimeout(() => {
+        document.querySelector('.el-autocomplete-suggestion').style.display =
+          event.type === 'blur' ? 'none' : 'block';
+      }, 300);
+    },
+    /**
+     * file select change
+     */
+    fileChange() {
+      this.selectedNode = {
+        info: {
+          inputControl: [],
+          input: [],
+          outputControl: [],
+          output: [],
+          attributes: [],
+        },
+        showControl: {
+          input: true,
+          output: true,
+        },
+      };
+      this.clickScope = {};
+      this.searchBox.value = '';
+      Object.keys(this.allGraphData).forEach((key) => {
+        delete this.allGraphData[key];
+      });
+      d3.select('#graph svg').remove();
+      this.firstFloorNodes = [];
+      this.queryGraphData();
+    },
+    /**
+     * refresh select list
+     * @param {Boolean} expanded Should get data visual plugins or not.
+     */
+    getSelectList(expanded) {
+      if (expanded) {
+        this.getDatavisualPlugins();
+      }
+    },
+    /**
+     * The search drop-down list box displays the matched data by entering data.
+     * @param {String} content Input parameters
+     * @param {Object} callback Callback Function
+     */
+    searchNodesNames(content, callback) {
+      if (!this.trainJobID) {
+        callback([]);
+        return;
+      }
+      const params = {
+        search: content,
+        train_id: this.trainJobID,
+        tag: this.fileSearchBox.value,
+        offset: 0,
+        limit: 1000,
+      };
+      RequestService.searchNodesNames(params)
+          .then(
+              (response) => {
+                if (response && response.data) {
+                  const names = response.data.names || response.data;
+                  callback(
+                      names.map((name) => {
+                        return {value: name};
+                      }),
+                  );
+                }
+              },
+              (e) => {
+                callback([]);
+                this.loading.show = false;
+              },
+          )
+          .catch((e) => {
+            callback([]);
+            this.$message.error(this.$t('public.dataError'));
+          });
+    },
+    /**
+     * Search for all data of a specific node and its namespace.
+     * @param {Object} option Selected node data object
+     */
+    querySingleNode(option) {
+      this.selectedNode.name = option.value;
+      this.selectedNode.more = false;
+      // If a node exists on the map, select the node.
+      if (this.allGraphData[option.value]) {
+        if (
+          d3
+              .select(`g[id="${option.value}"], g[id="${option.value}_unfold"]`)
+              .size()
+        ) {
+          // If the namespace or aggregation node is expanded, you need to close it and select
+          if (!this.allGraphData[option.value].isUnfold) {
+            this.selectNode(true);
+          } else {
+            this.dealDoubleClick(option.value);
+          }
+        } else {
+          const parentId = option.value.substring(
+              0,
+              option.value.lastIndexOf('/'),
+          );
+          if (
+            this.allGraphData[parentId] &&
+            this.allGraphData[parentId].isUnfold
+          ) {
+            const aggregationNode = this.allGraphData[parentId];
+            if (aggregationNode && aggregationNode.childIdsList) {
+              for (let i = 0; i < aggregationNode.childIdsList.length; i++) {
+                if (aggregationNode.childIdsList[i].includes(option.value)) {
+                  aggregationNode.index = i;
+                  break;
+                }
+              }
+            }
+            this.loading.info = this.$t('graph.searchLoading');
+            this.loading.show = true;
+            this.selectedNode.name = option.value;
+            this.layoutNamescope(parentId, true);
+          }
+        }
+      } else {
+        // If the node does not exist and is not a subnode of the aggregation node,
+        // directly invoke the background for query.
+        // If the node does not exist and is a subnode of the aggregation node, and the aggregation node is not
+        // expanded, directly invoke the background to check the node.
+        // If the node does not exist and is a child node in the aggregation node,
+        // and the aggregation node is expanded but is not displayed on the diagram, you need to zoom out the
+        // aggregated node, query the aggregation node again, and intercept the node array again.
+        const params = {
+          name: option.value,
+          train_id: this.trainJobID,
+          tag: this.fileSearchBox.value,
+        };
+        this.loading.info = this.$t('graph.searchLoading');
+        this.loading.show = true;
+        RequestService.querySingleNode(params)
+            .then(
+                (response) => {
+                  if (response && response.data && response.data.children) {
+                    const data = this.findStartUnfoldNode(response.data.children);
+                    if (data) {
+                      this.dealAutoUnfoldNamescopesData(data);
+                    }
+                  }
+                },
+                (e) => {
+                  this.loading.show = false;
+                },
+            )
+            .catch((e) => {
+              this.loading.show = false;
+              this.$message.error(this.$t('public.dataError'));
+            });
+      }
+    },
+    /**
+     * Processes all data of the queried node and the namespace to which the node belongs.
+     * @param {Object} data All data of the node and the namespace to which the node belongs
+     * @return {Object} The data object of the namespace to expand.
+     */
+    dealAutoUnfoldNamescopesData(data) {
+      if (!data.scope_name) {
+        return this.dealAutoUnfoldNamescopesData(data.children);
+      } else {
+        if (this.allGraphData[data.scope_name].isUnfold) {
+          return this.dealAutoUnfoldNamescopesData(data.children);
+        } else {
+          // If the namespace is a namespace and the number of subnodes exceeds the upper limit,
+          // an error is reported and the namespace is selected.
+          if (
+            this.allGraphData[data.scope_name].type === 'name_scope' &&
+            data.nodes.length > this.nodesCountLimit
+          ) {
+            this.selectedNode.name = data.scope_name;
+            this.querySingleNode({value: data.scope_name});
+            this.$message.error(this.$t('graph.tooManyNodes'));
+            this.$nextTick(() => {
+              this.loading.show = false;
+            });
+          } else {
+            // Normal expansion
+            const nodes = JSON.parse(JSON.stringify(data.nodes));
+            this.packageDataToObject(data.scope_name, true, nodes);
+            if (
+              this.allGraphData[data.scope_name].type === 'aggregation_scope'
+            ) {
+              this.dealAggregationNodes(data.scope_name);
+              const aggregationNode = this.allGraphData[data.scope_name];
+              if (aggregationNode) {
+                for (let i = 0; i < aggregationNode.childIdsList.length; i++) {
+                  if (
+                    aggregationNode.childIdsList[i].includes(
+                        this.selectedNode.name,
+                    )
+                  ) {
+                    aggregationNode.index = i;
+                    break;
+                  }
+                }
+              }
+              if (
+                this.allGraphData[data.scope_name].maxChainNum >
+                this.maxChainNum
+              ) {
+                this.selectedNode.name = data.scope_name;
+                this.allGraphData[data.scope_name].isUnfold = false;
+                this.deleteNamespace(data.scope_name);
+                this.$message.error(this.$t('graph.tooManyChain'));
+                this.$nextTick(() => {
+                  this.loading.show = false;
+                });
+                return;
+              }
+            }
+
+            if (data.children.scope_name) {
+              this.dealAutoUnfoldNamescopesData(data.children);
+            } else {
+              this.loading.info = this.$t('graph.searchLoading');
+              this.loading.show = true;
+              this.layoutNamescope(data.scope_name, true);
+            }
+          }
+        }
+      }
+    },
+    /**
+     * Queries the first layer namespace to be expanded for a search node.
+     * @param {Object} data All data of the node and the namespace to which the node belongs
+     * @return {Object} First namespace to be expanded
+     */
+    findStartUnfoldNode(data) {
+      if (data && data.scope_name) {
+        if (this.allGraphData[data.scope_name].isUnfold) {
+          if (
+            data.nodes.some((node) => {
+              return node.name === this.selectedNode.name;
+            })
+          ) {
+            return data;
+          } else {
+            return this.findStartUnfoldNode(data.children);
+          }
+        } else {
+          return data;
+        }
+      } else {
+        return null;
+      }
+    },
+    /**
+     * Initialize the svg, width and height of the small image, and transform information.
+     */
+    initGraphRectData() {
+      this.initSmallContainer();
+
+      if (!this.graph.dom) {
+        this.insideBox.width = this.smallResize.width;
+        this.insideBox.height = this.smallResize.height;
+        this.insideBox.top = this.insideBox.left = 0;
+        this.styleSet('#inside-box', this.insideBox);
+        insideBox.style.cursor = 'not-allowed';
+      } else {
+        let transformString = '';
+        const transTemp = this.graph.dom.attributes.transform || null;
+        if (transTemp) {
+          // transform information of graph
+          transformString = transTemp.nodeValue.split(/[(,)]/);
+        } else {
+          transformString = ['translate', '0', '0', ' scale', '1'];
+        }
+        this.graph.transform = {
+          k: parseFloat(transformString[4]),
+          x: parseFloat(transformString[1]),
+          y: parseFloat(transformString[2]),
+        };
+
+        const graphRect = this.graph.dom.getBoundingClientRect();
+        this.graph.transRate =
+          graphRect.width /
+          this.graph.dom.getBBox().width /
+          this.graph.transform.k;
+        this.graph.minScale =
+          Math.min(
+              this.svg.rect.width / 2 / graphRect.width,
+              this.svg.rect.height / 2 / graphRect.height,
+          ) * this.graph.transform.k;
+
+        this.setInsideBoxData();
+      }
+      this.setSmallMapEvents();
+    },
+    setSmallMapEvents() {
+      // Attributes of smallContainer
+      const smallContainer = document.querySelector('#small-container');
+
+      if (this.graph.dom) {
+        smallContainer.onmousedown = (e) => {
+          this.clickSmall = true;
+          this.insideBoxPositionChange(e);
+        };
+
+        document.onmouseup = (e) => {
+          this.clickSmall = false;
+        };
+
+        smallContainer.onmousemove = (e) => {
+          if (this.clickSmall) {
+            this.insideBoxPositionChange(e);
+          }
+        };
+
+        // Mouse wheel event
+        smallContainer.onmousewheel = (e) => {
+          e = e || window.event;
+          const wheelDelta = e.wheelDelta ? e.wheelDelta : e.detail;
+          if (!isNaN(this.graph.transform.k) && this.graph.transform.k !== 0) {
+            let rate =
+              wheelDelta > 0 ? wheelDelta / 100 : -1 / (wheelDelta / 100);
+
+            let scaleTemp = this.graph.transform.k / rate;
+            if (scaleTemp <= this.graph.minScale) {
+              scaleTemp = this.graph.minScale;
+              rate = this.graph.transform.k / this.graph.minScale;
+            }
+
+            this.graph.transform.k = Math.max(
+                this.scaleRange[0],
+                Math.min(scaleTemp, this.scaleRange[1]),
+            );
+            this.insideBox.scale = 1 / this.graph.transform.k;
+
+            this.insideBox.left += (this.insideBox.width * (1 - rate)) / 2;
+            this.insideBox.top += (this.insideBox.height * (1 - rate)) / 2;
+
+            this.insideBox.height = this.insideBox.height * rate;
+            this.insideBox.width = this.insideBox.width * rate;
+
+            document
+                .querySelector('#graph0')
+                .setAttribute(
+                    'transform',
+                    `translate(${this.graph.transform.x},${this.graph.transform.y}) ` +
+                  `scale(${this.graph.transform.k})`,
+                );
+
+            this.styleSet('#inside-box', this.insideBox);
+            this.graphChange();
+          }
+        };
+      } else {
+        document.onmouseup = null;
+        smallContainer.onmousemove = null;
+        smallContainer.onmousedown = null;
+        smallContainer.onmousewheel = null;
+      }
+    },
+    initSmallContainer() {
+      this.graph.dom = document.querySelector('#graph #graph0');
+      // Attributes of smallContainer
+      const smallContainer = document.querySelector('#small-container');
+      // Reset the length and width of the smallResize and locate the fault.
+      const smallResize = document.querySelector('#small-resize');
+
+      this.smallResize.width = this.smallResize.initWidth =
+        smallContainer.offsetWidth - 2; // Initial width of the thumbnail frame
+      this.smallResize.height = this.smallResize.initHeight =
+        smallContainer.offsetHeight - 2; // The initial height of the thumbnail frame is high.
+      this.smallResize.left = this.smallResize.top = 0;
+      if (Object.keys(this.allGraphData).length) {
+        if (
+          this.svg.originSize.width / this.svg.originSize.height <
+          this.smallResize.initWidth / this.smallResize.initHeight
+        ) {
+          this.smallResize.width =
+            (this.smallResize.initHeight * this.svg.originSize.width) /
+            this.svg.originSize.height;
+          this.smallResize.left =
+            (this.smallResize.initWidth - this.smallResize.width) / 2;
+        } else {
+          this.smallResize.height =
+            (this.smallResize.initWidth * this.svg.originSize.height) /
+            this.svg.originSize.width;
+          this.smallResize.top =
+            (this.smallResize.initHeight - this.smallResize.height) / 2;
+        }
+      }
+      this.styleSet('#small-resize', this.smallResize);
+      // Distance between the thumbnail frame and the upper part of the window
+      this.smallResize.offsetLeft = smallResize.getBoundingClientRect().left;
+      // Distance between the thumbnail frame and the upper part of the window
+      this.smallResize.offsetTop = smallResize.getBoundingClientRect().top;
+
+      // Attributes of smallMap
+      const smallMap = document.querySelector('#small-map');
+      const svgOuterHtml =
+        `<svg xmlns="http://www.w3.org/2000/svg" ` +
+        `xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" ` +
+        `viewBox="0.00 0.00 ${this.svg.originSize.width} ${this.svg.originSize.height}"` +
+        `><g id="smallGraph" class="graph" transform="translate(4,${this.svg
+            .originSize.height - 4}) scale(1)"` +
+        `>${this.graph.dom.innerHTML}</g></svg>`;
+
+      smallMap.innerHTML = svgOuterHtml;
+    },
+    /**
+     * Small image moving
+     * @param {Object} e Event object
+     */
+    insideBoxPositionChange(e) {
+      this.eventSmall.x = e.pageX - this.smallResize.offsetLeft;
+      this.eventSmall.y = e.pageY - this.smallResize.offsetTop;
+
+      this.insideBox.left =
+        this.eventSmall.x - parseFloat(this.insideBox.width) / 2;
+      this.insideBox.top =
+        this.eventSmall.y - parseFloat(this.insideBox.height) / 2;
+
+      this.styleSet('#inside-box', this.insideBox);
+      this.graphChange();
+    },
+    /**
+     * Displacement of the large picture when the small picture is changed
+     */
+    graphChange() {
+      if (!this.graph.transform.x || isNaN(this.graph.transform.x)) {
+        this.initGraphRectData();
+      }
+      const graphRect = this.graph.dom.getBoundingClientRect();
+
+      const graphSizeRate = this.svg.rect.width / this.insideBox.width;
+
+      const change = {
+        x:
+          (this.insideBox.left * graphSizeRate -
+            (this.svg.rect.left - graphRect.left)) /
+          this.graph.transRate,
+        y:
+          (this.insideBox.top * graphSizeRate -
+            (this.svg.rect.top - graphRect.top)) /
+          this.graph.transRate,
+      };
+
+      this.graph.transform.x -= change.x;
+      this.graph.transform.y -= change.y;
+
+      this.graph.dom.setAttribute(
+          'transform',
+          `translate(${this.graph.transform.x},${this.graph.transform.y}) ` +
+          `scale(${this.graph.transform.k})`,
+      );
+    },
+    /**
+     * Displacement of the small map when the large picture is changed
+     */
+    setInsideBoxData() {
+      const graphRect = this.graph.dom.getBoundingClientRect();
+      const transRate = graphRect.width / this.smallResize.width;
+
+      this.insideBox.left = (this.svg.rect.left - graphRect.left) / transRate;
+      this.insideBox.top = (this.svg.rect.top - graphRect.top) / transRate;
+
+      this.insideBox.width = this.svg.rect.width / transRate;
+      this.insideBox.height = this.svg.rect.height / transRate;
+      this.styleSet('#inside-box', this.insideBox);
+    },
+    /**
+     * Setting the width and height of a node
+     * @param {String} id dom id whose style needs to be modified
+     * @param {Object} domData data of dom
+     */
+    styleSet(id, domData) {
+      const dom = document.querySelector(id);
+      dom.style.left = `${domData.left}px`;
+      dom.style.top = `${domData.top}px`;
+      dom.style.width = `${domData.width}px`;
+      dom.style.height = `${domData.height}px`;
+    },
+    /**
+     * Expansion and folding of control edges
+     * @param {String} item Determines the control edge of the input or output.
+     */
+    toggleControl(item) {
+      this.selectedNode.showControl[item] = !this.selectedNode.showControl[
+          item
+      ];
+    },
+    /**
+     * Click the node information name.
+     */
+    nodeNameClick() {
+      const nodeNameText = event.target;
+      if (document.body.createTextRange) {
+        const nodeNameTextRange = document.body.createTextRange();
+        nodeNameTextRange.moveToElementText(nodeNameText);
+        nodeNameTextRange.select();
+      } else if (window.getSelection) {
+        const nodeNameSelection = window.getSelection();
+        const nodeNameTextRange = document.createRange();
+        nodeNameTextRange.selectNodeContents(nodeNameText);
+        nodeNameSelection.removeAllRanges();
+        nodeNameSelection.addRange(nodeNameTextRange);
+      }
+    },
+    /**
+     * Collapse on the right
+     */
+    toggleRight() {
+      this.rightShow = !this.rightShow;
+      setTimeout(() => {
+        this.initSvg();
+        this.initGraphRectData();
+      }, 10);
+    },
+    /**
+     * Full-screen display
+     */
+    toggleScreen() {
+      this.fullScreen = !this.fullScreen;
+      setTimeout(() => {
+        this.initSvg();
+        this.initGraphRectData();
+      }, 10);
+    },
+    /**
+     * Download svg
+     */
+    downLoadSVG() {
+      const svgXml = document.querySelector('#graph #graph0').innerHTML;
+      const bbox = document.getElementById('graph0').getBBox();
+      const viewBoxSize = `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`;
+      const encodeStr =
+        `<svg xmlns="http://www.w3.org/2000/svg" ` +
+        `xmlns:xlink="http://www.w3.org/1999/xlink" ` +
+        `width="${bbox.width}" height="${bbox.height}" ` +
+        `viewBox="${viewBoxSize}">${CommonProperty.graphDownloadStyle}<g>${svgXml}</g></svg>`;
+
+      // Write the svg stream encoded by base64 to the image object.
+      const src = `data:image/svg+xml;base64,
+      ${window.btoa(unescape(encodeURIComponent(encodeStr)))}`;
+      const a = document.createElement('a');
+      a.href = src; // Export the information in the canvas as image data.
+      a.download = 'graph'; // Set the download name.
+      a.click(); // Click to trigger download.
+    },
+    /**
+     * Fold the legend area.
+     */
+    foldLegend() {
+      this.showLegend = !this.showLegend;
+    },
+    // jump back to train dashboard
+    jumpToTrainDashboard() {
+      this.$router.push({
+        path: '/train-manage/training-dashboard',
+        query: {
+          id: this.trainJobID,
+        },
+      });
+    },
+  },
+  // Components imported by the page
+  components: {
+    Autocomplete,
+  },
+};
+</script>
+<style lang="scss">
+.cl-graph-manage {
+  height: 100%;
+  .cl-graph-title {
+    height: 56px;
+    line-height: 56px;
+    .guide {
+      cursor: pointer;
+      margin-left: 10px;
+      display: inline-block;
+      line-height: 18px;
+      font-size: 12px;
+      .guide-icon {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        vertical-align: -2.5px;
+        margin-right: 4px;
+        background: url('../../assets/images/guideIcon.svg');
+      }
+    }
+    .guide:hover {
+      color: #00a5a7;
+      .guide-icon {
+        background: url('../../assets/images/guideIconHover.svg');
+      }
+    }
+  }
+  .graph-p32 {
+    height: 100%;
+    position: relative;
+    .guide-content {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      background-color: #c6c8cc;
+      z-index: 9999;
+      .step-pic {
+        text-align: center;
+        margin-top: 8px;
+      }
+      .step {
+        height: 100%;
+        background-repeat: round;
+        img {
+          width: 100%;
+        }
+      }
+      .guide-span {
+        font-size: 12px;
+        color: #575d6c;
+        line-height: 18px;
+        text-align: left;
+        display: inline-block;
+      }
+      .el-popover {
+        .el-icon-close {
+          cursor: pointer;
+          position: absolute;
+          right: 10px;
+          top: 13px;
+          font-size: 20px;
+        }
+        .el-icon-close:hover {
+          color: #00a5a7;
+        }
+      }
+      .el-popover__title {
+        font-size: 16px;
+        color: #252b3a;
+        line-height: 24px;
+        font-weight: bold;
+      }
+      .el-button {
+        display: block;
+        float: right;
+        height: 28px;
+        line-height: 27px;
+        border-radius: 0;
+        padding: 0 20px;
+      }
+    }
+  }
+  .cl-content {
+    height: calc(100% - 50px);
+    overflow: auto;
+  }
+  #graphs {
+    width: 100%;
+    height: 100%;
+    font-size: 0;
+    background: #f0f2f5;
+    .search {
+      margin-bottom: 15px;
+      width: 100%;
+      .el-autocomplete-suggestion {
+        position: absolute;
+        width: 100%;
+        z-index: 200;
+      }
+    }
+    .cl-graph {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #fff;
+      padding: 0 32px 24px;
+      min-height: 700px;
+      overflow: hidden;
+    }
+    .cl-graph.full-screen {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -280px;
+      right: 0;
+      width: auto;
+      height: auto;
+      padding: 0;
+      #sidebar {
+        .node-info-con {
+          height: calc(100% - 280px);
+        }
+      }
+      .graph-container {
+        width: 100%;
+      }
+    }
+    #sidebar.right-hide {
+      right: -442px;
+    }
+    #sidebar {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 442px;
+      height: 100%;
+      border-radius: 6px;
+      text-align: left;
+      background-color: #ffffff;
+      display: inline-block;
+      box-shadow: 0 1px 3px 0px rgba(0, 0, 0, 0.1);
+      color: #333333;
+      font-size: 14px;
+      line-height: 14px;
+      padding: 18px 32px 24px;
+      div,
+      span,
+      pre {
+        font-size: 14px;
+      }
+      #small-container {
+        height: 209px;
+        width: 100%;
+        z-index: 100;
+        border: 1px solid #e6ebf5;
+        overflow: hidden;
+        background-color: white;
+        position: relative;
+        #small-resize {
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          left: 0;
+          top: 0;
+        }
+        #small-map {
+          height: 100%;
+          width: 100%;
+          position: relative;
+          padding: 0;
+        }
+        #inside-box {
+          background-color: #5b88f1;
+          position: absolute;
+          /* Transparency */
+          opacity: 0.3;
+          width: 100%;
+          height: 100%;
+          left: 0px;
+          top: 0px;
+          z-index: 200;
+          cursor: move;
+        }
+      }
+      .title {
+        padding: 20px 0;
+        font-size: 14px;
+        color: #333333;
+        img {
+          float: right;
+          margin-right: 10px;
+          cursor: pointer;
+        }
+      }
+      .graph-controls {
+        padding: 10px 20px 0 20px;
+        div {
+          cursor: pointer;
+          display: inline-block;
+          margin-left: 20px;
+        }
+        img {
+          cursor: pointer;
+          vertical-align: middle;
+        }
+      }
+      .node-info-con {
+        ::-webkit-scrollbar-button {
+          z-index: 200;
+          width: 10px;
+          height: 10px;
+          background: #fff;
+          cursor: pointer;
+        }
+        ::-webkit-scrollbar-button:horizontal:single-button:start {
+          background-image: url('../../assets/images/scroll-btn-left.png');
+          background-position: center;
+        }
+        ::-webkit-scrollbar-button:horizontal:single-button:end {
+          background-image: url('../../assets/images/scroll-btn-right.png');
+          background-position: center;
+        }
+        ::-webkit-scrollbar-button:vertical:single-button:start {
+          background-image: url('../../assets/images/scroll-btn-up.png');
+          background-position: center;
+        }
+        ::-webkit-scrollbar-button:vertical:single-button:end {
+          background-image: url('../../assets/images/scroll-btn-down.png');
+          background-position: center;
+        }
+        ::-webkit-scrollbar-thumb {
+          background-color: #bac5cc;
+        }
+        ::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+      }
+      .node-info-container {
+        height: calc(100% - 451px);
+      }
+      .node-info-container-long {
+        height: calc(100% - 357px);
+      }
+      .node-info {
+        font-size: 14px;
+        padding: 0 20px;
+        height: calc(100% - 54px);
+        overflow: auto;
+        color: #333;
+        background-color: #f7faff;
+        .clear {
+          clear: both;
+        }
+        .hover {
+          li:hover {
+            background: #fce8b2;
+          }
+          .control-list {
+            .dependence-title {
+              line-height: 30px;
+              cursor: pointer;
+              font-weight: bold;
+              img {
+                vertical-align: middle;
+                margin-right: 3px;
+              }
+            }
+            .dependence-title.hide {
+              img {
+                margin-top: -3px;
+                transform: rotate(-90deg);
+              }
+            }
+            li:hover {
+              background: #fce8b2;
+            }
+          }
+          .control-list:hover {
+            background: none;
+          }
+        }
+        .pointer {
+          cursor: pointer;
+        }
+        .item-content {
+          max-height: calc(50% - 95px);
+          overflow: auto;
+          li {
+            min-width: 100%;
+            width: max-content;
+          }
+        }
+        .item-min {
+          min-height: 50px;
+        }
+        .item-min2 {
+          min-height: 87px;
+        }
+        .items {
+          line-height: 20px;
+          padding: 9px 0;
+          .items-over {
+            max-height: 60px;
+            overflow: auto;
+          }
+          .item {
+            color: #999;
+          }
+        }
+        .shape {
+          vertical-align: top;
+          width: 50px;
+          word-break: break-all;
+          display: inline-table;
+          position: absolute;
+          left: 0;
+        }
+        .key {
+          vertical-align: top;
+          width: 60px;
+          word-break: break-all;
+          display: inline-table;
+        }
+        .label {
+          vertical-align: top;
+          width: 70px;
+          word-break: break-all;
+          display: inline-block;
+        }
+        .value {
+          vertical-align: top;
+          display: inline-block;
+          width: calc(100% - 70px);
+          white-space: nowrap;
+          overflow: auto;
+        }
+        .size {
+          width: 310px;
+          font-size: 12px;
+          text-align: right;
+        }
+        .input {
+          width: 100%;
+          position: relative;
+          display: inline-block;
+          white-space: nowrap;
+        }
+        ul {
+          li {
+            line-height: 20px;
+          }
+        }
+      }
+      .legend {
+        .legend-content {
+          background-color: #f7faff;
+          padding: 0 32px;
+          height: 94px;
+          overflow-y: auto;
+        }
+        .legend-item {
+          padding: 5px 0;
+          display: inline-block;
+          width: 50%;
+          font-size: 14px;
+          line-height: 20px;
+          .pic {
+            width: 45px;
+            text-align: center;
+            display: inline-block;
+            padding-left: 20px;
+            vertical-align: middle;
+            img {
+              max-width: 45px;
+              max-height: 15px;
+              margin-left: -20px;
+              vertical-align: middle;
+            }
+          }
+          .legend-text {
+            display: inline-block;
+            padding-left: 20px;
+            width: calc(100% - 45px);
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .legend-text:hover {
+            cursor: default;
+          }
+        }
+      }
+      .toggle-right {
+        position: absolute;
+        top: calc(50% - 43px);
+        left: -16px;
+        width: 18px;
+        height: 86px;
+        cursor: pointer;
+        background-image: url('../../assets/images/toggle-right-bg.png');
+      }
+      .icon-toggle {
+        width: 6px;
+        height: 9px;
+        background-image: url('../../assets/images/toggle-right-icon.png');
+        position: absolute;
+        top: calc(50% - 4.5px);
+        left: calc(50% - 3px);
+      }
+      .icon-toggle.icon-left {
+        transform: rotateY(180deg);
+      }
+    }
+    .operate-button-list {
+      position: absolute;
+      right: 0;
+      top: 0;
+      z-index: 100;
+      div {
+        cursor: pointer;
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+        margin: 5px;
+      }
+      .download-button {
+        background-image: url('../../assets/images/download.png');
+      }
+      .full-screen-button {
+        background-image: url('../../assets/images/full-screen.png');
+      }
+    }
+    .graph-container.all {
+      width: 100%;
+    }
+    .graph-container {
+      .node:hover > path,
+      .node:hover > ellipse,
+      .node:hover > polygon,
+      .node:hover > rect {
+        stroke-width: 2px;
+      }
+      .node.cluster > rect:hover {
+        stroke: #f45c5e;
+      }
+      .selected {
+        stroke: red !important;
+        stroke-width: 2px;
+      }
+    }
+    .graph-container,
+    #small-map {
+      font-size: 16px;
+      position: relative;
+      display: inline-block;
+      width: calc(100% - 442px);
+      height: 100%;
+      text-align: left;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      .graph {
+        height: 100%;
+        background-color: #f7faff;
+      }
+      #graph0 > polygon {
+        fill: transparent;
+      }
+      .node {
+        cursor: pointer;
+      }
+      .edge {
+        path {
+          stroke: rgb(167, 167, 167);
+        }
+        polygon {
+          fill: rgb(167, 167, 167);
+        }
+      }
+      .edge.highlighted {
+        path {
+          stroke: red;
+        }
+        polygon {
+          stroke: red;
+          fill: red;
+        }
+        marker {
+          path {
+            fill: red;
+          }
+        }
+      }
+      .node.aggregation > polygon {
+        stroke: #fdca5a;
+        fill: #ffe8b5;
+      }
+      .node.cluster.aggregation > rect {
+        stroke: #fdca5a;
+        fill: #fff2d4;
+        stroke-dasharray: 3, 3;
+      }
+      .node > polygon {
+        stroke: #f45c5e;
+        fill: #ffba99;
+      }
+      .node > ellipse {
+        stroke: #58a4e0;
+        fill: #d1ebff;
+      }
+      .plain > path,
+      .plain ellipse {
+        stroke: #56b077;
+        fill: #c1f5d5;
+        stroke-dasharray: 1.5, 1.5;
+      }
+      .edge-point ellipse {
+        stroke: #a7a7a7;
+        fill: #a7a7a7;
+      }
+      text {
+        fill: black;
+      }
+    }
+    // No data available.
+    .image-noData {
+      // Set the width and white on the right.
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 200;
+    }
+    .noData-text {
+      margin-top: 33px;
+      font-size: 18px;
+    }
+  }
+  .cl-display-block {
+    display: block;
+  }
+  .cl-input-value {
+    width: calc(100% - 70px) !important;
+    margin-left: 10px !important;
+  }
+  .cl-close-btn {
+    width: 20px;
+    height: 20px;
+    vertical-align: -3px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  .cl-title-right {
+    padding-right: 32px;
+  }
+}
+</style>

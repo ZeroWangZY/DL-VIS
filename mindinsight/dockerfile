@@ -1,0 +1,22 @@
+FROM python:3.7.5
+
+WORKDIR /usr/src/app
+
+COPY . . 
+
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    && pip install pybind11 \
+    && pip install pytest \
+    && apt update \
+    && apt install dos2unix \
+    && dos2unix build/scripts/crc32.sh \
+    && dos2unix build/scripts/ui.sh \
+    && wget -O cmake.sh "https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.sh" \
+    && chmod 777 cmake.sh \
+    && ./cmake.sh --skip-license \
+    && PATH=$PATH:/usr/src/app/bin \
+    && wget -O node.tar.xz "https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/v12.18.2/node-v12.18.2-linux-x64.tar.xz" \
+    && tar -xvf node.tar.xz \
+    && PATH=$PATH:/usr/src/app/node-v12.18.2-linux-x64/bin \
+    && npm config set registry http://registry.npm.taobao.org \
+    && python setup.py install
