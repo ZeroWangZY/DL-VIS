@@ -33,7 +33,7 @@ LOG_ROTATING_BACKUPCOUNT = 30
 ####################################
 # Web default settings.
 ####################################
-HOST = '127.0.0.1'
+HOST = '0.0.0.0'
 
 # Allow to support cross origin resource sharing(CORS) enable. Default is disable.
 # If enable CORS, `SUPPORT_REQUEST_METHODS` should enable 'OPTIONS' method.
