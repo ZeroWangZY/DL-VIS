@@ -12,6 +12,7 @@ import {
 import Box from "@material-ui/core/Box";
 import Snaphot from "../Snaphot/Snaphot";
 import "./index.less";
+import LayerLevel from "../LaylerLevel/LaylerLevel"
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -146,7 +147,7 @@ export default () => {
                 color: value["innerBottom"] === 0 ? "#00a5a7" : "#333",
               }}
               className={classes.itabStyle}
-              label="loss"
+              label="Activation"
               {...a11yProps(0, "innerBottom")}
             />
             <Tab
@@ -154,40 +155,18 @@ export default () => {
                 color: value["innerBottom"] === 1 ? "#00a5a7" : "#333",
               }}
               className={classes.itabStyle}
-              label="accuracy"
+              label="Gradient"
               {...a11yProps(1, "innerBottom")}
-            />
-            <Tab
-              style={{
-                color: value["innerBottom"] === 2 ? "#00a5a7" : "#333",
-              }}
-              className={classes.itabStyle}
-              label="activation"
-              {...a11yProps(2, "innerBottom")}
-            />
-            <Tab
-              style={{
-                color: value["innerBottom"] === 3 ? "#00a5a7" : "#333",
-              }}
-              className={classes.itabStyle}
-              label="gradient"
-              {...a11yProps(3, "innerBottom")}
             />
           </Tabs>
           <TabPanel value={value["innerBottom"]} index={0} pos={"innerBottom"}>
-            Item One
+            <LayerLevel ActivationOrGradient={"Activation"} />
           </TabPanel>
           <TabPanel value={value["innerBottom"]} index={1} pos={"innerBottom"}>
-            Item Two
-          </TabPanel>
-          <TabPanel value={value["innerBottom"]} index={2} pos={"innerBottom"}>
-            Item Two
-          </TabPanel>
-          <TabPanel value={value["innerBottom"]} index={3} pos={"innerBottom"}>
-            Item Two
+            <LayerLevel ActivationOrGradient={"Gradient"} />
           </TabPanel>
         </TabPanel>
       </ThemeProvider>
-    </div>
+    </div >
   );
 };

@@ -50,7 +50,7 @@ export default () => {
             renderLeftChild={() => (
               <Switch>
                 <Route path="/layer">
-                  <LaylerLevel />
+                  <LaylerLevel ActivationOrGradient={"Activation"} />
                 </Route>
                 <Route path="/">
                   <ELKLayout />

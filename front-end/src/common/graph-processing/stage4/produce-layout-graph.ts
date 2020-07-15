@@ -32,6 +32,9 @@ let visNodeMap = {};
 let hiddenEdgeMap = new Map();
 let visModuleConnectionMap = new Map();
 let modules = new Set();
+
+export const LAYERNODESIZEINDIAGNOSISMODE = { height: 120, width: 120 };
+
 export async function produceLayoutGraph(
   visGraph: VisGraph,
   layoutOptions: LayoutOptions = { networkSimplex: true }
@@ -462,7 +465,7 @@ export const generateNode = (
       node.type === NodeType.OPERATION
         ? 20
         : node.type === NodeType.LAYER && fixedNodeHeight
-          ? 120
+          ? LAYERNODESIZEINDIAGNOSISMODE.height
           : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp,

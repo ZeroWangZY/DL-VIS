@@ -51,11 +51,6 @@ const fetchBackendData = () => {
       })
       console.log("此处每隔10秒调用一次")
     }, 10000)
-
-    fetchNodeScalars({ graph_name: "lenet", node_id: ["1", "2"], start_step: 1, end_step: 10 }).then((data) => {
-      console.log(data);
-    }) // 测试
-
   }, [currentMSGraphName]);
 }
 

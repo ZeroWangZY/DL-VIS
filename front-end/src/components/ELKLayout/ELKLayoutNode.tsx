@@ -28,8 +28,9 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-import { LineGroup } from "../LineCharts/index";
-import { produceLayoutGraph } from "../../common/graph-processing/stage4/produce-layout-graph";
+// import { LineGroup } from "../LineCharts/index";
+import LineGroup from "./LineGroup"
+import { produceLayoutGraph, LAYERNODESIZEINDIAGNOSISMODE } from "../../common/graph-processing/stage4/produce-layout-graph";
 
 interface Props {
   handleRightClick: { (e: any): void };
@@ -143,16 +144,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   };
 
   const getLineChartAndText = (node, rectWidth, rectHeight) => {
+    // 使用外部 LAYERNODESIZEINDIAGNOSISMODE 的长宽
     // 注意： 目前折线图处于中间3/4之类。所以上方和下方分别剩余1/8的空余
     return (
       <g className="LineChartInNode">
-        <LineGroup
-          transform={`translate(-${rectWidth / 2},-${(rectHeight * 3) / 8})`}
-          width={rectWidth}
-          height={(rectHeight * 3) / 4}
-          data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []}
-        />
-        {/* {console.log(lineChartData.get(node.id))} */}
         <foreignObject
           x={-rectWidth / 2}
           y={-rectHeight / 2}
@@ -165,6 +160,26 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             </text>
           </div>
         </foreignObject>
+
+        <foreignObject
+          x={-rectWidth / 2}
+          y={-(rectHeight * 3) / 8}
+          width={rectWidth}
+          height={(rectHeight * 7) / 8}
+        >
+          <LineGroup
+            svgWidth={LAYERNODESIZEINDIAGNOSISMODE.width}
+            svgHeight={(LAYERNODESIZEINDIAGNOSISMODE.height * 7) / 8}
+            layerNodeId={node.id}
+          />
+        </foreignObject>
+
+        {/* <LineGroup
+          transform={`translate(-${rectWidth / 2},-${(rectHeight * 3) / 8})`}
+          width={rectWidth}
+          height={(rectHeight * 3) / 4}
+          data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []}
+        /> */}
       </g>
     );
   };

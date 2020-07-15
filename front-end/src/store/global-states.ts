@@ -2,15 +2,23 @@ import { useState, useEffect } from "react";
 import {
   GlobalStates,
   GlobalStatesModificationType,
+  LayerLevelCheckBoxState
 } from "./global-states.type";
 
 let listeners = [];
+let checkBoxInitial: LayerLevelCheckBoxState = {
+  showMax: true,
+  showMin: true,
+  showMean: true,
+}
+
 let globalStates: GlobalStates = {
   currentMSGraphName: null,
   currentStep: null,
   selectedNodeId: null,
   is_training: null,
   max_step: null,
+  layerLevel_checkBoxState: checkBoxInitial,
 };
 
 const broadcast = () => {
@@ -47,6 +55,11 @@ export const modifyGlobalStates = (
     case GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME:
       globalStates = Object.assign({}, globalStates, {
         currentMSGraphName: payload,
+      });
+      break;
+    case GlobalStatesModificationType.SET_LAYERLEVEL_CHECKBOXSTATE:
+      globalStates = Object.assign({}, globalStates, {
+        layerLevel_checkBoxState: payload,
       });
       break;
     default:

@@ -1,61 +1,51 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import ReactDOM from "react-dom";
-import { useHistory } from "react-router-dom";
-import * as d3 from "d3";
-import "./Snaphot.css";
-import { fetchAndComputeSnaphot, fetchAndComputeModelScalars } from "../../common/model-level/snaphot";
-import { computeXYScales, linearScale, generateSeriesAxis } from "../LineCharts/src/computed";
-import { modifyGlobalConfigurations } from "../../store/global-configuration";
-import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
+import * as d3 from 'd3';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
-import { GlobalStatesModificationType } from "../../store/global-states.type";
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-interface Point {
-  x: number;
-  y: number;
-}
-interface checkBoxState {
-  checkedA: boolean;
-  checkedB: boolean;
-  checkedC: boolean;
-  checkedD: boolean;
-  checkedE: boolean;
-}
+import { GlobalStatesModificationType, LayerLevelCheckBoxState } from "../../store/global-states.type";
+import { Point, DataToShow } from "./LaylerLevel"
 
-const Snaphot: React.FC = () => {
+interface Props {
+  activationOrGradientData: DataToShow[],
+  is_training: boolean,
+  max_step: number
+}
+// TODO: 在调用此组件的时候就告诉它准确的宽和高。
+const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
+  const { activationOrGradientData, is_training, max_step } = props;
+
+  const [svgWidth, setSvgWidth] = useState(650);
+  const [svgHeight, setSvgHeight] = useState(162);
+  const [clickNumber, setClickNumber] = useState(null);
   const svgRef = useRef();
+  const [cursorLinePos, setCursorLinePos] = useState(null);
+  const { layerLevel_checkBoxState } = useGlobalStates();
 
-  const [svgWidth, setSvgWidth] = useState(1800);
-
-  const dataVariety = ["train loss", "test loss", "train accuracy", "test accuracy", "learning rate"];
-
+  const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
-      setSvgWidth(node.getBoundingClientRect().width - 100);
+      setSvgWidth(node.getBoundingClientRect().width - 50);
+      setSvgHeight(node.getBoundingClientRect().height - 10);
     }
   }, []);
 
-  const svgHeight = 300;
-  const [cursorLinePos, setCursorLinePos] = useState(null);
-  const [checkBoxState, setcheckBoxState] = useState({
-    checkedA: true,
-    checkedB: true,
-    checkedC: true,
-    checkedD: true,
-    checkedE: true,
-  });
+  const margin = { top: 10, left: 30, bottom: 10, right: 30 };
+  const gapHeight = 20; // 上下折线图之间的距离
+  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 3 / 4;
+  const margin2 = { top: height + margin.top + gapHeight, left: 30 };
+  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 4; // height2是height的1/4
+  // console.log(height, height2)
 
-  //trainLoss, testLoss,trainAccuracy ,testAccuracy,learningRate;
   const handleChange = (event) => { // checkBox状态控制
-    let newcheckBoxState = {} as checkBoxState;
+    let newcheckBoxState = {} as LayerLevelCheckBoxState;
 
     // 保证至少有一个checkBox被选中
-    let stateArr = Object.values(checkBoxState);
+    let stateArr = Object.values(layerLevel_checkBoxState);
     let count = 0;
     for (let state of stateArr) {
       if (state) count++;
@@ -64,44 +54,34 @@ const Snaphot: React.FC = () => {
     if (count === 1 && !event.target.checked) return;
 
     Object.assign(newcheckBoxState,
-      { ...checkBoxState, [event.target.name]: event.target.checked });
-    setcheckBoxState(newcheckBoxState);
-  }
+      { ...layerLevel_checkBoxState, [event.target.name]: event.target.checked });
 
-  const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
-  const margin = { top: 20, right: 20, bottom: 110, left: 40 };
-  const margin2 = { top: 220, right: 20, bottom: 40, left: 40 };
-  const width = svgWidth - margin.left - margin.right;
-  const height = svgHeight - margin.top - margin.bottom;
-  const height2 = svgHeight - margin2.top - margin2.bottom;
+    let dataSlice = [];
+    Object.values(newcheckBoxState).forEach((state, i) => {
+      if (state) dataSlice.push(activationOrGradientData[i]);
+    })
+    setDataArrToShow(dataSlice);
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_LAYERLEVEL_CHECKBOXSTATE,
+      newcheckBoxState
+    );
+  }
 
   useEffect(() => {
     computeAndDrawLine();
-  }, [is_training, max_step, currentMSGraphName, checkBoxState]);
+  }, [layerLevel_checkBoxState, dataArrToShow]);
 
   const computeAndDrawLine = async () => {
-    if (!is_training || !max_step) return;
-
-    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step);
-
-    // 将要显示的数据拿出来
-    let dataArrToShow = [];
-    let checkBoxNames = Object.keys(checkBoxState);
-    for (let i = 0; i < checkBoxNames.length; i++) {
-      let checkBoxName = checkBoxNames[i];
-      if (checkBoxState[checkBoxName])
-        dataArrToShow.push(dataArr[i]);
-    }
-
+    if (!is_training || !max_step || dataArrToShow.length === 0) return;
     // 首先清除上一次的svg绘制结果。
     // 因为当dataArrToShow为空的时候，没有任何绘制，但是也要将原来的绘制结果删除
     // 所以把这一段代码放在 if(dataArrToShow.length === 0) 之前
-    let focus = d3.select(svgRef.current).select("g.focus");
+    let focus = d3.select(svgRef.current).select("g.layerLevel-lineChart-focus");
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.selectAll(".area").remove(); // 清除原折线图
 
-    let context = d3.select(svgRef.current).select("g.context");
+    let context = d3.select(svgRef.current).select("g.layerLevel-lineChart-context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
     context.selectAll(".axis--y").remove(); // 清除原来的坐标
     context.selectAll(".area").remove(); // 清除原折线图
@@ -170,7 +150,7 @@ const Snaphot: React.FC = () => {
     focus
       .append("g")
       .attr("class", "axis axis--y")
-      .call(d3.axisLeft(focusAreaYScale));
+      .call(d3.axisLeft(focusAreaYScale).ticks(5).tickSize(3).tickPadding(2));
 
 
     for (let i = 0; i < dataArrToShow.length; i++) {
@@ -216,7 +196,7 @@ const Snaphot: React.FC = () => {
       .call(brush.move, XScale.range());
 
     d3.select(svgRef.current)
-      .select("rect.zoom")
+      .select("rect.layerLevel-lineChart-zoom")
       .on("mousemove", function () {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
         let x = XScale.invert(mouseX);
@@ -251,7 +231,6 @@ const Snaphot: React.FC = () => {
             ? _index
             : _index - 1;
         let clickNumber = dataExample.data[index].x;
-
         modifyGlobalStates(
           GlobalStatesModificationType.SET_CURRENT_STEP,
           clickNumber
@@ -261,28 +240,19 @@ const Snaphot: React.FC = () => {
   };
 
   return (
-    <div className="lineChart-container" ref={measuredRef}>
-      {/* <h2>The above header is {Math.round(svgWidth)}px tall</h2> */}
+    <div className="layerLevel-lineChart-container" ref={measuredRef}>
       <div style={{ height: "5%", width: "100%" }}>
-        <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA"></input>
-        <label >train loss</label>
-        <input type="checkbox" style={{ backgroundColor: "#DC143C" }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB"></input>
-        <label >test loss</label>
-        <input type="checkbox" style={{ backgroundColor: "#4B0082" }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC"></input>
-        <label >train accuracy</label>
-        <input type="checkbox" style={{ backgroundColor: "#0000FF" }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD"></input>
-        <label >test accuracy</label>
-        <input type="checkbox" style={{ backgroundColor: "#32CD32" }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE"></input>
-        <label >learning rate</label>
+        <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax"></input>
+        <label >max</label>
+        <input type="checkbox" style={{ backgroundColor: "#DC143C" }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin"></input>
+        <label >min</label>
+        <input type="checkbox" style={{ backgroundColor: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean"></input>
+        <label >mean</label>
+
       </div>
       <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
-        <defs>
-          <clipPath id={"clip"}>
-            <rect width={svgWidth} height={height} />
-          </clipPath>
-        </defs>
         <g
-          className="focus"
+          className="layerLevel-lineChart-focus"
           transform={`translate(${margin.left},${margin.top})`}
         >
           {cursorLinePos !== null && (
@@ -299,11 +269,11 @@ const Snaphot: React.FC = () => {
           )}
         </g>
         <g
-          className="context"
+          className="layerLevel-lineChart-context"
           transform={`translate(${margin2.left},${margin2.top})`}
         ></g>
         <rect
-          className="zoom"
+          className="layerLevel-lineChart-zoom"
           width={svgWidth}
           height={height}
           transform={`translate(${margin.left},${margin.top})`}
@@ -311,6 +281,5 @@ const Snaphot: React.FC = () => {
       </svg>
     </div>
   );
-};
-
-export default Snaphot;
+}
+export default ActivationOrGradientChart;
