@@ -46,8 +46,6 @@ interface GraphMetadata {
   description?: string;
 }
 
-
-
 const GraphSelector = (props) => {
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([]);
@@ -71,17 +69,6 @@ const GraphSelector = (props) => {
   const isMsGraph =
     currentLayout === LayoutType.DAGRE_FOR_MS ||
     currentLayout === LayoutType.ELK_FOR_MS;
-
-  //根据url中的图参数确定当前选择的显示图
-  useEffect(() => {
-    msGraphMetadatas.forEach(function (value, index, array) {
-      if (array[index].name == props.match.params.graphName) {
-        setCurrentMsGraphIndex(index);
-      }
-    })
-
-  });
-
 
   const handleTfGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
@@ -109,13 +96,10 @@ const GraphSelector = (props) => {
 
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
-    if (msGraphMetadatas[currentMsGraphIndex].name)
-      modifyGlobalStates(
-        GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
-        msGraphMetadatas[currentMsGraphIndex].name
-      );
-
-    fetchLocalMsGraph(msGraphMetadatas[currentMsGraphIndex].name).then(
+    const graphName = props.match.params.graphName
+      ? props.match.params.graphName
+      : msGraphMetadatas[currentMsGraphIndex].name;
+    fetchLocalMsGraph(graphName).then(
       (RawData) => {
         let parsedGraph = RawData.data.data; // 处理
         if (conceptualGraphMode) {
@@ -125,7 +109,12 @@ const GraphSelector = (props) => {
         setMsRawGraph(parsedGraph);
       }
     );
-  }, [currentMsGraphIndex, currentLayout, conceptualGraphMode, msGraphMetadatas]);
+  }, [
+    currentMsGraphIndex,
+    currentLayout,
+    conceptualGraphMode,
+    msGraphMetadatas,
+  ]);
 
   useEffect(() => {
     if (!isTfGraph) return; // TFGraph
@@ -200,8 +189,6 @@ const GraphSelector = (props) => {
       </FormControl>
     </div>
   );
-}
+};
 
 export default GraphSelector;
-
-
