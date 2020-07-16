@@ -28,6 +28,7 @@ services:
   mindinsight:
     image: "mindinsight:0.5"
     working_dir: /usr/src/app
+    restart: always
     ports:
       - "6003:8080"
     command: sh -c 'mindinsight start && tail -f setup.py '
