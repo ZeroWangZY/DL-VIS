@@ -6,6 +6,8 @@
 @arrow_stroke_color: #999999;
 @arrow_fill_color: #999999;
 @focus_node_stroke_color: #c7000b;
+@start_node_stroke_color: #993399;
+@end_node_stroke_color: #993399;
 /*点击选中节点的外边框颜色*/
 @selected_node_fill_color: #5d83be;
 @selected_node_stroke_color: #333;
@@ -14,6 +16,8 @@
 @edge_path_stroke_width: 1;
 @hover_edge_path_stroke_color: #4d7e96;
 @hover_edge_path_stroke_width: 2;
+@highlight_edge_path_stroke_color: #993399;
+@highlight_edge_path_stroke_width: 2;
 
 // CSS Module 有一个:export关键字，它在功能上等同于 ES6 的关键字export，即导出一个 js 对象。
 :export {
@@ -25,6 +29,8 @@
   arrow_stroke_color: @arrow_stroke_color;
   arrow_fill_color: @arrow_fill_color;
   focus_node_stroke_color: @focus_node_stroke_color;
+  start_node_stroke_color: @start_node_stroke_color;
+  end_node_stroke_color: @end_node_stroke_color;
   /*点击选中节点的外边框颜色*/
   selected_node_fill_color: @selected_node_fill_color;
   selected_node_stroke_colorv: @selected_node_stroke_color;
@@ -33,4 +39,6 @@
   edge_path_stroke_width: @edge_path_stroke_width;
   hover_edge_path_stroke_color: @hover_edge_path_stroke_color;
   hover_edge_path_stroke_width: @hover_edge_path_stroke_width;
+  highlight_edge_path_stroke_color: @highlight_edge_path_stroke_color;
+  highlight_edge_path_stroke_width: @highlight_edge_path_stroke_width;
 }

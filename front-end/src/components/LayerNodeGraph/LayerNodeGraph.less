@@ -11,6 +11,14 @@
   stroke: @focus_node_stroke_color;
   stroke-width: 2px;
 };
+@rectStart:{
+  stroke: @start_node_stroke_color !important;
+  stroke-width: 2px !important;
+}
+@rectEnd:{
+  stroke: @end_node_stroke_color !important;
+  stroke-width: 2px !important;
+}
 
 .nodeitem-1 rect.FC-layer-label-container {
   fill: @rnn_layer_bg_color;
@@ -19,6 +27,12 @@
 
 .nodeitem-1 rect.FC-layer-label-container.focus {
   @rectFocused();
+}
+.nodeitem-1.startNode rect.FC-layer-label-container {
+  @rectStart();
+}
+.nodeitem-1.endNode rect.FC-layer-label-container {
+  @rectEnd();
 }
 
 /* conv */
@@ -30,6 +44,12 @@
 .nodeitem-1 rect.CONV-layer-label-container.focus {
   @rectFocused();
 }
+.nodeitem-1.startNode rect.CONV-layer-label-container {
+  @rectStart();
+}
+.nodeitem-1.endNode rect.CONV-layer-label-container {
+  @rectEnd();
+}
 
 /* RNN */
 .nodeitem-1 rect.RNN-layer-label-container {
@@ -40,6 +60,12 @@
 .nodeitem-1 rect.RNN-layer-label-container.focus {
   @rectFocused();
 }
+.nodeitem-1.startNode rect.RNN-layer-label-container {
+  @rectStart();
+}
+.nodeitem-1.endNode rect.RNN-layer-label-container {
+  @rectEnd();
+}
 
 /* other */
 .nodeitem-1 rect.OTHER-layer-label-container {
@@ -49,4 +75,10 @@
 
 .nodeitem-1 rect.OTHER-layer-label-container.focus {
   @rectFocused();
+}
+.nodeitem-1.startNode rect.OTHER-layer-label-container {
+  @rectStart();
+}
+.nodeitem-1.endNode rect.OTHER-layer-label-container {
+  @rectEnd();
 }

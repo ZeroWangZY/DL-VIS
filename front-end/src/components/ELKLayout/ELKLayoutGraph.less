@@ -43,19 +43,33 @@
 /* 路径模式节点高亮 */
 .node.startNode.expanded-node rect.elk-label-container {
   stroke-width: 2px !important;
-  stroke: #4d7e96 !important;
+  stroke: @start_node_stroke_color !important;
 }
 .node.startNode .elk-label-container {
   stroke-width: 2px !important;
-  stroke: #4d7e96 !important;
+  stroke: @start_node_stroke_color !important;
+}
+.node.startNode circle {
+  stroke: @start_node_stroke_color !important;
+}
+.node.startNode .label-container{
+  stroke-width: 3px !important;
+  stroke: @start_node_stroke_color !important;
 }
 .node.endNode.expanded-node rect.elk-label-container {
   stroke-width: 2px !important;
-  stroke: #4d7e96 !important;
+  stroke: @end_node_stroke_color !important;
 }
 .node.endNode .elk-label-container {
   stroke-width: 2px !important;
-  stroke: #4d7e96 !important;
+  stroke: @end_node_stroke_color !important;
+}
+.node.endNode circle {
+  stroke: @end_node_stroke_color !important;
+}
+.node.endNode .label-container{
+  stroke-width: 3px !important;
+  stroke: @end_node_stroke_color !important;
 }
 
 .node rect,
@@ -181,8 +195,9 @@ rect.behind-text {
 }
 
 .highlightPath path {
-  stroke: #4d7e96 !important;
+  stroke: #993399 !important;
   stroke-width: 2px !important;
+  marker-end: url(#arrowheadHighlighted) !important;
 }
 
 :export {
