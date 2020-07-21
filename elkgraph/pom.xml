@@ -46,20 +46,20 @@
 
 		<dependency>
 			<groupId>org.eclipse.elk</groupId>
-			<artifactId>core.meta</artifactId>
-			<version>0.2.3</version>
+			<artifactId>org.eclipse.elk.core.meta</artifactId>
+			<version>0.6.1</version>
 		</dependency>
 
 		<dependency>
-			<groupId>org.eclipse</groupId>
-			<artifactId>sprotty.xtext</artifactId>
-			<version>0.5.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.eclipse</groupId>
-			<artifactId>core.service</artifactId>
+			<groupId>org.eclipse.sprotty</groupId>
+			<artifactId>org.eclipse.sprotty.xtext</artifactId>
 			<version>0.7.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.elk</groupId>
+			<artifactId>org.eclipse.elk.core.service</artifactId>
+			<version>0.6.1</version>
 		</dependency>
 
 		<dependency>
