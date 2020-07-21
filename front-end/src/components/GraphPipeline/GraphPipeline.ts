@@ -77,7 +77,6 @@ export default function useGraphPipeline() {
     lGraph.then(result => {
       setLayoutGraph(result);
     })
-
   }, [visGraph, diagnosisMode]);
 
   // layoutGraph --> StyledGraph

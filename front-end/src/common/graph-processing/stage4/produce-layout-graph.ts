@@ -1,5 +1,7 @@
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 
+import _ from 'lodash';
+
 import {
   BaseNode,
   NodeType,
@@ -155,7 +157,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-      }`,
+        }`,
       isModuleEdge: inPort === PortType.Module && outPort === PortType.Module,
       originalSource: layoutNodeIdMap[originalSource],
       originalTarget: layoutNodeIdMap[originalTarget],
@@ -177,7 +179,7 @@ export async function produceLayoutGraph(
       id: `${edge.source}-${edge.target}`,
       id4Style: `${layoutNodeIdMap[edge.source]}->${
         layoutNodeIdMap[edge.target]
-      }`,
+        }`,
       isModuleEdge: inPort === PortType.Module && outPort === PortType.Module,
       originalSource: layoutNodeIdMap[source],
       originalTarget: layoutNodeIdMap[target],
@@ -208,52 +210,94 @@ export async function produceLayoutGraph(
 
   oldEleMap = newEleMap;
   newEleMap = {};
-  return generateLayout(newNodes, newLinks, newElkNodeMap, layoutOptions);
+  return generateLayout(newNodes, newLinks, newElkNodeMap, layoutOptions, visNodes.length);
 }
 
 async function generateLayout(
   children,
   edges,
   elkNodeMap,
-  layoutOptions: LayoutOptions
+  layoutOptions: LayoutOptions,
+  length
 ): Promise<LayoutGraph> {
   const { networkSimplex } = layoutOptions;
-  const elk = new ELK();
-  let elkLayout: Promise<ElkNode> = elk.layout(
-    {
-      id: "root",
-      children: children,
-      edges: edges,
-    }, //input_graph
-    {
-      // logging: true,
-      // measureExecutionTime: true,
-      layoutOptions: {
-        algorithm: "layered",
+  if (length <= 1000) {
+    const elk = new ELK();
+    let elkLayout: Promise<ElkNode> = elk.layout(
+      {
+        id: "root",
+        children: children,
+        edges: edges,
+      }, //input_graph
+      {
+        // logging: true,
+        // measureExecutionTime: true,
+        layoutOptions: {
+          algorithm: "layered",
+          "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
+            ? "NETWORK_SIMPLEX"
+            : "INTERACTIVE",
+          "org.eclipse.elk.portAlignment.east": "CENTER",
+          "org.eclipse.elk.portAlignment.west": "CENTER",
+          "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
+          // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
+          // "org.eclipse.elk.layered.mergeEdges": mergeEdge.toString(),
+          "org.eclipse.elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+          // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
+          "org.eclipse.elk.interactive": "true",
+          "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
+          // "org.eclipse.elk.edgeRouting": "SPLINES"
+          "spacing.nodeNodeBetweenLayers": "50.0",
+        },
+      }
+    );
+    let layoutGraph: Promise<LayoutGraph> = elkLayout.then((result) => {
+      if (isElkNode(result)) {
+        const { id, children, edges } = result;
+        return new LayoutGraphImp(id, children, edges, elkNodeMap);
+      }
+    });
+    return layoutGraph;
+  }
+  else {
+    const body = {
+      graph: {
+        id: 'root',
+        children,
+        edges
+      },
+      options: {
+        "org.eclipse.elk.algorithm": "layered", 
         "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
-          ? "NETWORK_SIMPLEX"
-          : "INTERACTIVE",
+        ? "NETWORK_SIMPLEX"
+        : "INTERACTIVE",
         "org.eclipse.elk.portAlignment.east": "CENTER",
         "org.eclipse.elk.portAlignment.west": "CENTER",
         "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
-        // "org.eclipse.elk.layered.layering.strategy": "INTERACTIVE",
-        // "org.eclipse.elk.layered.mergeEdges": mergeEdge.toString(),
         "org.eclipse.elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-        // "org.eclipse.elk.layered.cycleBreaking.strategy": "INTERACTIVE",
         "org.eclipse.elk.interactive": "true",
-        "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN", // 可INHERIT INCLUDE_CHILDREN SEPARATE_CHILDREN，布局时，跨聚合的边被不被考虑进来，默认SEPARATE_CHILDREN。
-        // "org.eclipse.elk.edgeRouting": "SPLINES"
-        "spacing.nodeNodeBetweenLayers": "50.0",
+        "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "org.eclipse.elk.layered.spacing.nodeNodeBetweenLayers": "50.0"
+      }
+    }
+    let elkLayout = fetch('/java/api/elk_layout', {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'content-type': 'application/json'
       },
-    }
-  );
-  let layoutGraph: Promise<LayoutGraph> = elkLayout.then((result) => {
-    if (isElkNode(result)) {
-      const { id, children, edges } = result;
-      return new LayoutGraphImp(id, children, edges, elkNodeMap);
-    }
-  });
-  return layoutGraph;
+      body: JSON.stringify(body)
+    }).then((result) => {
+      return result.json();
+    })
+    let layoutGraph: Promise<LayoutGraph> = elkLayout.then((result) => {
+        let { id, children: tempChildren, edges: tempEdges } = result;
+        children = _.merge(children, tempChildren);
+        edges = _.merge(edges, tempEdges||[]);
+        return new LayoutGraphImp(id, children, edges, elkNodeMap);
+    })
+    return layoutGraph;
+  }
 }
 
 function isElkNode(object: void | ElkNode): object is ElkNode {
@@ -279,17 +323,17 @@ function idConverter(index: number): string {
 }
 
 function _isPort(node: BaseNode, mode: string): PortType {
-  return  modules.has(node.id)
-  ? PortType.Module
-  : hiddenEdgeMap.has(node.id) &&
-    hiddenEdgeMap.get(node.id)[mode].size > 0
-  ? PortType.hasHiddenEdge
-  : hiddenEdgeMap.has(node.id) &&
-    hiddenEdgeMap.get(node.id)[mode].size === 0
-  ? PortType.HiddenPort
-  : node["expanded"]
-  ? PortType.Expanded
-  : PortType.None
+  return modules.has(node.id)
+    ? PortType.Module
+    : hiddenEdgeMap.has(node.id) &&
+      hiddenEdgeMap.get(node.id)[mode].size > 0
+      ? PortType.hasHiddenEdge
+      : hiddenEdgeMap.has(node.id) &&
+        hiddenEdgeMap.get(node.id)[mode].size === 0
+        ? PortType.HiddenPort
+        : node["expanded"]
+          ? PortType.Expanded
+          : PortType.None
 }
 
 function isPort(target: BaseNode, source: BaseNode): PortType[] {
@@ -346,20 +390,20 @@ export const generateNode = (
 ): LayoutNode => {
   let ports = [];
   // if (inPort !== PortType.None) {
-    ports.push({
-      id: node.id + "-in-port",
-      properties: {
-        "port.side": "WEST",
-      },
-    });
+  ports.push({
+    id: node.id + "-in-port",
+    properties: {
+      "port.side": "WEST",
+    },
+  });
   // }
   // if (outPort !== PortType.None) {
-    ports.push({
-      id: node.id + "-out-port",
-      layoutOptions: {
-        "port.side": "EAST",
-      },
-    });
+  ports.push({
+    id: node.id + "-out-port",
+    layoutOptions: {
+      "port.side": "EAST",
+    },
+  });
   // }
   let parameters: DataNodeImp[] = [],
     constVals: DataNodeImp[] = [];
@@ -418,8 +462,8 @@ export const generateNode = (
       node.type === NodeType.OPERATION
         ? 20
         : node.type === NodeType.LAYER && fixedNodeHeight
-        ? 120
-        : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
+          ? 120
+          : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     labels: genLabel(node.id + "_label"),
     isStacked: node instanceof StackedOpNodeImp,
   };

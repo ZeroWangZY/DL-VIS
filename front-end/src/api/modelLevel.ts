@@ -6,7 +6,7 @@ interface snaphot {
     "TEST_LOSS": number,
     "TEST_ACCURACY": number,
 }
-export const fetchSnaphot = (): Promise<{ data: snaphot[] }> => fireAjax('GET', '/api/tf/modellevel/snaphot');
+export const fetchSnaphot = (): Promise<{ data: snaphot[] }> => fireAjax('GET', '/python/api/tf/modellevel/snaphot');
 
 
 interface layerInfo {
@@ -22,7 +22,7 @@ interface layerParams {
     "STEP_TO": number,
     "NODE_ARRAY": string[]
 }
-export const fetchLayerInfo = (params: layerParams): Promise<{ data: layerInfo[] }> => fireAjax('POST', '/api/tf/modellevel/layerinfo', params);
+export const fetchLayerInfo = (params: layerParams): Promise<{ data: layerInfo[] }> => fireAjax('POST', '/python/api/tf/modellevel/layerinfo', params);
 
 interface modelScalars {
     "step": number,
@@ -40,7 +40,7 @@ interface fetchModelScalarsParams {
 }
 export const fetchModelScalars =
     (params: fetchModelScalarsParams): Promise<{ data }> =>
-        fireAjax('GET', '/api/get_model_scalars', params);
+        fireAjax('GET', '/python/api/get_model_scalars', params);
 
 interface metadata {
     "max_step": number,
@@ -51,4 +51,4 @@ interface fetchMetadataParams {
 }
 export const fetchMetadata =
     (params: fetchMetadataParams): Promise<{ data }> =>
-        fireAjax('GET', '/api/get_metadata', params);
+        fireAjax('GET', '/python/api/get_metadata', params);

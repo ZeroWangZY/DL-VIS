@@ -32,4 +32,10 @@ services:
     ports:
       - "6003:8080"
     command: sh -c 'mindinsight start && tail -f setup.py '
+  dl-vis-elk:
+    image: "dl-vis-elk:0.1"
+    restart: always
+    ports:
+      - "6004:8080"
+    command: "java -jar /app.jar"
 

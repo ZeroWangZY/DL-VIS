@@ -31,7 +31,8 @@
 docker build .\front-end -t dl-vis-frontend:0.1  
 docker build .\back-end -t dl-vis-backend:0.1
 docker build .\mindinsight -t mindinsight:0.5
-docker-compose up  
+docker build .\elkgraph -t dl-vis-elk:0.1
+docker-compose up
 
 # 代码提交注意事项
 
