@@ -69,7 +69,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     computeAndDrawLine();
-  }, [layerLevel_checkBoxState, dataArrToShow]);
+  }, [layerLevel_checkBoxState, dataArrToShow, svgWidth]);
 
   const computeAndDrawLine = async () => {
     if (!is_training || !max_step || dataArrToShow.length === 0) return;
@@ -248,8 +248,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         <label >min</label>
         <input type="checkbox" style={{ backgroundColor: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean"></input>
         <label >mean</label>
-
       </div>
+
       <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
         <g
           className="layerLevel-lineChart-focus"

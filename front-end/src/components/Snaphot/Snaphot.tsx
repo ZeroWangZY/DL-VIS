@@ -262,7 +262,6 @@ const Snaphot: React.FC = () => {
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
-      {/* <h2>The above header is {Math.round(svgWidth)}px tall</h2> */}
       <div style={{ height: "5%", width: "100%" }}>
         <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA"></input>
         <label >train loss</label>

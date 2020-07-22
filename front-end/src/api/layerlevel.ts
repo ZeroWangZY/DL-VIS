@@ -10,4 +10,4 @@ interface fetchNodeScalarsParams {
 }
 export const fetchNodeScalars =
   (params: fetchNodeScalarsParams): Promise<{ data }> =>
-    fireAjax('GET', '/api/get_node_scalars', params);
+    fireAjax('GET', '/python/api/get_node_scalars', params);
