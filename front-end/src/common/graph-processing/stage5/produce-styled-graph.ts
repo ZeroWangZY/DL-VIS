@@ -108,7 +108,8 @@ export const generateNodeStyles = (
       nodeKeyMap[id4Style] = 1;
     }
     nodeStyles.push({
-      key: `${id4Style}_${nodeKeyMap[id4Style]}`,
+      //key: `${id4Style}_${nodeKeyMap[id4Style]}`,
+      key: `${node.id}`,
       data: node.hasOwnProperty("label")
         ? {
           class: node.class,
@@ -153,7 +154,8 @@ export const generateNodeStyles = (
     const [inPortType, outPortType] = node.portType;
     if (inPortType === PortType.Module) {
       portStyles.push({
-        key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        //key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        key: `inPort_${node.id}`,
         data: {
           type: "in",
           id4Style: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
@@ -168,7 +170,8 @@ export const generateNodeStyles = (
       });
     } else if (inPortType === PortType.hasHiddenEdge) {
       portStyles.push({
-        key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        //key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        key: `inPort_${node.id}`,
         data: {
           type: "in",
           id4Style: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
@@ -186,7 +189,8 @@ export const generateNodeStyles = (
     }
     if (outPortType === PortType.Module) {
       portStyles.push({
-        key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        //key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        key: `outPort_${node.id}`,
         data: {
           type: "out",
           id4Style: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
@@ -201,7 +205,8 @@ export const generateNodeStyles = (
       });
     } else if (outPortType === PortType.hasHiddenEdge) {
       portStyles.push({
-        key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        //key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
+        key: `outPort_${node.id}`,
         data: {
           type: "out",
           id4Style: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
