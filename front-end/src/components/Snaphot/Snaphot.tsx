@@ -12,9 +12,6 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
 interface Point {
   x: number;
   y: number;
@@ -29,17 +26,8 @@ interface checkBoxState {
 
 const Snaphot: React.FC = () => {
   const svgRef = useRef();
-
   const [svgWidth, setSvgWidth] = useState(1800);
-
-  const dataVariety = ["train loss", "test loss", "train accuracy", "test accuracy", "learning rate"];
-
-  const measuredRef = useCallback((node) => {
-    if (node !== null) {
-      setSvgWidth(node.getBoundingClientRect().width - 100);
-    }
-  }, []);
-
+  // const dataVariety = ["train loss", "test loss", "train accuracy", "test accuracy", "learning rate"];
   const svgHeight = 300;
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [checkBoxState, setcheckBoxState] = useState({
@@ -49,6 +37,24 @@ const Snaphot: React.FC = () => {
     checkedD: true,
     checkedE: true,
   });
+  const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
+
+  const margin = { top: 20, right: 20, bottom: 110, left: 40 };
+  const margin2 = { top: 220, right: 20, bottom: 40, left: 40 };
+  const width = svgWidth - margin.left - margin.right;
+  const height = svgHeight - margin.top - margin.bottom;
+  const height2 = svgHeight - margin2.top - margin2.bottom;
+
+  let XScale = d3.scaleLinear()
+    .rangeRound([0, svgWidth])
+    .domain([1, max_step]);
+
+  const measuredRef = useCallback((node) => {
+    if (node !== null) {
+      setSvgWidth(node.getBoundingClientRect().width - 100);
+    }
+  }, []);
+
 
   //trainLoss, testLoss,trainAccuracy ,testAccuracy,learningRate;
   const handleChange = (event) => { // checkBox状态控制
@@ -68,16 +74,9 @@ const Snaphot: React.FC = () => {
     setcheckBoxState(newcheckBoxState);
   }
 
-  const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
-  const margin = { top: 20, right: 20, bottom: 110, left: 40 };
-  const margin2 = { top: 220, right: 20, bottom: 40, left: 40 };
-  const width = svgWidth - margin.left - margin.right;
-  const height = svgHeight - margin.top - margin.bottom;
-  const height2 = svgHeight - margin2.top - margin2.bottom;
-
   useEffect(() => {
     computeAndDrawLine();
-  }, [is_training, max_step, currentMSGraphName, checkBoxState]);
+  }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth]);
 
   const computeAndDrawLine = async () => {
     if (!is_training || !max_step) return;
@@ -124,11 +123,6 @@ const Snaphot: React.FC = () => {
         maxY = Math.max(maxY, point.y);
       }
     }
-    // const data = await fetchAndComputeSnaphot();
-
-    let XScale = d3.scaleLinear()
-      .rangeRound([0, svgWidth])
-      .domain([1, max_step]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
@@ -288,6 +282,18 @@ const Snaphot: React.FC = () => {
             <line
               x1={cursorLinePos}
               x2={cursorLinePos}
+              y1={height}
+              y2={0}
+              style={{
+                stroke: "grey",
+                strokeWidth: 1,
+              }}
+            />
+          )}
+          {XScale !== null && currentStep !== null && (
+            <line
+              x1={XScale(currentStep)}
+              x2={XScale(currentStep)}
               y1={height}
               y2={0}
               style={{

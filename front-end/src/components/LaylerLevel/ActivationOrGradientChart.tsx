@@ -1,8 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import * as d3 from 'd3';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
 import {
   useGlobalStates,
   modifyGlobalStates,
@@ -18,14 +15,12 @@ interface Props {
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const { activationOrGradientData, is_training, max_step } = props;
+  const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
 
+  const svgRef = useRef();
   const [svgWidth, setSvgWidth] = useState(650);
   const [svgHeight, setSvgHeight] = useState(162);
-  const [clickNumber, setClickNumber] = useState(null);
-  const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
-  const { layerLevel_checkBoxState } = useGlobalStates();
-
   const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
@@ -34,12 +29,15 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     }
   }, []);
 
+  let XScale = d3.scaleLinear()
+    .rangeRound([0, svgWidth])
+    .domain([1, max_step]);
+
   const margin = { top: 10, left: 30, bottom: 10, right: 30 };
   const gapHeight = 20; // 上下折线图之间的距离
   const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 3 / 4;
   const margin2 = { top: height + margin.top + gapHeight, left: 30 };
   const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 4; // height2是height的1/4
-  // console.log(height, height2)
 
   const handleChange = (event) => { // checkBox状态控制
     let newcheckBoxState = {} as LayerLevelCheckBoxState;
@@ -104,11 +102,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         maxY = Math.max(maxY, point.y);
       }
     }
-    // const data = await fetchAndComputeSnaphot();
-
-    let XScale = d3.scaleLinear()
-      .rangeRound([0, svgWidth])
-      .domain([1, max_step]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
@@ -235,7 +228,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           GlobalStatesModificationType.SET_CURRENT_STEP,
           clickNumber
         );
-        setCursorLinePos(XScale(clickNumber));
       });
   };
 
@@ -259,6 +251,18 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             <line
               x1={cursorLinePos}
               x2={cursorLinePos}
+              y1={height}
+              y2={0}
+              style={{
+                stroke: "grey",
+                strokeWidth: 1,
+              }}
+            />
+          )}
+          {XScale !== null && currentStep !== null && (
+            <line
+              x1={XScale(currentStep)}
+              x2={XScale(currentStep)}
               y1={height}
               y2={0}
               style={{
