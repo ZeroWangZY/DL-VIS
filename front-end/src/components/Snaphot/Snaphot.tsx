@@ -32,11 +32,12 @@ const Snaphot: React.FC = () => {
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [checkBoxState, setcheckBoxState] = useState({
     checkedA: true,
-    checkedB: true,
-    checkedC: true,
-    checkedD: true,
-    checkedE: true,
+    checkedB: false,
+    checkedC: false,
+    checkedD: false,
+    checkedE: false,
   });
+  const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
 
   const margin = { top: 20, right: 20, bottom: 110, left: 40 };
@@ -99,6 +100,7 @@ const Snaphot: React.FC = () => {
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.selectAll(".area").remove(); // 清除原折线图
+    focus.selectAll(".snapshot-grid").remove();
 
     let context = d3.select(svgRef.current).select("g.context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -167,6 +169,22 @@ const Snaphot: React.FC = () => {
       .call(d3.axisLeft(focusAreaYScale));
 
 
+    // add the X gridlines
+    focus.append("g")
+      .attr("class", "snapshot-grid")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(XScale).tickSize(-height))
+      .selectAll("text")
+      .style("opacity", "0")
+
+    // add the Y gridlines
+    focus.append("g")
+      .attr("class", "snapshot-grid")
+      .call(d3.axisLeft(focusAreaYScale).tickSize(-svgWidth))
+      .selectAll("text")
+      .style("opacity", "0")
+
+    // 以下是context部分的折线图
     for (let i = 0; i < dataArrToShow.length; i++) {
       let data = dataArrToShow[i];
       context
@@ -184,19 +202,49 @@ const Snaphot: React.FC = () => {
       .attr("transform", "translate(0," + height2 + ")")
       .call(d3.axisBottom(XScale));
 
+    // brush部分
+
+    const zoomed = () => {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+      var t = d3.event.transform;
+      let newXScale = d3.scaleLinear()
+        .rangeRound([0, svgWidth])
+        .domain(t.rescaleX(XScale).domain());
+
+      focus.select(".focus").attr("d", focusAreaLineGenerator);
+      // focus.select(".axis--x").call(d3.axisBottom(newXScale));
+
+      console.log(newXScale.range().map(t.invertX, t));
+      context.select(".brush")
+        .call(brush.move, newXScale.range().map(t.invertX, t));
+    }
+
+    let zoom = d3.zoom()
+      .scaleExtent([1, Infinity])
+      .translateExtent([[0, 0], [svgWidth, height]])
+      .extent([[0, 0], [svgWidth, height]])
+    // .on("zoom", zoomed);
+
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || XScale.range();
-      XScale.domain(
-        s.map(XScale.invert, XScale)
-      );
-      let focus = d3.select(svgRef.current).select("g.focus");
-      focus.select(".area").attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").call(d3.axisBottom(XScale));
+      // console.log(s.map(XScale.invert, XScale));
+      let newXScale = d3.scaleLinear()
+        .rangeRound([0, svgWidth])
+        .domain(s.map(XScale.invert, XScale));
+
+      // focus.select(".focus").attr("d", focusAreaLineGenerator);
+
+      focus.select(".axis--x").call(d3.axisBottom(newXScale));
+
+      d3.select(svgRef.current)
+        .select(".zoom")
+        .call(zoom.transform, d3.zoomIdentity
+          .scale(width / (s[1] - s[0]))
+          .translate(-s[0], 0))
     };
 
-    const brush = d3
-      .brushX()
+    const brush = d3.brushX()
       .extent([
         [0, 0],
         [svgWidth, height2],
@@ -226,6 +274,14 @@ const Snaphot: React.FC = () => {
             : _index - 1;
         let clickNumber = dataExample.data[index].x;
         setCursorLinePos(XScale(clickNumber));
+        let newDetailInfoOfCurrentStep = [];
+        for (let i = 0; i < dataArrToShow.length; i++) {
+          newDetailInfoOfCurrentStep.push({
+            "name": dataArrToShow[i].id,
+            "value": dataArrToShow[i].data[clickNumber - 1].y,
+          })
+        }
+        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       })
       .on("mouseleave", function () {
         setCursorLinePos(null);
@@ -251,8 +307,45 @@ const Snaphot: React.FC = () => {
           clickNumber
         );
         setCursorLinePos(XScale(clickNumber));
+        let newDetailInfoOfCurrentStep = [];
+        for (let i = 0; i < dataArrToShow.length; i++) {
+          newDetailInfoOfCurrentStep.push({
+            "name": dataArrToShow[i].id,
+            "value": dataArrToShow[i].data[clickNumber - 1].y,
+          })
+        }
+        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       });
   };
+
+  const getDetailInfoRect = (xPos, height) => {
+    // return (
+    //   <rect
+    //     className="detailInfoRect"
+    //     width={50}
+    //     height={50}
+    //     transform={`translate(${xPos},${height / 2})`}
+    //   >
+    //   </rect>)
+    let textHeight = 50
+    let textWeight = 100
+    return (
+      <foreignObject
+        x={xPos}
+        y={height / 2 - textHeight / 2}
+        width={textWeight}
+        height={textHeight}
+      >
+        <div className="DetailInfoContainer">
+          {DetailInfoOfCurrentStep.map((d, i) => {
+            <span>
+              sadf
+            </span>
+          })}
+        </div>
+      </foreignObject>
+    )
+  }
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
@@ -290,6 +383,9 @@ const Snaphot: React.FC = () => {
               }}
             />
           )}
+          {XScale !== null && currentStep !== null && DetailInfoOfCurrentStep.length &&
+            getDetailInfoRect(XScale(currentStep), height)
+          }
           {XScale !== null && currentStep !== null && (
             <line
               x1={XScale(currentStep)}

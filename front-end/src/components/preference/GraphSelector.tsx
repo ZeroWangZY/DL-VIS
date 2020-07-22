@@ -99,6 +99,10 @@ const GraphSelector = (props) => {
     const graphName = props.match.params.graphName
       ? props.match.params.graphName
       : msGraphMetadatas[currentMsGraphIndex].name;
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+      graphName
+    );
     fetchLocalMsGraph(graphName).then(
       (RawData) => {
         let parsedGraph = RawData.data.data; // 处理

@@ -8,11 +8,34 @@
   /* width: 100%; */
   /* background-color: brown */
 }
+
 .area {
   clip-path: url(#clip);
 }
+
 .zoom {
   /* cursor: move; */
   fill: none;
   pointer-events: all;
+}
+
+.snapshot-grid .tick {
+  stroke: lightgrey;
+  opacity: 0.2;
+}
+
+.DetailInfoContainer {
+  border: 1px solid green;
+}
+
+.tooltiptext {
+  visibility: visible;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
 }

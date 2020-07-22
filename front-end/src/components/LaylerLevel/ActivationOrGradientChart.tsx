@@ -166,12 +166,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || XScale.range();
-      XScale.domain(
-        s.map(XScale.invert, XScale)
-      );
-      let focus = d3.select(svgRef.current).select("g.focus");
-      focus.select(".area").attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").call(d3.axisBottom(XScale));
+      let newXScale = d3.scaleLinear()
+        .rangeRound([0, svgWidth])
+        .domain(s.map(XScale.invert, XScale));
+
+      // focus.select(".focus").attr("d", focusAreaLineGenerator);
+
+      focus.select(".axis--x").call(d3.axisBottom(newXScale));
     };
 
     const brush = d3

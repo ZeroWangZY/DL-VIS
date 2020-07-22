@@ -133,13 +133,19 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + lineChartSize.height + ")")
-      .call(d3.axisBottom(XScale).ticks(5).tickSize(3).tickPadding(2));
+      .call(d3.axisBottom(XScale).ticks(5).tickSize(3).tickPadding(2))
+      .selectAll("text")
+      .attr("transform", "rotate(-45)")
+      .style("font-size", 7)
+      .style("text-anchor", "end")
 
     focus
       .append("g")
       .attr("class", "axis axis--y")
       .attr("transform", "translate(0,0)")
-      .call(d3.axisLeft(focusAreaYScale).ticks(5).tickSize(3).tickPadding(10));
+      .call(d3.axisLeft(focusAreaYScale).tickFormat(d3.format(".2")).ticks(5).tickSize(3).tickPadding(10))
+      .selectAll("text")
+      .style("font-size", 7)
 
 
     svg.append("rect")
