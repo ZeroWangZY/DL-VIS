@@ -27,5 +27,7 @@ urlpatterns = [
 
     path('api/get_model_scalars', views.get_model_scalars),
     path('api/get_metadata', views.get_metadata),
-    path('api/get_node_scalars', views.get_node_scalars)
+    path('api/get_node_scalars', views.get_node_scalars),
+
+    path('api/emit_action', views.emit_action)
 ]

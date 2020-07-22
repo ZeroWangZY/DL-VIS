@@ -10,15 +10,29 @@ from graph.data_access.loaders.data_loader import DataLoader
 from graph.data_access.common.enums import PluginNameEnum
 from graph.data_access.proto_files import anf_ir_pb2
 from google.protobuf import json_format
+from threading import Timer
 import random
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 
+max_step = 500
+is_training = False
 
-# print("summary path is: {}".format(SUMMARY_DIR))
+def start_training():
+    global max_step
+    global is_training
+    max_step = 0
+    is_training = True
+    def tick():
+        global max_step
+        global is_training
+        if is_training:
+            max_step += 1
+            Timer(3, tick).start()
+        if max_step > 5000:
+            is_training = False
+    Timer(3, tick).start()
 
-
-# print("summary path is: {}".format(SUMMARY_DIR))
 
 
 def index(request):
@@ -157,8 +171,8 @@ def get_metadata(request):
         return HttpResponse(json.dumps({
             "message": "success",
             "data": {
-                "max_step": 500,
-                "is_training": True
+                "max_step": max_step,
+                "is_training": is_training
             }
         }), content_type="application/json")
     return HttpResponse(json.dumps({
@@ -199,5 +213,32 @@ def get_node_scalars(request):
         }), content_type="application/json")
     return HttpResponse(json.dumps({
         "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
+
+def emit_action(request):
+    if request.method != 'GET':
+        return HttpResponse(json.dumps({
+            "message": "method undefined",
+            "data": None
+        }), content_type="application/json")
+    global max_step
+    global is_training
+    action = request.GET.get('action', default='reset_training')
+    if action == "reset_training":
+        max_step = 500
+        is_training = False
+    elif action == "start_training":
+        start_training()
+    elif action == "stop_training":
+        is_training = False
+    else:
+        return HttpResponse(json.dumps({
+            "message": "action undefined",
+            "data": None
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "success",
         "data": None
     }), content_type="application/json")
