@@ -103,6 +103,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       }
     }
 
+    let x1Scale = d3.scaleLinear()
+      .rangeRound([0, svgWidth])
+      .domain([1, max_step]);
+    let x2Scale = d3.scaleLinear()
+      .rangeRound([0, svgWidth])
+      .domain([1, max_step]);
+
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
       .domain([minY, maxY]);
@@ -114,13 +121,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     const focusAreaLineGenerator = d3
       .line<Point>()
       .curve(d3.curveMonotoneX)
-      .x((d) => XScale(d.x))
+      .x((d) => x1Scale(d.x))
       .y((d) => focusAreaYScale(d.y))
 
     const contextAreaLineGenerator = d3
       .line<Point>()
       .curve(d3.curveMonotoneX)
-      .x((d) => XScale(d.x))
+      .x((d) => x2Scale(d.x))
       .y((d) => contextAreaYScale(d.y))
 
     for (let i = 0; i < dataArrToShow.length; i++) {
@@ -138,7 +145,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(XScale));
+      .call(d3.axisBottom(x1Scale));
 
     focus
       .append("g")
@@ -161,18 +168,15 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height2 + ")")
-      .call(d3.axisBottom(XScale));
+      .call(d3.axisBottom(x2Scale));
 
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
-      let s = d3.event.selection || XScale.range();
-      let newXScale = d3.scaleLinear()
-        .rangeRound([0, svgWidth])
-        .domain(s.map(XScale.invert, XScale));
+      let s = d3.event.selection || x2Scale.range();
+      x1Scale.domain(s.map(x2Scale.invert, x2Scale));
 
-      // focus.select(".focus").attr("d", focusAreaLineGenerator);
-
-      focus.select(".axis--x").call(d3.axisBottom(newXScale));
+      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
+      focus.select(".axis--x").call(d3.axisBottom(x1Scale));
     };
 
     const brush = d3
@@ -187,13 +191,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .append("g")
       .attr("class", "brush")
       .call(brush)
-      .call(brush.move, XScale.range());
+      .call(brush.move, x2Scale.range());
 
     d3.select(svgRef.current)
       .select("rect.layerLevel-lineChart-zoom")
       .on("mousemove", function () {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-        let x = XScale.invert(mouseX);
+        let x = x1Scale.invert(mouseX);
         let _index = bisect(dataExample.data, x, 1);
 
         // 因为data中是[1, max_step]的数组,共max_step-1个数
@@ -205,14 +209,14 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             ? _index
             : _index - 1;
         let clickNumber = dataExample.data[index].x;
-        setCursorLinePos(XScale(clickNumber));
+        setCursorLinePos(x1Scale(clickNumber));
       })
       .on("mouseleave", function () {
         setCursorLinePos(null);
       })
       .on("click", function () {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-        let x = XScale.invert(mouseX);
+        let x = x1Scale.invert(mouseX);
 
         let _index = bisect(dataExample.data, x, 1);
 

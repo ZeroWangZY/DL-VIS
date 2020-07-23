@@ -12,6 +12,7 @@ import {
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
+import { ShowActivationOrGradient } from "../../DynamicInfo/index"
 
 export default () => {
 
@@ -50,7 +51,7 @@ export default () => {
             renderLeftChild={() => (
               <Switch>
                 <Route path="/layer">
-                  <LaylerLevel ActivationOrGradient={"Activation"} />
+                  <LaylerLevel ActivationOrGradient={ShowActivationOrGradient.ACTIVATION} />
                 </Route>
                 <Route path="/">
                   <ELKLayout />

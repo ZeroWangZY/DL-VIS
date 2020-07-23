@@ -14,6 +14,11 @@ import Snaphot from "../Snaphot/Snaphot";
 import "./index.less";
 import LayerLevel from "../LaylerLevel/LaylerLevel"
 
+export enum ShowActivationOrGradient {
+  ACTIVATION,
+  GRADIENT,
+}
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
@@ -160,10 +165,10 @@ export default () => {
             />
           </Tabs>
           <TabPanel value={value["innerBottom"]} index={0} pos={"innerBottom"}>
-            <LayerLevel ActivationOrGradient={"Activation"} />
+            <LayerLevel ActivationOrGradient={ShowActivationOrGradient.ACTIVATION} />
           </TabPanel>
           <TabPanel value={value["innerBottom"]} index={1} pos={"innerBottom"}>
-            <LayerLevel ActivationOrGradient={"Gradient"} />
+            <LayerLevel ActivationOrGradient={ShowActivationOrGradient.GRADIENT} />
           </TabPanel>
         </TabPanel>
       </ThemeProvider>

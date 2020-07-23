@@ -9,6 +9,7 @@ import TsneClusterGraph from './TsneClusterGraph';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
 import { activationsData } from '../../mock/mockDataForLayerLevel';
+import { ShowActivationOrGradient } from "../../components/DynamicInfo/index"
 import {
 	useGlobalStates,
 	modifyGlobalStates,
@@ -28,7 +29,7 @@ interface layerNodeScalar {
 }
 
 interface Props {
-	ActivationOrGradient: string,
+	ActivationOrGradient: ShowActivationOrGradient,
 }
 export interface Point {
 	x: number;
@@ -65,13 +66,13 @@ const LayerLevel: React.FC<Props> = (props: Props) => {
 
 		let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
 		let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-		if (ActivationOrGradient === "Activation")
+		if (ActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
 			for (let scalar of nodeScalar) {
 				max.push({ x: scalar.step, y: scalar.activation_max });
 				min.push({ x: scalar.step, y: scalar.activation_min });
 				mean.push({ x: scalar.step, y: scalar.activation_mean });
 			}
-		else if (ActivationOrGradient === "Gradient")
+		else if (ActivationOrGradient === ShowActivationOrGradient.GRADIENT)
 			for (let scalar of nodeScalar) {
 				max.push({ x: scalar.step, y: scalar.gradient_max });
 				min.push({ x: scalar.step, y: scalar.gradient_min });
