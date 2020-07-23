@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import {
   GlobalStates,
   GlobalStatesModificationType,
-  LayerLevelCheckBoxState
+  LayerLevelCheckBoxState,
+  ShowActivationOrGradient
 } from "./global-states.type";
 
 let listeners = [];
@@ -19,6 +20,7 @@ let globalStates: GlobalStates = {
   is_training: null,
   max_step: null,
   layerLevel_checkBoxState: checkBoxInitial,
+  showActivationOrGradient: ShowActivationOrGradient.ACTIVATION,
 };
 
 const broadcast = () => {
@@ -60,6 +62,11 @@ export const modifyGlobalStates = (
     case GlobalStatesModificationType.SET_LAYERLEVEL_CHECKBOXSTATE:
       globalStates = Object.assign({}, globalStates, {
         layerLevel_checkBoxState: payload,
+      });
+      break;
+    case GlobalStatesModificationType.SET_SHOWACTIVATIONORGRADIENT:
+      globalStates = Object.assign({}, globalStates, {
+        showActivationOrGradient: payload,
       });
       break;
     default:

@@ -4,7 +4,7 @@ import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
-import { GlobalStatesModificationType } from "../../store/global-states.type";
+import { GlobalStatesModificationType, ShowActivationOrGradient } from "../../store/global-states.type";
 import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
 import { isWidthDown } from "@material-ui/core";
 import { LineChart } from "../LineCharts";
@@ -32,11 +32,9 @@ interface layerNodeScalar {
 
 const LineGroup: React.FC<Props> = (props: Props) => {
   const { svgWidth, svgHeight, layerNodeId } = props;
-  const { currentStep, max_step, currentMSGraphName } = useGlobalStates();
+  const { currentStep, max_step, currentMSGraphName, showActivationOrGradient } = useGlobalStates();
   const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
-
-  const stepNumberInLayernode = 21;
 
   const margin = { top: 10, right: 10, bottom: 20, left: 23 };
   const lineChartSize = {
@@ -44,12 +42,27 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     width: svgWidth - margin.left - margin.right
   };
 
+  const stepNumberInLayernode = 21;
+  const getStartStepAndEndStep = () => {
+    let endStep = 0;
+    let startStep = 0;
+    let halfOfStepNumberInLayernode = Math.floor(stepNumberInLayernode / 2);
+    if (!currentStep) { // 当没有选中某个step的时候，折线图跟随着max_step变化
+      endStep = max_step;
+      startStep = (max_step - stepNumberInLayernode >= 1 ? max_step - stepNumberInLayernode : 1);
+    } else { // 如果选中某个step, 则显示他的前面halfOfStepNumberInLayernode个，后面halfOfStepNumberInLayernode个
+      startStep = (currentStep - halfOfStepNumberInLayernode >= 1 ? currentStep - halfOfStepNumberInLayernode : 1);
+      endStep = (currentStep + halfOfStepNumberInLayernode > max_step ? max_step : currentStep + halfOfStepNumberInLayernode);
+    }
+
+    return [startStep, endStep];
+  }
+
   useEffect(() => {
     if (layerNodeId === "" || !layerNodeId) return;
-    let endStep = (currentStep + stepNumberInLayernode >= max_step ? max_step : currentStep + stepNumberInLayernode);
-    let startStep = currentStep === null ? 1 : currentStep;
+    const [startStep, endStep] = getStartStepAndEndStep();
     getNodeScalars(currentMSGraphName, [layerNodeId], startStep, endStep);
-  }, [layerNodeId, currentStep])
+  }, [layerNodeId, currentStep, max_step])
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
     let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
@@ -57,14 +70,13 @@ const LineGroup: React.FC<Props> = (props: Props) => {
 
     let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
     let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-    let ActivationOrGradient = "Activation" // TODO:
-    if (ActivationOrGradient === "Activation")
+    if (showActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
       for (let scalar of nodeScalar) {
         max.push({ x: scalar.step, y: scalar.activation_max });
         min.push({ x: scalar.step, y: scalar.activation_min });
         mean.push({ x: scalar.step, y: scalar.activation_mean });
       }
-    else if (ActivationOrGradient === "Gradient")
+    else if (showActivationOrGradient === ShowActivationOrGradient.GRADIENT)
       for (let scalar of nodeScalar) {
         max.push({ x: scalar.step, y: scalar.gradient_max });
         min.push({ x: scalar.step, y: scalar.gradient_min });
@@ -211,13 +223,6 @@ const LineGroup: React.FC<Props> = (props: Props) => {
             />
           )}
         </g>
-        {/* <rect
-          className="layerNodeInnerLineChart-zoom"
-          width={lineChartSize.width}
-          height={lineChartSize.height}
-          transform={`translate(${margin.left},${margin.top})`}
-          style={{ opacity: 0 }}
-        /> */}
       </svg>
     </div>
   );

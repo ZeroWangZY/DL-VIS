@@ -9,7 +9,7 @@ import TsneClusterGraph from './TsneClusterGraph';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
 import { activationsData } from '../../mock/mockDataForLayerLevel';
-import { ShowActivationOrGradient } from "../../components/DynamicInfo/index"
+import { ShowActivationOrGradient } from "../../store/global-states.type"
 import {
 	useGlobalStates,
 	modifyGlobalStates,
@@ -27,10 +27,6 @@ interface layerNodeScalar {
 	"gradient_max": number,
 	"gradient_mean": number
 }
-
-interface Props {
-	ActivationOrGradient: ShowActivationOrGradient,
-}
 export interface Point {
 	x: number;
 	y: number;
@@ -41,14 +37,13 @@ export interface DataToShow {
 	color: string,
 }
 
-const LayerLevel: React.FC<Props> = (props: Props) => {
-	let ActivationOrGradient = props.ActivationOrGradient;
+const LayerLevel: React.FC = () => {
 	const linedata = useLineData();
 	const history = useHistory();
 	const goback = () => {
 		history.push("/")
 	}
-	const { currentMSGraphName, is_training, max_step } = useGlobalStates();
+	const { showActivationOrGradient, currentMSGraphName, is_training, max_step } = useGlobalStates();
 
 	const [activations, setActivations] = useState([]);
 	const [tsneGraph, setTsneGraph] = useState({});
@@ -66,13 +61,13 @@ const LayerLevel: React.FC<Props> = (props: Props) => {
 
 		let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
 		let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-		if (ActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
+		if (showActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
 			for (let scalar of nodeScalar) {
 				max.push({ x: scalar.step, y: scalar.activation_max });
 				min.push({ x: scalar.step, y: scalar.activation_min });
 				mean.push({ x: scalar.step, y: scalar.activation_mean });
 			}
-		else if (ActivationOrGradient === ShowActivationOrGradient.GRADIENT)
+		else if (showActivationOrGradient === ShowActivationOrGradient.GRADIENT)
 			for (let scalar of nodeScalar) {
 				max.push({ x: scalar.step, y: scalar.gradient_max });
 				min.push({ x: scalar.step, y: scalar.gradient_min });

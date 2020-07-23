@@ -11,6 +11,7 @@ export interface GlobalStates {
   is_training: boolean,
   max_step: number,
   layerLevel_checkBoxState: LayerLevelCheckBoxState,
+  showActivationOrGradient: ShowActivationOrGradient
 }
 
 export enum GlobalStatesModificationType {
@@ -20,6 +21,12 @@ export enum GlobalStatesModificationType {
   SET_IS_TRAINING,
   SET_MAX_SETP,
   SET_LAYERLEVEL_CHECKBOXSTATE,
+  SET_SHOWACTIVATIONORGRADIENT,
+}
+
+export enum ShowActivationOrGradient {
+  ACTIVATION,
+  GRADIENT,
 }
 
 

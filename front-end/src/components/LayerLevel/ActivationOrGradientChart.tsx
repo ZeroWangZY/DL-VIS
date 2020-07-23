@@ -5,7 +5,7 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType, LayerLevelCheckBoxState } from "../../store/global-states.type";
-import { Point, DataToShow } from "./LaylerLevel"
+import { Point, DataToShow } from "./LayerLevel"
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';

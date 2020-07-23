@@ -52,6 +52,7 @@ const Snaphot: React.FC = () => {
   // const dataVariety = ["train loss", "test loss", "train accuracy", "test accuracy", "learning rate"];
   const svgHeight = 300;
   const [cursorLinePos, setCursorLinePos] = useState(null);
+  const [localCurrentStep, setLocalCurrentStep] = useState(null);
   const [checkBoxState, setcheckBoxState] = useState({
     checkedA: true,
     checkedB: false,
@@ -233,10 +234,6 @@ const Snaphot: React.FC = () => {
       .call(d3.axisBottom(x2Scale));
 
     // brush部分
-    let zoom = d3.zoom()
-      .scaleExtent([1, Infinity])
-      .translateExtent([[0, 0], [svgWidth, height]])
-      .extent([[0, 0], [svgWidth, height]])
 
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
@@ -276,6 +273,7 @@ const Snaphot: React.FC = () => {
             ? _index
             : _index - 1;
         let clickNumber = dataExample.data[index].x;
+        setLocalCurrentStep(clickNumber);
         setCursorLinePos(x1Scale(clickNumber));
         let newDetailInfoOfCurrentStep = [];
         for (let i = 0; i < dataArrToShow.length; i++) {
@@ -287,6 +285,7 @@ const Snaphot: React.FC = () => {
         setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       })
       .on("mouseleave", function () {
+        setLocalCurrentStep(null);
         setCursorLinePos(null);
       })
       .on("click", function () {
@@ -329,7 +328,7 @@ const Snaphot: React.FC = () => {
   }
 
   const getDetailInfoRect = (xPos, height) => {
-    let textHeight = 16 * DetailInfoOfCurrentStep.length;
+    let textHeight = 16 * (DetailInfoOfCurrentStep.length + 1);
     let textWidth = 150;
     if (xPos + textWidth > svgWidth) xPos -= textWidth;
     else xPos += 10;// gap
@@ -341,6 +340,9 @@ const Snaphot: React.FC = () => {
         height={textHeight}
       >
         <div className="DetailInfoContainer" style={{ width: textWidth, height: textHeight }}>
+          <div className={classes.title}>
+            {"iteration: " + localCurrentStep}
+          </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
             <div className={classes.title}>
               {d.name + ": " + ((d.value < 0.001 || d.value > 1000) ? toExponential(d.value) : d.value.toFixed(3))}
@@ -355,7 +357,7 @@ const Snaphot: React.FC = () => {
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
-      <div style={{ height: "5%", width: "100%" }}>
+      <div style={{ height: "5%", width: "100%" }} >
         {/* <input type="checkbox" style={{ backgroundColor: "#922f2c" }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA"></input>
         <label >train loss</label>
         <input type="checkbox" style={{ backgroundColor: "#ca6457" }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB"></input>
@@ -366,33 +368,27 @@ const Snaphot: React.FC = () => {
         <label >test accuracy</label>
         <input type="checkbox" style={{ backgroundColor: "#f7b968" }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE"></input>
         <label >learning rate</label> */}
-        <FormGroup row>
+        < FormGroup row >
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}
-            // label="train loss"
             label={<Typography style={{ fontSize: "14px" }}>train loss</Typography>}
           />
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("test_loss") }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB" />}
-            // label="test loss"
             label={<Typography style={{ fontSize: "14px" }}>test loss</Typography>}
           />
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("learning_rate") }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE" />}
-            // label="learning rate"
             label={<Typography style={{ fontSize: "14px" }}>learning rate</Typography>}
           />
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("train_accuracy") }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC" />}
-            // label="train accuracy"
             label={<Typography style={{ fontSize: "14px" }}>train accuracy</Typography>}
           />
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("test_accuracy") }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD" />}
-            // label="test accuracy"
             label={<Typography style={{ fontSize: "14px" }}>test accuracy</Typography>}
           />
-
         </FormGroup>
       </div>
       <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
@@ -444,7 +440,7 @@ const Snaphot: React.FC = () => {
           transform={`translate(${margin.left},${margin.top})`}
         />
       </svg>
-    </div>
+    </div >
   );
 };
 

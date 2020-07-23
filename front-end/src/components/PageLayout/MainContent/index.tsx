@@ -3,7 +3,7 @@ import FlexHorContainer from "../FlexHorContainer";
 import FlexVerContainer from "../FlexVerContainer";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import "./index.less";
-import LaylerLevel from "../../LaylerLevel/LaylerLevel";
+import LayerLevel from "../../LayerLevel/LayerLevel";
 import ELKLayout from "../../ELKLayout/ELKLayout";
 import {
   useGlobalConfigurations,
@@ -12,7 +12,7 @@ import {
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
-import { ShowActivationOrGradient } from "../../DynamicInfo/index"
+import { ShowActivationOrGradient } from "../../../store/global-states.type"
 
 export default () => {
 
@@ -51,7 +51,7 @@ export default () => {
             renderLeftChild={() => (
               <Switch>
                 <Route path="/layer">
-                  <LaylerLevel ActivationOrGradient={ShowActivationOrGradient.ACTIVATION} />
+                  <LayerLevel />
                 </Route>
                 <Route path="/">
                   <ELKLayout />

@@ -12,12 +12,8 @@ import {
 import Box from "@material-ui/core/Box";
 import Snaphot from "../Snaphot/Snaphot";
 import "./index.less";
-import LayerLevel from "../LaylerLevel/LaylerLevel"
-
-export enum ShowActivationOrGradient {
-  ACTIVATION,
-  GRADIENT,
-}
+import LayerLevel from "../LayerLevel/LayerLevel"
+import { ShowActivationOrGradient } from "../../store/global-states.type"
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -165,10 +161,10 @@ export default () => {
             />
           </Tabs>
           <TabPanel value={value["innerBottom"]} index={0} pos={"innerBottom"}>
-            <LayerLevel ActivationOrGradient={ShowActivationOrGradient.ACTIVATION} />
+            <LayerLevel />
           </TabPanel>
           <TabPanel value={value["innerBottom"]} index={1} pos={"innerBottom"}>
-            <LayerLevel ActivationOrGradient={ShowActivationOrGradient.GRADIENT} />
+            <LayerLevel />
           </TabPanel>
         </TabPanel>
       </ThemeProvider>
