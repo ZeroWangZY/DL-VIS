@@ -6,6 +6,14 @@ import {
 } from "./global-configuration.type";
 
 let listeners = [];
+
+let colorMap = new Map();
+colorMap.set("train_loss", "#922f2c");
+colorMap.set("test_loss", "#ca6457");
+colorMap.set("learning_rate", "#f7b968");
+colorMap.set("train_accuracy", "#388aac");
+colorMap.set("test_accuracy", "#133b4e");
+
 let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: false,
   conceptualGraphMode: false,
@@ -18,7 +26,7 @@ let globalConfigurations: GlobalConfigurations = {
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
   currentLayout: LayoutType.ELK_FOR_MS,
-
+  colorMap: colorMap,
 };
 
 const broadcast = () => {

@@ -12,10 +12,9 @@ export const fetchAndComputeSnaphot = async () => {
     return { id: 'snapshot', data: line, color: '#9ecae1' }
 }
 
-export const fetchAndComputeModelScalars = async (graph_name: string, start_step: number, end_step: number) => {
+export const fetchAndComputeModelScalars = async (graph_name: string, start_step: number, end_step: number, colorMap) => {
     // TODO: graph_name可以是传入的graph_name
     let data = await fetchModelScalars({ graph_name: "lenet", start_step: start_step, end_step: end_step });
-
     let trainLoss = [],
         testLoss = [],
         trainAccuracy = [],
@@ -45,12 +44,13 @@ export const fetchAndComputeModelScalars = async (graph_name: string, start_step
         })
 
     })
+
     return [
-        { id: `trainLoss`, data: trainLoss, color: "#C71585" },
-        { id: `testLoss`, data: testLoss, color: "#DC143C" },
-        { id: `trainAccuracy`, data: trainAccuracy, color: "#4B0082" },
-        { id: `testAccuracy`, data: testAccuracy, color: "#0000FF" },
-        { id: `learningRate`, data: learningRate, color: "#32CD32" },
+        { id: `train_loss`, data: trainLoss, color: colorMap.get("train_loss") },
+        { id: `test_loss`, data: testLoss, color: colorMap.get("test_loss") },
+        { id: `train_accuracy`, data: trainAccuracy, color: colorMap.get("train_accuracy") },
+        { id: `test_accuracy`, data: testAccuracy, color: colorMap.get("test_accuracy") },
+        { id: `learning_rate`, data: learningRate, color: colorMap.get("learning_rate") },
     ]
 }
 

@@ -32,7 +32,7 @@ interface layerNodeScalar {
 
 const LineGroup: React.FC<Props> = (props: Props) => {
   const { svgWidth, svgHeight, layerNodeId } = props;
-  const { currentStep, max_step, currentMSGraphName, layerLevel_checkBoxState } = useGlobalStates();
+  const { currentStep, max_step, currentMSGraphName } = useGlobalStates();
   const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
 
@@ -49,7 +49,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     let endStep = (currentStep + stepNumberInLayernode >= max_step ? max_step : currentStep + stepNumberInLayernode);
     let startStep = currentStep === null ? 1 : currentStep;
     getNodeScalars(currentMSGraphName, [layerNodeId], startStep, endStep);
-  }, [layerLevel_checkBoxState, layerNodeId, currentStep])
+  }, [layerNodeId, currentStep])
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
     let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
@@ -71,12 +71,9 @@ const LineGroup: React.FC<Props> = (props: Props) => {
         mean.push({ x: scalar.step, y: scalar.gradient_mean });
       }
     let dataArrToShow = [];
-    if (layerLevel_checkBoxState.showMax)
-      dataArrToShow.push({ id: "Max", data: max, color: "#C71585" })
-    if (layerLevel_checkBoxState.showMin)
-      dataArrToShow.push({ id: "Min", data: min, color: "#DC143C" })
-    if (layerLevel_checkBoxState.showMean)
-      dataArrToShow.push({ id: "Mean", data: mean, color: "#4B0082" })
+    dataArrToShow.push({ id: "Max", data: max, color: "#C71585" })
+    dataArrToShow.push({ id: "Min", data: min, color: "#DC143C" })
+    dataArrToShow.push({ id: "Mean", data: mean, color: "#4B0082" })
 
     if (dataArrToShow.length === 0) return;
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值

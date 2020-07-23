@@ -6,6 +6,9 @@ import {
 } from "../../store/global-states";
 import { GlobalStatesModificationType, LayerLevelCheckBoxState } from "../../store/global-states.type";
 import { Point, DataToShow } from "./LaylerLevel"
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 
 interface Props {
   activationOrGradientData: DataToShow[],
@@ -239,12 +242,28 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   return (
     <div className="layerLevel-lineChart-container" ref={measuredRef}>
       <div style={{ height: "5%", width: "100%" }}>
-        <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax"></input>
+        {/* <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax"></input>
         <label >max</label>
         <input type="checkbox" style={{ backgroundColor: "#DC143C" }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin"></input>
         <label >min</label>
         <input type="checkbox" style={{ backgroundColor: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean"></input>
-        <label >mean</label>
+        <label >mean</label> */}
+
+        <FormGroup row>
+          <FormControlLabel
+            control={<Checkbox style={{ color: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
+            label="max"
+          />
+          <FormControlLabel
+            control={<Checkbox style={{ color: "#DC143C" }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin" />}
+            label="min"
+          />
+          <FormControlLabel
+            control={<Checkbox style={{ color: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean" />}
+            label="mean"
+          />
+        </FormGroup>
+
       </div>
 
       <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>

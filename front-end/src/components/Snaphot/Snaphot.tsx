@@ -1,11 +1,20 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { useHistory } from "react-router-dom";
+import CardContent from "@material-ui/core/CardContent";
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+import { makeStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
 import * as d3 from "d3";
 import "./Snaphot.css";
 import { fetchAndComputeSnaphot, fetchAndComputeModelScalars } from "../../common/model-level/snaphot";
 import { computeXYScales, linearScale, generateSeriesAxis } from "../LineCharts/src/computed";
-import { modifyGlobalConfigurations } from "../../store/global-configuration";
+import {
+  useGlobalConfigurations,
+  modifyGlobalConfigurations
+} from "../../store/global-configuration";
 import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import {
   useGlobalStates,
@@ -24,9 +33,22 @@ interface checkBoxState {
   checkedE: boolean;
 }
 
+const useStyles = makeStyles({
+  root: {
+    minWidth: 275,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "left",
+    wordBreak: "break-word",
+  },
+});
+
 const Snaphot: React.FC = () => {
   const svgRef = useRef();
   const [svgWidth, setSvgWidth] = useState(1800);
+  const classes = useStyles();
   // const dataVariety = ["train loss", "test loss", "train accuracy", "test accuracy", "learning rate"];
   const svgHeight = 300;
   const [cursorLinePos, setCursorLinePos] = useState(null);
@@ -39,6 +61,7 @@ const Snaphot: React.FC = () => {
   });
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
+  const { colorMap } = useGlobalConfigurations();
 
   const margin = { top: 20, right: 20, bottom: 110, left: 40 };
   const margin2 = { top: 220, right: 20, bottom: 40, left: 40 };
@@ -82,7 +105,7 @@ const Snaphot: React.FC = () => {
   const computeAndDrawLine = async () => {
     if (!is_training || !max_step) return;
 
-    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step);
+    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step, colorMap);
 
     // 将要显示的数据拿出来
     let dataArrToShow = [];
@@ -298,48 +321,79 @@ const Snaphot: React.FC = () => {
       });
   };
 
+  const toExponential = (value) => { // 将小数或者大整数转换为科学计数法，保留两位小数
+    var p = Math.floor(Math.log(value) / Math.LN10);
+    var n = value * Math.pow(10, -p);
+
+    return (n.toFixed(2) + 'e' + p)
+  }
+
   const getDetailInfoRect = (xPos, height) => {
-    // return (
-    //   <rect
-    //     className="detailInfoRect"
-    //     width={50}
-    //     height={50}
-    //     transform={`translate(${xPos},${height / 2})`}
-    //   >
-    //   </rect>)
-    let textHeight = 50
-    let textWeight = 100
+    let textHeight = 16 * DetailInfoOfCurrentStep.length;
+    let textWidth = 150;
+    if (xPos + textWidth > svgWidth) xPos -= textWidth;
+    else xPos += 10;// gap
     return (
       <foreignObject
         x={xPos}
         y={height / 2 - textHeight / 2}
-        width={textWeight}
+        width={textWidth}
         height={textHeight}
       >
-        <div className="DetailInfoContainer">
-          {DetailInfoOfCurrentStep.map((d, i) => {
-            <span>
-              sadf
-            </span>
-          })}
+        <div className="DetailInfoContainer" style={{ width: textWidth, height: textHeight }}>
+          {DetailInfoOfCurrentStep.map((d, i) => (
+            <div className={classes.title}>
+              {d.name + ": " + ((d.value < 0.001 || d.value > 1000) ? toExponential(d.value) : d.value.toFixed(3))}
+            </div>
+          ))}
         </div>
       </foreignObject>
     )
-  }
+  };
+  //train_loss #922f2c, test_loss #ca6457 , learning_rate #f7b968 , 
+  //train_accuracy #388aac, test_accuracy #133b4e
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
       <div style={{ height: "5%", width: "100%" }}>
-        <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA"></input>
+        {/* <input type="checkbox" style={{ backgroundColor: "#922f2c" }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA"></input>
         <label >train loss</label>
-        <input type="checkbox" style={{ backgroundColor: "#DC143C" }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB"></input>
+        <input type="checkbox" style={{ backgroundColor: "#ca6457" }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB"></input>
         <label >test loss</label>
-        <input type="checkbox" style={{ backgroundColor: "#4B0082" }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC"></input>
+        <input type="checkbox" style={{ backgroundColor: "#388aac" }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC"></input>
         <label >train accuracy</label>
-        <input type="checkbox" style={{ backgroundColor: "#0000FF" }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD"></input>
+        <input type="checkbox" style={{ backgroundColor: "#133b4e" }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD"></input>
         <label >test accuracy</label>
-        <input type="checkbox" style={{ backgroundColor: "#32CD32" }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE"></input>
-        <label >learning rate</label>
+        <input type="checkbox" style={{ backgroundColor: "#f7b968" }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE"></input>
+        <label >learning rate</label> */}
+        <FormGroup row>
+          <FormControlLabel
+            control={<Checkbox style={{ color: colorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}
+            // label="train loss"
+            label={<Typography style={{ fontSize: "14px" }}>train loss</Typography>}
+          />
+          <FormControlLabel
+            control={<Checkbox style={{ color: colorMap.get("test_loss") }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB" />}
+            // label="test loss"
+            label={<Typography style={{ fontSize: "14px" }}>test loss</Typography>}
+          />
+          <FormControlLabel
+            control={<Checkbox style={{ color: colorMap.get("learning_rate") }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE" />}
+            // label="learning rate"
+            label={<Typography style={{ fontSize: "14px" }}>learning rate</Typography>}
+          />
+          <FormControlLabel
+            control={<Checkbox style={{ color: colorMap.get("train_accuracy") }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC" />}
+            // label="train accuracy"
+            label={<Typography style={{ fontSize: "14px" }}>train accuracy</Typography>}
+          />
+          <FormControlLabel
+            control={<Checkbox style={{ color: colorMap.get("test_accuracy") }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD" />}
+            // label="test accuracy"
+            label={<Typography style={{ fontSize: "14px" }}>test accuracy</Typography>}
+          />
+
+        </FormGroup>
       </div>
       <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
         <defs>
@@ -363,8 +417,8 @@ const Snaphot: React.FC = () => {
               }}
             />
           )}
-          {XScale !== null && currentStep !== null && DetailInfoOfCurrentStep.length &&
-            getDetailInfoRect(XScale(currentStep), height)
+          {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
+            getDetailInfoRect(cursorLinePos, height)
           }
           {XScale !== null && currentStep !== null && (
             <line
