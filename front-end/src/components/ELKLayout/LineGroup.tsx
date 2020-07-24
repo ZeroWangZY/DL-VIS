@@ -107,7 +107,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
 
     let focus = d3.select(svgRef.current).select("g.layerNodeInnerLineChart");
     let svg = d3.select(svgRef.current);
-    svg.select("rect.layerNodeInnerLineChart-zoom").remove();
+    svg.selectAll("rect.layerNodeInnerLineChart-zoom").remove();
     focus.selectAll(".area").remove(); // 清除原折线图
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -223,6 +223,13 @@ const LineGroup: React.FC<Props> = (props: Props) => {
             />
           )}
         </g>
+        {/* <rect
+          className="layerNodeInnerLineChart-zoom"
+          width={lineChartSize.width}
+          height={lineChartSize.height}
+          transform={`translate(${margin.left},${margin.top})`}
+          style={{ opacity: 0 }}
+        /> */}
       </svg>
     </div>
   );

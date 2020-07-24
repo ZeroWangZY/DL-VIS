@@ -13,8 +13,7 @@ export const fetchAndComputeSnaphot = async () => {
 }
 
 export const fetchAndComputeModelScalars = async (graph_name: string, start_step: number, end_step: number, colorMap) => {
-    // TODO: graph_name可以是传入的graph_name
-    let data = await fetchModelScalars({ graph_name: "lenet", start_step: start_step, end_step: end_step });
+    let data = await fetchModelScalars({ graph_name: graph_name, start_step: start_step, end_step: end_step });
     let trainLoss = [],
         testLoss = [],
         trainAccuracy = [],

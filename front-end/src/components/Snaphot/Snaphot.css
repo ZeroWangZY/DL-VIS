@@ -26,5 +26,16 @@
 
 .DetailInfoContainer {
   border: 1px solid green;
+  border-radius: 5%;
   padding: 1px;
+  background-color: black;
+  opacity: 0.5;
+}
+
+.dfsdfdot {
+  height: 5px;
+  width: 5px;
+  background-color: #bbb;
+  border-radius: 50%;
+  /* display: inline-block; */
 }

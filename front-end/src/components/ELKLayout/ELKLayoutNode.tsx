@@ -152,7 +152,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           x={-rectWidth / 2}
           y={-rectHeight / 2}
           width={rectWidth}
-          height={rectHeight / 8}
+          height={rectHeight / 8 + 1}
         >
           <div>
             <text>

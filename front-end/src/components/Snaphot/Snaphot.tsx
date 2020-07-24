@@ -5,7 +5,7 @@ import CardContent from "@material-ui/core/CardContent";
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, withTheme } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import * as d3 from "d3";
 import "./Snaphot.css";
@@ -39,9 +39,8 @@ const useStyles = makeStyles({
   },
   title: {
     fontSize: 14,
-    fontWeight: "bold",
+    color: "white",
     textAlign: "left",
-    wordBreak: "break-word",
   },
 });
 
@@ -49,7 +48,6 @@ const Snaphot: React.FC = () => {
   const svgRef = useRef();
   const [svgWidth, setSvgWidth] = useState(1800);
   const classes = useStyles();
-  // const dataVariety = ["train loss", "test loss", "train accuracy", "test accuracy", "learning rate"];
   const svgHeight = 300;
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [localCurrentStep, setLocalCurrentStep] = useState(null);
@@ -62,6 +60,7 @@ const Snaphot: React.FC = () => {
   });
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
+
   const { colorMap } = useGlobalConfigurations();
 
   const margin = { top: 20, right: 20, bottom: 110, left: 40 };
@@ -100,12 +99,12 @@ const Snaphot: React.FC = () => {
   }
 
   useEffect(() => {
+    if (!is_training || !max_step || !currentMSGraphName) return;
+
     computeAndDrawLine();
   }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth]);
 
   const computeAndDrawLine = async () => {
-    if (!is_training || !max_step) return;
-
     const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step, colorMap);
 
     // 将要显示的数据拿出来
@@ -328,32 +327,39 @@ const Snaphot: React.FC = () => {
   }
 
   const getDetailInfoRect = (xPos, height) => {
-    let textHeight = 16 * (DetailInfoOfCurrentStep.length + 1);
-    let textWidth = 150;
-    if (xPos + textWidth > svgWidth) xPos -= textWidth;
+    let fontSize = 14;
+    let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
+    let contextWidth = 150;
+
+    let containerWidth = contextWidth + 10, containerHeight = contextHeight + 10;
+
+    if (xPos + contextHeight > svgWidth) xPos -= contextWidth; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
+
     return (
       <foreignObject
         x={xPos}
-        y={height / 2 - textHeight / 2}
-        width={textWidth}
-        height={textHeight}
+        y={height / 2 - contextHeight / 2}
+        width={containerWidth + 10}
+        height={contextHeight + 10}
       >
-        <div className="DetailInfoContainer" style={{ width: textWidth, height: textHeight }}>
+        <div className="DetailInfoContainer" style={{ width: contextWidth, height: contextHeight }}>
           <div className={classes.title}>
             {"iteration: " + localCurrentStep}
           </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
-            <div className={classes.title}>
-              {d.name + ": " + ((d.value < 0.001 || d.value > 1000) ? toExponential(d.value) : d.value.toFixed(3))}
+            <div>
+              <span className="dfsdfdot"></span>
+              <div className={classes.title}>
+                {/* {console.log(colorMap.get(d.name))} */}
+                {d.name + ": " + ((d.value < 0.001 || d.value > 1000) ? toExponential(d.value) : d.value.toFixed(3))}
+              </div>
             </div>
           ))}
         </div>
       </foreignObject>
     )
   };
-  //train_loss #922f2c, test_loss #ca6457 , learning_rate #f7b968 , 
-  //train_accuracy #388aac, test_accuracy #133b4e
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
@@ -416,6 +422,9 @@ const Snaphot: React.FC = () => {
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }
+          {/* {XScale !== null && currentStep !== null && DetailInfoOfCurrentStep.length &&
+            getDetailInfoRect(XScale(currentStep), height)
+          } */}
           {XScale !== null && currentStep !== null && (
             <line
               x1={XScale(currentStep)}
