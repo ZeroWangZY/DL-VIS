@@ -99,7 +99,7 @@ const Snaphot: React.FC = () => {
   }
 
   useEffect(() => {
-    if (!is_training || !max_step || !currentMSGraphName) return;
+    if (!max_step || !currentMSGraphName) return;
 
     computeAndDrawLine();
   }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth]);

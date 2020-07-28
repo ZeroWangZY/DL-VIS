@@ -73,7 +73,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   }, [layerLevel_checkBoxState, dataArrToShow, svgWidth]);
 
   const computeAndDrawLine = async () => {
-    if (!is_training || !max_step || dataArrToShow.length === 0) return;
+    if (!max_step || dataArrToShow.length === 0) return;
     // 首先清除上一次的svg绘制结果。
     // 因为当dataArrToShow为空的时候，没有任何绘制，但是也要将原来的绘制结果删除
     // 所以把这一段代码放在 if(dataArrToShow.length === 0) 之前
