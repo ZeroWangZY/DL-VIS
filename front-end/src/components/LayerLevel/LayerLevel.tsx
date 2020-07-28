@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Children } from "react";
 import './layerLevel.css';
 import { useLineData } from '../../store/layerLevel';
 import { useHistory } from "react-router-dom";
@@ -17,6 +17,21 @@ import {
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
+import { useProcessedGraph } from "../../store/processedGraph";
+import { useVisGraph } from "../../store/visGraph";
+import {
+	NodeType,
+	GroupNode,
+	LayerNode,
+	DataType,
+	OperationNode,
+	GroupNodeImp,
+	OperationNodeImp,
+	DataNodeImp,
+	LayerNodeImp,
+} from "../../common/graph-processing/stage2/processed-graph";
+import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
+import { dsvFormat } from "d3";
 
 interface layerNodeScalar {
 	"step": number,
@@ -43,19 +58,64 @@ const LayerLevel: React.FC = () => {
 	const goback = () => {
 		history.push("/")
 	}
-	const { showActivationOrGradient, currentMSGraphName, is_training, max_step } = useGlobalStates();
+
+	const visGraph = useVisGraph();
+	const processedGraph = useProcessedGraph();
+	const { nodeMap } = processedGraph;
+	const { visNodeMap } = visGraph;
+
+	const { selectedNodeId, showActivationOrGradient, currentMSGraphName, is_training, max_step } = useGlobalStates();
 
 	const [activations, setActivations] = useState([]);
 	const [tsneGraph, setTsneGraph] = useState({});
 	const [activationOrGradientData, setActivationOrGradientData] = useState([] as DataToShow[]);
 
 	useEffect(() => {
-		let nodeIds = ["2", "3"];
-		getNodeScalars(currentMSGraphName, nodeIds, 1, max_step);
+		if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp))
+			return; // 不是layerNode 
+
+		console.log(processedGraph);
+		let scope = (nodeMap[selectedNodeId] as LayerNodeImp).id;
+		let childNodeId = findChildNodeId(scope, selectedNodeId);
+		console.log(childNodeId);
+		if (childNodeId.length === 0) return;
+		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step);
 		getIteration(Math.floor(Math.random() * (max_step - 1 + 1) + 1));
-	}, [currentMSGraphName, is_training, max_step])
+	}, [selectedNodeId, currentMSGraphName, is_training, max_step])
+
+	const findChildNodeId = (scope, NodeId) => {
+		// 超出layer node下面的一个 output node在layer node之外的节点。
+		// 如果这个output node是一个group node， 则继续向里面寻找
+		let res = [];
+		DFS();
+		return res;
+
+		function DFS() {
+			let currentNode = nodeMap[NodeId];
+			// let scope = (currentNode as LayerNodeImp).id; // layernode scope
+			let children = Array.from((currentNode as LayerNodeImp).children);
+
+			for (let child of children) { // 遍历layer node的children
+				let childNode = nodeMap[child];
+				if (childNode instanceof OperationNodeImp) {
+					let outputNodesId = Array.from((childNode).outputNode);
+					for (let outputNodeId of outputNodesId) {
+						console.log(outputNodeId)
+						console.log(nodeMap[outputNodeId].parent);
+						if (!nodeMap[outputNodeId].parent.startsWith(scope))
+							res.push(child);
+					}
+				}
+				else if (childNode instanceof LayerNodeImp || childNode instanceof GroupNodeImp) {
+					findChildNodeId(scope, child);
+				}
+			}
+		}
+
+	};
 
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
+		console.log(nodeIds);
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
 		let nodeScalars = data.data.data;
 
@@ -104,27 +164,30 @@ const LayerLevel: React.FC = () => {
 			<div className='return-button'>
 				<ArrowBackIosIcon onClick={goback} />
 			</div>
-			<div className="layer-container">
-				{/* <IterationChart linedata={linedata} getStep={getActivations} onSubmit={getIteration} /> */}
-				{/* <ActivationChart activations={activations} /> */}
-				<div className="layer-container-box detail-box"></div>
-				<div className="layer-container-box cluster-box">
-					<TsneClusterGraph activations={tsneGraph} />
-				</div>
-				<div className="layer-container-box line-box">
-					{activationOrGradientData.length !== 0 &&
-						<ActivationOrGradientChart
-							activationOrGradientData={activationOrGradientData}
-							is_training={is_training}
-							max_step={max_step} />}
-				</div>
+			{nodeMap[selectedNodeId] instanceof LayerNodeImp && (
+				<div className="layer-container">
+					{/* <IterationChart linedata={linedata} getStep={getActivations} onSubmit={getIteration} /> */}
+					{/* <ActivationChart activations={activations} /> */}
+					<div className="layer-container-box detail-box"></div>
+					<div className="layer-container-box cluster-box">
+						<TsneClusterGraph activations={tsneGraph} />
+					</div>
+					<div className="layer-container-box line-box">
+						{activationOrGradientData.length !== 0 &&
+							<ActivationOrGradientChart
+								activationOrGradientData={activationOrGradientData}
+								is_training={is_training}
+								max_step={max_step} />}
+					</div>
 
-				{/* <div
+					{/* <div
 					style={{
 						paddingLeft: "10px"
 					}}
 				></div> */}
-			</div>
+				</div>
+			)}
+
 		</div>
 	);
 }

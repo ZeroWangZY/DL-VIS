@@ -116,6 +116,8 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .rangeRound([0, lineChartSize.width])
       .domain([startStep, endStep]);
 
+    setCursorLinePos(XScale(currentStep));
+
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([lineChartSize.height, 0])
       .domain([minY, maxY]);
@@ -156,51 +158,50 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .selectAll("text")
       .style("font-size", 7)
 
+    // svg.append("rect")
+    //   .attr("class", "layerNodeInnerLineChart-zoom")
+    //   .attr("width", lineChartSize.width)
+    //   .attr("height", lineChartSize.height)
+    //   .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    //   .attr("opacity", 0);
 
-    svg.append("rect")
-      .attr("class", "layerNodeInnerLineChart-zoom")
-      .attr("width", lineChartSize.width)
-      .attr("height", lineChartSize.height)
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-      .attr("opacity", 0);
+    // d3.select(svgRef.current)
+    //   .select("rect.layerNodeInnerLineChart-zoom")
+    //   .on("mousemove", function () {
+    //     let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+    //     let x = XScale.invert(mouseX);
+    //     let _index = bisect(dataExample.data, x, 1);
 
-    d3.select(svgRef.current)
-      .select("rect.layerNodeInnerLineChart-zoom")
-      .on("mousemove", function () {
-        let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-        let x = XScale.invert(mouseX);
-        let _index = bisect(dataExample.data, x, 1);
+    //     if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
+    //     let index =
+    //       Math.abs(x - dataExample.data[_index - 1].x) < Math.abs(dataExample.data[_index].x - x)
+    //         ? _index - 1
+    //         : _index;
+    //     let clickNumber = dataExample.data[index].x;
 
-        if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
-        let index =
-          Math.abs(x - dataExample.data[_index - 1].x) < Math.abs(dataExample.data[_index].x - x)
-            ? _index - 1
-            : _index;
-        let clickNumber = dataExample.data[index].x;
+    //     setCursorLinePos(XScale(clickNumber));
+    //   })
+    //   .on("mouseleave", function () {
+    //     setCursorLinePos(null);
+    //   })
+    //   .on("click", function () {
+    //     let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+    //     let x = XScale.invert(mouseX);
+    //     let _index = bisect(dataExample.data, x, 1);
 
-        setCursorLinePos(XScale(clickNumber));
-      })
-      .on("mouseleave", function () {
-        setCursorLinePos(null);
-      })
-      .on("click", function () {
-        let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-        let x = XScale.invert(mouseX);
-        let _index = bisect(dataExample.data, x, 1);
+    //     if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
+    //     let index =
+    //       Math.abs(x - dataExample.data[_index - 1].x) < Math.abs(dataExample.data[_index].x - x)
+    //         ? _index - 1
+    //         : _index;
+    //     let clickNumber = dataExample.data[index].x;
 
-        if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
-        let index =
-          Math.abs(x - dataExample.data[_index - 1].x) < Math.abs(dataExample.data[_index].x - x)
-            ? _index - 1
-            : _index;
-        let clickNumber = dataExample.data[index].x;
-
-        modifyGlobalStates(
-          GlobalStatesModificationType.SET_CURRENT_STEP,
-          clickNumber
-        );
-        setCursorLinePos(XScale(clickNumber));
-      });
+    //     modifyGlobalStates(
+    //       GlobalStatesModificationType.SET_CURRENT_STEP,
+    //       clickNumber
+    //     );
+    //     setCursorLinePos(XScale(clickNumber));
+    //   });
   }
 
   return (
