@@ -11,8 +11,11 @@ from graph.data_access.common.enums import PluginNameEnum
 from graph.data_access.proto_files import anf_ir_pb2
 from google.protobuf import json_format
 from threading import Timer
+from dao.data_helper import DataHelper
+from dao.node_mapping import alex_node_map
 import random
 
+db_file = 'data/alex-normal-100.db'
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 
 max_step = 500
@@ -126,9 +129,15 @@ def get_local_ms_graph(request):
 
 def get_model_scalars(request):
     if request.method == 'GET':
+        data_helper = DataHelper(db_file)
         graph_name = request.GET.get('graph_name', default='lenet')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": data_helper.get_model_scalars(start_step, end_step)
+        }), content_type="application/json")
+        data_helper.close()
         res = []
         last_value = [random.random(), random.random(), random.random(), random.random(), 0.1]
         for i in range(start_step, end_step):
@@ -167,12 +176,16 @@ def get_model_scalars(request):
 
 def get_metadata(request):
     if request.method == 'GET':
+        data_helper = DataHelper(db_file)
         graph_name = request.GET.get('graph_name', default='lenet')
+        db_max_step = int(data_helper.get_metadata('max_step'))
+        db_is_training = data_helper.get_metadata('is_training') == 'true'
+        data_helper.close()
         return HttpResponse(json.dumps({
             "message": "success",
             "data": {
-                "max_step": max_step,
-                "is_training": is_training
+                "max_step": db_max_step,
+                "is_training": db_is_training
             }
         }), content_type="application/json")
     return HttpResponse(json.dumps({
@@ -187,8 +200,14 @@ def get_node_scalars(request):
         node_ids = request.GET.getlist('node_id')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
+        type = request.GET.get('type', default='activation')
+        data_helper = DataHelper(db_file)
         res = {}
         for node_id in node_ids:
+            db_node_id = alex_node_map.get(node_id)
+            if db_node_id != None:
+                res[node_id] = data_helper.get_activation_scalars(db_node_id, start_step, end_step)
+                continue
             data = []
             last_value = [random.random(), random.random(), random.random(), random.random(), random.random(),
                           random.random()]
@@ -207,6 +226,7 @@ def get_node_scalars(request):
                     "gradient_mean": last_value[5]
                 })
             res[node_id] = data
+        data_helper.close()
         return HttpResponse(json.dumps({
             "message": "success",
             "data": res

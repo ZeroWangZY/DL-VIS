@@ -14,7 +14,7 @@ class MODEL_SCALAR_TYPE(Enum):
     TrainLoss = 0
     LearningRate = 1
 
-conn = sqlite3.connect('alex-normal.db')
+conn = sqlite3.connect('alex-normal-100.db')
 c = conn.cursor()
 c.execute('''CREATE TABLE METADATA
        (KEY     CHAR(50)    PRIMARY KEY     NOT NULL,
@@ -64,8 +64,7 @@ def save_model_scalar(type, num):
                     VALUES(%d, %s);''' % (step, str(num)))
         conn.commit()
     elif type == MODEL_SCALAR_TYPE.LearningRate:
-        c.execute('''INSERT OR REPLACE INTO MODEL_SCALARS(step, learning_rate)
-                            VALUES(%d, %s);''' % (step, str(num)))
+        c.execute('''UPDATE MODEL_SCALARS set learning_rate = %s where step=%d;''' % (str(num), step))
         conn.commit()
 
 def save_node_scalar(name, tensor, type):
