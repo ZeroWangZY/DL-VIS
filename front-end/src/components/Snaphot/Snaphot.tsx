@@ -49,6 +49,7 @@ const Snaphot: React.FC = () => {
   const [svgWidth, setSvgWidth] = useState(1800);
   const classes = useStyles();
   const svgHeight = 300;
+  const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [localCurrentStep, setLocalCurrentStep] = useState(null);
   const [checkBoxState, setcheckBoxState] = useState({
@@ -243,11 +244,16 @@ const Snaphot: React.FC = () => {
       focus.select(".axis--x").call(d3.axisBottom(x1Scale));
     };
 
+    const brushedStart = () => {
+      setFixCursorLinePos(null);
+    }
+
     const brush = d3.brushX()
       .extent([
         [0, 0],
         [svgWidth, height2],
       ])
+      .on("brush start", brushedStart)
       .on("brush end", brushed);
 
     context
@@ -307,7 +313,7 @@ const Snaphot: React.FC = () => {
           GlobalStatesModificationType.SET_CURRENT_STEP,
           clickNumber
         );
-        setCursorLinePos(x1Scale(clickNumber));
+        setFixCursorLinePos(x1Scale(clickNumber));
         let newDetailInfoOfCurrentStep = [];
         for (let i = 0; i < dataArrToShow.length; i++) {
           newDetailInfoOfCurrentStep.push({
@@ -425,10 +431,11 @@ const Snaphot: React.FC = () => {
           {/* {XScale !== null && currentStep !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(XScale(currentStep), height)
           } */}
-          {XScale !== null && currentStep !== null && (
+          {fixCursorLinePos !== null && (
             <line
-              x1={XScale(currentStep)}
-              x2={XScale(currentStep)}
+              className="fixCursorLine"
+              x1={fixCursorLinePos}
+              x2={fixCursorLinePos}
               y1={height}
               y2={0}
               style={{
