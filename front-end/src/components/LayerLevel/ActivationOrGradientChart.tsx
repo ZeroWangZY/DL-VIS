@@ -70,7 +70,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     computeAndDrawLine();
-  }, [layerLevel_checkBoxState, dataArrToShow, svgWidth]);
+    setDataArrToShow(activationOrGradientData);
+  }, [activationOrGradientData, layerLevel_checkBoxState, dataArrToShow, svgWidth]);
 
   const computeAndDrawLine = async () => {
     if (!max_step || dataArrToShow.length === 0) return;

@@ -74,48 +74,49 @@ const LayerLevel: React.FC = () => {
 		if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp))
 			return; // 不是layerNode 
 
-		console.log(processedGraph);
-		let scope = (nodeMap[selectedNodeId] as LayerNodeImp).id;
-		let childNodeId = findChildNodeId(scope, selectedNodeId);
-		console.log(childNodeId);
+		let childNodeId = findChildNodeId(selectedNodeId);
 		if (childNodeId.length === 0) return;
+
+		childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
+
 		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step);
 		getIteration(Math.floor(Math.random() * (max_step - 1 + 1) + 1));
 	}, [selectedNodeId, currentMSGraphName, is_training, max_step])
 
-	const findChildNodeId = (scope, NodeId) => {
+	const findChildNodeId = (NodeId) => {
 		// 超出layer node下面的一个 output node在layer node之外的节点。
 		// 如果这个output node是一个group node， 则继续向里面寻找
-		let res = [];
-		DFS();
-		return res;
+		let scope = (nodeMap[selectedNodeId] as LayerNodeImp).id;
+		let currentNode = nodeMap[NodeId]; // currentNode一定是一个layer node
+		return BFS(currentNode);
 
-		function DFS() {
-			let currentNode = nodeMap[NodeId];
-			// let scope = (currentNode as LayerNodeImp).id; // layernode scope
-			let children = Array.from((currentNode as LayerNodeImp).children);
-
-			for (let child of children) { // 遍历layer node的children
-				let childNode = nodeMap[child];
-				if (childNode instanceof OperationNodeImp) {
-					let outputNodesId = Array.from((childNode).outputNode);
-					for (let outputNodeId of outputNodesId) {
-						console.log(outputNodeId)
-						console.log(nodeMap[outputNodeId].parent);
-						if (!nodeMap[outputNodeId].parent.startsWith(scope))
-							res.push(child);
-					}
-				}
-				else if (childNode instanceof LayerNodeImp || childNode instanceof GroupNodeImp) {
-					findChildNodeId(scope, child);
+		function BFS(root) {
+			if (root === null) return;
+			let res = [], queue = [];
+			queue.push(root);
+			while (queue.length !== 0) {
+				let node = queue.shift();
+				if (node instanceof OperationNodeImp) {
+					(node as OperationNodeImp).outputNode.forEach((outputNodeId) => {
+						// outputNodeId 一定是一个 operation Node
+						let scopeOfOutputNode = (nodeMap[outputNodeId] as OperationNodeImp).parent;
+						// 判断scope2是否在scope1同级或者下面
+						// 也就是判断scope2是否以scope1开头
+						if (!scopeOfOutputNode.startsWith(scope))
+							res.push((node as OperationNodeImp).id);
+					})
+				} else if (node instanceof GroupNodeImp || node instanceof LayerNodeImp) {
+					(node as GroupNodeImp).children.forEach((nodeId) => {
+						queue.push(nodeMap[nodeId]);
+					})
 				}
 			}
-		}
 
+			return res;
+		}
 	};
 
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
-		console.log(nodeIds);
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
 		let nodeScalars = data.data.data;
 
