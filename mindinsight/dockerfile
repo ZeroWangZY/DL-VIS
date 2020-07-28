@@ -4,14 +4,14 @@ WORKDIR /usr/src/app
 
 COPY . . 
 
-RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    && pip install pybind11 \
-    && pip install pytest \
+RUN pip install --no-cache-dir -r requirements.txt -i https://repo.huaweicloud.com/repository/pypi/simple \
+    && pip install pybind11 -i https://repo.huaweicloud.com/repository/pypi/simple \
+    && pip install pytest -i https://repo.huaweicloud.com/repository/pypi/simple \
     && apt update \
     && apt install dos2unix \
     && dos2unix build/scripts/crc32.sh \
     && dos2unix build/scripts/ui.sh \
-    && wget -O cmake.sh "https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.sh" \
+    && wget -O cmake.sh "http://10.76.0.163:8111/cmake-3.17.3-Linux-x86_64.sh" \
     && chmod 777 cmake.sh \
     && ./cmake.sh --skip-license \
     && PATH=$PATH:/usr/src/app/bin \

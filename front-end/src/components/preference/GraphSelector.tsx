@@ -21,11 +21,17 @@ import { setMsRawGraph } from "../../store/rawGraph.ms";
 import useGraphPipeline from "../GraphPipeline/GraphPipeline";
 import fetchBackendData from "../FetchBackendData/FetchBackendData";
 import Typography from "@material-ui/core/Typography";
-import {
-  useGlobalStates,
-  modifyGlobalStates,
-} from "../../store/global-states";
+import { useGlobalStates, modifyGlobalStates } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
+
+const VALID_GRAPH_NAME = new Set([
+  "lenet",
+  "alexnets",
+  "bert_finetune",
+  "bert_pretrain",
+  "mobilenetv2",
+  "resnet",
+]);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -96,23 +102,20 @@ const GraphSelector = (props) => {
 
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
-    const graphName = props.match.params.graphName
-      ? props.match.params.graphName
-      : msGraphMetadatas[currentMsGraphIndex].name;
-    modifyGlobalStates(
-      GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
-      graphName
-    );
-    fetchLocalMsGraph(graphName).then(
-      (RawData) => {
-        let parsedGraph = RawData.data.data; // 处理
-        if (conceptualGraphMode) {
-          const msGraphOptimizer = new MsRawGraphOptimizer();
-          msGraphOptimizer.optimize(parsedGraph);
-        }
-        setMsRawGraph(parsedGraph);
+    const hashPath = location.hash.split("/");
+    let graphName = msGraphMetadatas[currentMsGraphIndex].name
+    if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) {
+      graphName = hashPath[2]
+    }
+    ;
+    fetchLocalMsGraph(graphName).then((RawData) => {
+      let parsedGraph = RawData.data.data; // 处理
+      if (conceptualGraphMode) {
+        const msGraphOptimizer = new MsRawGraphOptimizer();
+        msGraphOptimizer.optimize(parsedGraph);
       }
-    );
+      setMsRawGraph(parsedGraph);
+    });
   }, [
     currentMsGraphIndex,
     currentLayout,

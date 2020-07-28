@@ -1,0 +1,7 @@
+MNIST_Data
+.idea
+*.dat
+summary
+*.meta
+*.ckpt
+*.pb

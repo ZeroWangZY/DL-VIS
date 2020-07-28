@@ -23,12 +23,7 @@ export const Sidebar: React.FC<PropTypes> = ({
     <div className="sidebar-wrapper">
       <div className="panel-title">节点信息</div>
       <div className="vis-graphselector">
-        {/* <Divider /> */}
-        <Switch>      
-          <Route path='/:graphName' component={GraphSelector}/> 
-          <Route path='' component={GraphSelector}/> 
-        </Switch>
-
+        <GraphSelector />
       </div>
       {/* <Divider /> */}
       <NodeSelector />
