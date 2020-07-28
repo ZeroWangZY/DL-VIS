@@ -349,17 +349,17 @@ const Snaphot: React.FC = () => {
         width={containerWidth + 10}
         height={contextHeight + 10}
       >
-        <div className="DetailInfoContainer" style={{ width: contextWidth, height: contextHeight }}>
-          <div className={classes.title}>
+        <div className="DetailInfoContainer" style={{ width: contextWidth + 10, height: contextHeight + 20 }}>
+          <div className={classes.title} style={{marginLeft: '23px'}}>
             {"iteration: " + localCurrentStep}
           </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
             <div>
-              <span className="dfsdfdot"></span>
-              <div className={classes.title}>
-                {/* {console.log(colorMap.get(d.name))} */}
+              <span className="dfsdfdot" style={{ background: colorMap.get(d.name), float: 'left' }}></span>
+              <div className={classes.title} style={{display: 'inline-block', float: 'left'}}>
                 {d.name + ": " + ((d.value < 0.001 || d.value > 1000) ? toExponential(d.value) : d.value.toFixed(3))}
               </div>
+              <div style={{clear: 'both'}}></div>
             </div>
           ))}
         </div>
