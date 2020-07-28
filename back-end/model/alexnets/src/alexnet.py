@@ -16,6 +16,7 @@
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
+from .tools import save_node_scalar
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid"):
     weight = weight_variable()
@@ -31,21 +32,6 @@ def fc_with_initialize(input_channels, out_channels):
 def weight_variable():
     return TruncatedNormal(0.02)  # 0.02
 
-class StatisticCollector(nn.Cell):
-    def __init__(self):
-        super(StatisticCollector, self).__init__()
-
-        self.sm_scalar = P.ScalarSummary()
-        self.max = P.ReduceMax()
-        # self.min = P.ReduceMin()
-        self.mean = P.ReduceMean()
-
-    def construct(self, name, tensor):
-
-        # self.sm_scalar("conv1-min", self.min(x))
-        self.sm_scalar(name + "-max", self.max(tensor))
-        self.sm_scalar(name + "-mean", self.mean(tensor))
-        return tensor
 
 class AlexNet(nn.Cell):
     """
@@ -64,34 +50,34 @@ class AlexNet(nn.Cell):
         self.fc1 = fc_with_initialize(6*6*256, 4096)
         self.fc2 = fc_with_initialize(4096, 4096)
         self.fc3 = fc_with_initialize(4096, num_classes)
-        self.scalar_saver = StatisticCollector()
+        # self.scalar_saver = StatisticCollector()
 
     def construct(self, x):
         x = self.conv1(x)
-        self.scalar_saver("conv1", x)
+        save_node_scalar("conv1", x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv2(x)
-        self.scalar_saver("conv2", x)
+        save_node_scalar("conv2", x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv3(x)
-        self.scalar_saver("conv3", x)
+        save_node_scalar("conv3", x)
         x = self.relu(x)
         x = self.conv4(x)
-        self.scalar_saver("conv4", x)
+        save_node_scalar("conv4", x)
         x = self.relu(x)
         x = self.conv5(x)
-        self.scalar_saver("conv5", x)
+        save_node_scalar("conv5", x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.flatten(x)
         x = self.fc1(x)
-        self.scalar_saver("fc1", x)
+        save_node_scalar("fc1", x)
         x = self.relu(x)
         x = self.fc2(x)
-        self.scalar_saver("fc2", x)
+        save_node_scalar("fc2", x)
         x = self.relu(x)
         x = self.fc3(x)
-        self.scalar_saver("fc3", x)
+        save_node_scalar("fc3", x)
         return x
