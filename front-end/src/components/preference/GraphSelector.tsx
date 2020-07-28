@@ -14,7 +14,10 @@ import { fetchAndParseGraphData } from "../../common/graph-processing/stage1/par
 import { RawGraphOptimizer } from "../../common/graph-processing/stage1/raw-graph-optimizer.tf";
 import MsRawGraphOptimizer from "../../common/graph-processing/stage1/raw-graph-optimizer.ms";
 import { useGlobalConfigurations } from "../../store/global-configuration";
-import { LayoutType } from "../../store/global-configuration.type";
+import {
+  LayoutType,
+  GlobalConfigurationsModificationType,
+} from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/rawGraph.tf";
 import { fetchLocalMsGraph } from "../../api";
 import { setMsRawGraph } from "../../store/rawGraph.ms";
@@ -103,17 +106,20 @@ const GraphSelector = (props) => {
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
     const hashPath = location.hash.split("/");
-    let graphName = msGraphMetadatas[currentMsGraphIndex].name
+    let graphName = msGraphMetadatas[currentMsGraphIndex].name;
     if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) {
-      graphName = hashPath[2]
+      graphName = hashPath[2];
     }
-    ;
     fetchLocalMsGraph(graphName).then((RawData) => {
       let parsedGraph = RawData.data.data; // 处理
       if (conceptualGraphMode) {
         const msGraphOptimizer = new MsRawGraphOptimizer();
         msGraphOptimizer.optimize(parsedGraph);
       }
+      modifyGlobalStates(
+        GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+        graphName
+      );
       setMsRawGraph(parsedGraph);
     });
   }, [
