@@ -342,14 +342,16 @@ const Snaphot: React.FC = () => {
     if (xPos + contextHeight > svgWidth) xPos -= contextWidth; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
 
+    console.log('containerWidth: ', containerWidth, contextHeight)
+
     return (
       <foreignObject
         x={xPos}
         y={height / 2 - contextHeight / 2}
         width={containerWidth + 10}
-        height={contextHeight + 10}
+        height={contextHeight + 30}
       >
-        <div className="DetailInfoContainer" style={{ width: contextWidth + 10, height: contextHeight + 20 }}>
+        <div className="DetailInfoContainer" style={{ width: contextWidth + 10, height: contextHeight + 10 }}>
           <div className={classes.title} style={{marginLeft: '23px'}}>
             {"iteration: " + localCurrentStep}
           </div>
@@ -366,6 +368,8 @@ const Snaphot: React.FC = () => {
       </foreignObject>
     )
   };
+
+  console.log('svgWidth: ', svgWidth, height);
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
