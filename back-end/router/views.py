@@ -15,10 +15,10 @@ from dao.data_helper import DataHelper
 from dao.node_mapping import alex_node_map
 import random
 
-db_file = 'data/alex-normal-100.db'
+db_file = 'data/alex-normal-8000.db'
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 
-max_step = 500
+max_step = 4553
 is_training = False
 
 
@@ -34,10 +34,10 @@ def start_training():
         if is_training:
             max_step += 1
             Timer(3, tick).start()
-        if max_step > 5000:
+        if max_step > 4553:
             is_training = False
 
-    Timer(3, tick).start()
+    Timer(1, tick).start()
 
 
 def index(request):
@@ -186,8 +186,8 @@ def get_metadata(request):
         return HttpResponse(json.dumps({
             "message": "success",
             "data": {
-                "max_step": db_max_step,
-                "is_training": db_is_training
+                "max_step": max_step,
+                "is_training": is_training
             }
         }), content_type="application/json")
     return HttpResponse(json.dumps({
@@ -250,7 +250,7 @@ def emit_action(request):
     global is_training
     action = request.GET.get('action', default='reset_training')
     if action == "reset_training":
-        max_step = 500
+        max_step = 4553
         is_training = False
     elif action == "start_training":
         start_training()
