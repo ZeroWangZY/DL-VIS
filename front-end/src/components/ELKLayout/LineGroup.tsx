@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import * as d3 from 'd3';
+import { useProcessedGraph } from "../../store/processedGraph";
+import { FindChildNodeUnderLayerNode } from "../LayerLevel/FindChildNodeUnderLayerNode"
 import {
   useGlobalStates,
   modifyGlobalStates,
@@ -36,6 +38,9 @@ const LineGroup: React.FC<Props> = (props: Props) => {
   const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
 
+  const processedGraph = useProcessedGraph();
+  const { nodeMap } = processedGraph;
+
   const margin = { top: 10, right: 10, bottom: 20, left: 23 };
   const lineChartSize = {
     height: svgHeight - margin.top - margin.bottom,
@@ -61,7 +66,14 @@ const LineGroup: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (layerNodeId === "" || !layerNodeId) return;
     const [startStep, endStep] = getStartStepAndEndStep();
-    getNodeScalars(currentMSGraphName, [layerNodeId], startStep, endStep);
+
+    let childNodeId = FindChildNodeUnderLayerNode(nodeMap, layerNodeId); // findChildNodeId(selectedNodeId);
+    if (childNodeId.length === 0) return;
+
+    childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
+    console.log(layerNodeId, childNodeId)
+
+    getNodeScalars(currentMSGraphName, childNodeId, startStep, endStep);
   }, [layerNodeId, currentStep, max_step])
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
@@ -116,7 +128,8 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .rangeRound([0, lineChartSize.width])
       .domain([startStep, endStep]);
 
-    setCursorLinePos(XScale(currentStep));
+    if (currentStep !== null)
+      setCursorLinePos(XScale(currentStep));
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([lineChartSize.height, 0])
@@ -211,7 +224,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
           className="layerNodeInnerLineChart"
           transform={`translate(${margin.left},${margin.top})`}
         >
-          {cursorLinePos !== null && (
+          {/* {cursorLinePos !== null && (
             <line
               x1={cursorLinePos}
               x2={cursorLinePos}
@@ -222,7 +235,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
                 strokeWidth: 1,
               }}
             />
-          )}
+          )} */}
         </g>
         {/* <rect
           className="layerNodeInnerLineChart-zoom"

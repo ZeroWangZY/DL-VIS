@@ -32,6 +32,7 @@ import {
 } from "../../common/graph-processing/stage2/processed-graph";
 import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
 import { dsvFormat } from "d3";
+import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode"
 
 interface layerNodeScalar {
 	"step": number,
@@ -74,47 +75,15 @@ const LayerLevel: React.FC = () => {
 		if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp))
 			return; // 不是layerNode 
 
-		let childNodeId = findChildNodeId(selectedNodeId);
+		let childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
 		if (childNodeId.length === 0) return;
+		console.log(selectedNodeId, childNodeId)
 
 		childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
 
 		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step);
 		getIteration(Math.floor(Math.random() * (max_step - 1 + 1) + 1));
 	}, [selectedNodeId, currentMSGraphName, is_training, max_step])
-
-	const findChildNodeId = (NodeId) => {
-		// 超出layer node下面的一个 output node在layer node之外的节点。
-		// 如果这个output node是一个group node， 则继续向里面寻找
-		let scope = (nodeMap[selectedNodeId] as LayerNodeImp).id;
-		let currentNode = nodeMap[NodeId]; // currentNode一定是一个layer node
-		return BFS(currentNode);
-
-		function BFS(root) {
-			if (root === null) return;
-			let res = [], queue = [];
-			queue.push(root);
-			while (queue.length !== 0) {
-				let node = queue.shift();
-				if (node instanceof OperationNodeImp) {
-					(node as OperationNodeImp).outputNode.forEach((outputNodeId) => {
-						// outputNodeId 一定是一个 operation Node
-						let scopeOfOutputNode = (nodeMap[outputNodeId] as OperationNodeImp).parent;
-						// 判断scope2是否在scope1同级或者下面
-						// 也就是判断scope2是否以scope1开头
-						if (!scopeOfOutputNode.startsWith(scope))
-							res.push((node as OperationNodeImp).id);
-					})
-				} else if (node instanceof GroupNodeImp || node instanceof LayerNodeImp) {
-					(node as GroupNodeImp).children.forEach((nodeId) => {
-						queue.push(nodeMap[nodeId]);
-					})
-				}
-			}
-
-			return res;
-		}
-	};
 
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
