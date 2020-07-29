@@ -342,8 +342,6 @@ const Snaphot: React.FC = () => {
     if (xPos + contextHeight > svgWidth) xPos -= contextWidth; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
 
-    console.log('containerWidth: ', containerWidth, contextHeight)
-
     return (
       <foreignObject
         x={xPos}
@@ -368,8 +366,6 @@ const Snaphot: React.FC = () => {
       </foreignObject>
     )
   };
-
-  console.log('svgWidth: ', svgWidth, height);
 
   return (
     <div className="lineChart-container" ref={measuredRef}>

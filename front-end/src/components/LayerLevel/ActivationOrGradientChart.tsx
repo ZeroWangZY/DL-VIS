@@ -21,6 +21,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
 
   const svgRef = useRef();
+  const zoomRef = useRef();
   const [svgWidth, setSvgWidth] = useState(650);
   const [svgHeight, setSvgHeight] = useState(162);
   const [cursorLinePos, setCursorLinePos] = useState(null);
@@ -28,7 +29,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setSvgWidth(node.getBoundingClientRect().width - 50);
-      setSvgHeight(node.getBoundingClientRect().height - 10);
+      setSvgHeight(node.getBoundingClientRect().height - 40);
     }
   }, []);
 
@@ -183,6 +184,24 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       focus.select(".axis--x").call(d3.axisBottom(x1Scale));
     };
 
+    const zoomed = () => {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+      var t = d3.event.transform;
+      x1Scale.domain(t.rescaleX(x2Scale).domain());
+      focus.select(".area").attr("d", focusAreaLineGenerator);
+      focus.select(".axis--x").call(d3.axisBottom(x1Scale));
+      context.select(".brush").call(brush.move, x1Scale.range().map(t.invertX, t));
+    }
+
+    const zoom = d3.zoom()
+      .scaleExtent([1, Infinity])
+      .translateExtent([[0, 0], [svgWidth, height]])
+      .extent([[0, 0], [svgWidth, height]])
+      .on('zoom', zoomed);
+
+    d3.select(zoomRef.current)
+      .call(zoom);
+
     const brush = d3
       .brushX()
       .extent([
@@ -241,7 +260,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <div className="layerLevel-lineChart-container" ref={measuredRef}>
+    <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none' }}>
       <div style={{ height: "5%", width: "100%" }}>
         {/* <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax"></input>
         <label >max</label>
@@ -268,6 +287,11 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       </div>
 
       <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
+        <defs>
+          <clipPath id={"clip"}>
+            <rect width={svgWidth} height={height} />
+          </clipPath>
+        </defs>
         <g
           className="layerLevel-lineChart-focus"
           transform={`translate(${margin.left},${margin.top})`}
@@ -306,6 +330,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           width={svgWidth}
           height={height}
           transform={`translate(${margin.left},${margin.top})`}
+          ref={zoomRef}
         />
       </svg>
     </div>
