@@ -21,11 +21,13 @@ SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 max_step = 500
 is_training = False
 
+
 def start_training():
     global max_step
     global is_training
     max_step = 0
     is_training = True
+
     def tick():
         global max_step
         global is_training
@@ -34,8 +36,8 @@ def start_training():
             Timer(3, tick).start()
         if max_step > 5000:
             is_training = False
-    Timer(3, tick).start()
 
+    Timer(3, tick).start()
 
 
 def index(request):
@@ -206,11 +208,15 @@ def get_node_scalars(request):
         for node_id in node_ids:
             db_node_id = alex_node_map.get(node_id)
             if db_node_id != None:
-                res[node_id] = data_helper.get_activation_scalars(db_node_id, start_step, end_step)
+                if type == 'activation':
+                    res[node_id] = data_helper.get_activation_scalars(db_node_id, start_step, end_step)
+                elif type == 'gradient':
+                    res[node_id] = data_helper.get_gradient_scalars(db_node_id, start_step, end_step)
+                elif type == 'weight':
+                    res[node_id] = data_helper.get_weight_scalars(db_node_id, start_step, end_step)
                 continue
             data = []
-            last_value = [random.random(), random.random(), random.random(), random.random(), random.random(),
-                          random.random()]
+            last_value = [random.random(), random.random(), random.random()]
             for i in range(start_step, end_step):
                 for j in range(len(last_value)):
                     last_value[j] = last_value[j] + random.random() / 20 - 0.5 / 20
@@ -218,12 +224,9 @@ def get_node_scalars(request):
                         last_value[j] = 0.01
                 data.append({
                     "step": i,
-                    "activation_min": last_value[0],
-                    "activation_max": last_value[1],
-                    "activation_mean": last_value[2],
-                    "gradient_min": last_value[3],
-                    "gradient_max": last_value[4],
-                    "gradient_mean": last_value[5]
+                    type + "_min": last_value[0],
+                    type + "_max": last_value[1],
+                    type + "_mean": last_value[2],
                 })
             res[node_id] = data
         data_helper.close()
