@@ -643,7 +643,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       ['activation','gradient','weight','none'].map((type,i)=>
         <p 
           id={`#item_${i}`}
-          className="dataTypeItem"
+          className={`dataTypeItem ${i===3?"selected":""}`}
           style={{ cursor: "pointer"}} 
           onClick={(e)=>{
             d3.select("#popoverParent").selectAll("p").classed("selected", false)
