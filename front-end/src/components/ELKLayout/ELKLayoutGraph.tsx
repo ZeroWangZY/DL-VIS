@@ -38,9 +38,12 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import ELKLayoutEdge from "./ELKLayoutEdge";
 import ELKLayoutNode from "./ELKLayoutNode";
 import ELKLayoutPort from "./ELKLayoutPort";
+import { changeConfirmLocale } from "antd/lib/modal/locale";
 window["d3"] = d3;
 window["ELK"] = ELK;
 
+let isFirstAddEventListener = true;
+let popoverFlag = true;
 const arrowStrokeColor = styles.arrow_stroke_color;
 const arrowFillColor = styles.arrow_fill_color;
 const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
@@ -601,6 +604,28 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     setBgRectHeight(svgHeight);
   }, []);
 
+  useEffect(()=>{
+    setTimeout(()=>{
+      if(isFirstAddEventListener && shouldShowDisplaySwitchPopover){
+        isFirstAddEventListener = false;
+        const dom = document.querySelector(".ant-popover")
+        if(dom){
+          dom.addEventListener("mouseout", function(e){
+            if(e.target && (e.target as any).className === "ant-popover-inner-content"){
+              if(popoverFlag){
+                popoverFlag = !popoverFlag;
+                return;
+              } else {
+                popoverFlag = !popoverFlag;
+              }
+              toggleShouldShowDisplaySwitchPopover(false);
+            }
+          },false)
+        }
+      }
+    },50)
+  }, [shouldShowDisplaySwitchPopover])
+
   const isPopoverOpen = Boolean(anchorEl);
 
   const handleLayoutModify = () => {
@@ -613,14 +638,13 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     );
   };
 
-  const nodeScalarTypes = (<div>
+  const nodeScalarTypes = (<div id="popoverParent">
     {
       ['activation','gradient','weight','none'].map((type,i)=>
         <p 
           className="dataTypeItem"
           style={{ cursor: "pointer"}} 
-          onClick={()=>{
-            console.log(type);
+          onClick={(e)=>{
             if(i!==3){
               modifyGlobalConfigurations(
                 GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
@@ -631,8 +655,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
                 GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE
               );
             }
-
-            toggleShouldShowDisplaySwitchPopover(false)
           }}>
             {type}
         </p>
@@ -801,8 +823,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
             }}
             src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
-            // handleClicked={handleDisplaySwitchClick}
-            handleHover={()=>{toggleShouldShowDisplaySwitchPopover(!shouldShowDisplaySwitchPopover)}}
+            handleHover={()=>{toggleShouldShowDisplaySwitchPopover(true)}}
           />
       </Popover>
     </div>
