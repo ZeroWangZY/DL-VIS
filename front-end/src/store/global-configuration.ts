@@ -40,6 +40,16 @@ export const modifyGlobalConfigurations = (
   payload: any = null
 ) => {
   switch (operation) {
+    case GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        diagnosisMode: true,
+      });
+      break;
+    case GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        diagnosisMode: false,
+      });
+      break;
     case GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         diagnosisMode: !globalConfigurations.diagnosisMode,

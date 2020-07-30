@@ -81,12 +81,12 @@ const LayerLevel: React.FC = () => {
 
 		childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
 
-		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step);
+		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step, "activation");
 		getIteration(Math.floor(Math.random() * (max_step - 1 + 1) + 1));
 	}, [selectedNodeId, currentMSGraphName, is_training, max_step])
 
-	const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
-		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
+	const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
+		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type:type });
 		let nodeScalars = data.data.data;
 
 		let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}

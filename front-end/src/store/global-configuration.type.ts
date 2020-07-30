@@ -23,6 +23,8 @@ export enum LayoutType {
 }
 
 export enum GlobalConfigurationsModificationType {
+  SET_DIAGNOSIS_MODE,
+  UNSET_DIAGNOSIS_MODE,
   TOGGLE_DIAGNOSIS_MODE,
   TOGGLE_CONCEPTUALGRAPH_MODE,
   TOGGLE_PREPROCESSING_PLUGIN,

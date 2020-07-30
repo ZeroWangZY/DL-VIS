@@ -6,7 +6,7 @@ import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
-import { GlobalStatesModificationType, ShowActivationOrGradient } from "../../store/global-states.type";
+import { GlobalStatesModificationType, NodeScalarType } from "../../store/global-states.type";
 import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
 import { isWidthDown } from "@material-ui/core";
 import { LineChart } from "../LineCharts";
@@ -29,12 +29,15 @@ interface layerNodeScalar {
   "activation_mean": number,
   "gradient_min": number,
   "gradient_max": number,
-  "gradient_mean": number
+  "gradient_mean": number,
+  "weight_min": number,
+  "weight_max": number,
+  "weight_mean": number
 }
 
 const LineGroup: React.FC<Props> = (props: Props) => {
   const { svgWidth, svgHeight, layerNodeId } = props;
-  const { currentStep, max_step, currentMSGraphName, showActivationOrGradient } = useGlobalStates();
+  const { currentStep, max_step, currentMSGraphName, nodeScalarType } = useGlobalStates();
   const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
 
@@ -73,32 +76,38 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
     console.log(layerNodeId, childNodeId)
 
-    getNodeScalars(currentMSGraphName, childNodeId, startStep, endStep);
-  }, [layerNodeId, currentStep, max_step])
+    getNodeScalars(currentMSGraphName, childNodeId, startStep, endStep, nodeScalarType);
+  }, [layerNodeId, currentStep, max_step, nodeScalarType])
 
-  const getNodeScalars = async (graphName, nodeIds, startStep, endStep) => {
-    let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep });
+  const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
+    const typeArray = ['activation','gradient','weight'];
+    let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: typeArray[type] });
     let nodeScalars = data.data.data;
-
     let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
     let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-    if (showActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
+    if (type === NodeScalarType.ACTIVATION)
       for (let scalar of nodeScalar) {
         max.push({ x: scalar.step, y: scalar.activation_max });
         min.push({ x: scalar.step, y: scalar.activation_min });
         mean.push({ x: scalar.step, y: scalar.activation_mean });
       }
-    else if (showActivationOrGradient === ShowActivationOrGradient.GRADIENT)
+    else if (type === NodeScalarType.GRADIENT)
       for (let scalar of nodeScalar) {
         max.push({ x: scalar.step, y: scalar.gradient_max });
         min.push({ x: scalar.step, y: scalar.gradient_min });
         mean.push({ x: scalar.step, y: scalar.gradient_mean });
       }
+    else if (type === NodeScalarType.WEIGHT)
+      for (let scalar of nodeScalar) {
+        max.push({ x: scalar.step, y: scalar.weight_max });
+        min.push({ x: scalar.step, y: scalar.weight_min });
+        mean.push({ x: scalar.step, y: scalar.weight_mean });
+      }
     let dataArrToShow = [];
     dataArrToShow.push({ id: "Max", data: max, color: "#C71585" })
     dataArrToShow.push({ id: "Min", data: min, color: "#DC143C" })
     dataArrToShow.push({ id: "Mean", data: mean, color: "#4B0082" })
-
+    console.log(dataArrToShow)
     if (dataArrToShow.length === 0) return;
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < dataArrToShow.length; i++) {

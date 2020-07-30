@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
 import "./ELKLayoutGraph.less";
 import styles from "../../CSSVariables/CSSVariables.less";
 import * as d3 from "d3";
+import { Popover, Button, Tooltip } from 'antd';
 import {
   useProcessedGraph,
   modifyProcessedGraph,
@@ -95,6 +96,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const [endNodeId, setEndNodeId] = useState<string>(null);
   const [editingNodeId, setEditingNodeId] = useState<string>(null);
   const [highlightPath, setHighlightPath] = useState<Set<string>>(new Set());
+  const [shouldShowDisplaySwitchPopover, toggleShouldShowDisplaySwitchPopover] = useState<boolean>(
+    false
+  );
   enum classOfEdge {
     edgePath,
     startId,
@@ -603,11 +607,38 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     setLayoutModificationMode(!layoutModificationMode);
   };
 
-  const handleDisplaySwitch = () => {
+  const handleDisplaySwitchClick = () => {
     modifyGlobalConfigurations(
       GlobalConfigurationsModificationType.TOGGLE_DIAGNOSIS_MODE
     );
   };
+
+  const nodeScalarTypes = (<div>
+    {
+      ['activation','gradient','weight','none'].map((type,i)=>
+        <p 
+          className="dataTypeItem"
+          style={{ cursor: "pointer"}} 
+          onClick={()=>{
+            console.log(type);
+            if(i!==3){
+              modifyGlobalConfigurations(
+                GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
+              );
+              modifyGlobalStates(GlobalStatesModificationType.SET_NODESCALARTYPE,i)
+            } else {
+              modifyGlobalConfigurations(
+                GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE
+              );
+            }
+
+            toggleShouldShowDisplaySwitchPopover(false)
+          }}>
+            {type}
+        </p>
+      )
+    }
+  </div>)
 
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
@@ -754,18 +785,26 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
         handleClicked={canvasBackToRight}
       />
-      <InteractiveIcon
-        id="display-switch"
-        className={
-          diagnosisMode ? "interactive-on-button" : "interactive-button"
-        }
-        position={{
-          left: 10,
-          bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
-        }}
-        src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
-        handleClicked={handleDisplaySwitch}
-      />
+      <Popover 
+        placement="right" 
+        title={<span>Data Type</span>} 
+        content={nodeScalarTypes}
+        getPopupContainer={()=>document.querySelector("#elk-graph")} 
+        trigger="hover"
+        visible={shouldShowDisplaySwitchPopover}
+        >
+          <InteractiveIcon
+            id="display-switch"
+            className="interactive-button"
+            position={{
+              left: 10,
+              bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
+            }}
+            src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
+            // handleClicked={handleDisplaySwitchClick}
+            handleHover={()=>{toggleShouldShowDisplaySwitchPopover(!shouldShowDisplaySwitchPopover)}}
+          />
+      </Popover>
     </div>
   );
 };

@@ -3,7 +3,8 @@ import {
   GlobalStates,
   GlobalStatesModificationType,
   LayerLevelCheckBoxState,
-  ShowActivationOrGradient
+  ShowActivationOrGradient,
+  NodeScalarType
 } from "./global-states.type";
 
 let listeners = [];
@@ -21,6 +22,7 @@ let globalStates: GlobalStates = {
   max_step: null,
   layerLevel_checkBoxState: checkBoxInitial,
   showActivationOrGradient: ShowActivationOrGradient.ACTIVATION,
+  nodeScalarType: NodeScalarType.ACTIVATION
 };
 
 const broadcast = () => {
@@ -67,6 +69,11 @@ export const modifyGlobalStates = (
     case GlobalStatesModificationType.SET_SHOWACTIVATIONORGRADIENT:
       globalStates = Object.assign({}, globalStates, {
         showActivationOrGradient: payload,
+      });
+      break;
+    case GlobalStatesModificationType.SET_NODESCALARTYPE:
+      globalStates = Object.assign({}, globalStates, {
+        nodeScalarType: payload,
       });
       break;
     default:
