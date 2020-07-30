@@ -642,9 +642,13 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     {
       ['activation','gradient','weight','none'].map((type,i)=>
         <p 
+          id={`#item_${i}`}
           className="dataTypeItem"
           style={{ cursor: "pointer"}} 
           onClick={(e)=>{
+            d3.select("#popoverParent").selectAll("p").classed("selected", false)
+            e.currentTarget.className += " selected"
+            console.log(e.currentTarget)
             if(i!==3){
               modifyGlobalConfigurations(
                 GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
@@ -817,7 +821,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         >
           <InteractiveIcon
             id="display-switch"
-            className="interactive-button"
+            className={
+              diagnosisMode ? "interactive-on-button" : "interactive-button"
+            }
             position={{
               left: 10,
               bottom: firstIconBottom + 3 * (iconHeight + iconPadding),

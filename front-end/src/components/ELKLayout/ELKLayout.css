@@ -61,3 +61,7 @@
 .dataTypeItem:hover {
     background-color: #1890ff3f;
 }
+
+.selected {
+    background-color: #1890ff3f;
+}
