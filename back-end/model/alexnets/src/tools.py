@@ -16,7 +16,7 @@ class MODEL_SCALAR_TYPE(Enum):
     LearningRate = 1
 
 
-SQLITE_FILE_NAME = 'test_for_multithread2.db'
+SQLITE_FILE_NAME = 'alexnet-parameter-outlier-sigma-1.db'
 
 sqlite_helper = SqliteHelper(SQLITE_FILE_NAME)
 

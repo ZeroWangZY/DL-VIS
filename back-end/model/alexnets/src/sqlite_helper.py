@@ -55,6 +55,8 @@ class SqliteHelper():
 
         conn = sqlite3.connect(db_file_name)
         c = conn.cursor()
+        c.execute('''PRAGMA synchronous = OFF''')
+        c.execute('''PRAGMA journal_mode = OFF''')
         c.execute('''CREATE TABLE METADATA
                (KEY     CHAR(50)    PRIMARY KEY     NOT NULL,
                VALUE    TEXT                        NOT NULL);''')
@@ -96,21 +98,37 @@ class SqliteHelper():
         c.execute("INSERT INTO METADATA (KEY,VALUE) \
               VALUES ('is_training', 'true')")
 
+        self.c = c
+        self.conn = conn
         conn.commit()
-        conn.close()
+        # conn.close()
 
     def save_loss(self, step, loss):
-        _thread.start_new_thread(save_loss_function, (self.db_file_name, step, loss))
+        self.c.execute('''INSERT OR REPLACE INTO MODEL_SCALARS(step, train_loss)
+                                VALUES(%d, %s);''' % (step, str(loss)))
+        self.conn.commit()
+        # _thread.start_new_thread(save_loss_function, (self.db_file_name, step, loss))
 
     def save_lr(self, step, lr):
-        _thread.start_new_thread(save_loss_function, (self.db_file_name, step, lr))
+        self.c.execute('''UPDATE MODEL_SCALARS set learning_rate = %s where step=%d;''' % (str(lr), step))
+        self.conn.commit()
+        # _thread.start_new_thread(save_loss_function, (self.db_file_name, step, lr))
 
     def save_activation_scalars(self, step, name, minimum, mean, maxmum):
-        _thread.start_new_thread(save_activation_scalars_function,
-                                 (self.db_file_name, step, name, minimum, mean, maxmum))
+        self.c.execute('''INSERT OR REPLACE INTO ACTIVATION_SCALARS(step, node, activation_min, activation_mean, activation_max)
+                                                VALUES(%d, '%s', %f, %f, %f);''' % (
+            step, name, minimum, mean, maxmum))
+        self.conn.commit()        # _thread.start_new_thread(save_activation_scalars_function,
+        #                          (self.db_file_name, step, name, minimum, mean, maxmum))
 
     def save_gradient_scalars(self, step, name, minimum, mean, maxmum):
-        _thread.start_new_thread(save_gradient_scalars_function, (self.db_file_name, step, name, minimum, mean, maxmum))
+        self.c.execute('''INSERT OR REPLACE INTO GRADIENT_SCALARS(step, node, gradient_min, gradient_mean, gradient_max)
+                                                    VALUES(%d, '%s', %f, %f, %f);''' % (
+            step, name, minimum, mean, maxmum))
+        self.conn.commit()        # _thread.start_new_thread(save_gradient_scalars_function, (self.db_file_name, step, name, minimum, mean, maxmum))
 
     def save_weight_scalars(self, step, name, minimum, mean, maxmum):
-        _thread.start_new_thread(save_weight_scalars_function, (self.db_file_name, step, name, minimum, mean, maxmum))
+        self.c.execute('''INSERT OR REPLACE INTO WEIGHT_SCALARS(step, node, weight_min, weight_mean, weight_max)
+                                                VALUES(%d, '%s', %f, %f, %f);''' % (
+            step, name, minimum, mean, maxmum))
+        self.conn.commit()        # _thread.start_new_thread(save_weight_scalars_function, (self.db_file_name, step, name, minimum, mean, maxmum))

@@ -15,10 +15,15 @@ from dao.data_helper import DataHelper
 from dao.node_mapping import alex_node_map
 import random
 
-db_file = 'data/alex-normal-8000.db'
+db_file = 'data/alexnet-parameter-outlier-sigma-1.db'
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 
-max_step = 4553
+dp = DataHelper(db_file)
+DB_MAX_STEP = int(dp.get_metadata('max_step'))
+dp.close()
+del dp
+
+max_step = DB_MAX_STEP
 is_training = False
 
 
@@ -34,7 +39,7 @@ def start_training():
         if is_training:
             max_step += 1
             Timer(3, tick).start()
-        if max_step > 4553:
+        if max_step > DB_MAX_STEP:
             is_training = False
 
     Timer(1, tick).start()
@@ -250,7 +255,7 @@ def emit_action(request):
     global is_training
     action = request.GET.get('action', default='reset_training')
     if action == "reset_training":
-        max_step = 4553
+        max_step = DB_MAX_STEP
         is_training = False
     elif action == "start_training":
         start_training()

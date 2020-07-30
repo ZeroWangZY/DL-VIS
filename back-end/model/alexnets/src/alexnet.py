@@ -18,19 +18,19 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
 from .tools import save_node_scalar, NODE_SCALAR_TYPE
 
-def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid"):
-    weight = weight_variable()
+def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid", sigma=0.02):
+    weight = weight_variable(sigma)
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=kernel_size, stride=stride, padding=padding,
                      weight_init=weight, has_bias=False, pad_mode=pad_mode)
 
-def fc_with_initialize(input_channels, out_channels):
-    weight = weight_variable()
-    bias = weight_variable()
+def fc_with_initialize(input_channels, out_channels, sigma=0.02):
+    weight = weight_variable(sigma)
+    bias = weight_variable(sigma)
     return nn.Dense(input_channels, out_channels, weight, bias)
 
-def weight_variable():
-    return TruncatedNormal(0.02)  # 0.02
+def weight_variable(sigma):
+    return TruncatedNormal(sigma)  # 0.02
 
 
 class AlexNet(nn.Cell):
@@ -42,7 +42,7 @@ class AlexNet(nn.Cell):
         self.conv1 = conv(channel, 96, 11, stride=4)
         self.conv2 = conv(96, 256, 5, pad_mode="same")
         self.conv3 = conv(256, 384, 3, pad_mode="same")
-        self.conv4 = conv(384, 384, 3, pad_mode="same")
+        self.conv4 = conv(384, 384, 3, pad_mode="same", sigma=1)
         self.conv5 = conv(384, 256, 3, pad_mode="same")
         self.relu = nn.ReLU()
         self.max_pool2d = P.MaxPool(ksize=3, strides=2)
