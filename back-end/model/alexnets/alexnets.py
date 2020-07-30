@@ -46,7 +46,7 @@ class MyCallback(Callback):
         super(MyCallback, self).__init__()
     def step_begin(self, run_context):
         cb_params = run_context.original_args()
-        set_iteration((cb_params.cur_epoch_num - 1) * cb_params.batch_num + cb_params.cur_step_num)
+        set_iteration(cb_params.cur_step_num)
 
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
