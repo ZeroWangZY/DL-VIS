@@ -339,7 +339,7 @@ const Snaphot: React.FC = () => {
 
     let containerWidth = contextWidth + 10, containerHeight = contextHeight + 10;
 
-    if (xPos + contextHeight > svgWidth) xPos -= contextWidth; // 靠近右边界，将这一部分放到竖线前面显示
+    if (xPos + contextWidth > svgWidth) xPos -= contextWidth; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
 
     return (
@@ -350,16 +350,22 @@ const Snaphot: React.FC = () => {
         height={contextHeight + 30}
       >
         <div className="DetailInfoContainer" style={{ width: contextWidth + 10, height: contextHeight + 10 }}>
-          <div className={classes.title} style={{marginLeft: '23px'}}>
+          <div className={classes.title} style={{ marginLeft: '23px' }}>
             {"iteration: " + localCurrentStep}
           </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
             <div>
-              <span className="dfsdfdot" style={{ background: colorMap.get(d.name), float: 'left' }}></span>
-              <div className={classes.title} style={{display: 'inline-block', float: 'left'}}>
-                {d.name + ": " + ((d.value < 0.001 || d.value > 1000) ? toExponential(d.value) : d.value.toFixed(3))}
+              <span className="DotBeforeDetailInfo" style={{ background: colorMap.get(d.name), float: 'left' }}></span>
+              <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
+                {d.value === null && (d.name + ": NAN")}
+                {d.value !== null &&
+                  (d.name + ": " + ((d.value < 0.001 || d.value > 1000) ?
+                    toExponential(d.value) :
+                    d.value.toFixed(3))
+                  )
+                }
               </div>
-              <div style={{clear: 'both'}}></div>
+              <div style={{ clear: 'both' }}></div>
             </div>
           ))}
         </div>
