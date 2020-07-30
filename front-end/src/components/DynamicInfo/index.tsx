@@ -120,13 +120,13 @@ export default () => {
               color: value["outerBottom"] === 0 ? "#00a5a7" : "#333",
             }}
             className={classes.tabStyle}
-            label="Model level"
+            label="模型信息"
             {...a11yProps(0, "outerBottom")}
           />
           <Tab
             style={{ color: value["outerBottom"] === 1 ? "#00a5a7" : "#333" }}
             className={classes.tabStyle}
-            label="Layer level"
+            label="层信息"
             {...a11yProps(1, "outerBottom")}
           />
         </Tabs>
