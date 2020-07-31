@@ -25,12 +25,12 @@ services:
     ports:
       - "8080:8080"
     command: [nginx-debug, "-g", "daemon off;"]
-  mindinsight:
+  dl-vis-mindinsight:
     image: "mindinsight:0.5"
     working_dir: /usr/src/app
     restart: always
     ports:
-      - "6003:8080"
+      - "6005:8080"
     command: sh -c 'cd logs && mindinsight start --workspace . --url-path-prefix /ms && tail -f ../setup.py'
   dl-vis-elk:
     image: "dl-vis-elk:0.1"
