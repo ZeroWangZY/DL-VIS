@@ -347,14 +347,14 @@ const Snaphot: React.FC = () => {
         x={xPos}
         y={height / 2 - contextHeight / 2}
         width={containerWidth + 10}
-        height={contextHeight + 30}
+        height={contextHeight + 40}
       >
-        <div className="DetailInfoContainer" style={{ width: contextWidth + 10, height: contextHeight + 10 }}>
+        <div className="DetailInfoContainer">
           <div className={classes.title} style={{ marginLeft: '23px' }}>
             {"iteration: " + localCurrentStep}
           </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
-            <div>
+            <div style={{display: 'flex', alignItems: 'center'}}>
               <span className="DotBeforeDetailInfo" style={{ background: colorMap.get(d.name), float: 'left' }}></span>
               <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
                 {d.value === null && (d.name + ": NAN")}
