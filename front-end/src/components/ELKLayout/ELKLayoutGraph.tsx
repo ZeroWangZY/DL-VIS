@@ -608,17 +608,15 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     setTimeout(()=>{
       if(isFirstAddEventListener && shouldShowDisplaySwitchPopover){
         isFirstAddEventListener = false;
-        const dom = document.querySelector(".ant-popover")
+        const dom = document.querySelector(".ant-popover-inner-content")
         if(dom){
           dom.addEventListener("mouseout", function(e){
+            console.log((e.target as any).className)
             if(e.target && (e.target as any).className === "ant-popover-inner-content"){
+              popoverFlag = !popoverFlag;
               if(popoverFlag){
-                popoverFlag = !popoverFlag;
-                return;
-              } else {
-                popoverFlag = !popoverFlag;
-              }
-              toggleShouldShowDisplaySwitchPopover(false);
+                toggleShouldShowDisplaySwitchPopover(false);
+              } 
             }
           },false)
         }
@@ -648,7 +646,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           onClick={(e)=>{
             d3.select("#popoverParent").selectAll("p").classed("selected", false)
             e.currentTarget.className += " selected"
-            console.log(e.currentTarget)
             if(i!==3){
               modifyGlobalConfigurations(
                 GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
