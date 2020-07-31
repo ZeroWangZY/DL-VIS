@@ -15,7 +15,14 @@ from dao.data_helper import DataHelper
 from dao.node_mapping import alex_node_map
 import random
 
-db_file = 'data/alexnet-parameter-outlier-sigma-1.db'
+DB_FILES = {
+    'normal': 'data/alex-normal-8000.db',
+    'param_error': 'data/alexnet-parameter-outlier-sigma-1.db',
+    'lr_error': 'data/alexnet-lr-0.00001.db'
+}
+
+db_file = DB_FILES['normal']
+
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 
 dp = DataHelper(db_file)
@@ -253,6 +260,8 @@ def emit_action(request):
         }), content_type="application/json")
     global max_step
     global is_training
+    global DB_MAX_STEP
+    global db_file
     action = request.GET.get('action', default='reset_training')
     if action == "reset_training":
         max_step = DB_MAX_STEP
@@ -260,6 +269,30 @@ def emit_action(request):
     elif action == "start_training":
         start_training()
     elif action == "stop_training":
+        is_training = False
+    elif action == 'set_normal_data':
+        db_file = DB_FILES['normal']
+        dp = DataHelper(db_file)
+        DB_MAX_STEP = int(dp.get_metadata('max_step'))
+        dp.close()
+        del dp
+        max_step = DB_MAX_STEP
+        is_training = False
+    elif action == 'set_params_error_data':
+        db_file = DB_FILES['param_error']
+        dp = DataHelper(db_file)
+        DB_MAX_STEP = int(dp.get_metadata('max_step'))
+        dp.close()
+        del dp
+        max_step = DB_MAX_STEP
+        is_training = False
+    elif action == 'set_lr_error_data':
+        db_file = DB_FILES['lr_error']
+        dp = DataHelper(db_file)
+        DB_MAX_STEP = int(dp.get_metadata('max_step'))
+        dp.close()
+        del dp
+        max_step = DB_MAX_STEP
         is_training = False
     else:
         return HttpResponse(json.dumps({
