@@ -20,7 +20,7 @@ from . import views
 urlpatterns = [
     # path('admin/', admin.site.urls),
     path('api/tf/modellevel/layerinfo', views.getMiddleResult),
-    path('api/tf/modellevel/snaphot', views.getLoss),
+    path('api/tf/modellevel/snapshot', views.getLoss),
     path('api/tf/getPbtxt', views.getPb),
     path('api/ms/get_graph', views.get_graph),
     path('api/get_local_ms_graph', views.get_local_ms_graph),

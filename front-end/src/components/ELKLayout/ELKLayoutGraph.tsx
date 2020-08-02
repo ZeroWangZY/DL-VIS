@@ -31,7 +31,7 @@ import { modifyData } from "../../store/layerLevel";
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard";
 import MiniMap from "../MiniMap/MiniMap";
 import PopoverBox from "../PopoverBox/PopoverBox";
-import { fetchAndGetLayerInfo } from "../../common/model-level/snaphot";
+import { fetchAndGetLayerInfo } from "../../common/model-level/snapshot";
 import InteractiveIcon from "../InteractiveIcon/InteractiveIcon";
 
 import ELK from "elkjs/lib/elk.bundled.js";

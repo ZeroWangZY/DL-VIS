@@ -8,8 +8,8 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { makeStyles, withTheme } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import * as d3 from "d3";
-import "./Snaphot.css";
-import { fetchAndComputeSnaphot, fetchAndComputeModelScalars } from "../../common/model-level/snaphot";
+import "./Snapshot.css";
+import { fetchAndComputeSnapshot, fetchAndComputeModelScalars } from "../../common/model-level/snapshot";
 import { computeXYScales, linearScale, generateSeriesAxis } from "../LineCharts/src/computed";
 import {
   useGlobalConfigurations,
@@ -44,7 +44,7 @@ const useStyles = makeStyles({
   },
 });
 
-const Snaphot: React.FC = () => {
+const Snapshot: React.FC = () => {
   const svgRef = useRef();
   const [svgWidth, setSvgWidth] = useState(1800);
   const classes = useStyles();
@@ -456,4 +456,4 @@ const Snaphot: React.FC = () => {
   );
 };
 
-export default Snaphot;
+export default Snapshot;

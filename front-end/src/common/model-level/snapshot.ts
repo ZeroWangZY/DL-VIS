@@ -1,8 +1,8 @@
-import { fetchSnaphot, fetchLayerInfo, fetchModelScalars } from '../../api/modelLevel'
+import { fetchSnapshot, fetchLayerInfo, fetchModelScalars } from '../../api/modelLevel'
 import { GroupNodeImp, LayerNodeImp } from '../graph-processing/stage2/processed-graph'
 
-export const fetchAndComputeSnaphot = async () => {
-    let data = await fetchSnaphot()
+export const fetchAndComputeSnapshot = async () => {
+    let data = await fetchSnapshot()
     let line = data.data.slice(0, 1000).map(d => {
         return {
             x: d.STEP,

@@ -17,7 +17,7 @@ import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
-import { fetchAndGetLayerInfo } from "../../common/model-level/snaphot";
+import { fetchAndGetLayerInfo } from "../../common/model-level/snapshot";
 import {
   useGlobalConfigurations,
   modifyGlobalConfigurations,

@@ -1,12 +1,12 @@
 import fireAjax from './base'
-interface snaphot {
+interface snapshot {
     "STEP": number, // STEP 是递增的
     "TRAIN_LOSS": number,
     "TRAIN_ACCURACY": number,
     "TEST_LOSS": number,
     "TEST_ACCURACY": number,
 }
-export const fetchSnaphot = (): Promise<{ data: snaphot[] }> => fireAjax('GET', '/python/api/tf/modellevel/snaphot');
+export const fetchSnapshot = (): Promise<{ data: snapshot[] }> => fireAjax('GET', '/python/api/tf/modellevel/snapshot');
 
 
 interface layerInfo {

@@ -14,7 +14,7 @@ import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
 import MiniMap from '../MiniMap/MiniMap';
 import PopoverBox from '../PopoverBox/PopoverBox';
-import { fetchAndGetLayerInfo } from '../../common/model-level/snaphot'
+import { fetchAndGetLayerInfo } from '../../common/model-level/snapshot'
 import { generateNodeStyles, generateEdgeStyles, getColor, generateAcrossModuleEdgeStyles } from '../../common/style/graph';
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard"
 

@@ -15,7 +15,7 @@ import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import FormLabel from "@material-ui/core/FormLabel";
-import Snaphot from "../Snaphot/Snaphot";
+import Snapshot from "../Snapshot/Snapshot";
 import "./index.less";
 import LayerLevel from "../LayerLevel/LayerLevel"
 import {
@@ -145,7 +145,7 @@ export default () => {
           />
         </Tabs>
         <TabPanel value={value["outerBottom"]} index={0} pos={"outerBottom"}>
-          <Snaphot />
+          <Snapshot />
         </TabPanel>
 
         <TabPanel value={value["outerBottom"]} index={1} pos={"outerBottom"}>
