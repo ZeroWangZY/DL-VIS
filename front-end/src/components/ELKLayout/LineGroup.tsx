@@ -74,13 +74,12 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     if (childNodeId.length === 0) return;
 
     childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
-    console.log(layerNodeId, childNodeId)
 
     getNodeScalars(currentMSGraphName, childNodeId, startStep, endStep, nodeScalarType);
   }, [layerNodeId, currentStep, max_step, nodeScalarType])
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
-    const typeArray = ['activation','gradient','weight'];
+    const typeArray = ['activation', 'gradient', 'weight'];
     let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: typeArray[type] });
     let nodeScalars = data.data.data;
     let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
@@ -107,8 +106,9 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     dataArrToShow.push({ id: "Max", data: max, color: "#C71585" })
     dataArrToShow.push({ id: "Min", data: min, color: "#DC143C" })
     dataArrToShow.push({ id: "Mean", data: mean, color: "#4B0082" })
-    console.log(dataArrToShow)
+
     if (dataArrToShow.length === 0) return;
+
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < dataArrToShow.length; i++) {
       let LineData: Point[] = dataArrToShow[i].data;

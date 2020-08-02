@@ -17,7 +17,7 @@ interface Props {
 }
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
-  const { activationOrGradientData, is_training, max_step } = props;
+  const { activationOrGradientData, max_step } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
 
   const svgRef = useRef();
@@ -25,6 +25,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const [svgWidth, setSvgWidth] = useState(650);
   const [svgHeight, setSvgHeight] = useState(162);
   const [cursorLinePos, setCursorLinePos] = useState(null);
+  const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
@@ -33,9 +34,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     }
   }, []);
 
-  let XScale = d3.scaleLinear()
-    .rangeRound([0, svgWidth])
-    .domain([1, max_step]);
+  // let XScale = d3.scaleLinear()
+  //   .rangeRound([0, svgWidth])
+  //   .domain([1, max_step]);
 
   const margin = { top: 10, left: 30, bottom: 10, right: 30 };
   const gapHeight = 20; // 上下折线图之间的距离
@@ -188,7 +189,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
       var t = d3.event.transform;
       x1Scale.domain(t.rescaleX(x2Scale).domain());
-      focus.select(".area").attr("d", focusAreaLineGenerator);
+      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
       focus.select(".axis--x").call(d3.axisBottom(x1Scale));
       context.select(".brush").call(brush.move, x1Scale.range().map(t.invertX, t));
     }
@@ -256,19 +257,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           GlobalStatesModificationType.SET_CURRENT_STEP,
           clickNumber
         );
+        setFixCursorLinePos(x1Scale(clickNumber));
       });
   };
 
   return (
     <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none' }}>
       <div style={{ height: "5%", width: "100%" }}>
-        {/* <input type="checkbox" style={{ backgroundColor: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax"></input>
-        <label >max</label>
-        <input type="checkbox" style={{ backgroundColor: "#DC143C" }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin"></input>
-        <label >min</label>
-        <input type="checkbox" style={{ backgroundColor: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean"></input>
-        <label >mean</label> */}
-
         <FormGroup row>
           <FormControlLabel
             control={<Checkbox style={{ color: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
@@ -308,10 +303,23 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
-          {XScale !== null && currentStep !== null && (
+          {/* {XScale !== null && currentStep !== null && (
             <line
               x1={XScale(currentStep)}
               x2={XScale(currentStep)}
+              y1={height}
+              y2={0}
+              style={{
+                stroke: "grey",
+                strokeWidth: 1,
+              }}
+            />
+          )} */}
+
+          {fixCursorLinePos !== null && (
+            <line
+              x1={fixCursorLinePos}
+              x2={fixCursorLinePos}
               y1={height}
               y2={0}
               style={{

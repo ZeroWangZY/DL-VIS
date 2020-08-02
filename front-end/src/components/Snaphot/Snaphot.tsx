@@ -376,16 +376,6 @@ const Snaphot: React.FC = () => {
   return (
     <div className="lineChart-container" ref={measuredRef}>
       <div style={{ height: "5%", width: "100%" }} >
-        {/* <input type="checkbox" style={{ backgroundColor: "#922f2c" }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA"></input>
-        <label >train loss</label>
-        <input type="checkbox" style={{ backgroundColor: "#ca6457" }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB"></input>
-        <label >test loss</label>
-        <input type="checkbox" style={{ backgroundColor: "#388aac" }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC"></input>
-        <label >train accuracy</label>
-        <input type="checkbox" style={{ backgroundColor: "#133b4e" }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD"></input>
-        <label >test accuracy</label>
-        <input type="checkbox" style={{ backgroundColor: "#f7b968" }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE"></input>
-        <label >learning rate</label> */}
         < FormGroup row >
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}

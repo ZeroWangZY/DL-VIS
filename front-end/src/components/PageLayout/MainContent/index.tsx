@@ -12,7 +12,6 @@ import {
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
-import { ShowActivationOrGradient } from "../../../store/global-states.type"
 
 export default () => {
 

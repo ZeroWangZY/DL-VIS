@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import {
@@ -10,10 +10,50 @@ import {
   ThemeProvider,
 } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
+import Radio from "@material-ui/core/Radio";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import FormControl from "@material-ui/core/FormControl";
+import FormLabel from "@material-ui/core/FormLabel";
 import Snaphot from "../Snaphot/Snaphot";
 import "./index.less";
 import LayerLevel from "../LayerLevel/LayerLevel"
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { ShowActivationOrGradient } from "../../store/global-states.type"
+
+type Position = "outerBottom" | "innerBottom";
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: any;
+  value: any;
+  pos: Position;
+}
+
+const fontTheme = createMuiTheme({
+  typography: {
+    fontFamily: [
+      "Helvetica Neue",
+      "Helvetica",
+      "PingFang SC",
+      "Hiragino Sans GB",
+      "Microsoft YaHei",
+      "Arial",
+      "sans-serif",
+    ].join(","),
+  },
+});
+
+function a11yProps(index: any, pos: Position) {
+  return {
+    id: `full-width-tab-${pos}-${index}`,
+    "aria-controls": `full-width-tabpanel-${pos}-${index}`,
+  };
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -42,39 +82,27 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
+function TabPanel(params: TabPanelProps) {
+  const { children, value, index, pos, ...other } = params;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${pos}-${index}`}
+      aria-labelledby={`simple-tab-${pos}-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+}
+
 export default () => {
   const classes = useStyles();
   const theme = useTheme();
-  const [value, setValue] = React.useState({
-    right: 0,
-    outerBottom: 0,
-    innerBottom: 0,
-  });
-
-  type Position = "outerBottom" | "innerBottom";
-
-  interface TabPanelProps {
-    children?: React.ReactNode;
-    index: any;
-    value: any;
-    pos: Position;
-  }
-
-  function TabPanel(props: TabPanelProps) {
-    const { children, value, index, pos, ...other } = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${pos}-${index}`}
-        aria-labelledby={`simple-tab-${pos}-${index}`}
-        {...other}
-      >
-        {value === index && <Box>{children}</Box>}
-      </div>
-    );
-  }
+  const [value, setValue] = useState({ right: 0, outerBottom: 0, innerBottom: 0 });
+  const { showActivationOrGradient } = useGlobalStates();
 
   const toggleTab = (pos: Position) => (
     event: React.ChangeEvent<{}>,
@@ -83,26 +111,12 @@ export default () => {
     setValue({ ...value, [pos]: newValue });
   };
 
-  function a11yProps(index: any, pos: Position) {
-    return {
-      id: `full-width-tab-${pos}-${index}`,
-      "aria-controls": `full-width-tabpanel-${pos}-${index}`,
-    };
-  }
-
-  const fontTheme = createMuiTheme({
-    typography: {
-      fontFamily: [
-        "Helvetica Neue",
-        "Helvetica",
-        "PingFang SC",
-        "Hiragino Sans GB",
-        "Microsoft YaHei",
-        "Arial",
-        "sans-serif",
-      ].join(","),
-    },
-  });
+  const handleChange = event => {
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_SHOWACTIVATIONORGRADIENT,
+      parseInt(event.target.value)
+    );
+  };
 
   return (
     <div className="">
@@ -133,40 +147,21 @@ export default () => {
         <TabPanel value={value["outerBottom"]} index={0} pos={"outerBottom"}>
           <Snaphot />
         </TabPanel>
+
         <TabPanel value={value["outerBottom"]} index={1} pos={"outerBottom"}>
-          {/* layer level 的tab */}
-          <Tabs
-            value={value["innerBottom"]}
-            onChange={toggleTab("innerBottom")}
-            className={classes.innerTabsStyle}
-            classes={{ indicator: classes.indicator }}
-            aria-label="info panel"
-          >
-            <Tab
-              style={{
-                paddingLeft: theme.spacing(3),
-                color: value["innerBottom"] === 0 ? "#00a5a7" : "#333",
-              }}
-              className={classes.itabStyle}
-              label="Activation"
-              {...a11yProps(0, "innerBottom")}
-            />
-            <Tab
-              style={{
-                color: value["innerBottom"] === 1 ? "#00a5a7" : "#333",
-              }}
-              className={classes.itabStyle}
-              label="Gradient"
-              {...a11yProps(1, "innerBottom")}
-            />
-          </Tabs>
-          <TabPanel value={value["innerBottom"]} index={0} pos={"innerBottom"}>
-            <LayerLevel />
-          </TabPanel>
-          <TabPanel value={value["innerBottom"]} index={1} pos={"innerBottom"}>
-            <LayerLevel />
-          </TabPanel>
+          <FormControl component="fieldset">
+            {/* <FormLabel component="legend">指标选择</FormLabel> */}
+            <RadioGroup row
+              value={showActivationOrGradient}
+              onChange={handleChange}>
+              <FormControlLabel value={ShowActivationOrGradient.ACTIVATION} control={<Radio />} label="activation" />
+              <FormControlLabel value={ShowActivationOrGradient.GRADIENT} control={<Radio />} label="gradient" />
+            </RadioGroup>
+          </FormControl>
+          {/* layer level */}
+          <LayerLevel />
         </TabPanel>
+
       </ThemeProvider>
     </div >
   );
