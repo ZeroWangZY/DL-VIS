@@ -268,6 +268,7 @@ const Snapshot: React.FC = () => {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
         let x = x1Scale.invert(mouseX);
         let _index = bisect(dataExample.data, x, 1);
+        _index = _index === 0 ? 1 : _index;
 
         // 因为data中是[1, max_step]的数组,共max_step-1个数
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
@@ -298,6 +299,7 @@ const Snapshot: React.FC = () => {
         let x = x1Scale.invert(mouseX);
 
         let _index = bisect(dataExample.data, x, 1);
+        _index = _index === 0 ? 1 : _index;
 
         // 因为data中是[1, max_step]的数组,共max_step-1个数
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
@@ -354,7 +356,7 @@ const Snapshot: React.FC = () => {
             {"iteration: " + localCurrentStep}
           </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
-            <div style={{display: 'flex', alignItems: 'center'}}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <span className="DotBeforeDetailInfo" style={{ background: colorMap.get(d.name), float: 'left' }}></span>
               <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
                 {d.value === null && (d.name + ": NAN")}

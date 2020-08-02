@@ -223,6 +223,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
         let x = x1Scale.invert(mouseX);
         let _index = bisect(dataExample.data, x, 1);
+        _index = _index === 0 ? 1 : _index;
 
         // 因为data中是[1, max_step]的数组,共max_step-1个数
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
@@ -243,6 +244,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         let x = x1Scale.invert(mouseX);
 
         let _index = bisect(dataExample.data, x, 1);
+        _index = _index === 0 ? 1 : _index;
 
         // 因为data中是[1, max_step]的数组,共max_step-1个数
         // 而数组从0开始存储，所以数组中是[0, max_step-1)

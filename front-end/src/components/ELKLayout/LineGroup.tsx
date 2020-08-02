@@ -193,6 +193,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     //     let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
     //     let x = XScale.invert(mouseX);
     //     let _index = bisect(dataExample.data, x, 1);
+    //     _index = _index === 0 ? 1 : _index;
 
     //     if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
     //     let index =
@@ -210,6 +211,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     //     let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
     //     let x = XScale.invert(mouseX);
     //     let _index = bisect(dataExample.data, x, 1);
+    //     _index = _index === 0 ? 1 : _index;
 
     //     if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
     //     let index =
