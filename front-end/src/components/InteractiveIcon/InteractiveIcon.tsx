@@ -15,6 +15,7 @@ const InteractiveIcon = (props) => {
       src={process.env.PUBLIC_URL + props.src}
       onClick={props.handleClicked}
       onMouseOver={props.handleHover}
+      title={props.prompt}
     />
   );
 };

@@ -785,6 +785,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         position={{ left: 10, bottom: firstIconBottom }}
         src={process.env.PUBLIC_URL + "/assets/layout-modify.svg"}
         handleClicked={handleLayoutModify}
+        prompt={"Layout Modify"}
       />
       <InteractiveIcon
         id="search-switch"
@@ -797,6 +798,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         }}
         src={process.env.PUBLIC_URL + "/assets/path-search.svg"}
         handleClicked={togglePathFindingMode}
+        prompt={"Path Search"}
       />
       <InteractiveIcon
         id="reset-switch"
@@ -807,6 +809,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         }}
         src={process.env.PUBLIC_URL + "/assets/reset-layout.svg"}
         handleClicked={canvasBackToRight}
+        prompt={"Reset Layout"}
       />
       <Popover 
         placement="right" 
@@ -827,6 +830,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
             }}
             src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
             handleHover={()=>{toggleShouldShowDisplaySwitchPopover(true)}}
+            prompt={"Layer Display"}
           />
       </Popover>
     </div>
