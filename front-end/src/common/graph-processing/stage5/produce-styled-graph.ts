@@ -18,8 +18,7 @@ import { link } from "fs";
 
 let nodeKeyMap = {},
   linkKeyMap = {};
-const portWidth = 5,
-  portHeight = 12;
+
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
@@ -162,10 +161,9 @@ export const generateNodeStyles = (
           hiddenEdges: node.hiddenEdges["in"],
         },
         style: {
-          gNodeTransX: spring(ofs.x + node.x + inPort.x - portWidth),
-          gNodeTransY: spring(ofs.y + node.y + inPort.y - portHeight / 2),
-          rectWidth: spring(portWidth),
-          rectHeight: spring(portHeight),
+          gNodeTransX: spring(ofs.x + node.x + inPort.x),
+          gNodeTransY: spring(ofs.y + node.y + inPort.y),
+          type: "level_1"
         },
       });
     } else if (inPortType === PortType.hasHiddenEdge) {
@@ -178,12 +176,9 @@ export const generateNodeStyles = (
           hiddenEdges: node.hiddenEdges["in"],
         },
         style: {
-          gNodeTransX: spring(ofs.x + node.x + inPort.x - 0.6 * portWidth),
-          gNodeTransY: spring(
-            ofs.y + node.y + inPort.y - (0.6 * portHeight) / 2
-          ),
-          rectWidth: spring(0.6 * portWidth),
-          rectHeight: spring(0.6 * portHeight),
+          gNodeTransX: spring(ofs.x + node.x + inPort.x),
+          gNodeTransY: spring(ofs.y + node.y + inPort.y),
+          type: "level_1"
         },
       });
     }
@@ -198,9 +193,9 @@ export const generateNodeStyles = (
         },
         style: {
           gNodeTransX: spring(ofs.x + node.x + outPort.x),
-          gNodeTransY: spring(ofs.y + node.y + outPort.y - portHeight / 2),
-          rectWidth: spring(portWidth),
-          rectHeight: spring(portHeight),
+          gNodeTransY: spring(ofs.y + node.y + outPort.y),
+          type: "level_1"
+
         },
       });
     } else if (outPortType === PortType.hasHiddenEdge) {
@@ -214,11 +209,8 @@ export const generateNodeStyles = (
         },
         style: {
           gNodeTransX: spring(ofs.x + node.x + outPort.x),
-          gNodeTransY: spring(
-            ofs.y + node.y + outPort.y - (0.6 * portHeight) / 2
-          ),
-          rectWidth: spring(0.6 * portWidth),
-          rectHeight: spring(0.6 * portHeight),
+          gNodeTransY: spring(ofs.y + node.y + outPort.y),
+          type: "level_1"
         },
       });
     }

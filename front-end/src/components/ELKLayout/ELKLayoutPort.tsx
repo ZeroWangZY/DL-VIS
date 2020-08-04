@@ -5,6 +5,8 @@ import * as d3 from "d3";
 
 const circle_level_1_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="7.5" r="1.4"/></g>)
 
+const circle_level_2_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="5.4" cy="7.5" r="1.4"/><circle style={{fill:"#333"}} cx="9.95" cy="7.5" r="1.4"/></g>)
+
 const circle_level_1_2_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="4.5" r="1.4"/><line style={{stroke:"#333",strokeMiterlimit:10, fill:"none"}} x1="0.5" y1="7.5" x2="14.5" y2="7.5"/><circle style={{fill:"#333"}} cx="5.4" cy="10.5" r="1.4"/><circle style={{fill:"#333"}} cx="9.95" cy="10.5" r="1.4"/></g>)
 
 const ELKLayoutPort: React.FC = () => {
@@ -111,38 +113,16 @@ const ELKLayoutPort: React.FC = () => {
                 }}
               >
                 {d.data.type === "in" ? (
-                  // <rect
-                  //   width={d.style.rectWidth / 2}
-                  //   height={d.style.rectHeight}
-                  //   transform={`translate(${d.style.rectWidth / 2}, 0)`}
-                  //   fill={fill}
-                  //   stroke={stroke}
-                  //   strokeWidth={strokeWidth}
-                  // />
-                  <g transform={`translate(${d.style.rectWidth / 2 - 5}, -3)`}>
+                  //todo: 判断d.style.type==="level_1"
+                  <g transform={`translate(-7, -7.4)`}>
                     {circle_level_1_big}
                   </g>
                 ) : (
-                  // <rect
-                  //   width={d.style.rectWidth / 2}
-                  //   height={d.style.rectHeight}
-                  //   fill={fill}
-                  //   stroke={stroke}
-                  //   strokeWidth={strokeWidth}
-                  // />
-                  <g transform={`translate(${-7.5}, -3)`}>
+                  //todo: 判断d.style.type==="level_1"
+                  <g transform={`translate(-7, -7.4)`}>
                     {circle_level_1_big}
                   </g>
                   )}
-                {/* <rect
-                  width={d.style.rectWidth}
-                  height={d.style.rectHeight}
-                  rx="2.5"
-                  ry="2.5"
-                  fill={fill}
-                  stroke={stroke}
-                  strokeWidth={strokeWidth}
-                ></rect> */}
               </g>
             );
           })}
