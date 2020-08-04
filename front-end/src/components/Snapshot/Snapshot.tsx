@@ -48,7 +48,7 @@ const Snapshot: React.FC = () => {
   const svgRef = useRef();
   const [svgWidth, setSvgWidth] = useState(1800);
   const classes = useStyles();
-  const svgHeight = 300;
+  const svgHeight = 290;
   const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [localCurrentStep, setLocalCurrentStep] = useState(null);
@@ -60,8 +60,9 @@ const Snapshot: React.FC = () => {
     checkedE: false,
   });
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
-  const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
+  const [showDomain, setShowDomain] = useState(null);
 
+  const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
   const { colorMap } = useGlobalConfigurations();
 
   const margin = { top: 20, right: 20, bottom: 110, left: 40 };
@@ -240,6 +241,8 @@ const Snapshot: React.FC = () => {
       let s = d3.event.selection || x2Scale.range();
       x1Scale.domain(s.map(x2Scale.invert, x2Scale));
 
+      setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
+
       focus.selectAll(".area").attr("d", focusAreaLineGenerator);
       focus.select(".axis--x").call(d3.axisBottom(x1Scale));
     };
@@ -256,11 +259,17 @@ const Snapshot: React.FC = () => {
       .on("brush start", brushedStart)
       .on("brush end", brushed);
 
+    let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
+    if (showDomain === null)
+      showRange = x2Scale.range();
+    else
+      showRange = [x2Scale(showDomain[0]), x2Scale(showDomain[1])];
+
     context
       .append("g")
       .attr("class", "brush")
       .call(brush)
-      .call(brush.move, x2Scale.range());
+      .call(brush.move, showRange);
 
     d3.select(svgRef.current)
       .select("rect.zoom")
@@ -341,7 +350,7 @@ const Snapshot: React.FC = () => {
 
     let containerWidth = contextWidth + 10, containerHeight = contextHeight + 10;
 
-    if (xPos + contextWidth > svgWidth) xPos -= contextWidth; // 靠近右边界，将这一部分放到竖线前面显示
+    if (xPos + containerWidth > svgWidth) xPos = xPos - containerWidth - 20; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
 
     return (

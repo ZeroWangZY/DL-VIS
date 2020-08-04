@@ -27,6 +27,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
+  const [showDomain, setShowDomain] = useState(null);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setSvgWidth(node.getBoundingClientRect().width - 50);
@@ -181,6 +182,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       let s = d3.event.selection || x2Scale.range();
       x1Scale.domain(s.map(x2Scale.invert, x2Scale));
 
+      setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
+
       focus.selectAll(".area").attr("d", focusAreaLineGenerator);
       focus.select(".axis--x").call(d3.axisBottom(x1Scale));
     };
@@ -211,11 +214,17 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       ])
       .on("brush end", brushed);
 
+    let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
+    if (showDomain === null)
+      showRange = x2Scale.range();
+    else
+      showRange = [x2Scale(showDomain[0]), x2Scale(showDomain[1])];
+
     context
       .append("g")
       .attr("class", "brush")
       .call(brush)
-      .call(brush.move, x2Scale.range());
+      .call(brush.move, showRange);
 
     d3.select(svgRef.current)
       .select("rect.layerLevel-lineChart-zoom")
