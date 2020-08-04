@@ -1,8 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { TransitionMotion } from "react-motion";
 import { useStyledGraph } from "../../store/styledGraph";
-import ELK from "elkjs/lib/elk.bundled.js";
 import * as d3 from "d3";
+
+const circle_level_1_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="7.5" r="1.4"/></g>)
+
+const circle_level_1_2_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="4.5" r="1.4"/><line style={{stroke:"#333",strokeMiterlimit:10, fill:"none"}} x1="0.5" y1="7.5" x2="14.5" y2="7.5"/><circle style={{fill:"#333"}} cx="5.4" cy="10.5" r="1.4"/><circle style={{fill:"#333"}} cx="9.95" cy="10.5" r="1.4"/></g>)
 
 const ELKLayoutPort: React.FC = () => {
   const styledGraph = useStyledGraph();
@@ -35,7 +38,7 @@ const ELKLayoutPort: React.FC = () => {
                         .selectAll(`.${edgeName}`)
                         .select("path")
                         .attr("fill", "none")
-                        .style("stroke", "#3186FF")
+                        .style("stroke", "#00679f")
                         .style("stroke-width", "2")
                         .style("stroke-linecap", "round");
                       continue;
@@ -78,13 +81,13 @@ const ELKLayoutPort: React.FC = () => {
                         "d",
                         lineFunction([
                           [x1, y1],
-                          [(x1 + x2) / 2, y1],
-                          [(x1 + x2) / 2, y2],
+                          // [(x1 + x2) / 2, y1],
+                          // [(x1 + x2) / 2, y2],
                           [x2, y2],
                         ])
                       )
                       .attr("fill", "none")
-                      .style("stroke", "#3186FFAA")
+                      .style("stroke", "#00679f")
                       .style("stroke-width", "2")
                       .style("stroke-linecap", "round");
                   }
@@ -108,24 +111,30 @@ const ELKLayoutPort: React.FC = () => {
                 }}
               >
                 {d.data.type === "in" ? (
-                  <rect
-                    width={d.style.rectWidth / 2}
-                    height={d.style.rectHeight}
-                    transform={`translate(${d.style.rectWidth / 2}, 0)`}
-                    fill={fill}
-                    stroke={stroke}
-                    strokeWidth={strokeWidth}
-                  ></rect>
+                  // <rect
+                  //   width={d.style.rectWidth / 2}
+                  //   height={d.style.rectHeight}
+                  //   transform={`translate(${d.style.rectWidth / 2}, 0)`}
+                  //   fill={fill}
+                  //   stroke={stroke}
+                  //   strokeWidth={strokeWidth}
+                  // />
+                  <g transform={`translate(${d.style.rectWidth / 2 - 5}, -3)`}>
+                    {circle_level_1_big}
+                  </g>
                 ) : (
-                    <rect
-                      width={d.style.rectWidth / 2}
-                      height={d.style.rectHeight}
-                      fill={fill}
-                      stroke={stroke}
-                      strokeWidth={strokeWidth}
-                    ></rect>
+                  // <rect
+                  //   width={d.style.rectWidth / 2}
+                  //   height={d.style.rectHeight}
+                  //   fill={fill}
+                  //   stroke={stroke}
+                  //   strokeWidth={strokeWidth}
+                  // />
+                  <g transform={`translate(${-7.5}, -3)`}>
+                    {circle_level_1_big}
+                  </g>
                   )}
-                <rect
+                {/* <rect
                   width={d.style.rectWidth}
                   height={d.style.rectHeight}
                   rx="2.5"
@@ -133,7 +142,7 @@ const ELKLayoutPort: React.FC = () => {
                   fill={fill}
                   stroke={stroke}
                   strokeWidth={strokeWidth}
-                ></rect>
+                ></rect> */}
               </g>
             );
           })}
