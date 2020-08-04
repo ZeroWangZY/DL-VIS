@@ -34,6 +34,7 @@ const VALID_GRAPH_NAME = new Set([
   "bert_pretrain",
   "mobilenetv2",
   "resnet",
+  "lenet-err"
 ]);
 
 const useStyles = makeStyles((theme: Theme) =>
