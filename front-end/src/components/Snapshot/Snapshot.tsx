@@ -386,7 +386,7 @@ const Snapshot: React.FC = () => {
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
-      <div style={{ height: "5%", width: "100%" }} >
+      <div style={{ height: "5%", width: "100%", position: 'relative', top: '-20px' }} >
         < FormGroup row >
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}
