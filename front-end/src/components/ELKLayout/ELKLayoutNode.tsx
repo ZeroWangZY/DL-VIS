@@ -257,6 +257,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           className={focused ? "elk-label-container focus" : "elk-label-container"}
           width={rectWidth}
           height={rectHeight}
+          rx="5"
+          ry="5"
           transform={`translate(-${rectWidth / 2}, -${rectHeight / 2})`}
           fillOpacity={node.expand ? 0 : 1}
           pointerEvents="visibleStroke"
