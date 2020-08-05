@@ -9,6 +9,8 @@ const circle_level_2_big = (<g id="图层_1-2" data-name="图层 1"><circle styl
 
 const circle_level_1_2_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="4.5" r="1.4"/><line style={{stroke:"#333",strokeMiterlimit:10, fill:"none"}} x1="0.5" y1="7.5" x2="14.5" y2="7.5"/><circle style={{fill:"#333"}} cx="5.4" cy="10.5" r="1.4"/><circle style={{fill:"#333"}} cx="9.95" cy="10.5" r="1.4"/></g>)
 
+const circle_level_1_small = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="5.5" cy="5.5" r="5"/><circle style={{fill:"#333"}} cx="5.5" cy="5.5" r="1"/></g>)
+
 const ELKLayoutPort: React.FC = () => {
   const styledGraph = useStyledGraph();
   const hoverEdges = d3.select("#output-svg").select(".hoverEdges");
@@ -19,17 +21,40 @@ const ELKLayoutPort: React.FC = () => {
     .line()
     .x((d) => d[0])
     .y((d) => d[1]);
+  const corCal = (x1,y1,x2,y2,r)=>{
+    const a = Math.abs(x1-x2)
+    const b = Math.abs(y1-y2)
+    const c = Math.sqrt(Math.pow(a,2)+Math.pow(b,2))
+    const x0 = r * a/c;
+    const y0 = r * b/c;
+
+    if(x1<x2){x1+=x0;x2-=x0;}
+    else{x1-=x0;x2+=x0;}
+
+    if(y1<y2){y1+=y0;y2-=y0;}
+    else{y1-=y0; y2+=y0;}
+
+    return {x1,y1,x2,y2}
+  }
   return (
     <TransitionMotion
       styles={styledGraph === null ? [] : styledGraph.portStyles}
     >
       {(interpolatedStyles) => (
         <g className="ports">
-          {interpolatedStyles.map((d) => {
+          {interpolatedStyles.map((d, n) => {
+            const ofs_x = -7.5;
+            const ofs_y = -7.4;
+            const xt = 9, yt = -1/2*d.style.nodeRectHeight+10;
+            let ofs = [xt, ofs_y] 
+            if(!d.data.isRealLink){
+              ofs = [0, ofs_y+yt];
+            }
             return (
               <g
                 key={d.key}
                 id={d.data.id4Style}
+                className={`${d.data.direction}-${d.data.nodeId}`}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onMouseEnter={() => {
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
@@ -47,34 +72,48 @@ const ELKLayoutPort: React.FC = () => {
                     }
                     let x = 0,
                       y = 0,
-                      width = 0,
-                      height = 0;
-                    const sourceElement = d3.select(`#${source}`).node() as any;
-                    ({ width, height } = sourceElement.getBBox());
-                    [x, y] = sourceElement
-                      .getAttribute("transform")
-                      .slice(10, -1)
-                      .split(", ")
-                      .map((v) => parseInt(v));
-                    const sourceBox = { x, y, width, height };
-                    const targetElement = d3.select(`#${target}`).node() as any;
-                    ({ width, height } = targetElement.getBBox());
-                    [x, y] = targetElement
-                      .getAttribute("transform")
-                      .slice(10, -1)
-                      .split(", ")
-                      .map((v) => parseInt(v));
-                    const targetBox = { x, y, width, height };
-                    let sign = 1; //1:右连接，2：左连接
+                      xc = 0,
+                      yc = 0,
+                      pos = "out";
                     if (source.length < target.length) {
-                      sign = -1;
+                      pos = "in";
                     }
-                    const ofs_x = 1;
-                    let x1 = sourceBox.x + sign * (sourceBox.width / 2) + ofs_x,
-                      y1 = sourceBox.y,
-                      x2 = targetBox.x + sign * (targetBox.width / 2) - ofs_x,
-                      y2 = targetBox.y;
+                    const sourcePortParent = d3.select(`.${pos}-${source}`).node() as any;
+                    const sourcePort = d3.select(`.${pos}-${source}`).select("g").node() as any;
+                    [x, y] = sourcePortParent
+                      .getAttribute("transform")
+                      .slice(10, -1)
+                      .split(",")
+                      .map((v) => parseInt(v));
+                    [xc, yc] = sourcePort
+                      .getAttribute("transform")
+                      .slice(10, -1)
+                      .split(",")
+                      .map((v) => parseInt(v));
+                    const sourceBox = { x:x+xc, y:y+yc };
 
+                    const targetPortParent = d3.select(`.${pos}-${target}`).node() as any;
+                    const targetPort = d3.select(`.${pos}-${target}`).select("g").node() as any;
+
+                    [x, y] = targetPortParent
+                    .getAttribute("transform")
+                    .slice(10, -1)
+                    .split(",")
+                    .map((v) => parseInt(v));
+                    [xc, yc] = targetPort
+                      .getAttribute("transform")
+                      .slice(10, -1)
+                      .split(",")
+                      .map((v) => parseInt(v));
+                    const targetBox = { x:x+xc, y:y+yc };
+
+                    const r = 7
+                    let x1 = sourceBox.x+r,
+                      y1 = sourceBox.y+r,
+                      x2 = targetBox.x+r,
+                      y2 = targetBox.y+r;
+
+                    ({x1,y1,x2,y2} = corCal(x1,y1,x2,y2,r))
                     hoverEdges
                       .append("g")
                       .attr("class", `edgePath hoverEdge ${edgeName}`)
@@ -112,17 +151,17 @@ const ELKLayoutPort: React.FC = () => {
                   }
                 }}
               >
-                {d.data.type === "in" ? (
-                  //todo: 判断d.style.type==="level_1"
-                  <g transform={`translate(-7, -7.4)`}>
-                    {circle_level_1_big}
-                  </g>
-                ) : (
-                  //todo: 判断d.style.type==="level_1"
-                  <g transform={`translate(-7, -7.4)`}>
-                    {circle_level_1_big}
-                  </g>
-                  )}
+                <g 
+                  transform={`translate(${d.data.direction==="in"?ofs_x+ofs[0]:ofs_x-ofs[0]}, ${ofs[1]})`}
+                >
+                  {d.data.isOperation
+                  ?circle_level_1_small
+                  :(d.data.type["level_1"]&&d.data.type["level_2"])
+                  ?circle_level_1_2_big
+                  :d.data.type["level_1"]
+                  ?circle_level_1_big
+                  :circle_level_2_big}
+                </g>
               </g>
             );
           })}

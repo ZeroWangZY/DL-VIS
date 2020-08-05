@@ -19,6 +19,8 @@ import { link } from "fs";
 let nodeKeyMap = {},
   linkKeyMap = {};
 
+let portTypeMap: Map<string/*=id4Style*/, {type:{level_1: boolean, level_2: boolean}, index:number}> = new Map();
+
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
   let newLinkStyles = [];
@@ -114,7 +116,7 @@ export const generateNodeStyles = (
           class: node.class,
           type: node.type,
           id: node.id,
-          id4Style: node.id4Style,
+          id4Style: id4Style,
           parent: node.parent,
           parameters:
             node.type === NodeType.OPERATION ? node.parameters : null,
@@ -135,7 +137,7 @@ export const generateNodeStyles = (
           class: "dummy",
           type: "dummy",
           id: node.id,
-          id4Style: node.id4Style,
+          id4Style: id4Style,
           parent: node.parent,
           label: node.id,
           expand: node.expand,
@@ -151,69 +153,165 @@ export const generateNodeStyles = (
     });
     const [inPort, outPort] = node.ports;
     const [inPortType, outPortType] = node.portType;
+    const inHiddenEdges = node.hiddenEdges["in"];
+    const outHiddenEdges = node.hiddenEdges["out"];
     if (inPortType === PortType.Module) {
+      const type = {"level_1":true,"level_2":false};
+      portTypeMap.set("in>"+id4Style, {type:type,index: portStyles.length})
       portStyles.push({
         //key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `inPort_${node.id}`,
         data: {
-          type: "in",
+          direction: "in",
+          isRealLink: true,
+          isOperation: node.type === NodeType.OPERATION,
+          type: type,
+          nodeId: id4Style,
           id4Style: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
-          hiddenEdges: node.hiddenEdges["in"],
+          hiddenEdges: inHiddenEdges,
         },
         style: {
           gNodeTransX: spring(ofs.x + node.x + inPort.x),
           gNodeTransY: spring(ofs.y + node.y + inPort.y),
-          type: "level_1"
+          nodeRectWidth: spring(node.width),
+          nodeRectHeight: spring(node.height),
         },
       });
     } else if (inPortType === PortType.hasHiddenEdge) {
+      const type = {"level_1":false,"level_2":true};
+      portTypeMap.set("in>"+id4Style, {type:type,index:portStyles.length})
       portStyles.push({
         //key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `inPort_${node.id}`,
         data: {
-          type: "in",
+          direction: "in",
+          isRealLink: false,
+          isOperation: node.type === NodeType.OPERATION,
+          type: type,
+          nodeId: id4Style,
           id4Style: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
-          hiddenEdges: node.hiddenEdges["in"],
+          hiddenEdges: inHiddenEdges,
         },
         style: {
           gNodeTransX: spring(ofs.x + node.x + inPort.x),
           gNodeTransY: spring(ofs.y + node.y + inPort.y),
-          type: "level_1"
+          nodeRectWidth: spring(node.width),
+          nodeRectHeight: spring(node.height),
         },
       });
     }
     if (outPortType === PortType.Module) {
+      const type = {"level_1":true,"level_2":false};
+      portTypeMap.set("out>"+id4Style, {type:type,index:portStyles.length})
       portStyles.push({
         //key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `outPort_${node.id}`,
         data: {
-          type: "out",
+          direction: "out",
+          isRealLink: true,
+          isOperation: node.type === NodeType.OPERATION,
+          type: type,
+          nodeId: id4Style,
           id4Style: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
-          hiddenEdges: node.hiddenEdges["out"],
+          hiddenEdges: outHiddenEdges,
         },
         style: {
           gNodeTransX: spring(ofs.x + node.x + outPort.x),
           gNodeTransY: spring(ofs.y + node.y + outPort.y),
-          type: "level_1"
-
+          nodeRectWidth: spring(node.width),
+          nodeRectHeight: spring(node.height)
         },
       });
     } else if (outPortType === PortType.hasHiddenEdge) {
+      const type = {"level_1":false,"level_2":true};
+      portTypeMap.set("out>"+id4Style, {type:type,index:portStyles.length})
       portStyles.push({
         //key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `outPort_${node.id}`,
         data: {
-          type: "out",
+          direction: "out",
+          isRealLink: false,
+          isOperation: node.type === NodeType.OPERATION,
+          type: type,
+          nodeId: id4Style,
           id4Style: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
-          hiddenEdges: node.hiddenEdges["out"],
+          hiddenEdges: outHiddenEdges,
         },
         style: {
           gNodeTransX: spring(ofs.x + node.x + outPort.x),
           gNodeTransY: spring(ofs.y + node.y + outPort.y),
-          type: "level_1"
+          nodeRectWidth: spring(node.width),
+          nodeRectHeight: spring(node.height),
         },
       });
     }
+    //先计算level_1
+    for(let i = 0; i < portStyles.length; i++){
+      let style = portStyles[i];
+      let {nodeId} = style.data;
+      style.data.hiddenEdges.forEach(hiddenEdge => {
+        const { source, target } = hiddenEdge;
+        let _nodeId = ""
+        if(style.data.direction === "in" && target === nodeId){
+          _nodeId = source;
+          nodeId = "in>"+nodeId;
+          _nodeId = "in>"+_nodeId;
+        }
+        if(style.data.direction === "out" && source === nodeId){
+          _nodeId = target;
+          nodeId = "out>"+nodeId;
+          _nodeId = "out>"+_nodeId;
+        }
+        if(_nodeId!==""){
+          if(portTypeMap.get(nodeId).type["level_1"]){
+            let info = portTypeMap.get(_nodeId);
+            info["type"]["level_1"] = true;
+            info["type"]["level_2"] = false;
+            portTypeMap.set(_nodeId,info);
+            portStyles[info["index"]]["data"]["type"] = info["type"]
+          } else if(portTypeMap.get(_nodeId).type["level_1"]){
+            let info = portTypeMap.get(nodeId);
+            info["type"]["level_1"] = true;
+            info["type"]["level_2"] = false;
+            portTypeMap.set(nodeId,info);
+            portStyles[info["index"]]["data"]["type"] = info["type"]
+          }
+        }
+      });
+    }
+    //level_1遍历完成之后再计算level_2
+    for(let i = 0; i < portStyles.length; i++){
+      let style = portStyles[i];
+      let {nodeId} = style.data;
+      style.data.hiddenEdges.forEach(hiddenEdge => {
+        const { source, target } = hiddenEdge;
+        let _nodeId = ""
+        if(style.data.direction === "in" && target === nodeId){
+          _nodeId = source;
+          nodeId = "in>"+nodeId;
+          _nodeId = "in>"+_nodeId;
+        }
+        if(style.data.direction === "out" && source === nodeId){
+          _nodeId = target;
+          nodeId = "out>"+nodeId;
+          _nodeId = "out>"+_nodeId;
+        }
+        if(_nodeId!==""){
+          if(portTypeMap.get(nodeId).type["level_2"]){
+            let info = portTypeMap.get(_nodeId);
+            info["type"]["level_2"] = true;
+            portTypeMap.set(_nodeId,info);
+            portStyles[info["index"]]["data"]["type"] = info["type"]
+          } else if(portTypeMap.get(_nodeId).type["level_2"]){
+            let info = portTypeMap.get(nodeId);
+            info["type"]["level_2"] = true;
+            portTypeMap.set(nodeId,info);
+            portStyles[info["index"]]["data"]["type"] = info["type"]
+          }
+        }
+      });
+    }
+    
     if (node.hasOwnProperty("children")) {
       //node有"children"属性<=>有"edge"属性
       generateEdgeStyles(node["edges"], linkStyles, {
