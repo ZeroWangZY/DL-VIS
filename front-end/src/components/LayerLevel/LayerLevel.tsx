@@ -77,7 +77,6 @@ const LayerLevel: React.FC = () => {
 
 		let childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
 		if (childNodeId.length === 0) return;
-		console.log(selectedNodeId, childNodeId)
 
 		childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
 
@@ -137,17 +136,21 @@ const LayerLevel: React.FC = () => {
 	// TODO : 网格布局
 	return (
 		<div>
-			<div className='return-button'>
+			{/* <div className='return-button'>
 				<ArrowBackIosIcon onClick={goback} />
-			</div>
+			</div> */}
 			{nodeMap[selectedNodeId] instanceof LayerNodeImp && (
 				<div className="layer-container">
 					{/* <IterationChart linedata={linedata} getStep={getActivations} onSubmit={getIteration} /> */}
 					{/* <ActivationChart activations={activations} /> */}
-					<div className="layer-container-box detail-box"></div>
+					<div className="layer-container-box detail-box">
+
+					</div>
+
 					<div className="layer-container-box cluster-box">
 						<TsneClusterGraph activations={tsneGraph} />
 					</div>
+
 					<div className="layer-container-box line-box">
 						{activationOrGradientData.length !== 0 &&
 							<ActivationOrGradientChart
@@ -155,12 +158,6 @@ const LayerLevel: React.FC = () => {
 								is_training={is_training}
 								max_step={max_step} />}
 					</div>
-
-					{/* <div
-					style={{
-						paddingLeft: "10px"
-					}}
-				></div> */}
 				</div>
 			)}
 

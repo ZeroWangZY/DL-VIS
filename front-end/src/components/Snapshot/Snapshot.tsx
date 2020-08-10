@@ -46,9 +46,9 @@ const useStyles = makeStyles({
 
 const Snapshot: React.FC = () => {
   const svgRef = useRef();
+  const [svgHeight, setSvgHeight] = useState(270);
   const [svgWidth, setSvgWidth] = useState(1800);
   const classes = useStyles();
-  const svgHeight = 290;
   const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [localCurrentStep, setLocalCurrentStep] = useState(null);
@@ -65,22 +65,22 @@ const Snapshot: React.FC = () => {
   const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
   const { colorMap } = useGlobalConfigurations();
 
-  const margin = { top: 20, right: 20, bottom: 110, left: 40 };
-  const margin2 = { top: 220, right: 20, bottom: 40, left: 40 };
-  const width = svgWidth - margin.left - margin.right;
-  const height = svgHeight - margin.top - margin.bottom;
-  const height2 = svgHeight - margin2.top - margin2.bottom;
+  const measuredRef = useCallback((node) => {
+    if (node !== null) {
+      setSvgHeight(node.getBoundingClientRect().height - 15);
+      setSvgWidth(node.getBoundingClientRect().width - 60);
+    }
+  }, []);
+
+  const margin = { top: 10, left: 30, bottom: 10, right: 30 };
+  const gapHeight = 20; // 上下折线图之间的距离
+  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 6;
+  const margin2 = { top: height + margin.top + gapHeight, left: 30 };
+  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下折线图比例是 5: 1
 
   let XScale = d3.scaleLinear()
     .rangeRound([0, svgWidth])
     .domain([1, max_step]);
-
-  const measuredRef = useCallback((node) => {
-    if (node !== null) {
-      setSvgWidth(node.getBoundingClientRect().width - 100);
-    }
-  }, []);
-
 
   //trainLoss, testLoss,trainAccuracy ,testAccuracy,learningRate;
   const handleChange = (event) => { // checkBox状态控制
@@ -202,12 +202,12 @@ const Snapshot: React.FC = () => {
 
 
     // add the X gridlines
-    focus.append("g")
-      .attr("class", "snapshot-grid")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x1Scale).tickSize(-height))
-      .selectAll("text")
-      .style("opacity", "0")
+    // focus.append("g")
+    //   .attr("class", "snapshot-grid")
+    //   .attr("transform", "translate(0," + height + ")")
+    //   .call(d3.axisBottom(x1Scale).tickSize(-height))
+    //   .selectAll("text")
+    //   .style("opacity", "0")
 
     // add the Y gridlines
     focus.append("g")
@@ -386,7 +386,7 @@ const Snapshot: React.FC = () => {
 
   return (
     <div className="lineChart-container" ref={measuredRef}>
-      <div style={{ height: "5%", width: "100%", position: 'relative', top: '-20px' }} >
+      <div className="lineChart-checkbox" style={{ height: "5%", width: "70%", position: 'relative', top: '-10px', left: margin.left }} >
         < FormGroup row >
           <FormControlLabel
             control={<Checkbox style={{ color: colorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}

@@ -6,8 +6,10 @@ import {
 } from "../../store/global-states";
 import { GlobalStatesModificationType, LayerLevelCheckBoxState } from "../../store/global-states.type";
 import { Point, DataToShow } from "./LayerLevel"
+import "./ActivationOrGradientChart.css"
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Typography from "@material-ui/core/Typography";
 import Checkbox from '@material-ui/core/Checkbox';
 
 interface Props {
@@ -30,8 +32,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const [showDomain, setShowDomain] = useState(null);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
-      setSvgWidth(node.getBoundingClientRect().width - 50);
-      setSvgHeight(node.getBoundingClientRect().height - 40);
+      setSvgWidth(node.getBoundingClientRect().width - 70);
+      setSvgHeight(node.getBoundingClientRect().height - 20);
+      console.log("update")
     }
   }, []);
 
@@ -39,11 +42,20 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   //   .rangeRound([0, svgWidth])
   //   .domain([1, max_step]);
 
-  const margin = { top: 10, left: 30, bottom: 10, right: 30 };
+  const margin = { top: 4, left: 40, bottom: 10, right: 40 };
   const gapHeight = 20; // 上下折线图之间的距离
-  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 3 / 4;
-  const margin2 = { top: height + margin.top + gapHeight, left: 30 };
-  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 4; // height2是height的1/4
+  const checkboxAreaHeight = 40;
+  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2 - checkboxAreaHeight - 15) * 5 / 7;
+  const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
+  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2 - checkboxAreaHeight - 15) * 2 / 7;
+
+  const filterData = (newcheckBoxState) => {
+    let dataSlice = [];
+    Object.values(newcheckBoxState).forEach((state, i) => {
+      if (state) dataSlice.push(activationOrGradientData[i]);
+    })
+    return dataSlice;
+  }
 
   const handleChange = (event) => { // checkBox状态控制
     let newcheckBoxState = {} as LayerLevelCheckBoxState;
@@ -60,11 +72,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     Object.assign(newcheckBoxState,
       { ...layerLevel_checkBoxState, [event.target.name]: event.target.checked });
 
-    let dataSlice = [];
-    Object.values(newcheckBoxState).forEach((state, i) => {
-      if (state) dataSlice.push(activationOrGradientData[i]);
-    })
-    setDataArrToShow(dataSlice);
+    setDataArrToShow(filterData(newcheckBoxState));
+
     modifyGlobalStates(
       GlobalStatesModificationType.SET_LAYERLEVEL_CHECKBOXSTATE,
       newcheckBoxState
@@ -72,9 +81,12 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   }
 
   useEffect(() => {
+    setDataArrToShow(filterData(layerLevel_checkBoxState));
+  }, activationOrGradientData)
+
+  useEffect(() => {
     computeAndDrawLine();
-    setDataArrToShow(activationOrGradientData);
-  }, [activationOrGradientData, layerLevel_checkBoxState, dataArrToShow, svgWidth]);
+  }, [dataArrToShow, svgWidth]);
 
   const computeAndDrawLine = async () => {
     if (!max_step || dataArrToShow.length === 0) return;
@@ -85,6 +97,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.selectAll(".area").remove(); // 清除原折线图
+    focus.selectAll(".activationOrGradient-grid").remove();
 
     let context = d3.select(svgRef.current).select("g.layerLevel-lineChart-context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -159,6 +172,20 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .attr("class", "axis axis--y")
       .call(d3.axisLeft(focusAreaYScale).ticks(5).tickSize(3).tickPadding(2));
 
+    // add the X gridlines
+    // focus.append("g")
+    //   .attr("class", "activationOrGradient-grid")
+    //   .attr("transform", "translate(0," + height + ")")
+    //   .call(d3.axisBottom(x1Scale).tickSize(-height))
+    //   .selectAll("text")
+    //   .style("opacity", "0")
+
+    // add the Y gridlines
+    focus.append("g")
+      .attr("class", "activationOrGradient-grid")
+      .call(d3.axisLeft(focusAreaYScale).tickSize(-svgWidth))
+      .selectAll("text")
+      .style("opacity", "0")
 
     for (let i = 0; i < dataArrToShow.length; i++) {
       let data = dataArrToShow[i];
@@ -274,25 +301,27 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   return (
     <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none' }}>
-      <div style={{ height: "5%", width: "100%" }}>
+      {/* <div style={{ display: "inline" }}> */}
+
+      <div className="layerLevel-lineChart-checkbox" style={{ height: "5%", width: "70%", position: 'relative', top: '-10px', left: margin.left }}>
         <FormGroup row>
           <FormControlLabel
             control={<Checkbox style={{ color: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
-            label="max"
+            label={<Typography style={{ fontSize: "14px" }}>max</Typography>}
           />
           <FormControlLabel
             control={<Checkbox style={{ color: "#DC143C" }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin" />}
-            label="min"
+            label={<Typography style={{ fontSize: "14px" }}>min</Typography>}
+
           />
           <FormControlLabel
             control={<Checkbox style={{ color: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean" />}
-            label="mean"
+            label={<Typography style={{ fontSize: "14px" }}>mean</Typography>}
           />
         </FormGroup>
-
       </div>
 
-      <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
+      <svg style={{ height: "95%", width: "100%", position: 'relative', top: '-15px', }} ref={svgRef}>
         <defs>
           <clipPath id={"clip"}>
             <rect width={svgWidth} height={height} />

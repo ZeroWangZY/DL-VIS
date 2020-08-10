@@ -9,9 +9,9 @@ interface ClusterGraphProps {
 const TsneClusterGraph: React.FC<ClusterGraphProps> = (props: ClusterGraphProps) => {
     let { activations } = props
     const canvasRef = useRef();
-    const graphWidth = 230
-    const graphHight = 230
-    const margin = { left: 20, right: 20, top: 20, bottom: 20 }
+    const graphWidth = 140
+    const graphHight = 140
+    const margin = { left: 20, right: 20, top: 0, bottom: 0 }
     useEffect(() => {
         if (JSON.stringify(activations) === '{}') return
         let model = new TSNE({

@@ -132,7 +132,6 @@ function deloop(processedGraph: ProcessedGraph): void {
       traverseStack.push(nextNode)
     } 
   }
-  console.log(nodeMap)
 }
 
 

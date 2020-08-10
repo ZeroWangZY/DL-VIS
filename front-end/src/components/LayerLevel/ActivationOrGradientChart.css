@@ -1,0 +1,9 @@
+.activationOrGradient-grid .tick {
+  stroke: lightgrey;
+  opacity: 0.2;
+}
+
+.layerLevel-lineChart-checkbox {
+  align-items: center;
+  /* overflow: hidden; */
+}

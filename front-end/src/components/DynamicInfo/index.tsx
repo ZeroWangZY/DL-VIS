@@ -112,6 +112,7 @@ export default () => {
   };
 
   const handleChange = event => {
+    console.log(event.target.value);
     modifyGlobalStates(
       GlobalStatesModificationType.SET_SHOWACTIVATIONORGRADIENT,
       parseInt(event.target.value)
@@ -149,15 +150,27 @@ export default () => {
         </TabPanel>
 
         <TabPanel value={value["outerBottom"]} index={1} pos={"outerBottom"}>
-          <FormControl component="fieldset">
-            {/* <FormLabel component="legend">指标选择</FormLabel> */}
-            <RadioGroup row
-              value={showActivationOrGradient}
-              onChange={handleChange}>
-              <FormControlLabel value={ShowActivationOrGradient.ACTIVATION} control={<Radio />} label="activation" />
-              <FormControlLabel value={ShowActivationOrGradient.GRADIENT} control={<Radio />} label="gradient" />
-            </RadioGroup>
-          </FormControl>
+          <div className="activationOrGradient-options">
+            <p style={{ marginRight: 10, marginLeft: 20 }}>指标选择:</p>
+            <div className="activationOrGradient-floatBlock">
+              <input
+                type="radio"
+                value={ShowActivationOrGradient.ACTIVATION}
+                onClick={handleChange}
+                checked={showActivationOrGradient === ShowActivationOrGradient.ACTIVATION}
+              />
+              <label >activation</label>
+            </div>
+
+            <div className="activationOrGradient-floatBlock">
+              <input type="radio"
+                value={ShowActivationOrGradient.GRADIENT}
+                onClick={handleChange}
+                checked={showActivationOrGradient === ShowActivationOrGradient.GRADIENT}
+              />
+              <label >gradient</label>
+            </div>
+          </div>
           {/* layer level */}
           <LayerLevel />
         </TabPanel>
