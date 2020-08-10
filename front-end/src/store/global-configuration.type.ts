@@ -11,7 +11,8 @@ export interface GlobalConfigurations {
   isHiddenInterModuleEdges: boolean;
   shouldOptimizeProcessedGraph: boolean;
   currentLayout: LayoutType;
-  colorMap: Map<string, string>;
+  modelLevelcolorMap: Map<string, string>;
+  layerLevelcolorMap: Map<string, string>;
 }
 
 export enum LayoutType {

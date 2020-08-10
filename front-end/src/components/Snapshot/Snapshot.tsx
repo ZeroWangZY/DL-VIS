@@ -44,6 +44,21 @@ const useStyles = makeStyles({
   },
 });
 
+export const toExponential = (value: number): string => { // 将小数或者大整数转换为科学计数法，保留两位小数
+  if (value === 0) return "0";
+
+  let sign = value > 0 ? 1 : -1; // 符号
+  value = Math.abs(value);
+
+  if (value > 0.001 || value < 1000)
+    return ((sign === -1 ? "-" : "") + value.toFixed(3));
+
+  let p = Math.floor(Math.log(value) / Math.LN10);
+  let n = value * Math.pow(10, -p);
+
+  return ((sign === -1 ? "-" : "") + n.toFixed(2) + 'e' + p);
+}
+
 const Snapshot: React.FC = () => {
   const svgRef = useRef();
   const [svgHeight, setSvgHeight] = useState(270);
@@ -63,7 +78,7 @@ const Snapshot: React.FC = () => {
   const [showDomain, setShowDomain] = useState(null);
 
   const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
-  const { colorMap } = useGlobalConfigurations();
+  const { modelLevelcolorMap } = useGlobalConfigurations();
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
@@ -107,7 +122,7 @@ const Snapshot: React.FC = () => {
   }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth]);
 
   const computeAndDrawLine = async () => {
-    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step, colorMap);
+    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step, modelLevelcolorMap);
 
     // 将要显示的数据拿出来
     let dataArrToShow = [];
@@ -325,23 +340,16 @@ const Snapshot: React.FC = () => {
           clickNumber
         );
         setFixCursorLinePos(x1Scale(clickNumber));
-        let newDetailInfoOfCurrentStep = [];
-        for (let i = 0; i < dataArrToShow.length; i++) {
-          newDetailInfoOfCurrentStep.push({
-            "name": dataArrToShow[i].id,
-            "value": dataArrToShow[i].data[clickNumber - 1].y,
-          })
-        }
-        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+        // let newDetailInfoOfCurrentStep = [];
+        // for (let i = 0; i < dataArrToShow.length; i++) {
+        //   newDetailInfoOfCurrentStep.push({
+        //     "name": dataArrToShow[i].id,
+        //     "value": dataArrToShow[i].data[clickNumber - 1].y,
+        //   })
+        // }
+        // setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       });
   };
-
-  const toExponential = (value) => { // 将小数或者大整数转换为科学计数法，保留两位小数
-    var p = Math.floor(Math.log(value) / Math.LN10);
-    var n = value * Math.pow(10, -p);
-
-    return (n.toFixed(2) + 'e' + p)
-  }
 
   const getDetailInfoRect = (xPos, height) => {
     let fontSize = 14;
@@ -366,14 +374,11 @@ const Snapshot: React.FC = () => {
           </div>
           {DetailInfoOfCurrentStep.map((d, i) => (
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span className="DotBeforeDetailInfo" style={{ background: colorMap.get(d.name), float: 'left' }}></span>
+              <span className="DotBeforeDetailInfo" style={{ background: modelLevelcolorMap.get(d.name), float: 'left' }}></span>
               <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
                 {d.value === null && (d.name + ": NAN")}
                 {d.value !== null &&
-                  (d.name + ": " + ((d.value < 0.001 || d.value > 1000) ?
-                    toExponential(d.value) :
-                    d.value.toFixed(3))
-                  )
+                  (d.name + ": " + toExponential(d.value))
                 }
               </div>
               <div style={{ clear: 'both' }}></div>
@@ -389,23 +394,23 @@ const Snapshot: React.FC = () => {
       <div className="lineChart-checkbox" style={{ height: "5%", width: "70%", position: 'relative', top: '-10px', left: margin.left }} >
         < FormGroup row >
           <FormControlLabel
-            control={<Checkbox style={{ color: colorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}
+            control={<Checkbox style={{ color: modelLevelcolorMap.get("train_loss") }} checked={checkBoxState.checkedA} onChange={handleChange} name="checkedA" />}
             label={<Typography style={{ fontSize: "14px" }}>train loss</Typography>}
           />
           <FormControlLabel
-            control={<Checkbox style={{ color: colorMap.get("test_loss") }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB" />}
+            control={<Checkbox style={{ color: modelLevelcolorMap.get("test_loss") }} checked={checkBoxState.checkedB} onChange={handleChange} name="checkedB" />}
             label={<Typography style={{ fontSize: "14px" }}>test loss</Typography>}
           />
           <FormControlLabel
-            control={<Checkbox style={{ color: colorMap.get("learning_rate") }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE" />}
+            control={<Checkbox style={{ color: modelLevelcolorMap.get("learning_rate") }} checked={checkBoxState.checkedE} onChange={handleChange} name="checkedE" />}
             label={<Typography style={{ fontSize: "14px" }}>learning rate</Typography>}
           />
           <FormControlLabel
-            control={<Checkbox style={{ color: colorMap.get("train_accuracy") }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC" />}
+            control={<Checkbox style={{ color: modelLevelcolorMap.get("train_accuracy") }} checked={checkBoxState.checkedC} onChange={handleChange} name="checkedC" />}
             label={<Typography style={{ fontSize: "14px" }}>train accuracy</Typography>}
           />
           <FormControlLabel
-            control={<Checkbox style={{ color: colorMap.get("test_accuracy") }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD" />}
+            control={<Checkbox style={{ color: modelLevelcolorMap.get("test_accuracy") }} checked={checkBoxState.checkedD} onChange={handleChange} name="checkedD" />}
             label={<Typography style={{ fontSize: "14px" }}>test accuracy</Typography>}
           />
         </FormGroup>

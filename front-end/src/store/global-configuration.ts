@@ -7,12 +7,17 @@ import {
 
 let listeners = [];
 
-let colorMap = new Map();
-colorMap.set("train_loss", "#922f2c");
-colorMap.set("test_loss", "#ca6457");
-colorMap.set("learning_rate", "#f7b968");
-colorMap.set("train_accuracy", "#388aac");
-colorMap.set("test_accuracy", "#133b4e");
+let modelLevelcolorMap = new Map();
+modelLevelcolorMap.set("train_loss", "#922f2c");
+modelLevelcolorMap.set("test_loss", "#ca6457");
+modelLevelcolorMap.set("learning_rate", "#f7b968");
+modelLevelcolorMap.set("train_accuracy", "#388aac");
+modelLevelcolorMap.set("test_accuracy", "#133b4e");
+
+let layerLevelcolorMap = new Map();
+layerLevelcolorMap.set("max", "#C71585");
+layerLevelcolorMap.set("min", "#DC143C");
+layerLevelcolorMap.set("mean", "#4B0082");
 
 let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: false,
@@ -26,7 +31,8 @@ let globalConfigurations: GlobalConfigurations = {
   isHiddenInterModuleEdges: false,
   shouldOptimizeProcessedGraph: false,
   currentLayout: LayoutType.ELK_FOR_MS,
-  colorMap: colorMap,
+  modelLevelcolorMap: modelLevelcolorMap,
+  layerLevelcolorMap: layerLevelcolorMap
 };
 
 const broadcast = () => {

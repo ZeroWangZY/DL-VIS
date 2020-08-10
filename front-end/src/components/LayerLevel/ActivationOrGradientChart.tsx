@@ -4,6 +4,10 @@ import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
+import {
+  useGlobalConfigurations
+} from "../../store/global-configuration";
+import { makeStyles } from "@material-ui/core/styles";
 import { GlobalStatesModificationType, LayerLevelCheckBoxState } from "../../store/global-states.type";
 import { Point, DataToShow } from "./LayerLevel"
 import "./ActivationOrGradientChart.css"
@@ -11,24 +15,42 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Typography from "@material-ui/core/Typography";
 import Checkbox from '@material-ui/core/Checkbox';
+import { toExponential } from "../Snapshot/Snapshot"
 
 interface Props {
   activationOrGradientData: DataToShow[],
   is_training: boolean,
   max_step: number
 }
+
+const useStyles = makeStyles({
+  root: {
+    minWidth: 275,
+  },
+  title: {
+    fontSize: 14,
+    color: "white",
+    textAlign: "left",
+  },
+});
+
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const { activationOrGradientData, max_step } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
+  const { layerLevelcolorMap } = useGlobalConfigurations();
+
+  const classes = useStyles();
 
   const svgRef = useRef();
   const zoomRef = useRef();
   const [svgWidth, setSvgWidth] = useState(650);
   const [svgHeight, setSvgHeight] = useState(162);
   const [cursorLinePos, setCursorLinePos] = useState(null);
+  const [localCurrentStep, setLocalCurrentStep] = useState(null);
   const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
+  const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [showDomain, setShowDomain] = useState(null);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
@@ -270,9 +292,21 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             ? _index
             : _index - 1;
         let clickNumber = dataExample.data[index].x;
+        setLocalCurrentStep(clickNumber);
         setCursorLinePos(x1Scale(clickNumber));
+
+        let newDetailInfoOfCurrentStep = [];
+        for (let i = 0; i < dataArrToShow.length; i++) {
+          newDetailInfoOfCurrentStep.push({
+            "name": dataArrToShow[i].id,
+            "value": dataArrToShow[i].data[clickNumber - 1].y,
+          })
+        }
+        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+
       })
       .on("mouseleave", function () {
+        setLocalCurrentStep(null);
         setCursorLinePos(null);
       })
       .on("click", function () {
@@ -299,6 +333,44 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       });
   };
 
+  const getDetailInfoRect = (xPos, height) => {
+    let fontSize = 14;
+    let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
+    let contextWidth = 150;
+
+    let containerWidth = contextWidth + 10, containerHeight = contextHeight + 10;
+
+    if (xPos + containerWidth > svgWidth) xPos = xPos - containerWidth - 20; // 靠近右边界，将这一部分放到竖线前面显示
+    else xPos += 10;// gap
+
+    return (
+      <foreignObject
+        x={xPos}
+        y={height / 2 - contextHeight / 2}
+        width={containerWidth + 10}
+        height={contextHeight + 40}
+      >
+        <div className="DetailInfoContainer">
+          <div className={classes.title} style={{ marginLeft: '23px' }}>
+            {"iteration: " + localCurrentStep}
+          </div>
+          {DetailInfoOfCurrentStep.map((d, i) => (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span className="DotBeforeDetailInfo" style={{ background: layerLevelcolorMap.get(d.name), float: 'left' }}></span>
+              <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
+                {d.value === null && (d.name + ": NAN")}
+                {d.value !== null &&
+                  (d.name + ": " + toExponential(d.value))
+                }
+              </div>
+              <div style={{ clear: 'both' }}></div>
+            </div>
+          ))}
+        </div>
+      </foreignObject>
+    )
+  };
+
   return (
     <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none' }}>
       {/* <div style={{ display: "inline" }}> */}
@@ -306,16 +378,16 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       <div className="layerLevel-lineChart-checkbox" style={{ height: "5%", width: "70%", position: 'relative', top: '-10px', left: margin.left }}>
         <FormGroup row>
           <FormControlLabel
-            control={<Checkbox style={{ color: "#C71585" }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
+            control={<Checkbox style={{ color: layerLevelcolorMap.get("max") }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
             label={<Typography style={{ fontSize: "14px" }}>max</Typography>}
           />
           <FormControlLabel
-            control={<Checkbox style={{ color: "#DC143C" }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin" />}
+            control={<Checkbox style={{ color: layerLevelcolorMap.get("min") }} checked={layerLevel_checkBoxState.showMin} onChange={handleChange} name="showMin" />}
             label={<Typography style={{ fontSize: "14px" }}>min</Typography>}
 
           />
           <FormControlLabel
-            control={<Checkbox style={{ color: "#4B0082" }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean" />}
+            control={<Checkbox style={{ color: layerLevelcolorMap.get("mean") }} checked={layerLevel_checkBoxState.showMean} onChange={handleChange} name="showMean" />}
             label={<Typography style={{ fontSize: "14px" }}>mean</Typography>}
           />
         </FormGroup>
@@ -343,18 +415,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
-          {/* {XScale !== null && currentStep !== null && (
-            <line
-              x1={XScale(currentStep)}
-              x2={XScale(currentStep)}
-              y1={height}
-              y2={0}
-              style={{
-                stroke: "grey",
-                strokeWidth: 1,
-              }}
-            />
-          )} */}
+          {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
+            getDetailInfoRect(cursorLinePos, height)
+          }
 
           {fixCursorLinePos !== null && (
             <line
@@ -368,6 +431,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
+
         </g>
         <g
           className="layerLevel-lineChart-context"

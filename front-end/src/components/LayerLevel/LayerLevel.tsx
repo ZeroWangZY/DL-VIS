@@ -109,9 +109,9 @@ const LayerLevel: React.FC = () => {
 				mean.push({ x: scalar.step, y: scalar.gradient_mean });
 			}
 		let dataTransform = [];
-		dataTransform.push({ id: "Max", data: max, color: "#C71585" })
-		dataTransform.push({ id: "Min", data: min, color: "#DC143C" })
-		dataTransform.push({ id: "Mean", data: mean, color: "#4B0082" })
+		dataTransform.push({ id: "max", data: max, color: "#C71585" })
+		dataTransform.push({ id: "min", data: min, color: "#DC143C" })
+		dataTransform.push({ id: "mean", data: mean, color: "#4B0082" })
 
 		setActivationOrGradientData(dataTransform);
 	}

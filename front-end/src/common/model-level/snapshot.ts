@@ -12,7 +12,7 @@ export const fetchAndComputeSnapshot = async () => {
     return { id: 'snapshot', data: line, color: '#9ecae1' }
 }
 
-export const fetchAndComputeModelScalars = async (graph_name: string, start_step: number, end_step: number, colorMap) => {
+export const fetchAndComputeModelScalars = async (graph_name: string, start_step: number, end_step: number, modelLevelcolorMap) => {
     let data = await fetchModelScalars({ graph_name: graph_name, start_step: start_step, end_step: end_step });
     let trainLoss = [],
         testLoss = [],
@@ -45,11 +45,11 @@ export const fetchAndComputeModelScalars = async (graph_name: string, start_step
     })
 
     return [
-        { id: `train_loss`, data: trainLoss, color: colorMap.get("train_loss") },
-        { id: `test_loss`, data: testLoss, color: colorMap.get("test_loss") },
-        { id: `train_accuracy`, data: trainAccuracy, color: colorMap.get("train_accuracy") },
-        { id: `test_accuracy`, data: testAccuracy, color: colorMap.get("test_accuracy") },
-        { id: `learning_rate`, data: learningRate, color: colorMap.get("learning_rate") },
+        { id: `train_loss`, data: trainLoss, color: modelLevelcolorMap.get("train_loss") },
+        { id: `test_loss`, data: testLoss, color: modelLevelcolorMap.get("test_loss") },
+        { id: `train_accuracy`, data: trainAccuracy, color: modelLevelcolorMap.get("train_accuracy") },
+        { id: `test_accuracy`, data: testAccuracy, color: modelLevelcolorMap.get("test_accuracy") },
+        { id: `learning_rate`, data: learningRate, color: modelLevelcolorMap.get("learning_rate") },
     ]
 }
 
