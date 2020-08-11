@@ -63,12 +63,15 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   //   .rangeRound([0, svgWidth])
   //   .domain([1, max_step]);
 
-  const margin = { top: 4, left: 40, bottom: 15, right: 40 };
+  const titleAreaHeight = svgHeight * 0.1;
+  const chartAreaHeight = svgHeight - titleAreaHeight;
+
+  // 下面这些都是chart Area中的宽高
+  const margin = { top: 4, left: 40, bottom: 0, right: 40 };
   const gapHeight = 20; // 上下折线图之间的距离
-  // const checkboxAreaHeight = 40;
-  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 7;
+  const height = (chartAreaHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 7;
   const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
-  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 2 / 7;
+  const height2 = (chartAreaHeight - margin.top - margin.bottom - gapHeight * 2) * 2 / 7;
 
   const filterData = (newcheckBoxState) => {
     let dataSlice = [];
@@ -374,7 +377,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none', height: "100%" }}>
       {/* <div style={{ display: "inline" }}> */}
 
-      <div className="layerLevel-lineChart-checkbox" style={{ height: 0.1 * svgHeight + "px", width: "70%", position: 'relative', top: "-10px", left: margin.left }}>
+      <div className="layerLevel-lineChart-checkbox" style={{ height: titleAreaHeight + "px", width: "70%", position: 'relative', top: "-10px", left: margin.left }}>
         <FormGroup row>
           <FormControlLabel
             control={<Checkbox style={{ color: layerLevelcolorMap.get("max") }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
@@ -392,7 +395,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         </FormGroup>
       </div>
 
-      <svg style={{ height: 0.90 * svgHeight + "px", width: "100%" }} ref={svgRef}>
+      <svg style={{ height: chartAreaHeight + "px", width: "100%" }} ref={svgRef}>
         <defs>
           <clipPath id={"clip"}>
             <rect width={svgWidth} height={height} />

@@ -2,8 +2,7 @@ import React, { useEffect, useState, Children } from "react";
 import './layerLevel.css';
 import { useLineData } from '../../store/layerLevel';
 import { useHistory } from "react-router-dom";
-import IterationChart from './IterationChart';
-import ActivationChart from './ActivationChart';
+import DetailLineChart from './DetailLineChart';
 import ActivationOrGradientChart from './ActivationOrGradientChart';
 import TsneClusterGraph from './TsneClusterGraph';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
@@ -144,7 +143,7 @@ const LayerLevel: React.FC = () => {
 					{/* <IterationChart linedata={linedata} getStep={getActivations} onSubmit={getIteration} /> */}
 					{/* <ActivationChart activations={activations} /> */}
 					<div className="layer-container-box detail-box">
-
+						<DetailLineChart />
 					</div>
 
 					<div className="layer-container-box cluster-box">
