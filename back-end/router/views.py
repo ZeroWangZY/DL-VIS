@@ -251,6 +251,35 @@ def get_node_scalars(request):
         "data": None
     }), content_type="application/json")
 
+def get_node_tensors(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_id = request.GET.get('node_id')
+        start_step = int(request.GET.get('start_step', default='1'))
+        end_step = int(request.GET.get('end_step', default='10'))
+        type = request.GET.get('type', default='activation')
+        if end_step - start_step > 20:
+            return HttpResponse(json.dumps({
+                "message": "do not support such large steps",
+                "data": None
+            }), content_type="application/json")
+        
+        if start_step % 3 == 0:
+            res = np.random.randn(end_step - start_step, 16, 24, 24, 3)
+        elif start_step % 3 == 1:
+            res = np.random.randn(end_step - start_step, 32, 100)
+        elif start_step % 3 == 2:
+            res = np.random.randn(end_step - start_step, 64, 32, 32)
+
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": res.tolist()
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
 
 def emit_action(request):
     if request.method != 'GET':
