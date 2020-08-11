@@ -55,7 +55,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setSvgWidth(node.getBoundingClientRect().width - 70);
-      setSvgHeight(node.getBoundingClientRect().height - 20);
+      setSvgHeight(node.getBoundingClientRect().height);
     }
   }, []);
 
@@ -63,7 +63,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   //   .rangeRound([0, svgWidth])
   //   .domain([1, max_step]);
 
-  const margin = { top: 4, left: 40, bottom: 10, right: 40 };
+  const margin = { top: 4, left: 40, bottom: 15, right: 40 };
   const gapHeight = 20; // 上下折线图之间的距离
   // const checkboxAreaHeight = 40;
   const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 7;
@@ -345,7 +345,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     return (
       <foreignObject
         x={xPos}
-        y={height / 2 - contextHeight / 2}
+        y={height / 2 - contextHeight / 2 - 10}
         width={containerWidth + 10}
         height={contextHeight + 40}
       >
@@ -371,10 +371,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none' }}>
+    <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none', height: "100%" }}>
       {/* <div style={{ display: "inline" }}> */}
 
-      <div className="layerLevel-lineChart-checkbox" style={{ height: "5%", width: "70%", position: 'relative', top: '-10px', left: margin.left }}>
+      <div className="layerLevel-lineChart-checkbox" style={{ height: 0.1 * svgHeight + "px", width: "70%", position: 'relative', top: "-10px", left: margin.left }}>
         <FormGroup row>
           <FormControlLabel
             control={<Checkbox style={{ color: layerLevelcolorMap.get("max") }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
@@ -392,7 +392,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         </FormGroup>
       </div>
 
-      <svg style={{ height: "95%", width: "100%", position: 'relative', top: '-20px', }} ref={svgRef}>
+      <svg style={{ height: 0.90 * svgHeight + "px", width: "100%" }} ref={svgRef}>
         <defs>
           <clipPath id={"clip"}>
             <rect width={svgWidth} height={height} />
