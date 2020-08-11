@@ -15,14 +15,16 @@ import DanymicInfo from "../../DynamicInfo";
 
 export default () => {
 
+  const fixedHeight = "415px"; // 原为 360px
+
   return (
     <Router>
       <FlexVerContainer
-        fixedHeight="360px"
+        fixedHeight={fixedHeight}
         stretchItem="top"
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
-            <div className="vertical-bottom-wrapper">
+            <div className="vertical-bottom-wrapper" style={{ height: fixedHeight }}>
               <DanymicInfo />
               <div
                 className="expand-btn"

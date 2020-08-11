@@ -56,7 +56,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     if (node !== null) {
       setSvgWidth(node.getBoundingClientRect().width - 70);
       setSvgHeight(node.getBoundingClientRect().height - 20);
-      console.log("update")
     }
   }, []);
 
@@ -66,10 +65,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   const margin = { top: 4, left: 40, bottom: 10, right: 40 };
   const gapHeight = 20; // 上下折线图之间的距离
-  const checkboxAreaHeight = 40;
-  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2 - checkboxAreaHeight - 15) * 5 / 7;
+  // const checkboxAreaHeight = 40;
+  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 7;
   const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
-  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2 - checkboxAreaHeight - 15) * 2 / 7;
+  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 2 / 7;
 
   const filterData = (newcheckBoxState) => {
     let dataSlice = [];
@@ -393,7 +392,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         </FormGroup>
       </div>
 
-      <svg style={{ height: "95%", width: "100%", position: 'relative', top: '-15px', }} ref={svgRef}>
+      <svg style={{ height: "95%", width: "100%", position: 'relative', top: '-20px', }} ref={svgRef}>
         <defs>
           <clipPath id={"clip"}>
             <rect width={svgWidth} height={height} />
