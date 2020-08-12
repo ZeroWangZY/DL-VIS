@@ -217,12 +217,12 @@ const Snapshot: React.FC = () => {
 
 
     // add the X gridlines
-    // focus.append("g")
-    //   .attr("class", "snapshot-grid")
-    //   .attr("transform", "translate(0," + height + ")")
-    //   .call(d3.axisBottom(x1Scale).tickSize(-height))
-    //   .selectAll("text")
-    //   .style("opacity", "0")
+    focus.append("g")
+      .attr("class", "snapshot-grid")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x1Scale).tickSize(-height))
+      .selectAll("text")
+      .style("opacity", "0")
 
     // add the Y gridlines
     focus.append("g")

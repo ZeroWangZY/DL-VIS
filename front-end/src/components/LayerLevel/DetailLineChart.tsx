@@ -18,11 +18,14 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { toExponential } from "../Snapshot/Snapshot"
 
 interface Props {
-
+  nodeTensors: Array<Array<number>>;
+  start_step: number;
+  end_step: number;
 }
 
 const DetailLineChart: React.FC<Props> = (props: Props) => {
-  // let { } = props
+  const { start_step, end_step, nodeTensors } = props;
+
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
@@ -32,17 +35,44 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const [svgHeight, setSvgHeight] = useState(140);
   const measuredRef = useCallback((node) => {
     if (node !== null) {
-      setSvgWidth(node.getBoundingClientRect().width - 70);
+      setSvgWidth(node.getBoundingClientRect().width);
       setSvgHeight(node.getBoundingClientRect().height);
     }
   }, []);
 
   const titleAreaHeight = svgHeight * 0.1;
   const chartAreaHeight = svgHeight - titleAreaHeight;
-  const margin = { top: 4, left: 40, bottom: 5, right: 40 };
-  const height = chartAreaHeight - margin.top - margin.bottom;
+  const margin = { top: 4, left: 40, bottom: 5, right: 40 };// chart与外层之间的margin
+  const chartHeight = chartAreaHeight - margin.top - margin.bottom; // chart的高度
+  const chartWidth = svgWidth - margin.left - margin.right;
+
+  useEffect(() => {
+    if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
+
+    console.log(start_step, end_step, nodeTensors);
+
+    let totalSteps = nodeTensors.length;
 
 
+    for (let i = 0; i < totalSteps; i++) {
+      let tensor = nodeTensors[i];
+    }
+
+
+    let svg = d3.select(svgRef.current);
+    let xScale = d3.scaleLinear()
+      .domain([start_step, end_step])
+      .range([0, chartWidth]);
+
+    // add the X gridlines
+    // svg.append("g")
+    //   .attr("class", "detailLineChart-grid")
+    //   .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    //   .call(d3.axisBottom(xScale).tickSize(-chartHeight))
+    //   .selectAll("text")
+    //   .style("opacity", "1")
+
+  }, [nodeTensors])
 
   return (
     <div className="layerLevel-detailInfo-container" ref={measuredRef} style={{ userSelect: 'none', height: "100%" }}>
@@ -60,7 +90,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       <svg
         style={{ height: chartAreaHeight + "px", width: "100%" }}
         ref={svgRef}>
-          
+
       </svg>
     </div>
   );

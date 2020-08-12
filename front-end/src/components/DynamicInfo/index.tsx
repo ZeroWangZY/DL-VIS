@@ -112,7 +112,6 @@ export default () => {
   };
 
   const handleChange = event => {
-    console.log(event.target.value);
     modifyGlobalStates(
       GlobalStatesModificationType.SET_SHOWACTIVATIONORGRADIENT,
       parseInt(event.target.value)

@@ -5,7 +5,7 @@
 }
 
 .layer-container-box {
-    background-color: #eea303;
+    /* background-color: #eea303; */
     border-radius: 5px;
 }
 
@@ -16,7 +16,7 @@
 
 .cluster-box {
     grid-column: 5;
-    grid-row: 1 ;
+    grid-row: 1;
 }
 
 .line-box {
@@ -46,10 +46,15 @@
     display: inline-block;
 }
 
+.cluster-circle {
+    fill: #388aac;
+}
+
+/* 
 .tsne-cluster {
     border: 1px solid rgba(0, 0, 0, 0.12);
     display: inline-block;
-}
+} */
 
 .layerLevel-lineChart-zoom {
     /* cursor: move; */

@@ -1,0 +1,129 @@
+import React, { useEffect, useRef, useState } from "react";
+import TSNE from 'tsne-js';
+import * as d3 from 'd3';
+import { isFunction } from "util";
+
+interface Props {
+  nodeTensors: Array<Array<number>>;
+  start_step: number;
+  end_step: number;
+}
+
+const ClusterGraph: React.FC<Props> = (props: Props) => {
+  const { start_step, end_step, nodeTensors } = props;
+  const svgRef = useRef();
+  const graphWidth = 160;
+  const graphHight = 160;
+
+  const titleAreaHeight = graphHight * 0.1;
+  const chartAreaHeight = graphHight - titleAreaHeight;
+
+  const margin = { left: 10, right: 10, top: 5, bottom: 5 }; // 整个cluster与外层之间的margin
+  const clusterWidth = graphWidth - margin.left - margin.right;
+  const clusterHeight = chartAreaHeight - margin.top - margin.bottom;
+
+  useEffect(() => {
+    if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
+
+    // TODO : selectedStep为左侧"数据实例指标变化图"选择的step, 目前先默认为 start_step
+    const selectedStep = start_step;
+    const data = nodeTensors[selectedStep - start_step];
+    // data 的是二维的，layerLevel中进行了flat操作。
+
+    let model = new TSNE({
+      dim: 2,
+      perplexity: 30.0,
+      earlyExaggeration: 4.0,
+      learningRate: 100.0,
+      nIter: 1000,
+      metric: 'euclidean'
+    });
+
+    model.init({
+      data: data,
+      type: 'dense'
+    });
+    // `outputScaled` is `output` scaled to a range of [-1, 1]
+    let dataset = model.getOutputScaled();
+    console.log("tsne降维后的数据: ", dataset);
+
+    // 以下是绘制散点图
+    let svg = d3.select(svgRef.current);
+    svg.selectAll("circle").remove();
+
+    let minVal_x = d3.min(dataset, (d) => { return d[0] }),
+      maxVal_x = d3.max(dataset, (d) => { return d[0] }),
+      minVal_y = d3.min(dataset, (d) => { return d[1] }),
+      maxVal_y = d3.max(dataset, (d) => { return d[1] });
+
+    let xScale = d3.scaleLinear()
+      .domain([parseFloat(minVal_x), parseFloat(maxVal_x)])
+      .range([0, clusterWidth]);
+
+    let RxScale = d3.scaleLinear()
+      .range([parseFloat(minVal_x), parseFloat(maxVal_x)])
+      .domain([0, clusterWidth]);  //逆映射
+
+    let yScale = d3.scaleLinear()
+      .domain([parseFloat(minVal_y), parseFloat(maxVal_y)])
+      .range([clusterHeight, 0]);
+    let RyScale = d3.scaleLinear()
+      .range([parseFloat(minVal_y), parseFloat(maxVal_y)])
+      .domain([clusterHeight, 0]);
+
+    // let tooltip = d3.select("body")
+    //   .append("div")
+    //   .style("position", "absolute")
+    //   .style("z-index", "10")
+    //   .style("visibility", "hidden")
+    //   .text("a simple tooltip");
+
+    //绘制圆
+    let circle = svg.selectAll("circle")
+      .data(dataset)
+      .enter()
+      .append("circle")
+      .attr("class", "cluster-circle")
+      .attr("cx", (d) => { return margin.left + xScale(d[0]) })
+      .attr("cy", (d) => { return yScale(d[1]) + margin.top })
+      .attr("r", 2)
+      .on("mouseover", function (d, i) {  //hover
+        d3.select(this).attr("r", 5)
+
+        // return tooltip.text("(" + i + ")").style("visibility", "visible");
+
+      })
+      .on("mouseout", function (d, i) {
+        d3.select(this)
+          .transition()
+          .duration(500)
+          .attr("r", 2)
+
+        // return tooltip.style("visibility", "hidden");
+      })
+
+  }, [nodeTensors, start_step])
+
+  return (
+    <div className="layerLevel-cluster-container" style={{ height: graphWidth }}>
+
+      <div
+        className="layerLevel-detailInfo-title"
+        style={{
+          height: titleAreaHeight + "px",
+          position: 'relative',
+          left: margin.left,
+          fontSize: "14px"
+        }}>
+        数据实例指标投影图
+      </div>
+
+      <svg
+        style={{ height: chartAreaHeight + "px", width: "100%" }}
+        ref={svgRef}>
+      </svg>
+    </div>
+  );
+}
+
+export default ClusterGraph;

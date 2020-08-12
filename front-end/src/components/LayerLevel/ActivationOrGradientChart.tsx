@@ -250,6 +250,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       const t2 = context.transition().duration(750);
       const move: any = brush.move;
       context.select(".brush").transition(t2).call(move, x1Scale.range().map(t.invertX, t));
+
     }
 
     const zoom = d3.zoom()
