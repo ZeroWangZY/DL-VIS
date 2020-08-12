@@ -44,6 +44,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   const svgRef = useRef();
   const zoomRef = useRef();
+  const brushGRef = useRef();
   const [svgWidth, setSvgWidth] = useState(650);
   const [svgHeight, setSvgHeight] = useState(162);
   const [cursorLinePos, setCursorLinePos] = useState(null);
@@ -122,6 +123,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.selectAll(".area").remove(); // 清除原折线图
     focus.selectAll(".activationOrGradient-grid").remove();
+    d3.select(brushGRef.current).selectAll('.focusBrush').remove();
 
     let context = d3.select(svgRef.current).select("g.layerLevel-lineChart-context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -245,7 +247,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       x1Scale.domain(t.rescaleX(x2Scale).domain());
       focus.selectAll(".area").attr("d", focusAreaLineGenerator);
       focus.select(".axis--x").call(d3.axisBottom(x1Scale));
-      context.select(".brush").call(brush.move, x1Scale.range().map(t.invertX, t));
+      const t2 = context.transition().duration(750);
+      const move: any = brush.move;
+      context.select(".brush").transition(t2).call(move, x1Scale.range().map(t.invertX, t));
     }
 
     const zoom = d3.zoom()
@@ -254,8 +258,40 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .extent([[0, 0], [svgWidth, height]])
       .on('zoom', zoomed);
 
-    d3.select(zoomRef.current)
+    const brushG: any = brushGRef.current;
+
+    d3.select(brushG)
       .call(zoom);
+
+    const focusBrushended = () => {
+      const s = d3.event.selection;
+      if (!s) {
+        return;
+      }
+      const newX1Domain = s.map(x1Scale.invert, x1Scale);
+      x1Scale.domain(newX1Domain);
+      d3.select(brushG).select('.focusBrush').call(focusBrush.move, null);
+      const xAxis: any = d3.axisBottom(x1Scale);
+      const t1 = focus.transition().duration(750);
+      focus.select(".axis--x").transition(t1).call(xAxis);
+      focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
+      const t2 = context.transition().duration(750);
+      const move: any = brush.move;
+      context.select(".brush").transition(t2).call(move, newX1Domain.map(x2Scale));
+    };
+
+    const focusBrush = d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [svgWidth, height],
+      ])
+      .on("end", focusBrushended);
+
+    // 为focus添加brush
+    d3.select(brushG).append('g')
+      .attr('class', 'focusBrush')
+      .call(focusBrush);
 
     const brush = d3
       .brushX()
@@ -401,6 +437,14 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             <rect width={svgWidth} height={height} />
           </clipPath>
         </defs>
+        <g transform={`translate(${margin.left},${margin.top})`} ref={brushGRef}>
+          <rect
+            className="layerLevel-lineChart-zoom"
+            width={svgWidth}
+            height={height}
+            ref={zoomRef}
+          />
+        </g>
         <g
           className="layerLevel-lineChart-focus"
           transform={`translate(${margin.left},${margin.top})`}
@@ -439,13 +483,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           className="layerLevel-lineChart-context"
           transform={`translate(${margin2.left},${margin2.top})`}
         ></g>
-        <rect
-          className="layerLevel-lineChart-zoom"
-          width={svgWidth}
-          height={height}
-          transform={`translate(${margin.left},${margin.top})`}
-          ref={zoomRef}
-        />
       </svg>
     </div>
   );
