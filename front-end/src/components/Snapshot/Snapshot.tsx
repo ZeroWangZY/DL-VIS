@@ -217,12 +217,12 @@ const Snapshot: React.FC = () => {
 
 
     // add the X gridlines
-    focus.append("g")
-      .attr("class", "snapshot-grid")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x1Scale).tickSize(-height))
-      .selectAll("text")
-      .style("opacity", "0")
+    // focus.append("g")
+    //   .attr("class", "snapshot-grid")
+    //   .attr("transform", "translate(0," + height + ")")
+    //   .call(d3.axisBottom(x1Scale).tickSize(-height))
+    //   .selectAll("text")
+    //   .style("opacity", "0")
 
     // add the Y gridlines
     focus.append("g")
@@ -376,7 +376,7 @@ const Snapshot: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span className="DotBeforeDetailInfo" style={{ background: modelLevelcolorMap.get(d.name), float: 'left' }}></span>
               <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
-                {d.value === null && (d.name + ": NAN")}
+                {d.value === null && (d.name + ": null")}
                 {d.value !== null &&
                   (d.name + ": " + toExponential(d.value))
                 }

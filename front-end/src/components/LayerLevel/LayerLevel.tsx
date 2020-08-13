@@ -90,9 +90,9 @@ const LayerLevel: React.FC = () => {
 		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step, fetchDataType);
 
 		// TODO: 将brushedEndStep与brushedStartStep 改为真实的刷选的 step值
-		let maxGap = 15;
-		let brushedStartStep = Math.floor(Math.random() * (max_step - 20));
-		let brushedEndStep = brushedStartStep + Math.floor(Math.random() * (maxGap - 1) + 1); // [1, maxGap)
+		let maxGap = 10;
+		let brushedStartStep = max_step - 20;
+		let brushedEndStep = brushedStartStep + 8; // [1, maxGap)
 		if (max_step >= 20 && Math.abs(brushedEndStep - brushedStartStep) <= 10) {
 			getNodeTensors(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
 		}

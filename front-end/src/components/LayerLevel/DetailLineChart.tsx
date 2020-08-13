@@ -18,9 +18,18 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { toExponential } from "../Snapshot/Snapshot"
 
 interface Props {
-  nodeTensors: Array<Array<number>>;
+  nodeTensors: Array<Array<Array<number>>>;
   start_step: number;
   end_step: number;
+}
+
+interface LineChartData {
+  id: string;
+  data: {
+    x: number,
+    y: number,
+  }[];
+  color: string;
 }
 
 const DetailLineChart: React.FC<Props> = (props: Props) => {
@@ -42,37 +51,109 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
 
   const titleAreaHeight = svgHeight * 0.1;
   const chartAreaHeight = svgHeight - titleAreaHeight;
-  const margin = { top: 4, left: 40, bottom: 5, right: 40 };// chart与外层之间的margin
+
+  const margin = { top: 10, left: 40, bottom: 10, right: 40 };// chart与外层之间的margin
   const chartHeight = chartAreaHeight - margin.top - margin.bottom; // chart的高度
   const chartWidth = svgWidth - margin.left - margin.right;
 
   useEffect(() => {
     if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
 
-    console.log(start_step, end_step, nodeTensors);
-
     let totalSteps = nodeTensors.length;
+    const [minValue, maxValue, dataArrToShow] = ToLineData(nodeTensors);
+    console.log(minValue, maxValue, dataArrToShow);
 
+    DrawLineChart(minValue, maxValue, dataArrToShow);
 
-    for (let i = 0; i < totalSteps; i++) {
-      let tensor = nodeTensors[i];
+  }, [nodeTensors, svgWidth])
+
+  const DrawLineChart = (minValue, maxValue, dataArrToShow) => {
+    let svg = d3.select(svgRef.current);
+    let focus = d3.select(svgRef.current).select("g.layerLevel-detailInfo-focus");
+    focus.selectAll(".axis--y").remove(); // 清除原来的坐标
+    focus.selectAll(".axis--x").remove(); // 清除原来的坐标
+    focus.selectAll(".layerLevel-detailInfo-area").remove(); // 清除原折线图
+    focus.selectAll(".detailLineChart-grid").remove();
+
+    const bisect = d3.bisector((d: any) => d.x).left;
+    //拿第一组数据查询
+    const dataExample = dataArrToShow[0];
+
+    let xScale = d3.scaleLinear()
+      .range([0, chartWidth])
+      .domain([0, dataArrToShow[0].data.length - 1]);
+
+    let yScale = d3.scaleLinear()
+      .range([chartHeight, 0])
+      .domain([minValue as Number, maxValue as Number]);
+
+    const focusAreaLineGenerator = d3
+      .line<Point>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale(d.x))
+      .y((d) => yScale(d.y))
+
+    for (let i = 0; i < dataArrToShow.length; i++) {
+      let data = dataArrToShow[i];
+      focus
+        .append("path")
+        .datum(data.data)
+        .attr("class", "layerLevel-detailInfo-area")
+        .attr("d", focusAreaLineGenerator)
+        .attr("fill", "none")
+        .attr("stroke", data.color);
     }
 
+    // focus
+    //   .append("g")
+    //   .attr("class", "axis axis--x")
+    //   .attr("transform", "translate(0," + chartHeight + ")")
+    //   .call(d3.axisBottom(xScale));
 
-    let svg = d3.select(svgRef.current);
-    let xScale = d3.scaleLinear()
-      .domain([start_step, end_step])
-      .range([0, chartWidth]);
+    focus
+      .append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(yScale));
 
     // add the X gridlines
-    // svg.append("g")
-    //   .attr("class", "detailLineChart-grid")
-    //   .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    //   .call(d3.axisBottom(xScale).tickSize(-chartHeight))
-    //   .selectAll("text")
-    //   .style("opacity", "1")
 
-  }, [nodeTensors])
+    focus.append("g")
+      .attr("class", "detailLineChart-grid")
+      .attr("transform", "translate(0," + chartHeight + ")")
+      .call(d3.axisBottom(xScale).tickSize(-chartHeight))
+      .selectAll("text")
+      .style("opacity", "1")
+  }
+
+  // 将nodeTensors转换为如下形式的数据：
+  // [{ id: `Detail_Info`, data: detailInfo, color: "#388aac" }]
+  // detailInfo的形式是 ： [{x: , y: }]
+  const ToLineData = (nodeTensors: Array<Array<Array<number>>>): [Number, Number, Array<LineChartData>] => { // Array<Array<Array<number>>>
+    let totalSteps = nodeTensors.length; // 共选中了多少steps
+    let ticksBetweenSteps = nodeTensors[0].length; // 每两个step之间的ticks数量
+    let lineNumber = nodeTensors[0][0].length; // 折线数量
+
+    let dataArrToShow = [];
+    for (let i = 0; i < lineNumber; i++) {
+      dataArrToShow.push(
+        { id: "Detail_Info" + i, data: [], color: "#388aac" }
+      )
+    }
+
+    let minValue = Infinity, maxValue = -Infinity; // 找出最大最小值
+    for (let step = 0; step < totalSteps; step++) {
+      for (let tick = 0; tick < ticksBetweenSteps; tick++) {
+        for (let line = 0; line < lineNumber; line++) {
+          let value = nodeTensors[step][tick][line];
+          if (value > maxValue) maxValue = value;
+          if (value < minValue) minValue = value;
+          dataArrToShow[line].data.push({ x: step * ticksBetweenSteps + tick, y: value });
+        }
+      }
+    }
+
+    return [minValue, maxValue, dataArrToShow];
+  }
 
   return (
     <div className="layerLevel-detailInfo-container" ref={measuredRef} style={{ userSelect: 'none', height: "100%" }}>
@@ -90,6 +171,11 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       <svg
         style={{ height: chartAreaHeight + "px", width: "100%" }}
         ref={svgRef}>
+        <g
+          className="layerLevel-detailInfo-focus"
+          transform={`translate(${margin.left},${margin.top})`}
+        >
+        </g>
 
       </svg>
     </div>

@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { isFunction } from "util";
 
 interface Props {
-  nodeTensors: Array<Array<number>>;
+  nodeTensors: Array<Array<Array<number>>>;
   start_step: number;
   end_step: number;
 }
@@ -13,10 +13,10 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   const { start_step, end_step, nodeTensors } = props;
   const svgRef = useRef();
   const graphWidth = 160;
-  const graphHight = 160;
+  const graphHeight = 160;
 
-  const titleAreaHeight = graphHight * 0.1;
-  const chartAreaHeight = graphHight - titleAreaHeight;
+  const titleAreaHeight = graphHeight * 0.1;
+  const chartAreaHeight = graphHeight - titleAreaHeight;
 
   const margin = { left: 10, right: 10, top: 5, bottom: 5 }; // 整个cluster与外层之间的margin
   const clusterWidth = graphWidth - margin.left - margin.right;
@@ -71,12 +71,17 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .range([parseFloat(minVal_y), parseFloat(maxVal_y)])
       .domain([clusterHeight, 0]);
 
-    // let tooltip = d3.select("body")
+    // let tooltip = d3.select(".layerLevel-cluster-container")
     //   .append("div")
-    //   .style("position", "absolute")
+    //   .style("position", "relative")
     //   .style("z-index", "10")
     //   .style("visibility", "hidden")
     //   .text("a simple tooltip");
+
+    var div1 = d3.select("body")
+      .append("div")
+      .attr("class", "cluster-tooltip")
+      .style("opacity", 0);
 
     //绘制圆
     let circle = svg.selectAll("circle")
@@ -88,29 +93,37 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .attr("cy", (d) => { return yScale(d[1]) + margin.top })
       .attr("r", 2)
       .on("mouseover", function (d, i) {  //hover
-        d3.select(this).attr("r", 5)
+        d3.select(this).attr("r", 5);
 
+        div1.transition()
+          .duration(200)
+          .style("opacity", .9);
+
+        div1.html("(" + i + ")")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY) + "px");
         // return tooltip.text("(" + i + ")").style("visibility", "visible");
 
       })
       .on("mouseout", function (d, i) {
-        d3.select(this)
-          .transition()
-          .duration(500)
-          .attr("r", 2)
+        d3.select(this).transition().duration(500).attr("r", 2); //
 
+        div1.transition()
+          .duration(500)
+          .style("opacity", 0);
         // return tooltip.style("visibility", "hidden");
       })
 
   }, [nodeTensors, start_step])
 
   return (
-    <div className="layerLevel-cluster-container" style={{ height: graphWidth }}>
+    <div className="layerLevel-cluster-container" style={{ height: graphHeight }}>
 
       <div
         className="layerLevel-detailInfo-title"
         style={{
           height: titleAreaHeight + "px",
+          width: "80%",
           position: 'relative',
           left: margin.left,
           fontSize: "14px"
@@ -119,7 +132,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       </div>
 
       <svg
-        style={{ height: chartAreaHeight + "px", width: "100%" }}
+        style={{ height: chartAreaHeight + "px", width: chartAreaHeight + "px" }}
         ref={svgRef}>
       </svg>
     </div>

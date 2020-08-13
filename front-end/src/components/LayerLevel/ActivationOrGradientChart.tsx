@@ -397,7 +397,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span className="DotBeforeDetailInfo" style={{ background: layerLevelcolorMap.get(d.name), float: 'left' }}></span>
               <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
-                {d.value === null && (d.name + ": NAN")}
+                {d.value === null && (d.name + ": null")}
                 {d.value !== null &&
                   (d.name + ": " + toExponential(d.value))
                 }
