@@ -49,7 +49,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
 
     // 以下是绘制散点图
     let svg = d3.select(svgRef.current);
-    svg.selectAll("circle").remove();
+    svg.selectAll("g").remove();
 
     let minVal_x = d3.min(dataset, (d) => { return d[0] }),
       maxVal_x = d3.max(dataset, (d) => { return d[0] }),
@@ -71,47 +71,42 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .range([parseFloat(minVal_y), parseFloat(maxVal_y)])
       .domain([clusterHeight, 0]);
 
-    // let tooltip = d3.select(".layerLevel-cluster-container")
-    //   .append("div")
-    //   .style("position", "relative")
-    //   .style("z-index", "10")
-    //   .style("visibility", "hidden")
-    //   .text("a simple tooltip");
-
-    var div1 = d3.select("body")
-      .append("div")
-      .attr("class", "cluster-tooltip")
-      .style("opacity", 0);
+    
 
     //绘制圆
-    let circle = svg.selectAll("circle")
+    let circle = svg.selectAll("g")
       .data(dataset)
       .enter()
-      .append("circle")
+      .append("g")
+      .attr('transform', (d) => {
+        return `translate(${margin.left + xScale(d[0])}, ${yScale(d[1]) + margin.top})`;
+      })
+      .append('circle')
       .attr("class", "cluster-circle")
-      .attr("cx", (d) => { return margin.left + xScale(d[0]) })
-      .attr("cy", (d) => { return yScale(d[1]) + margin.top })
       .attr("r", 2)
       .on("mouseover", function (d, i) {  //hover
         d3.select(this).attr("r", 5);
-
-        div1.transition()
-          .duration(200)
-          .style("opacity", .9);
-
-        div1.html("(" + i + ")")
-          .style("left", (d3.event.pageX) + "px")
-          .style("top", (d3.event.pageY) + "px");
-        // return tooltip.text("(" + i + ")").style("visibility", "visible");
-
+        const g = d3.select(this.parentNode);
+        if(g.select('text').size() === 1) {
+          g.select('text').transition().duration(500).style('visibility', 'visible');
+        }
+        else {
+          let x = 10;
+          // 判断text的位置是否超出svg的边界
+          if(margin.left + xScale(d[0]) + 10 >= chartAreaHeight - 15) {
+            x = -30;
+          }
+          g.append('text')
+            .attr("x", x)
+            .attr("y", 0)
+            .text(`(${i})`)
+            .style('visibility', 'visible');
+        }
       })
       .on("mouseout", function (d, i) {
-        d3.select(this).transition().duration(500).attr("r", 2); //
-
-        div1.transition()
-          .duration(500)
-          .style("opacity", 0);
-        // return tooltip.style("visibility", "hidden");
+        d3.select(this).transition().duration(500).attr("r", 2);
+        const g = d3.select(this.parentNode);
+        g.select('text').transition().duration(500).style('visibility', 'hidden');
       })
 
   }, [nodeTensors, start_step])
