@@ -52,22 +52,23 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const titleAreaHeight = svgHeight * 0.1;
   const chartAreaHeight = svgHeight - titleAreaHeight;
 
-  const margin = { top: 10, left: 40, bottom: 10, right: 40 };// chart与外层之间的margin
+  const margin = { top: 15, left: 40, bottom: 5, right: 40 };// chart与外层之间的margin
   const chartHeight = chartAreaHeight - margin.top - margin.bottom; // chart的高度
   const chartWidth = svgWidth - margin.left - margin.right;
 
   useEffect(() => {
     if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
 
-    let totalSteps = nodeTensors.length;
+    const totalSteps = nodeTensors.length;
     const [minValue, maxValue, dataArrToShow] = ToLineData(nodeTensors);
-    console.log(minValue, maxValue, dataArrToShow);
+    console.log(minValue, maxValue, dataArrToShow, totalSteps);
 
-    DrawLineChart(minValue, maxValue, dataArrToShow);
+    DrawLineChart(minValue, maxValue, dataArrToShow, totalSteps);
 
   }, [nodeTensors, svgWidth])
 
-  const DrawLineChart = (minValue, maxValue, dataArrToShow) => {
+  const DrawLineChart = (minValue, maxValue, dataArrToShow, totalSteps) => {
+
     let svg = d3.select(svgRef.current);
     let focus = d3.select(svgRef.current).select("g.layerLevel-detailInfo-focus");
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
@@ -93,7 +94,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y))
 
-    for (let i = 0; i < dataArrToShow.length; i++) {
+    for (let i = 0, len = dataArrToShow.length; i < 5; i++) {
       let data = dataArrToShow[i];
       focus
         .append("path")
@@ -104,25 +105,14 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .attr("stroke", data.color);
     }
 
-    // focus
-    //   .append("g")
-    //   .attr("class", "axis axis--x")
-    //   .attr("transform", "translate(0," + chartHeight + ")")
-    //   .call(d3.axisBottom(xScale));
-
-    focus
-      .append("g")
-      .attr("class", "axis axis--y")
-      .call(d3.axisLeft(yScale));
-
     // add the X gridlines
+    const yGridLine = d3.axisTop(xScale)
+      .tickSize(-chartHeight)
+      .ticks(totalSteps);
 
-    focus.append("g")
-      .attr("class", "detailLineChart-grid")
-      .attr("transform", "translate(0," + chartHeight + ")")
-      .call(d3.axisBottom(xScale).tickSize(-chartHeight))
-      .selectAll("text")
-      .style("opacity", "1")
+    let yGrid = focus.append("g").attr("class", "detailLineChart-grid");
+    yGrid.call(yGridLine).selectAll("text").style("opacity", "0.8");
+    yGrid.selectAll("path.domain").remove();  // 删除横线。
   }
 
   // 将nodeTensors转换为如下形式的数据：

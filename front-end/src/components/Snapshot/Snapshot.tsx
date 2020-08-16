@@ -82,6 +82,7 @@ const Snapshot: React.FC = () => {
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
+      console.log(node.getBoundingClientRect().height);
       setSvgHeight(node.getBoundingClientRect().height - 15);
       setSvgWidth(node.getBoundingClientRect().width - 60);
     }
@@ -90,7 +91,7 @@ const Snapshot: React.FC = () => {
   const margin = { top: 10, left: 30, bottom: 10, right: 30 };
   const gapHeight = 20; // 上下折线图之间的距离
   const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 6;
-  const margin2 = { top: height + margin.top + gapHeight, left: 30 };
+  const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
   const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下折线图比例是 5: 1
 
   let XScale = d3.scaleLinear()

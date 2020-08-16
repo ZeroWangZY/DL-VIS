@@ -20,7 +20,8 @@ import { toExponential } from "../Snapshot/Snapshot"
 interface Props {
   activationOrGradientData: DataToShow[],
   is_training: boolean,
-  max_step: number
+  max_step: number,
+  setBrushedStep: { ([]): void };
 }
 
 const useStyles = makeStyles({
@@ -36,7 +37,7 @@ const useStyles = makeStyles({
 
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
-  const { activationOrGradientData, max_step } = props;
+  const { activationOrGradientData, max_step, setBrushedStep } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
@@ -270,6 +271,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         return;
       }
       const newX1Domain = s.map(x1Scale.invert, x1Scale);
+      setBrushedStep([Math.ceil(newX1Domain[0]), Math.floor(newX1Domain[1])]);
       x1Scale.domain(newX1Domain);
       d3.select(brushG).select('.focusBrush').call(focusBrush.move, null);
       const xAxis: any = d3.axisBottom(x1Scale);

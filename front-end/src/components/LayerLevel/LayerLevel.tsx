@@ -31,7 +31,7 @@ import {
 	LayerNodeImp,
 } from "../../common/graph-processing/stage2/processed-graph";
 import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
-import { dsvFormat } from "d3";
+import { dsvFormat, brushSelection } from "d3";
 import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode"
 
 interface layerNodeScalar {
@@ -68,36 +68,43 @@ const LayerLevel: React.FC = () => {
 
 	const [nodeTensors, setNodeTensors] = useState(null);
 	const [brushedStep, setBrushedStep] = useState(null);
+	const [childNodeId, setChildNodeId] = useState(null);
 	const [activations, setActivations] = useState([]);
 	const [tsneGraph, setTsneGraph] = useState({});
 	const [activationOrGradientData, setActivationOrGradientData] = useState([] as DataToShow[]);
+
+	const fetchDataType = (
+		showActivationOrGradient === ShowActivationOrGradient.ACTIVATION ?
+			"activation" :
+			"gradient"
+	)
 
 	useEffect(() => {
 		if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp))
 			return; // 不是layerNode 
 
-		let childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
-		if (childNodeId.length === 0) return;
+		let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
+		if (_childNodeId.length === 0) return;
+		_childNodeId = _childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
+		setChildNodeId(_childNodeId);
+	}, [selectedNodeId])
 
-		childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
-
-		let fetchDataType = (
-			showActivationOrGradient === ShowActivationOrGradient.ACTIVATION ?
-				"activation" :
-				"gradient"
-		)
-
+	useEffect(() => {
+		if (!childNodeId) return;
 		getNodeScalars(currentMSGraphName, childNodeId, 1, max_step, fetchDataType);
+	}, [childNodeId, currentMSGraphName, is_training, max_step, showActivationOrGradient])
 
-		// TODO: 将brushedEndStep与brushedStartStep 改为真实的刷选的 step值
-		let maxGap = 10;
-		let brushedStartStep = max_step - 20;
-		let brushedEndStep = brushedStartStep + 8; // [1, maxGap)
-		if (max_step >= 20 && Math.abs(brushedEndStep - brushedStartStep) <= 10) {
+	useEffect(() => {
+		if (!childNodeId) return;
+
+		console.log("brushedStep", brushedStep);
+
+		const maxGap = 10;
+		const [brushedStartStep, brushedEndStep] = brushedStep;
+		if (brushedEndStep - brushedStartStep <= maxGap)
 			getNodeTensors(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
-		}
-		getIteration(Math.floor(Math.random() * (max_step - 1 + 1) + 1));
-	}, [selectedNodeId, currentMSGraphName, is_training, max_step, showActivationOrGradient])
+
+	}, [brushedStep])
 
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: type });
@@ -139,8 +146,6 @@ const LayerLevel: React.FC = () => {
 				vectors[i] = newVector;
 			}
 		}
-
-		setBrushedStep([startStep, endStep]);
 		setNodeTensors(tensors);
 	}
 
@@ -149,24 +154,6 @@ const LayerLevel: React.FC = () => {
 		return arr1.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
 	}
 
-	const getActivations = async (extent) => {
-		// console.log(extent)
-		//    setActivations([])
-		let data = []
-		for (let i = extent[0]; i < extent[1]; i++) {
-			// let data = await fetchActivations({step: i})
-			data.push(activationsData())
-		}
-		setActivations([...data])
-	}
-	const getIteration = async (iteration) => {
-		// let data = await fetchActivations({ step: iteration })
-		let data = activationsData()
-		setTsneGraph(data)
-		setActivations([data])
-	}
-
-	// TODO : 网格布局
 	return (
 		<div>
 			{/* <div className='return-button'>
@@ -174,8 +161,6 @@ const LayerLevel: React.FC = () => {
 			</div> */}
 			{nodeMap[selectedNodeId] instanceof LayerNodeImp && (
 				<div className="layer-container">
-					{/* <IterationChart linedata={linedata} getStep={getActivations} onSubmit={getIteration} /> */}
-					{/* <ActivationChart activations={activations} /> */}
 					<div className="layer-container-box detail-box">
 						<DetailLineChart
 							start_step={brushedStep !== null ? brushedStep[0] : -1}
@@ -196,7 +181,8 @@ const LayerLevel: React.FC = () => {
 							<ActivationOrGradientChart
 								activationOrGradientData={activationOrGradientData}
 								is_training={is_training}
-								max_step={max_step} />}
+								max_step={max_step}
+								setBrushedStep={setBrushedStep} />}
 					</div>
 				</div>
 			)}

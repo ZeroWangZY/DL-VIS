@@ -108,6 +108,11 @@ export default () => {
     event: React.ChangeEvent<{}>,
     newValue: number
   ) => {
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_BOTTOMINFOTYPE,
+      newValue
+    );
+
     setValue({ ...value, [pos]: newValue });
   };
 

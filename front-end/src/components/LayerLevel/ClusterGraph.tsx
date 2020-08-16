@@ -60,18 +60,9 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .domain([parseFloat(minVal_x), parseFloat(maxVal_x)])
       .range([0, clusterWidth]);
 
-    let RxScale = d3.scaleLinear()
-      .range([parseFloat(minVal_x), parseFloat(maxVal_x)])
-      .domain([0, clusterWidth]);  //逆映射
-
     let yScale = d3.scaleLinear()
       .domain([parseFloat(minVal_y), parseFloat(maxVal_y)])
       .range([clusterHeight, 0]);
-    let RyScale = d3.scaleLinear()
-      .range([parseFloat(minVal_y), parseFloat(maxVal_y)])
-      .domain([clusterHeight, 0]);
-
-    
 
     //绘制圆
     let circle = svg.selectAll("g")
@@ -87,13 +78,13 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .on("mouseover", function (d, i) {  //hover
         d3.select(this).attr("r", 5);
         const g = d3.select(this.parentNode);
-        if(g.select('text').size() === 1) {
+        if (g.select('text').size() === 1) {
           g.select('text').transition().duration(500).style('visibility', 'visible');
         }
         else {
           let x = 10;
           // 判断text的位置是否超出svg的边界
-          if(margin.left + xScale(d[0]) + 10 >= chartAreaHeight - 15) {
+          if (margin.left + xScale(d[0]) + 10 >= chartAreaHeight - 15) {
             x = -30;
           }
           g.append('text')

@@ -61,3 +61,7 @@
     fill: none;
     pointer-events: all;
 }
+
+.detailLineChart-grid .tick line {
+    opacity: 0.2;
+}
