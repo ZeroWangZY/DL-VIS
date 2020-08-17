@@ -103,12 +103,12 @@ const GraphSelector = (props) => {
   };
 
   useEffect(() => {
-    fetch(process.env.PUBLIC_URL + "data/graph-metadata.json")
+    fetch(process.env.PUBLIC_URL + "/data/graph-metadata.json")
       .then((res) => res.json())
       .then((data) => {
         setGraphMetadatas(data);
       });
-    fetch(process.env.PUBLIC_URL + "data/ms-graph-metadata.json")
+    fetch(process.env.PUBLIC_URL + "/data/ms-graph-metadata.json")
       .then((res) => res.json())
       .then((data) => {
         setMsGraphMetadatas(data);
@@ -117,6 +117,8 @@ const GraphSelector = (props) => {
 
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
+
+
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
     if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) { // 路径中包含graphname时，读取summary数据，禁用选择器

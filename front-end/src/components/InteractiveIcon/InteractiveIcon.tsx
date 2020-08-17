@@ -12,7 +12,7 @@ const InteractiveIcon = (props) => {
         bottom: props.position.bottom,
         width: "18px",
       }}
-      src={process.env.PUBLIC_URL + props.src}
+      src={props.src}
       onClick={props.handleClicked}
       onMouseOver={props.handleHover}
       title={props.prompt}

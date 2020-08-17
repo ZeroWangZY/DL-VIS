@@ -2,7 +2,7 @@ version: "3.1"
 
 services:
   dl-vis-frontend:
-    image: "dl-vis-frontend:0.1"
+    image: "dl-vis-frontend:0.1.1"
     working_dir: /DL_VIS
     restart: always
     environment:
@@ -11,7 +11,7 @@ services:
       - "6001:5000"
     command: "serve -s build"
   dl-vis-backend:
-    image: "dl-vis-backend:0.1"
+    image: "dl-vis-backend:0.1.1"
     working_dir: /usr/src/app
     restart: always
     ports:
@@ -31,7 +31,7 @@ services:
     restart: always
     ports:
       - "6005:8080"
-    command: sh -c 'cd logs && mindinsight start --workspace . --url-path-prefix /ms && tail -f ../setup.py'
+    command: sh -c 'cd logs && mindinsight start --workspace . && tail -f ../setup.py'
   dl-vis-elk:
     image: "dl-vis-elk:0.1"
     restart: always

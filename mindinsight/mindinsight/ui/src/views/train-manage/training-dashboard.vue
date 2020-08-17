@@ -410,7 +410,7 @@ export default {
           train_id: this.trainingJobId,
         },
       });
-      window.location = "/#/graph/" + this.trainingJobId.slice(4)
+      window.location = "/vis/#/graph/" + this.trainingJobId.slice(4)
     },
     /**
      * Start the scheduled update
