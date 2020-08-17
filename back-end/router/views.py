@@ -56,50 +56,6 @@ def index(request):
     return render(request, 'index.html')
 
 
-def getMiddleResult(request):
-    # print(request.data)
-    readJson = json.loads(request.body.decode('utf-8'))
-    # print(readJson)
-    step_from = readJson["STEP_FROM"]
-    step_to = readJson["STEP_TO"]
-    nodeids = readJson["NODE_ARRAY"]
-
-    conn = sqlite3.connect(SUMMARY_DIR + '/test.db')
-    c = conn.cursor()
-    cursor = c.execute("SELECT * from LAYER_TABLE WHERE STEP >= " + str(step_from) + " AND STEP <= " + str(step_to))
-    result = []
-    nodeidDic = set()
-    for item in nodeids:
-        nodeidDic.add(item)
-
-    # print(nodeidDic)
-
-    for row in cursor:
-        if (row[3] in nodeidDic):
-            result.append({"STEP": row[1], "NODE_ID": row[2], "NODE_NAME": row[3], "ACTIVATION_MIN": row[4],
-                           "ACTIVATION_MAX": row[5], "ACTIVATION_MEAN": row[6]})
-
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
-def getLoss(request):
-    conn = sqlite3.connect(SUMMARY_DIR + '/test.db')
-    c = conn.cursor()
-
-    cursor = c.execute("SELECT * from LOSS_TABLE")
-    result = []
-    for row in cursor:
-        result.append({"STEP": row[1], "TRAIN_LOSS": row[2], "TRAIN_ACCURACY": row[3], "TEST_LOSS": row[4],
-                       "TEST_ACCURACY": row[5]})
-
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
-def getPb(request):
-    file_read = open(SUMMARY_DIR + '/model.pbtxt', "r+")
-    return HttpResponse(file_read, content_type="application/octet-stream")
-
-
 def get_graph(request):
     data_loader = None
     if SUMMARY_DIR:
