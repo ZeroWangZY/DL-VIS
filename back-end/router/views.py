@@ -56,10 +56,11 @@ def index(request):
     return render(request, 'index.html')
 
 
-def get_graph(request):
+def get_summary_graph(request):
     data_loader = None
+    graph_name = request.GET.get('graph_name', default='lenet')
     if SUMMARY_DIR:
-        data_loader = DataLoader(SUMMARY_DIR)
+        data_loader = DataLoader(SUMMARY_DIR + os.sep + graph_name)
         data_loader.load()
     try:
         if not data_loader:

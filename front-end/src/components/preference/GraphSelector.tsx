@@ -19,7 +19,7 @@ import {
   GlobalConfigurationsModificationType,
 } from "../../store/global-configuration.type";
 import { setTfRawGraph } from "../../store/rawGraph.tf";
-import { fetchLocalMsGraph } from "../../api";
+import { fetchLocalMsGraph, fetchSummaryGraph } from "../../api";
 import { setMsRawGraph } from "../../store/rawGraph.ms";
 import useGraphPipeline from "../GraphPipeline/GraphPipeline";
 import fetchBackendData from "../FetchBackendData/FetchBackendData";
@@ -36,6 +36,16 @@ const VALID_GRAPH_NAME = new Set([
   "resnet",
   "lenet-err"
 ]);
+
+const VALID_GRAPH_NAME_ARR = [
+  "lenet",
+  "alexnets",
+  "bert_finetune",
+  "bert_pretrain",
+  "mobilenetv2",
+  "resnet",
+  "lenet-err"
+];
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -60,6 +70,7 @@ const GraphSelector = (props) => {
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [msGraphMetadatas, setMsGraphMetadatas] = useState<GraphMetadata[]>([]);
+  const [selectorDisabled, setSelectorDisabled] = useState<boolean>(false);
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   useGraphPipeline();
@@ -108,21 +119,38 @@ const GraphSelector = (props) => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
-    if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) {
+    if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) { // 路径中包含graphname时，读取summary数据，禁用选择器
+      setSelectorDisabled(true);
       graphName = hashPath[2];
+      setCurrentMsGraphIndex(VALID_GRAPH_NAME_ARR.indexOf(graphName));
+      fetchSummaryGraph(graphName).then((RawData) => {
+        let parsedGraph = RawData.data.data; // 处理
+        if (conceptualGraphMode) {
+          const msGraphOptimizer = new MsRawGraphOptimizer();
+          msGraphOptimizer.optimize(parsedGraph);
+        }
+        modifyGlobalStates(
+          GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+          graphName
+        );
+        setMsRawGraph(parsedGraph);
+      });
+    } else {                                                        // 路径中不包含graphname时，读取local数据，激活选择器
+      setSelectorDisabled(false);
+      fetchLocalMsGraph(graphName).then((RawData) => {
+        let parsedGraph = RawData.data.data; // 处理
+        if (conceptualGraphMode) {
+          const msGraphOptimizer = new MsRawGraphOptimizer();
+          msGraphOptimizer.optimize(parsedGraph);
+        }
+        modifyGlobalStates(
+          GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+          graphName
+        );
+        setMsRawGraph(parsedGraph);
+      });
     }
-    fetchLocalMsGraph(graphName).then((RawData) => {
-      let parsedGraph = RawData.data.data; // 处理
-      if (conceptualGraphMode) {
-        const msGraphOptimizer = new MsRawGraphOptimizer();
-        msGraphOptimizer.optimize(parsedGraph);
-      }
-      modifyGlobalStates(
-        GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
-        graphName
-      );
-      setMsRawGraph(parsedGraph);
-    });
+    
   }, [
     currentMsGraphIndex,
     currentLayout,
@@ -163,6 +191,7 @@ const GraphSelector = (props) => {
             labelId="graph-selector"
             value={currentTfGraphIndex}
             onChange={handleTfGraphIndexChange}
+            disabled={selectorDisabled}
           >
             {graphMetadatas.map((metadata, index) => (
               <MenuItem key={index} value={index}>
