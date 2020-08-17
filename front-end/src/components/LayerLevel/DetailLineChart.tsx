@@ -21,6 +21,7 @@ interface Props {
   nodeTensors: Array<Array<Array<number>>>;
   start_step: number;
   end_step: number;
+  setClusterStep: { (number): void }
 }
 
 interface LineChartData {
@@ -33,7 +34,7 @@ interface LineChartData {
 }
 
 const DetailLineChart: React.FC<Props> = (props: Props) => {
-  const { start_step, end_step, nodeTensors } = props;
+  const { start_step, end_step, nodeTensors, setClusterStep } = props;
 
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
@@ -59,17 +60,17 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
 
-    const totalSteps = nodeTensors.length;
     const [minValue, maxValue, dataArrToShow] = ToLineData(nodeTensors);
-    console.log(minValue, maxValue, dataArrToShow, totalSteps);
+    // console.log(minValue, maxValue, dataArrToShow);
 
-    DrawLineChart(minValue, maxValue, dataArrToShow, totalSteps);
+    DrawLineChart(minValue, maxValue, dataArrToShow);
 
   }, [nodeTensors, svgWidth])
 
-  const DrawLineChart = (minValue, maxValue, dataArrToShow, totalSteps) => {
+  const DrawLineChart = (minValue, maxValue, dataArrToShow) => {
+    const totalSteps = nodeTensors.length;
+    const ticksBetweenTwoSteps = nodeTensors[0].length;
 
-    let svg = d3.select(svgRef.current);
     let focus = d3.select(svgRef.current).select("g.layerLevel-detailInfo-focus");
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -82,7 +83,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
 
     let xScale = d3.scaleLinear()
       .range([0, chartWidth])
-      .domain([0, dataArrToShow[0].data.length - 1]);
+      .domain([0, ticksBetweenTwoSteps * totalSteps - 1]);
 
     let yScale = d3.scaleLinear()
       .range([chartHeight, 0])
@@ -94,7 +95,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y))
 
-    for (let i = 0, len = dataArrToShow.length; i < 5; i++) {
+    for (let i = 0, len = dataArrToShow.length; i < len; i++) {
       let data = dataArrToShow[i];
       focus
         .append("path")
@@ -106,6 +107,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     }
 
     // add the X gridlines
+    console.log(totalSteps, totalSteps * ticksBetweenTwoSteps);
     const yGridLine = d3.axisTop(xScale)
       .tickSize(-chartHeight)
       .ticks(totalSteps);
@@ -113,8 +115,19 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     let yGrid = focus.append("g").attr("class", "detailLineChart-grid");
     yGrid.call(yGridLine).selectAll("text").style("opacity", "0.8");
     yGrid.selectAll("path.domain").remove();  // 删除横线。
-  }
 
+    d3.select(svgRef.current)
+      .select("rect.layerLevel-detailInfo-zoom")
+      .on("click", function () {
+        let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+        let x = xScale.invert(mouseX);
+
+        let _index = bisect(dataExample.data, x, 1);
+
+        console.log(Math.floor(_index / ticksBetweenTwoSteps));
+        setClusterStep(Math.floor(_index / ticksBetweenTwoSteps));
+      })
+  }
   // 将nodeTensors转换为如下形式的数据：
   // [{ id: `Detail_Info`, data: detailInfo, color: "#388aac" }]
   // detailInfo的形式是 ： [{x: , y: }]
@@ -166,7 +179,12 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           transform={`translate(${margin.left},${margin.top})`}
         >
         </g>
-
+        <rect
+          className="layerLevel-detailInfo-zoom"
+          width={chartWidth}
+          height={chartHeight}
+          transform={`translate(${margin.left},${margin.top})`}
+        />
       </svg>
     </div>
   );

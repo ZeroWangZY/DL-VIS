@@ -272,6 +272,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       }
       const newX1Domain = s.map(x1Scale.invert, x1Scale);
       setBrushedStep([Math.ceil(newX1Domain[0]), Math.floor(newX1Domain[1])]);
+      // Test代码
+      // let beginPos = Math.floor(Math.random() * 3) + 300;
+      // setBrushedStep([beginPos, beginPos + 9]);
+
       x1Scale.domain(newX1Domain);
       d3.select(brushG).select('.focusBrush').call(focusBrush.move, null);
       const xAxis: any = d3.axisBottom(x1Scale);

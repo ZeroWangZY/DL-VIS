@@ -7,10 +7,11 @@ interface Props {
   nodeTensors: Array<Array<Array<number>>>;
   start_step: number;
   end_step: number;
+  clusterStep: number;
 }
 
 const ClusterGraph: React.FC<Props> = (props: Props) => {
-  const { start_step, end_step, nodeTensors } = props;
+  const { start_step, end_step, nodeTensors, clusterStep } = props;
   const svgRef = useRef();
   const graphWidth = 160;
   const graphHeight = 160;
@@ -23,11 +24,9 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   const clusterHeight = chartAreaHeight - margin.top - margin.bottom;
 
   useEffect(() => {
-    if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
+    if (!nodeTensors || nodeTensors.length === 0 || start_step < 0 || !clusterStep) return;
 
-    // TODO : selectedStep为左侧"数据实例指标变化图"选择的step, 目前先默认为 start_step
-    const selectedStep = start_step;
-    const data = nodeTensors[selectedStep - start_step];
+    const data = nodeTensors[clusterStep];
     // data 的是二维的，layerLevel中进行了flat操作。
 
     let model = new TSNE({
@@ -113,7 +112,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         g.select('text').transition().duration(500).style('visibility', 'hidden');
       })
 
-  }, [nodeTensors, start_step])
+  }, [nodeTensors, start_step, clusterStep])
 
   return (
     <div className="layerLevel-cluster-container" style={{ height: graphHeight }}>

@@ -69,6 +69,7 @@ const LayerLevel: React.FC = () => {
 	const [nodeTensors, setNodeTensors] = useState(null);
 	const [brushedStep, setBrushedStep] = useState(null);
 	const [childNodeId, setChildNodeId] = useState(null);
+	const [clusterStep, setClusterStep] = useState(null);
 	const [activations, setActivations] = useState([]);
 	const [tsneGraph, setTsneGraph] = useState({});
 	const [activationOrGradientData, setActivationOrGradientData] = useState([] as DataToShow[]);
@@ -165,7 +166,8 @@ const LayerLevel: React.FC = () => {
 						<DetailLineChart
 							start_step={brushedStep !== null ? brushedStep[0] : -1}
 							end_step={brushedStep !== null ? brushedStep[1] : -1}
-							nodeTensors={nodeTensors} />
+							nodeTensors={nodeTensors}
+							setClusterStep={setClusterStep} />
 					</div>
 
 					<div className="layer-container-box cluster-box">
@@ -173,7 +175,8 @@ const LayerLevel: React.FC = () => {
 						<ClusterGraph
 							start_step={brushedStep !== null ? brushedStep[0] : -1}
 							end_step={brushedStep !== null ? brushedStep[1] : -1}
-							nodeTensors={nodeTensors} />
+							nodeTensors={nodeTensors}
+							clusterStep={clusterStep} />
 					</div>
 
 					<div className="layer-container-box line-box">
