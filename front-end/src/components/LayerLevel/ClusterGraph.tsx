@@ -70,7 +70,12 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .enter()
       .append("g")
       .attr('transform', (d) => {
-        return `translate(${margin.left + xScale(d[0])}, ${yScale(d[1]) + margin.top})`;
+        let left = margin.left + xScale(d[0]);
+        let top = yScale(d[1]) + margin.top;
+        if(left >= chartAreaHeight -2) {
+          left = chartAreaHeight -2;
+        }
+        return `translate(${left}, ${top})`;
       })
       .append('circle')
       .attr("class", "cluster-circle")
@@ -82,16 +87,24 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
           g.select('text').transition().duration(500).style('visibility', 'visible');
         }
         else {
+          const text: any = g.append('text')
+          .text(`(${i})`)
+          .style('font-size', 14)
+          .style('visibility', 'visible');
+          const {width, height} = text.node().getBoundingClientRect();
+
           let x = 10;
+          let y = 0;
           // 判断text的位置是否超出svg的边界
-          if (margin.left + xScale(d[0]) + 10 >= chartAreaHeight - 15) {
-            x = -30;
+          // x边界的处理
+          if (margin.left + xScale(d[0]) + Math.ceil(width) + 10 >= chartAreaHeight) {
+            x = -(Math.ceil(width) + 10);
           }
-          g.append('text')
-            .attr("x", x)
-            .attr("y", 0)
-            .text(`(${i})`)
-            .style('visibility', 'visible');
+          // y边界的处理
+          if(yScale(d[1]) + margin.top <= Math.ceil(height)) {
+            y = (Math.ceil(height) + 5 - yScale(d[1]) - margin.top);
+          }
+          text.attr("x", x).attr("y", y);
         }
       })
       .on("mouseout", function (d, i) {
