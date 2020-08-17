@@ -235,23 +235,24 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || x2Scale.range();
       x1Scale.domain(s.map(x2Scale.invert, x2Scale));
-
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
-
-      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").call(d3.axisBottom(x1Scale));
+      const t1 = focus.transition().duration(750);
+      const xAxis: any = d3.axisBottom(x1Scale);
+      focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
+      focus.select(".axis--x").transition(t1).call(xAxis);
     };
 
     const zoomed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
       var t = d3.event.transform;
       x1Scale.domain(t.rescaleX(x2Scale).domain());
-      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").call(d3.axisBottom(x1Scale));
+      const t1 = focus.transition().duration(750);
+      const xAxis: any = d3.axisBottom(x1Scale);
+      focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
+      focus.select(".axis--x").transition(t1).call(xAxis);
       const t2 = context.transition().duration(750);
       const move: any = brush.move;
       context.select(".brush").transition(t2).call(move, x1Scale.range().map(t.invertX, t));
-
     }
 
     const zoom = d3.zoom()
@@ -270,8 +271,17 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (!s) {
         return;
       }
-      const newX1Domain = s.map(x1Scale.invert, x1Scale);
-      setBrushedStep([Math.ceil(newX1Domain[0]), Math.floor(newX1Domain[1])]);
+      const tempNewX1Domain = s.map(x1Scale.invert, x1Scale);
+      tempNewX1Domain[0] = Math.ceil(tempNewX1Domain[0]);
+      tempNewX1Domain[1] = Math.floor(tempNewX1Domain[1]);
+
+      const newX1Domain = tempNewX1Domain.sort((a, b) => a - b);
+      if(newX1Domain[1] - newX1Domain[0] <= 1 && d3.event.type === 'end') {
+        d3.select(brushG).select('.focusBrush').call(focusBrush.move, null);
+        alert('刷选的起始step与终点step不能小于或等于1');
+        return ;
+      }
+      setBrushedStep(newX1Domain);
       // Test代码
       // let beginPos = Math.floor(Math.random() * 3) + 300;
       // setBrushedStep([beginPos, beginPos + 9]);
@@ -328,8 +338,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         let _index = bisect(dataExample.data, x, 1);
         _index = _index === 0 ? 1 : _index;
 
-        console.log('movemove...');
-
         // 因为data中是[1, max_step]的数组,共max_step-1个数
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
         // 所以_index最大是 max_step - 2
@@ -350,7 +358,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           })
         }
         setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
-
       })
       .on("mouseleave", function () {
         setLocalCurrentStep(null);
