@@ -321,12 +321,14 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .call(brush.move, showRange);
 
     d3.select(svgRef.current)
-      .select("rect.layerLevel-lineChart-zoom")
+      .select(".layerLevel-lineChart-zoom-g")
       .on("mousemove", function () {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
         let x = x1Scale.invert(mouseX);
         let _index = bisect(dataExample.data, x, 1);
         _index = _index === 0 ? 1 : _index;
+
+        console.log('movemove...');
 
         // 因为data中是[1, max_step]的数组,共max_step-1个数
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
@@ -444,13 +446,15 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             <rect width={svgWidth} height={height} />
           </clipPath>
         </defs>
-        <g transform={`translate(${margin.left},${margin.top})`} ref={brushGRef}>
-          <rect
-            className="layerLevel-lineChart-zoom"
-            width={svgWidth}
-            height={height}
-            ref={zoomRef}
-          />
+        <g className="layerLevel-lineChart-zoom-g" transform={`translate(${margin.left},${margin.top})`}>
+          <g ref={brushGRef}>
+            <rect
+              className="layerLevel-lineChart-zoom"
+              width={svgWidth}
+              height={height}
+              ref={zoomRef}
+            />
+          </g>
         </g>
         <g
           className="layerLevel-lineChart-focus"
