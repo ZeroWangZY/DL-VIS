@@ -67,10 +67,11 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
 
     let rate = 0.05;
     const dataArr = BlueNoiseSmapling(rate, originalLineData);
-    const dataArr1 = RandomSampling(rate, originalLineData);
-    const dataArr2 = KDE(rate, originalLineData);
+    // const dataArr1 = RandomSampling(rate, originalLineData);
+    // const dataArr2 = KDE(rate, originalLineData);
+    // particleMerge(min, max, originalLineData); // 按照一定的粒度合并图
 
-    setDataArrToShow(dataArr);
+    setDataArrToShow(originalLineData);
     setMinValueOfDataToShow(min);
     setMaxValueOfDataToShow(max);
   }, [nodeTensors])
@@ -209,6 +210,30 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
 
 
     return originalData;
+  }
+
+  const particleMerge = (min: number, max: number, originalData: Array<LineChartData>) => {
+    // KDE采样
+    let particlesNum = 3;
+    let gap = (max - min) / particlesNum;
+    let particles = [];
+    for (let i = 0; i <= particlesNum; i++) {
+      particles[i] = min + i * gap;
+    } // 共有particlesNum+1个
+
+
+    for (let lineChartData of originalData) {
+      let lineData = lineChartData.data;
+      for (let point of lineData) {
+        for (let i = 0; i < particlesNum; i++) {
+          if (particles[i] <= point.y && point.y <= particles[i + 1]) {
+            point.y = (Math.abs(point.y - particles[i]) > Math.abs(point.y - particles[i + 1]) ?
+              particles[i + 1] :
+              particles[i]);
+          }
+        }
+      }
+    }
   }
 
   return (
