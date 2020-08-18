@@ -16,6 +16,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Typography from "@material-ui/core/Typography";
 import Checkbox from '@material-ui/core/Checkbox';
 import { toExponential } from "../Snapshot/Snapshot"
+import { max } from "d3";
 
 interface Props {
   nodeTensors: Array<Array<Array<number>>>;
@@ -66,12 +67,14 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     const [min, max, originalLineData] = ToLineData(nodeTensors);
 
     let rate = 0.05;
+    console.time("test");
     const dataArr = BlueNoiseSmapling(rate, originalLineData);
+    console.timeEnd("test");
     // const dataArr1 = RandomSampling(rate, originalLineData);
     // const dataArr2 = KDE(rate, originalLineData);
     // particleMerge(min, max, originalLineData); // 按照一定的粒度合并图
 
-    setDataArrToShow(originalLineData);
+    setDataArrToShow(dataArr);
     setMinValueOfDataToShow(min);
     setMaxValueOfDataToShow(max);
   }, [nodeTensors])
@@ -176,8 +179,91 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
 
   const BlueNoiseSmapling = (rate: number, originalData: Array<LineChartData>): Array<LineChartData> => {
     // 蓝噪声采样
+    let lineNum = originalData.length; // 折线数量
+    let stepNum = originalData[0].data.length; // 折线中包含多少个数据点
 
-    return originalData;
+    let samplingLineNum = Math.round(rate * lineNum); // 要采样的折线图数量
+    const segmentGroupNum = 5;
+    const samplingSegmentNum = samplingLineNum * (stepNum - 1); // 采样的数据中一共包含多少个segment
+    const segmentNumberInEachGroup = Math.floor(samplingSegmentNum / segmentGroupNum);
+
+    let gap = Math.PI / segmentGroupNum; // 将pi分为多少份
+    let section = [];
+    for (let i = 0; i <= segmentGroupNum; i++) {
+      section[i] = i * gap;
+    } // segmentGroupNum+1个
+
+    let segmentGroupInfo = []; // 每条折线图的每个segment属于哪个group
+    // 比如segmentGroupInfo[i][j]表示第i条折线图的第j个segment属于哪个group
+
+    // 时间复杂度 O(折线图数量 * 10个step * nodeTensors第一维数值 * segmentGroupNum)；
+    // 大约是 O(千 * 10 * 百 * 10) = O(千万)
+    for (let lineChartData of originalData) {
+      let lineData = lineChartData.data;
+      let segmentAngleGroup = [];
+      for (let i = 0; i < stepNum - 1; i++) {
+        let angle = Math.atan(lineData[i + 1].y - lineData[i].y)//角度， (lineData[i + 1].x - lineData[i].x) 总是等于1的
+        if (angle < 0) angle += Math.PI;
+        // 接下来判断angle在哪个section里面，它的group就是section的下标
+        for (let i = 0; i < segmentGroupNum; i++) {
+          if (section[i] <= angle && angle <= section[i + 1])
+            segmentAngleGroup.push(i);
+        }
+      }
+      segmentGroupInfo.push(segmentAngleGroup);
+    }
+    console.log(segmentGroupInfo);
+
+    let samplingResult = [];
+    let selectedLineIndex = new Set(); // 被选中折线的index
+    let randomIndex = Math.floor(Math.random() * lineNum);
+    let line0 = originalData[randomIndex];
+    samplingResult.push(line0); // 随机选取第一条折线
+    selectedLineIndex.add(randomIndex);
+    let segmentGroupInfoOfThisLine = segmentGroupInfo[randomIndex];
+
+    let segmentCountOfEachGroup = new Array(segmentGroupNum).fill(0); // 统计选中的所有折线图中,每个group的总数
+    for (let group of segmentGroupInfoOfThisLine) {
+      segmentCountOfEachGroup[group]++;
+    }
+
+    for (let i = 1; i < samplingLineNum; i++) { // 继续选取samplingLineNum-1条折线
+      let maxFillScore = -Infinity;
+      let index = -1;
+      let newSegmentCountOfEachGroup = [];
+
+      for (let lineIndex = 0; lineIndex < lineNum; lineIndex++) {
+        if (selectedLineIndex.has(lineIndex)) continue;
+        
+        let segmentGroupInfoOfThisLine = segmentGroupInfo[lineIndex];
+        // 然后统计如果选中这条折线，每个group的fill rate
+        // 根据这条线的segmment group信息，更新segmentCountOfEachGroup
+
+        let tmpSegmentCountOfEachGroup = [...segmentCountOfEachGroup];
+        for (let group of segmentGroupInfoOfThisLine) {
+          tmpSegmentCountOfEachGroup[group]++;
+        }
+        // 根据tmpSegmentCountOfEachGroup计算fill rate
+        let score = 0;
+        for (let count of tmpSegmentCountOfEachGroup) {
+          score += count / segmentNumberInEachGroup
+        }
+
+        if (score > maxFillScore) {
+          newSegmentCountOfEachGroup = [...tmpSegmentCountOfEachGroup];
+          maxFillScore = score;
+          index = lineIndex;
+        }
+      }
+
+      segmentCountOfEachGroup = newSegmentCountOfEachGroup
+      selectedLineIndex.add(index); // 暂时被选中
+      samplingResult.push(originalData[index]);
+    }
+    // console.log(selectedLineIndex);
+    // console.log(samplingResult);
+
+    return samplingResult;
 
     function DistanceOfTwoLine(l1: LineChartData, l2: LineChartData) {
       let data1 = l1.data, data2 = l2.data;
