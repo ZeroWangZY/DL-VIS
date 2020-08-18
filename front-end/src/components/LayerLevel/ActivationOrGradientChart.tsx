@@ -16,6 +16,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Typography from "@material-ui/core/Typography";
 import Checkbox from '@material-ui/core/Checkbox';
 import { toExponential } from "../Snapshot/Snapshot"
+import _ from 'lodash';
 
 interface Props {
   activationOrGradientData: DataToShow[],
@@ -234,12 +235,12 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || x2Scale.range();
-      //x1Scale.domain(s.map(x2Scale.invert, x2Scale));
+      x1Scale.domain(s.map(x2Scale.invert, x2Scale));
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
-      // const t1 = focus.transition().duration(750);
-      // const xAxis: any = d3.axisBottom(x1Scale);
-      // focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
-      // focus.select(".axis--x").transition(t1).call(xAxis);
+      const t1 = focus.transition().duration(750);
+      const xAxis: any = d3.axisBottom(x1Scale);
+      focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
+      focus.select(".axis--x").transition(t1).call(xAxis);
     };
 
     // focus的zoom event
@@ -267,23 +268,26 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     // d3.select(brushG)
     //   .call(zoom);
 
-    const focusBrushStep = 1;
+    const focusBrushStep = 10;
 
     const focusBrushended = () => {
       const selection = d3.event.selection;
       if (!selection) {
         return ;
       }
-      const s = selection.slice();
+      let s = selection.slice().map(x1Scale.invert, x1Scale);
+      s[0] = Math.ceil(s[0]);
+      s[1] = Math.floor(s[1]);
+      s = s.sort((a, b) => a - b);
       if(s[1] - s[0] > focusBrushStep) {
         s[1] = s[0] + focusBrushStep;
       }
-      
-      const tempNewX1Domain = s.map(x1Scale.invert, x1Scale);
-      tempNewX1Domain[0] = Math.ceil(tempNewX1Domain[0]);
-      tempNewX1Domain[1] = Math.floor(tempNewX1Domain[1]);
+      // console.log('selection: ', s);
+      // const tempNewX1Domain = s.map(x1Scale.invert, x1Scale);
+      // tempNewX1Domain[0] = Math.ceil(tempNewX1Domain[0]);
+      // tempNewX1Domain[1] = Math.floor(tempNewX1Domain[1]);
 
-      const newX1Domain = tempNewX1Domain.sort((a, b) => a - b);
+      // const newX1Domain = tempNewX1Domain.sort((a, b) => a - b);
       // console.log('newX1Domain: ', newX1Domain);
       // if(newX1Domain[1] - newX1Domain[0] <= 1 && d3.event.type === 'end') {
       //   d3.select(brushG).select('.focusBrush').call(focusBrush.move, null);
@@ -291,7 +295,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       //   return ;
       // }
 
-      setBrushedStep(newX1Domain);
+      setBrushedStep(s);
       // Test代码
       // let beginPos = Math.floor(Math.random() * 3) + 300;
       // setBrushedStep([beginPos, beginPos + 9]);
@@ -302,9 +306,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       // const t1 = focus.transition().duration(750);
       // focus.select(".axis--x").transition(t1).call(xAxis);
       // focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
-      const t2 = context.transition().duration(750);
-      const move: any = brush.move;
-      context.select(".brush").transition(t2).call(move, newX1Domain.map(x2Scale));
+      // const t2 = context.transition().duration(750);
+      // const move: any = brush.move;
+      // context.select(".brush").transition(t2).call(move, newX1Domain.map(x2Scale));
       brushSelection = [-1, -1];
     };
 
@@ -320,18 +324,23 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if(!selection) {
         return ;
       }
-
-      const s = selection.slice();
-      // 防止抖动
+      let s = selection.slice();
+      // 节流
       if (isSameArray(brushSelection, s)) {
         return;
       }
+      brushSelection = s;
+      s = s.map(x1Scale.invert, x1Scale);
+      s[0] = Math.round(s[0] * 10) / 10;
+      s[1] = Math.round(s[1] * 10) / 10;
+      // s[0] = Math.ceil(s[0]);
+      // s[1] = Math.floor(s[1]);
+      // s = s.sort((a, b) => a - b);
       if(s[1] - s[0] > focusBrushStep) {
         s[1] = s[0] + focusBrushStep;
       }
-      brushSelection = s;
-      d3.select(brushG).select('.focusBrush').call(focusBrush.move, s);
-    }
+      d3.select(brushG).select('.focusBrush').call(focusBrush.move, s.map(x1Scale));
+    };
 
     const focusBrush = d3
       .brushX()

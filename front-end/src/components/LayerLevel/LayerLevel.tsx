@@ -102,8 +102,9 @@ const LayerLevel: React.FC = () => {
 
 		const maxGap = 10;
 		const [brushedStartStep, brushedEndStep] = brushedStep;
-		if (brushedEndStep - brushedStartStep <= maxGap)
+		if (brushedEndStep - brushedStartStep <= maxGap) {
 			getNodeTensors(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
+		}
 
 	}, [brushedStep])
 
