@@ -1,6 +1,5 @@
 @import "../../CSSVariables/CSSVariables.less";
-@icons: "/assets";
-
+@public_url: "PUBLIC_URL";
 @iconSize: 12px;
 
 @IconsStyle: {
@@ -21,16 +20,16 @@
 }
 
 .nodeitem-1.layertype-FC text::before {
-  background: url("@{icons}/FcIcon.svg");
+  background: url("@{public_url}/assets/FcIcon.svg");
   @IconsStyle();
 }
 
 .nodeitem-1.layertype-CONV text::before {
-  background: url("@{icons}/ConvIcon.svg");
+  background: url("@{public_url}/assets/ConvIcon.svg");
   @IconsStyle();
 }
 .nodeitem-1.layertype-RNN text::before {
-  background: url("@{icons}/RnnIcon.svg");
+  background: url("@{public_url}/assets/RnnIcon.svg");
   @IconsStyle();
 }
 

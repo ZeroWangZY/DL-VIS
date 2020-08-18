@@ -134,6 +134,15 @@ module.exports = function (webpackEnv) {
         }
       );
     }
+    if (preProcessor === 'less-loader') {
+      loaders.push({
+        loader: 'string-replace-loader',
+        options: {
+            search: 'PUBLIC_URL',
+            replace: publicUrl
+        },
+      })
+    }
     return loaders;
   };
 
