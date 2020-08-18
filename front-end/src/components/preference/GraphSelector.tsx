@@ -37,16 +37,6 @@ const VALID_GRAPH_NAME = new Set([
   "lenet-err"
 ]);
 
-const VALID_GRAPH_NAME_ARR = [
-  "lenet",
-  "alexnets",
-  "bert_finetune",
-  "bert_pretrain",
-  "mobilenetv2",
-  "resnet",
-  "lenet-err"
-];
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     container: {
@@ -70,7 +60,7 @@ const GraphSelector = (props) => {
   const classes = useStyles();
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [msGraphMetadatas, setMsGraphMetadatas] = useState<GraphMetadata[]>([]);
-  const [selectorDisabled, setSelectorDisabled] = useState<boolean>(false);
+  const [showSelector, setShowSelector] = useState<boolean>(true);
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   useGraphPipeline();
@@ -118,13 +108,11 @@ const GraphSelector = (props) => {
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
 
-
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
     if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) { // 路径中包含graphname时，读取summary数据，禁用选择器
-      setSelectorDisabled(true);
+      setShowSelector(false);
       graphName = hashPath[2];
-      setCurrentMsGraphIndex(VALID_GRAPH_NAME_ARR.indexOf(graphName));
       fetchSummaryGraph(graphName).then((RawData) => {
         let parsedGraph = RawData.data.data; // 处理
         if (conceptualGraphMode) {
@@ -138,7 +126,7 @@ const GraphSelector = (props) => {
         setMsRawGraph(parsedGraph);
       });
     } else {                                                        // 路径中不包含graphname时，读取local数据，激活选择器
-      setSelectorDisabled(false);
+      setShowSelector(true);
       fetchLocalMsGraph(graphName).then((RawData) => {
         let parsedGraph = RawData.data.data; // 处理
         if (conceptualGraphMode) {
@@ -182,7 +170,9 @@ const GraphSelector = (props) => {
     preprocessingPlugins,
     currentLayout,
   ]);
-
+  if (!showSelector) {
+    return <></>
+  }
   return (
     <div className={classes.container}>
       <Typography>图数据集</Typography>
@@ -193,7 +183,6 @@ const GraphSelector = (props) => {
             labelId="graph-selector"
             value={currentTfGraphIndex}
             onChange={handleTfGraphIndexChange}
-            disabled={selectorDisabled}
           >
             {graphMetadatas.map((metadata, index) => (
               <MenuItem key={index} value={index}>
