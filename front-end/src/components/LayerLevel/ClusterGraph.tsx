@@ -13,10 +13,10 @@ interface Props {
 const ClusterGraph: React.FC<Props> = (props: Props) => {
   const { start_step, end_step, nodeTensors, clusterStep } = props;
   const svgRef = useRef();
-  const graphWidth = 160;
-  const graphHeight = 160;
+  const graphWidth = 160 + 150;
+  const graphHeight = 160 + 150;
 
-  const titleAreaHeight = graphHeight * 0.1;
+  const titleAreaHeight = 16 // graphHeight * 0.1;
   const chartAreaHeight = graphHeight - titleAreaHeight;
 
   const margin = { left: 10, right: 10, top: 5, bottom: 5 }; // 整个cluster与外层之间的margin

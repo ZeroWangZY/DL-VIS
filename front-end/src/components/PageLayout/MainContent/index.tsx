@@ -23,7 +23,7 @@ export default () => {
     if (bottomInfoType === BottomInfoType.MODELINFO)
       setFixedHeight("360px");
     if (bottomInfoType === BottomInfoType.LAYERINFO)
-      setFixedHeight("415px");
+      setFixedHeight("565px");
   }, [bottomInfoType]);
 
   // const fixedHeight = "415px"; // 原为 360px

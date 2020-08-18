@@ -56,16 +56,31 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const margin = { top: 15, left: 40, bottom: 5, right: 40 };// chart与外层之间的margin
   const chartHeight = chartAreaHeight - margin.top - margin.bottom; // chart的高度
   const chartWidth = svgWidth - margin.left - margin.right;
+  const [dataArrToShow, setDataArrToShow] = useState(null);
+  const [minValueOfDataToShow, setMinValueOfDataToShow] = useState(-100);
+  const [maxValueOfDataToShow, setMaxValueOfDataToShow] = useState(100)
 
   useEffect(() => {
     if (!nodeTensors || nodeTensors.length === 0 || start_step < 0) return;
 
-    const [minValue, maxValue, dataArrToShow] = ToLineData(nodeTensors);
-    // console.log(minValue, maxValue, dataArrToShow);
+    const [min, max, originalLineData] = ToLineData(nodeTensors);
 
-    DrawLineChart(minValue, maxValue, dataArrToShow);
+    let rate = 0.05;
+    const dataArr = BlueNoiseSmapling(rate, originalLineData);
+    const dataArr1 = RandomSampling(rate, originalLineData);
+    const dataArr2 = KDE(rate, originalLineData);
 
-  }, [nodeTensors, svgWidth])
+    setDataArrToShow(dataArr);
+    setMinValueOfDataToShow(min);
+    setMaxValueOfDataToShow(max);
+  }, [nodeTensors])
+
+  useEffect(() => {
+    if (!dataArrToShow || dataArrToShow.length === 0) return;
+
+    DrawLineChart(minValueOfDataToShow, maxValueOfDataToShow, dataArrToShow);
+
+  }, [dataArrToShow, minValueOfDataToShow, maxValueOfDataToShow, svgWidth])
 
   const DrawLineChart = (minValue, maxValue, dataArrToShow) => {
     const totalSteps = nodeTensors.length;
@@ -131,7 +146,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   // 将nodeTensors转换为如下形式的数据：
   // [{ id: `Detail_Info`, data: detailInfo, color: "#388aac" }]
   // detailInfo的形式是 ： [{x: , y: }]
-  const ToLineData = (nodeTensors: Array<Array<Array<number>>>): [Number, Number, Array<LineChartData>] => { // Array<Array<Array<number>>>
+  const ToLineData = (nodeTensors: Array<Array<Array<number>>>): [number, number, Array<LineChartData>] => { // Array<Array<Array<number>>>
     let totalSteps = nodeTensors.length; // 共选中了多少steps
     let ticksBetweenSteps = nodeTensors[0].length; // 每两个step之间的ticks数量
     let lineNumber = nodeTensors[0][0].length; // 折线数量
@@ -156,6 +171,44 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     }
 
     return [minValue, maxValue, dataArrToShow];
+  }
+
+  const BlueNoiseSmapling = (rate: number, originalData: Array<LineChartData>): Array<LineChartData> => {
+    // 蓝噪声采样
+
+    return originalData;
+
+    function DistanceOfTwoLine(l1: LineChartData, l2: LineChartData) {
+      let data1 = l1.data, data2 = l2.data;
+      let distance = 0, len = data1.length;
+      for (let i = 0; i < len - 1; i++) {
+        distance += Math.abs((data2[i + 1].y - data2[i].y) / 2 - (data1[i + 1].y - data1[i].y) / 2);
+      }
+      return distance / len;
+    }
+  }
+
+  const RandomSampling = (rate: number, originalData: Array<LineChartData>): Array<LineChartData> => {
+    // 随机采样
+    let res = [];
+    let randomNums = new Set(), len = originalData.length;
+    for (let i = 0; i < Math.round(rate * len); i++) {
+      let randomNum = Math.floor(Math.random() * len);
+      if (!randomNums.has(randomNum))
+        randomNums.add(randomNum);
+    }
+    randomNums.forEach((randomNum: number) => {
+      res.push(originalData[randomNum]);
+    })
+
+    return res;
+  }
+
+  const KDE = (rate: number, originalData: Array<LineChartData>): Array<LineChartData> => {
+    // KDE采样
+
+
+    return originalData;
   }
 
   return (
