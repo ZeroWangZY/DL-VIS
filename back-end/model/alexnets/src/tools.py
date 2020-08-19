@@ -3,6 +3,7 @@ import mindspore.nn as nn
 import sqlite3
 from enum import Enum, unique
 from src.sqlite_helper import SqliteHelper
+import numpy as np
 
 @unique
 class NODE_SCALAR_TYPE(Enum):
@@ -16,7 +17,7 @@ class MODEL_SCALAR_TYPE(Enum):
     LearningRate = 1
 
 
-SQLITE_FILE_NAME = 'alexnet-parameter-outlier-sigma-1.db'
+SQLITE_FILE_NAME = 'alexnet-with-activation-tensors.db'
 
 sqlite_helper = SqliteHelper(SQLITE_FILE_NAME)
 
@@ -40,6 +41,10 @@ def save_node_scalar(name, tensor, type):
     if type == NODE_SCALAR_TYPE.Weight:
         sqlite_helper.save_weight_scalars(step, name, num.min(), num.mean(), num.max())
 
+def save_node_tensor(name, tensor, type):
+    num = tensor.asnumpy()
+    if type == NODE_SCALAR_TYPE.Activation:
+        np.save('output_tensors/' + str(step) + '-' + name + '-activation.npy', num)
 
 
 def set_iteration(_step):

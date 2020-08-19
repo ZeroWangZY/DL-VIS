@@ -16,7 +16,7 @@
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
-from .tools import save_node_scalar, NODE_SCALAR_TYPE
+from .tools import save_node_scalar, NODE_SCALAR_TYPE, save_node_tensor
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid", sigma=0.02):
     weight = weight_variable(sigma)
@@ -42,7 +42,7 @@ class AlexNet(nn.Cell):
         self.conv1 = conv(channel, 96, 11, stride=4)
         self.conv2 = conv(96, 256, 5, pad_mode="same")
         self.conv3 = conv(256, 384, 3, pad_mode="same")
-        self.conv4 = conv(384, 384, 3, pad_mode="same", sigma=1)
+        self.conv4 = conv(384, 384, 3, pad_mode="same")
         self.conv5 = conv(384, 256, 3, pad_mode="same")
         self.relu = nn.ReLU()
         self.max_pool2d = P.MaxPool(ksize=3, strides=2)
@@ -55,10 +55,12 @@ class AlexNet(nn.Cell):
     def construct(self, x):
         x = self.conv1(x)
         save_node_scalar("conv1", x, NODE_SCALAR_TYPE.Activation)
+        save_node_tensor("conv1", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv2(x)
         save_node_scalar("conv2", x, NODE_SCALAR_TYPE.Activation)
+        save_node_tensor("conv2", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv3(x)
@@ -74,6 +76,7 @@ class AlexNet(nn.Cell):
         x = self.flatten(x)
         x = self.fc1(x)
         save_node_scalar("fc1", x, NODE_SCALAR_TYPE.Activation)
+        save_node_tensor("fc1", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.fc2(x)
         save_node_scalar("fc2", x, NODE_SCALAR_TYPE.Activation)
