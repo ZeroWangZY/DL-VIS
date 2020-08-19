@@ -37,6 +37,9 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import ELKLayoutEdge from "./ELKLayoutEdge";
 import ELKLayoutNode from "./ELKLayoutNode";
 import ELKLayoutPort from "./ELKLayoutPort";
+
+import Threejs from "./threejs";
+
 window["d3"] = d3;
 window["ELK"] = ELK;
 
@@ -690,7 +693,12 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         <g id="gBrushHolder"></g>
       </svg>
 
+      {/* <Threejs /> */}
+
+
       <NodeInfoCard />
+
+      
 
       <div className="minimap-container">
         <MiniMap
