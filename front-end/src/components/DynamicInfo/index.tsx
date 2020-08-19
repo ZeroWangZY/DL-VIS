@@ -24,6 +24,8 @@ import {
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { ShowActivationOrGradient } from "../../store/global-states.type"
+import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
+import { useProcessedGraph } from "../../store/processedGraph";
 
 type Position = "outerBottom" | "innerBottom";
 
@@ -102,7 +104,9 @@ export default () => {
   const classes = useStyles();
   const theme = useTheme();
   const [value, setValue] = useState({ right: 0, outerBottom: 0, innerBottom: 0 });
-  const { showActivationOrGradient } = useGlobalStates();
+  const { selectedNodeId, showActivationOrGradient } = useGlobalStates();
+	const processedGraph = useProcessedGraph();
+  const { nodeMap } = processedGraph;
 
   const toggleTab = (pos: Position) => (
     event: React.ChangeEvent<{}>,
@@ -146,6 +150,7 @@ export default () => {
             style={{ color: value["outerBottom"] === 1 ? "#00a5a7" : "#333" }}
             className={classes.tabStyle}
             label="层信息"
+            disabled={!(nodeMap[selectedNodeId] instanceof LayerNodeImp)}
             {...a11yProps(1, "outerBottom")}
           />
         </Tabs>
