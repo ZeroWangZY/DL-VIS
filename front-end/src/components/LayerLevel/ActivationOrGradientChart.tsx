@@ -237,10 +237,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       let s = d3.event.selection || x2Scale.range();
       x1Scale.domain(s.map(x2Scale.invert, x2Scale));
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
-      const t1 = focus.transition().duration(750);
+      // const t1 = focus.transition().duration(750);
       const xAxis: any = d3.axisBottom(x1Scale);
-      focus.selectAll(".area").transition(t1).attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").transition(t1).call(xAxis);
+      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
+      focus.select(".axis--x").call(xAxis);
     };
 
     // focus的zoom event
