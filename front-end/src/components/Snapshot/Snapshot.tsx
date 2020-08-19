@@ -120,7 +120,7 @@ const Snapshot: React.FC = () => {
     if (!max_step || !currentMSGraphName) return;
 
     computeAndDrawLine();
-  }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth]);
+  }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth, currentStep]);
 
   const computeAndDrawLine = async () => {
     const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step, modelLevelcolorMap);
@@ -257,6 +257,9 @@ const Snapshot: React.FC = () => {
       let s = d3.event.selection || x2Scale.range();
       x1Scale.domain(s.map(x2Scale.invert, x2Scale));
 
+      if (currentStep)
+        setFixCursorLinePos(x1Scale(currentStep));
+
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
 
       focus.selectAll(".area").attr("d", focusAreaLineGenerator);
@@ -264,7 +267,7 @@ const Snapshot: React.FC = () => {
     };
 
     const brushedStart = () => {
-      setFixCursorLinePos(null);
+      // setFixCursorLinePos(null);
     }
 
     const brush = d3.brushX()
@@ -341,14 +344,6 @@ const Snapshot: React.FC = () => {
           clickNumber
         );
         setFixCursorLinePos(x1Scale(clickNumber));
-        // let newDetailInfoOfCurrentStep = [];
-        // for (let i = 0; i < dataArrToShow.length; i++) {
-        //   newDetailInfoOfCurrentStep.push({
-        //     "name": dataArrToShow[i].id,
-        //     "value": dataArrToShow[i].data[clickNumber - 1].y,
-        //   })
-        // }
-        // setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       });
   };
 
@@ -441,9 +436,6 @@ const Snapshot: React.FC = () => {
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }
-          {/* {XScale !== null && currentStep !== null && DetailInfoOfCurrentStep.length &&
-            getDetailInfoRect(XScale(currentStep), height)
-          } */}
           {fixCursorLinePos !== null && (
             <line
               className="fixCursorLine"

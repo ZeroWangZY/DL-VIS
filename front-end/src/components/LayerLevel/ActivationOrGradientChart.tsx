@@ -113,7 +113,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     computeAndDrawLine();
-  }, [dataArrToShow, svgWidth]);
+  }, [dataArrToShow, svgWidth, currentStep]);
 
   const computeAndDrawLine = async () => {
     if (!max_step || dataArrToShow.length === 0) return;
@@ -236,6 +236,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || x2Scale.range();
       x1Scale.domain(s.map(x2Scale.invert, x2Scale));
+
+      if (currentStep)
+        setFixCursorLinePos(x1Scale(currentStep));
+
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
       // const t1 = focus.transition().duration(750);
       const xAxis: any = d3.axisBottom(x1Scale);
@@ -273,13 +277,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     const focusBrushended = () => {
       const selection = d3.event.selection;
       if (!selection) {
-        return ;
+        return;
       }
       let s = selection.slice().map(x1Scale.invert, x1Scale);
       s[0] = Math.ceil(s[0]);
       s[1] = Math.floor(s[1]);
       s = s.sort((a, b) => a - b);
-      if(s[1] - s[0] > focusBrushStep) {
+      if (s[1] - s[0] > focusBrushStep) {
         s[1] = s[0] + focusBrushStep;
       }
       // console.log('selection: ', s);
@@ -320,9 +324,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
     const focusBrushHandler = () => {
       const selection = d3.event.selection;
-      
-      if(!selection) {
-        return ;
+
+      if (!selection) {
+        return;
       }
       let s = selection.slice();
       // 节流
@@ -336,7 +340,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       // s[0] = Math.ceil(s[0]);
       // s[1] = Math.floor(s[1]);
       // s = s.sort((a, b) => a - b);
-      if(s[1] - s[0] > focusBrushStep) {
+      if (s[1] - s[0] > focusBrushStep) {
         s[1] = s[0] + focusBrushStep;
       }
       d3.select(brushG).select('.focusBrush').call(focusBrush.move, s.map(x1Scale));
