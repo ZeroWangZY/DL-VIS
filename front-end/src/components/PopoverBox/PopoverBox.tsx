@@ -25,7 +25,6 @@ interface Props {
   currentShowLineChart: boolean;
   handleLineChartToggle: { (e: any): void };
   handleModifyNodetype: { (): void };
-  handleEnterLayer: { (): void };
   isPathFindingMode?: boolean;
   handleSetStart?: { (): void };
   handleSetEnd?: { (): void }
@@ -46,7 +45,6 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
     currentShowLineChart,
     handleLineChartToggle,
     handleModifyNodetype,
-    handleEnterLayer,
     isPathFindingMode,
     handleSetStart,
     handleSetEnd
@@ -238,19 +236,6 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
                 </Button>
                 </div>
               }
-              <Button
-                variant="outlined"
-                color="primary"
-                size="small"
-                style={{
-                  width: '100%',
-                  fontSize: 14,
-                  marginBottom: 5
-                }}
-                onClick={handleEnterLayer}
-              >
-                Layer-level
-                </Button>
               <Button
                 variant="outlined"
                 color="primary"

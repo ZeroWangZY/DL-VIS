@@ -5,7 +5,7 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-import { fetchSnapshot, fetchMetadata } from '../../api/modelLevel';
+import { fetchMetadata } from '../../api/modelLevel';
 
 let updateGlobalStatesTunc = null;
 

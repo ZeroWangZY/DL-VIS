@@ -1,21 +1,15 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import ReactDOM from "react-dom";
-import { useHistory } from "react-router-dom";
-import CardContent from "@material-ui/core/CardContent";
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import { makeStyles, withTheme } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import * as d3 from "d3";
 import "./Snapshot.css";
-import { fetchAndComputeSnapshot, fetchAndComputeModelScalars } from "../../common/model-level/snapshot";
-import { computeXYScales, linearScale, generateSeriesAxis } from "../LineCharts/src/computed";
+import { fetchAndComputeModelScalars } from "../../common/model-level/snapshot";
 import {
   useGlobalConfigurations,
-  modifyGlobalConfigurations
 } from "../../store/global-configuration";
-import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import {
   useGlobalStates,
   modifyGlobalStates,

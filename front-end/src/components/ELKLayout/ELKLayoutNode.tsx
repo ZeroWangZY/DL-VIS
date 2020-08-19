@@ -17,7 +17,6 @@ import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
-import { fetchAndGetLayerInfo } from "../../common/model-level/snapshot";
 import {
   useGlobalConfigurations,
   modifyGlobalConfigurations,
@@ -60,31 +59,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   const [lineChartData, setLineChartData] = useState(new Map());
   let _lineChartData = new Map();
-  const getLayerInfo = async () => {
-    if (styledGraph === null || styledGraph.nodeStyles === null) return;
-    let nodes = styledGraph.nodeStyles;
 
-    for (const node of nodes) {
-      if (node.data.type === NodeType.LAYER) {
-        // LAYER
-        let data = await fetchAndGetLayerInfo(
-          {
-            STEP_FROM: iteration,
-            STEP_TO: iteration + 20,
-          },
-          node.data.id,
-          graphForLayout
-        );
-        _lineChartData.set(node.data.id, data);
-      }
-    }
-  };
-
-  useEffect(() => {
-    getLayerInfo().then(() => {
-      setLineChartData(_lineChartData);
-    });
-  }, [styledGraph]);
 
   const handleClick = (id) => {
     if (selectedNodeId !== id)

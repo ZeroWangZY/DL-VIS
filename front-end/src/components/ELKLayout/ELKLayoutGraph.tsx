@@ -24,21 +24,15 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-import { useStyledGraph } from "../../store/styledGraph";
-import { ModifyLineData } from "../../types/layerLevel";
-import { useHistory, useLocation } from "react-router-dom";
-import { modifyData } from "../../store/layerLevel";
+import { useHistory } from "react-router-dom";
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard";
 import MiniMap from "../MiniMap/MiniMap";
 import PopoverBox from "../PopoverBox/PopoverBox";
-import { fetchAndGetLayerInfo } from "../../common/model-level/snapshot";
 import InteractiveIcon from "../InteractiveIcon/InteractiveIcon";
-
 import ELK from "elkjs/lib/elk.bundled.js";
 import ELKLayoutEdge from "./ELKLayoutEdge";
 import ELKLayoutNode from "./ELKLayoutNode";
 import ELKLayoutPort from "./ELKLayoutPort";
-import { changeConfirmLocale } from "antd/lib/modal/locale";
 window["d3"] = d3;
 window["ELK"] = ELK;
 
@@ -472,22 +466,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     }
   };
 
-  const handleEnterLayer = async () => {
-    alert;
-    let selectedG = d3.select(svgRef.current).selectAll("g.selected");
-    let node = selectedG.node();
-    let nodeId = d3.select(node).attr("data-id");
-    let lineData = await fetchAndGetLayerInfo(
-      {
-        STEP_FROM: iteration,
-        STEP_TO: iteration + 100,
-      },
-      nodeId,
-      graphForLayout
-    );
-    modifyData(ModifyLineData.UPDATE_Line, lineData);
-    history.push("layer");
-  };
 
   const brushstart = () => {
     node = d3.select(".nodes").selectAll(".node");
@@ -770,7 +748,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         currentShowLineChart={currentShowLineChart}
         handleLineChartToggle={handleLineChartToggle}
         handleModifyNodetype={handleModifyNodetype}
-        handleEnterLayer={handleEnterLayer}
         isPathFindingMode={isPathFindingMode}
         handleSetStart={handleSetStart}
         handleSetEnd={handleSetEnd}

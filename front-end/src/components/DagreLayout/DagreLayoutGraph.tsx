@@ -5,19 +5,15 @@ import { NodeType, LayerType, DataType, RawEdge, GroupNode, LayerNode, GroupNode
 import { LayerNodeContainer } from '../LayerNodeGraph/LayerNodeGraph';
 import * as dagre from 'dagre';
 import * as d3 from 'd3';
-import { TransitionMotion, spring } from 'react-motion';
-import { useHistory, useLocation } from "react-router-dom";
+import { TransitionMotion } from 'react-motion';
+import { useHistory } from "react-router-dom";
 import { useProcessedGraph, modifyProcessedGraph, ProcessedGraphModificationType } from '../../store/processedGraph';
 import { useGlobalConfigurations } from '../../store/global-configuration'
-import { modifyData } from '../../store/layerLevel';
-import { ModifyLineData } from '../../types/layerLevel'
 import { LineGroup } from '../LineCharts/index'
 import MiniMap from '../MiniMap/MiniMap';
 import PopoverBox from '../PopoverBox/PopoverBox';
-import { fetchAndGetLayerInfo } from '../../common/model-level/snapshot'
 import { generateNodeStyles, generateEdgeStyles, getColor, generateAcrossModuleEdgeStyles } from '../../common/style/graph';
 import NodeInfoCard from "../NodeInfoCard/NodeInfoCard"
-
 
 
 const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration }) => {
@@ -211,24 +207,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
     setModuleConnection(newModuleConnection);
     setAnchorEl(null);
-    await getLayerInfo(newNodes);
     setNodes(newNodes);
     setEdges(newEdges);
   }
 
-  const getLayerInfo = async (nodes) => {
-    let _lineChartData = {}
-    for (const nodeId in nodes) {
-      if (nodes[nodeId].nodetype === NodeType.LAYER) {
-        let data = await fetchAndGetLayerInfo({
-          "STEP_FROM": iteration,
-          "STEP_TO": iteration + 20
-        }, nodeId, graphForLayout)
-        _lineChartData[nodeId] = data
-      }
-    }
-    setLayerLineChartData(_lineChartData)
-  }
 
   // 聚合多个节点
   const handleAggregate = () => {
@@ -478,19 +460,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
       shiftKey = false;
       setSelectMode(false);
     }
-  }
-
-  const handleEnterLayer = async () => {
-    alert
-    let selectedG = d3.select(svgRef.current).selectAll("g.selected");
-    let node = selectedG.node();
-    let nodeId = d3.select(node).attr("id");
-    let lineData = await fetchAndGetLayerInfo({
-      "STEP_FROM": iteration,
-      "STEP_TO": iteration + 100
-    }, nodeId, graphForLayout);
-    modifyData(ModifyLineData.UPDATE_Line, lineData)
-    history.push("layer")
   }
 
   const brushstart = () => {
@@ -1113,7 +1082,6 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         currentShowLineChart={currentShowLineChart}
         handleLineChartToggle={handleLineChartToggle}
         handleModifyNodetype={handleModifyNodetype}
-        handleEnterLayer={handleEnterLayer}
       />
     </div >
   );
