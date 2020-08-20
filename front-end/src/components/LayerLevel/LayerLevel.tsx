@@ -7,7 +7,7 @@ import ActivationOrGradientChart from './ActivationOrGradientChart';
 import TsneClusterGraph from './TsneClusterGraph';
 import ClusterGraph from './ClusterGraph';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
-import { fetchActivations, fetchNodeScalars, fetchNodeTensors } from '../../api/layerlevel';
+import { fetchNodeLineDataBlueNoiceSampling, fetchNodeScalars, fetchNodeTensors } from '../../api/layerlevel';
 import { activationsData } from '../../mock/mockDataForLayerLevel';
 import { ShowActivationOrGradient } from "../../store/global-states.type"
 import {
@@ -74,6 +74,10 @@ const LayerLevel: React.FC = () => {
 	const [tsneGraph, setTsneGraph] = useState({});
 	const [activationOrGradientData, setActivationOrGradientData] = useState([] as DataToShow[]);
 
+	const [detailLineChartData, setDetailLineChartData] = useState(null);
+	const [minValueOfDetailLineChartData, setMinValueOfDetailLineChartData] = useState(-100);
+	const [maxValueOfDetailLineChartData, setMaxValueOfDetailLineChartData] = useState(100)
+
 	const fetchDataType = (
 		showActivationOrGradient === ShowActivationOrGradient.ACTIVATION ?
 			"activation" :
@@ -104,6 +108,8 @@ const LayerLevel: React.FC = () => {
 		const [brushedStartStep, brushedEndStep] = brushedStep;
 		if (brushedEndStep - brushedStartStep <= maxGap) {
 			getNodeTensors(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
+
+			getNodeLineDataBlueNoiceSampling(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
 		}
 
 	}, [brushedStep])
@@ -151,6 +157,36 @@ const LayerLevel: React.FC = () => {
 		setNodeTensors(tensors);
 	}
 
+	const getNodeLineDataBlueNoiceSampling = async (graphName, nodeId, startStep, endStep, type) => {
+		let data = await fetchNodeLineDataBlueNoiceSampling({ graph_name: graphName, node_id: nodeId, start_step: startStep, end_step: endStep, type: type });
+		let originalLineData = data.data.data;
+		console.log(originalLineData);
+
+		let lineNumber = originalLineData.length;
+
+		let dataArrToShow = [];
+		for (let i = 0; i < lineNumber; i++) {
+			dataArrToShow.push(
+				{ id: "Detail_Info" + i, data: [], color: "#388aac" }
+			)
+		}
+		let maxValue = -Infinity, minValue = Infinity;
+		for (let lineIndex = 0; lineIndex < lineNumber; lineIndex++) {
+			let line = originalLineData[lineIndex];
+			for (let i = 0, len = line.length; i < len; i++) {
+				let xValue = i, yValue = line[i];
+				if (yValue > maxValue) maxValue = yValue;
+				if (yValue < minValue) minValue = yValue;
+
+				dataArrToShow[lineIndex].data.push({ x: xValue, y: yValue });
+			}
+		}
+
+		setDetailLineChartData(dataArrToShow);
+		setMinValueOfDetailLineChartData(minValue);
+		setMaxValueOfDetailLineChartData(maxValue);
+	}
+
 	//to enable deep level flatten use recursion with reduce and concat
 	function flattenDeep(arr1) {
 		return arr1.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
@@ -158,17 +194,16 @@ const LayerLevel: React.FC = () => {
 
 	return (
 		<div>
-			{/* <div className='return-button'>
-				<ArrowBackIosIcon onClick={goback} />
-			</div> */}
 			{nodeMap[selectedNodeId] instanceof LayerNodeImp && (
 				<div className="layer-container">
 					<div className="layer-container-box detail-box">
 						<DetailLineChart
 							start_step={brushedStep !== null ? brushedStep[0] : -1}
 							end_step={brushedStep !== null ? brushedStep[1] : -1}
-							nodeTensors={nodeTensors}
-							setClusterStep={setClusterStep} />
+							dataArrToShow={detailLineChartData}
+							setClusterStep={setClusterStep}
+							minValueOfDataToShow={minValueOfDetailLineChartData}
+							maxValueOfDataToShow={maxValueOfDetailLineChartData} />
 					</div>
 
 					<div className="layer-container-box cluster-box">
