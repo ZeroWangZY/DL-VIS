@@ -27,16 +27,6 @@ import Typography from "@material-ui/core/Typography";
 import { useGlobalStates, modifyGlobalStates } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 
-const VALID_GRAPH_NAME = new Set([
-  "lenet",
-  "alexnets",
-  "bert_finetune",
-  "bert_pretrain",
-  "mobilenetv2",
-  "resnet",
-  "lenet-err"
-]);
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     container: {
@@ -110,7 +100,7 @@ const GraphSelector = (props) => {
 
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
-    if (hashPath.length >= 3 && VALID_GRAPH_NAME.has(hashPath[2])) { // 路径中包含graphname时，读取summary数据，禁用选择器
+    if (hashPath.length >= 3) { // 路径中包含graphname时，读取summary数据，禁用选择器
       setShowSelector(false);
       graphName = hashPath[2];
       fetchSummaryGraph(graphName).then((RawData) => {
