@@ -201,17 +201,16 @@ function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
   const { nodeMap } = processedGraph
   const results: OperationNode[] = []
   for (const node of Object.values(nodeMap)) {
-    // if (node.type === NodeType.OPERATION) {
-    //   let isFirstInputOperationNode = true
-    //   for (const input of node.inputNode) {
-    //     if (nodeMap[input].type !== NodeType.DATA) {
-    //       isFirstInputOperationNode = false
-    //       break
-    //     }
-    //   }
-    //   if (isFirstInputOperationNode) results.push(node as OperationNode)
-    // }
-    if (node.id === "2" && (node as OperationNode).operationType === "Conv2D" && Object.keys(nodeMap).length < 500) results.push(node as OperationNode)
+    if (node.type === NodeType.OPERATION) {
+      let isFirstInputOperationNode = true
+      for (const input of node.inputNode) {
+        if (nodeMap[input].type !== NodeType.DATA) {
+          isFirstInputOperationNode = false
+          break
+        }
+      }
+      if (isFirstInputOperationNode) results.push(node as OperationNode)
+    }
   }
   return results
 }
