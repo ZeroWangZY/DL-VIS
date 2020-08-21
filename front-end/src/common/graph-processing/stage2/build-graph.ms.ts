@@ -120,6 +120,9 @@ function _buildGraph(rGraph: RawGraph): ProcessedGraph {
 
   buildModule(pGraph)
 
+  // 将rootNode加入到nodeMap
+  pGraph.nodeMap[pGraph.rootNode.id] = pGraph.rootNode
+
   return pGraph;
 }
 

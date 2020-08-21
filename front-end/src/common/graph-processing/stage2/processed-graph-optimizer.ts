@@ -1,4 +1,4 @@
-import { ProcessedGraph, GroupNode, NodeType, OperationNode, LayerNodeImp, LayerType, DataNode, NodeMap, ROOT_SCOPE, GroupNodeImp, NodeId } from "./processed-graph";
+import { ProcessedGraph, GroupNode, NodeType, OperationNode, LayerNodeImp, LayerType, DataNode, NodeMap, ROOT_SCOPE, GroupNodeImp, NodeId, NodeDef } from "./processed-graph";
 
 const aggreOptimization = (hGraph: ProcessedGraph): void => {//更改无意义边跨越节点的命名空间以简化视图
   //寻找
@@ -111,6 +111,30 @@ const layerRecognition = (hGraph: ProcessedGraph): void => {
 
 }
 
+function deAggre(processedGraph: ProcessedGraph): void {
+  console.log("去除聚合前")
+  console.log(processedGraph)
+  var currentNode;
+  var currentChildrenSet = processedGraph.rootNode.children;
+  var editedFlag = false;
+  while (currentChildrenSet.size == 1) {
+    editedFlag = true;
+    currentChildrenSet.forEach((val) => {
+      currentNode = processedGraph.nodeMap[val];
+      currentChildrenSet = currentNode.children;
+    });
+  }
+  if (editedFlag) {
+    processedGraph.rootNode.children.clear();
+    processedGraph.rootNode.children.add(currentNode.id);
+    currentChildrenSet.forEach((val) => {
+      processedGraph.nodeMap[val].parent = ROOT_SCOPE;
+    })
+    console.log("处理完成：")
+  }
+  console.log(JSON.stringify(Array.from(processedGraph.rootNode.children)))
+}
+
 function deloop(processedGraph: ProcessedGraph): void {
   const traverseStack = _findFirstInputNodes(processedGraph)
   const { nodeMap } = processedGraph
@@ -161,6 +185,7 @@ function splitScope(scope: string, visitedNodes: Set<string>, nodeMap: NodeMap):
 
 // 判断两个scope之间是否有包含关系，如default/conv1和default之间是有包含关系的
 function inheritanceScope(scope1, scope2, nodeMap: NodeMap): boolean {
+  if (scope1 === ROOT_SCOPE || scope2 === ROOT_SCOPE) return true
   let tempScope = scope1
 
   while (tempScope !== ROOT_SCOPE) {
@@ -202,7 +227,8 @@ export default class ProcessedGraphOptimizer {
   constructor() {
     this.processedGraphOptimizers = [
       aggreOptimization,
-      deloop,
+      // deAggre,
+      // deloop,
       layerRecognition,
     ];
   }

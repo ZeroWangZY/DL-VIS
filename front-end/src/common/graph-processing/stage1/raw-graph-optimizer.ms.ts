@@ -1,14 +1,35 @@
 import { RawNode, RawGraph } from "./raw-graph.ms.type";
+import { RawGraphOptimizer } from "./raw-graph-optimizer.tf";
 
 const conceptualGraphOptimization = (newRawGraph: RawGraph): void => {
   // mobilenetv2 只保留输出为 RawNode.name === "211"节点 的子图
   // alexnets 只保留输出为RawNode.name === "23"节点 的子图
-  if (newRawGraph.name === "455_454_403_352_construct")
-    // alexnets
-    pruneByOutput(newRawGraph, "23");
-  else if (newRawGraph.name === "7217_7215_7213_5169_2585_1_construct")
-    //mobilenetv2
-    pruneByOutput(newRawGraph, "211");
+  console.log("我要看的位置：")
+  console.log(newRawGraph.node)
+  let nodes = newRawGraph.node
+  let newNodes: RawNode[] = [];
+
+  // 查询scope中有backbone的位置
+  for (let idx = 0, len = nodes.length; idx < len; idx++) {
+    if (nodes[idx].scope.indexOf("backbone") !== -1
+    && nodes[idx].scope.indexOf("network") !== -1
+    && nodes[idx].scope.indexOf("Default") !== -1) {
+      newNodes.push(nodes[idx]);
+    }
+  }
+
+  newRawGraph.node = newNodes;
+  console.log("修改后的整个图")
+  console.log(newRawGraph)
+
+  // if (newRawGraph.name === "455_454_403_352_construct") {
+  //   // alexnets
+  //   pruneByOutput(newRawGraph, "23");
+  // }
+  // else if (newRawGraph.name === "7217_7215_7213_5169_2585_1_construct")
+  //   // mobilenetv2
+  //   pruneByOutput(newRawGraph, "211");
+
 };
 
 const pruneByOutput = (newRawGraph: RawGraph, outputNodeName: string) => {
@@ -111,11 +132,12 @@ export default class msRawGraphOptimizer {
   constructor() {
     this.msRawGraphOptimizers = [
       conceptualGraphOptimization,
-      pruneTupleGetItem,
+      // pruneTupleGetItem,
     ];
   }
 
   optimize(rawGraph: RawGraph) {
+    console.log(rawGraph)
     this.msRawGraphOptimizers.forEach((optimizer) => {
       optimizer(rawGraph);
     });
