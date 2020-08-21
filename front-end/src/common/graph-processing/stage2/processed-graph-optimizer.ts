@@ -112,11 +112,9 @@ const layerRecognition = (hGraph: ProcessedGraph): void => {
 }
 
 function deAggre(processedGraph: ProcessedGraph): void {
-  console.log("去除聚合前")
-  console.log(processedGraph)
-  var currentNode;
-  var currentChildrenSet = processedGraph.rootNode.children;
-  var editedFlag = false;
+  let currentNode;
+  let currentChildrenSet = processedGraph.rootNode.children;
+  let editedFlag = false;
   while (currentChildrenSet.size == 1) {
     editedFlag = true;
     currentChildrenSet.forEach((val) => {
@@ -125,14 +123,11 @@ function deAggre(processedGraph: ProcessedGraph): void {
     });
   }
   if (editedFlag) {
-    processedGraph.rootNode.children.clear();
-    processedGraph.rootNode.children.add(currentNode.id);
+    processedGraph.rootNode.children = currentChildrenSet;
     currentChildrenSet.forEach((val) => {
       processedGraph.nodeMap[val].parent = ROOT_SCOPE;
     })
-    console.log("处理完成：")
   }
-  console.log(JSON.stringify(Array.from(processedGraph.rootNode.children)))
 }
 
 function deloop(processedGraph: ProcessedGraph): void {
@@ -154,7 +149,7 @@ function deloop(processedGraph: ProcessedGraph): void {
       if (visitedNodes.has(nextNodeId)) continue
       const nextNode = nodeMap[nextNodeId] as OperationNode
       traverseStack.push(nextNode)
-    } 
+    }
   }
 }
 
@@ -227,8 +222,8 @@ export default class ProcessedGraphOptimizer {
   constructor() {
     this.processedGraphOptimizers = [
       aggreOptimization,
-      // deAggre,
-      // deloop,
+      deAggre,
+      deloop,
       layerRecognition,
     ];
   }

@@ -122,7 +122,6 @@ export default class msRawGraphOptimizer {
   }
 
   optimize(rawGraph: RawGraph) {
-    console.log(rawGraph)
     this.msRawGraphOptimizers.forEach((optimizer) => {
       optimizer(rawGraph);
     });
