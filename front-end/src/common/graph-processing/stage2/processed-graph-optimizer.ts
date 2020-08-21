@@ -199,6 +199,10 @@ function inheritanceScope(scope1, scope2, nodeMap: NodeMap): boolean {
 
 function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
   const { nodeMap } = processedGraph
+
+  // 对于节点过多的复杂图，不去环
+  if (Object.keys(nodeMap).length > 200) return []
+  
   const results: OperationNode[] = []
   for (const node of Object.values(nodeMap)) {
     if (node.type === NodeType.OPERATION) {

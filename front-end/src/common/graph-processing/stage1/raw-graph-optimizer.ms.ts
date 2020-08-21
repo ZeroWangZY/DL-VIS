@@ -55,7 +55,9 @@ function keepOnlyBackbone(rawGarph: RawGraph) {
   // 仅保留backbone里的节点
   const reservedNodes: RawNode[] = []
   for (const n of rawGarph.node) {
-    if (n.scope.search(regexPattern) !== -1) {
+    if (!n.scope) {
+      console.warn("warning: 存在不合法的node：", n)
+    } else if (n.scope.search(regexPattern) !== -1) {
       reservedNodes.push(n)
     }
   }
