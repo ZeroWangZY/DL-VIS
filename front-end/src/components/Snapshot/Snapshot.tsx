@@ -70,7 +70,6 @@ const Snapshot: React.FC = () => {
   });
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [showDomain, setShowDomain] = useState(null);
-
   const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
   const { modelLevelcolorMap } = useGlobalConfigurations();
 
@@ -111,7 +110,6 @@ const Snapshot: React.FC = () => {
 
   useEffect(() => {
     if (!max_step || !currentMSGraphName) return;
-
     computeAndDrawLine();
   }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth, currentStep]);
 
@@ -131,10 +129,10 @@ const Snapshot: React.FC = () => {
     // 因为当dataArrToShow为空的时候，没有任何绘制，但是也要将原来的绘制结果删除
     // 所以把这一段代码放在 if(dataArrToShow.length === 0) 之前
     let focus = d3.select(svgRef.current).select("g.focus");
-    focus.selectAll(".axis--y").remove(); // 清除原来的坐标
-    focus.selectAll(".axis--x").remove(); // 清除原来的坐标
-    focus.selectAll(".area").remove(); // 清除原折线图
-    focus.selectAll(".snapshot-grid").remove();
+    focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
+    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+    focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
+    focus.select('.focus-axis').selectAll(".snapshot-grid").remove();
 
     let context = d3.select(svgRef.current).select("g.context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -192,6 +190,7 @@ const Snapshot: React.FC = () => {
     for (let i = 0; i < dataArrToShow.length; i++) {
       let data = dataArrToShow[i];
       focus
+        .select('.focus-axis')
         .append("path")
         .datum(data.data)
         .attr("class", "area")
@@ -201,12 +200,14 @@ const Snapshot: React.FC = () => {
     }
 
     focus
+      .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x1Scale));
 
     focus
+      .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--y")
       .call(d3.axisLeft(focusAreaYScale));
@@ -257,8 +258,8 @@ const Snapshot: React.FC = () => {
 
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
 
-      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").call(d3.axisBottom(x1Scale));
+      focus.select('.focus-axis').selectAll(".area").attr("d", focusAreaLineGenerator);
+      focus.select('.focus-axis').select(".axis--x").call(d3.axisBottom(x1Scale));
     };
 
     const brushedStart = () => {
@@ -434,6 +435,7 @@ const Snapshot: React.FC = () => {
               }}
             />
           )}
+          <g className="focus-axis"></g>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }

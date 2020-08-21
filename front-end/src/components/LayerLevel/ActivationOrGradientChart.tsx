@@ -53,6 +53,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [localCurrentStep, setLocalCurrentStep] = useState(null);
   const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
+  const [isMousemove, setIsMouseMove] = useState(true);
   const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [showDomain, setShowDomain] = useState(null);
@@ -113,6 +114,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   }, activationOrGradientData)
 
   useEffect(() => {
+    //console.log('useEffect: ', isMousemove);
     computeAndDrawLine();
   }, [dataArrToShow, svgWidth, currentStep]);
 
@@ -126,7 +128,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.selectAll(".area").remove(); // 清除原折线图
     focus.selectAll(".activationOrGradient-grid").remove();
-    d3.select(brushGRef.current).selectAll('.focusBrush').remove();
+    // console.log('清空focusBrush');
+    // d3.select(brushGRef.current).selectAll('.focusBrush').remove();
 
     let context = d3.select(svgRef.current).select("g.layerLevel-lineChart-context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -280,6 +283,14 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (!selection) {
         return;
       }
+      // 删除focus brush
+      d3.select(brushGRef.current).selectAll('.focusBrush').remove();
+      // 添加mousemove
+      setIsMouseMove(true);
+      d3.select(svgRef.current)
+      .select(".layerLevel-lineChart-zoom-g")
+      .on("mousemove",  mouseMoveHandler);
+      //console.log('brush end: ', isMousemove);
       let s = selection.slice().map(x1Scale.invert, x1Scale);
 
       if (Math.abs(s[0] - s[1]) < 1 && Math.floor(s[0]) === Math.floor(s[1])) { // 刷选距离小于1，且中间没有包含任何step
@@ -370,11 +381,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .on('brush', focusBrushHandler)
       .on("end", focusBrushended);
 
-    // 为focus添加brush
-    d3.select(brushG).append('g')
-      .attr('class', 'focusBrush')
-      .call(focusBrush);
-
     const brush = d3
       .brushX()
       .extent([
@@ -395,6 +401,33 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .call(brush)
       .call(brush.move, showRange);
 
+    const mouseMoveHandler = function () {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+      let x = x1Scale.invert(mouseX);
+      let _index = bisect(dataExample.data, x, 1);
+      _index = _index === 0 ? 1 : _index;
+
+      // 因为data中是[1, max_step]的数组,共max_step-1个数
+      // 而数组从0开始存储，所以数组中是[0, max_step-1)
+      // 所以_index最大是 max_step - 2
+      if (_index === max_step - 1) _index = max_step - 2;
+      let index =
+        x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
+          ? _index
+          : _index - 1;
+      let clickNumber = dataExample.data[index].x;
+      setLocalCurrentStep(clickNumber);
+      setCursorLinePos(x1Scale(clickNumber));
+
+      let newDetailInfoOfCurrentStep = [];
+      for (let i = 0; i < dataArrToShow.length; i++) {
+        newDetailInfoOfCurrentStep.push({
+          "name": dataArrToShow[i].id,
+          "value": dataArrToShow[i].data[clickNumber - 1].y,
+        })
+      }
+      setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+    };
     d3.select(svgRef.current)
       .select(".layerLevel-lineChart-zoom-g")
       .on("mousemove", function () {
@@ -432,6 +465,14 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         setCursorLinePos(null);
       })
       .on("click", function () {
+        // cancel mousemove and add brush after this is clicked.
+        setIsMouseMove(false);
+        setCursorLinePos(null);
+        // 为focus添加brush
+        d3.select(brushG).append('g')
+          .attr('class', 'focusBrush')
+          .call(focusBrush);
+
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
         let x = x1Scale.invert(mouseX);
 
@@ -524,16 +565,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             <rect width={svgWidth} height={height} />
           </clipPath>
         </defs>
-        <g className="layerLevel-lineChart-zoom-g" transform={`translate(${margin.left},${margin.top})`}>
-          <g ref={brushGRef}>
-            <rect
-              className="layerLevel-lineChart-zoom"
-              width={svgWidth}
-              height={height}
-              ref={zoomRef}
-            />
-          </g>
-        </g>
         <g
           className="layerLevel-lineChart-focus"
           transform={`translate(${margin.left},${margin.top})`}
@@ -567,6 +598,16 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
             />
           )}
 
+        </g>
+        <g className="layerLevel-lineChart-zoom-g" transform={`translate(${margin.left},${margin.top})`}>
+          <g ref={brushGRef}>
+            <rect
+              className="layerLevel-lineChart-zoom"
+              width={svgWidth}
+              height={height}
+              ref={zoomRef}
+            />
+          </g>
         </g>
         <g
           className="layerLevel-lineChart-context"
