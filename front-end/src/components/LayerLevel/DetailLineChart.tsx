@@ -170,7 +170,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         let _index = bisect(dataExample.data, x, 1);
 
         console.log(Math.floor(_index / ticksBetweenTwoSteps));
-        setClusterStep(Math.floor(_index / ticksBetweenTwoSteps));
+        setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
       })
   }
 
