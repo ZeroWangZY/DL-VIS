@@ -4,12 +4,12 @@ import * as d3 from 'd3';
 import { isFunction } from "util";
 
 interface Props {
-  nodeTensors: Array<Array<Array<number>>>;
+  clusterData: Array<Array<number>>;
   clusterStep: number;
 }
 
 const ClusterGraph: React.FC<Props> = (props: Props) => {
-  const { nodeTensors, clusterStep } = props;
+  const { clusterData, clusterStep } = props;
   const svgRef = useRef();
   const graphWidth = 160 + 150;
   const graphHeight = 160 + 150;
@@ -22,28 +22,11 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   const clusterHeight = chartAreaHeight - margin.top - margin.bottom;
 
   useEffect(() => {
-    if (!nodeTensors || nodeTensors.length === 0 || !clusterStep) return;
+    if (!clusterData || clusterData.length === 0 || !clusterStep) return;
 
-    const data = nodeTensors[clusterStep];
-    // data 的是二维的，layerLevel中进行了flat操作。
-
-    let model = new TSNE({
-      dim: 2,
-      perplexity: 30.0,
-      earlyExaggeration: 4.0,
-      learningRate: 100.0,
-      nIter: 1000,
-      metric: 'euclidean'
-    });
-
-    model.init({
-      data: data,
-      type: 'dense'
-    });
-    // `outputScaled` is `output` scaled to a range of [-1, 1]
-    let dataset = model.getOutputScaled();
+    const dataset = clusterData;
     console.log("tsne降维后的数据: ", dataset);
-
+    console.log(dataset);
     // 以下是绘制散点图
     let svg = d3.select(svgRef.current);
     svg.selectAll("g").remove();
@@ -54,11 +37,11 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       maxVal_y = d3.max(dataset, (d) => { return d[1] });
 
     let xScale = d3.scaleLinear()
-      .domain([parseFloat(minVal_x), parseFloat(maxVal_x)])
+      .domain([minVal_x, maxVal_x])
       .range([0, clusterWidth]);
 
     let yScale = d3.scaleLinear()
-      .domain([parseFloat(minVal_y), parseFloat(maxVal_y)])
+      .domain([minVal_y, maxVal_y])
       .range([clusterHeight, 0]);
 
     //绘制圆
@@ -110,7 +93,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         g.select('text').transition().duration(500).style('visibility', 'hidden');
       })
 
-  }, [nodeTensors, clusterStep])
+  }, [clusterData, clusterStep])
 
   return (
     <div className="layerLevel-cluster-container" style={{ height: graphHeight }}>

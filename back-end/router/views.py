@@ -15,6 +15,9 @@ from dao.data_helper import DataHelper
 from dao.node_mapping import alex_node_map
 import random
 import math
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import normalize
 
 DB_FILES = {
     'normal': 'data/alex-normal-8000.db',
@@ -238,6 +241,56 @@ def get_node_tensors(request):
         "data": None
     }), content_type="application/json")
 
+def get_node_data():
+    filename1 = 'data/output_tensors/26-conv2-activation.npy'
+    filename2 = 'data/output_tensors/27-conv2-activation.npy'
+    filename3 = 'data/output_tensors/28-conv2-activation.npy'
+    filename4 = 'data/output_tensors/29-conv2-activation.npy'
+    filename5 = 'data/output_tensors/30-conv2-activation.npy'
+    tensor1 = np.load(filename1)
+    tensor2 = np.load(filename2)
+    tensor3 = np.load(filename3)
+    tensor4 = np.load(filename4)
+    tensor5 = np.load(filename5)
+    res_tensors = np.array(
+        [np.sum(tensor1, axis=1).tolist(), np.sum(tensor2, axis=1).tolist(), np.sum(tensor3, axis=1).tolist(),
+         np.sum(tensor4, axis=1).tolist(), np.sum(tensor5, axis=1).tolist()])
+
+    # flat处理
+    faltenTensors=res_tensors.reshape(len(res_tensors), len(tensor1), -1)
+
+    return faltenTensors
+
+def get_cluster_data(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_id = request.GET.get('node_id')
+        current_step = int(request.GET.get('start_step', default='1'))
+        type = request.GET.get('type', default='activation')
+
+        faltenTensors = get_node_data();
+        # Tsne降维 并返回结果。
+        currentStep = 0;
+        originalData = faltenTensors[currentStep];
+
+        data_pca = PCA(n_components=min(50, len(originalData))).fit_transform(originalData)  ## 先进行pca
+        data_pca_tsne = TSNE(n_components=2).fit_transform(data_pca)
+        maxV = np.max(data_pca_tsne)
+        meanV = np.mean(data_pca_tsne)
+        minV = np.min(data_pca_tsne)
+        for i in range(len(data_pca_tsne)):
+            for j in range(len(data_pca_tsne[0])):
+                data_pca_tsne[i][j] = (data_pca_tsne[i][j] - meanV) / (maxV-minV)
+
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": data_pca_tsne.tolist()
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
 # 蓝噪声采样
 def blueNoiseSmapling(rate, originalData):    
     lineNum = len(originalData); # 折线数量
@@ -319,20 +372,9 @@ def get_node_lineData_blueNoiceSampling(request):
                 "message": "do not support such large steps",
                 "data": None
             }), content_type="application/json")
-        
-        filename1 = 'data/output_tensors/26-conv2-activation.npy'
-        filename2 = 'data/output_tensors/27-conv2-activation.npy'
-        filename3 = 'data/output_tensors/28-conv2-activation.npy'
-        filename4 = 'data/output_tensors/29-conv2-activation.npy'
-        filename5 = 'data/output_tensors/30-conv2-activation.npy'
-        tensor1 = np.load(filename1)
-        tensor2 = np.load(filename2)
-        tensor3 = np.load(filename3)
-        tensor4 = np.load(filename4)
-        tensor5 = np.load(filename5)
-        res_tensors = np.array([np.sum(tensor1, axis=1).tolist(), np.sum(tensor2, axis=1).tolist(),np.sum(tensor3, axis=1).tolist(),np.sum(tensor4, axis=1).tolist(),np.sum(tensor5, axis=1).tolist()])
-        # flat处理
-        faltenTensors = res_tensors.reshape(len(res_tensors),len(tensor1),-1)
+
+        # res_tensors = get_node_data();
+        faltenTensors = get_node_data();
         
         # ToLineData
         totalSteps = len(faltenTensors); # 共选中了多少steps

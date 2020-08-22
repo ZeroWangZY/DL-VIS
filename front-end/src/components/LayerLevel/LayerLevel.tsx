@@ -7,7 +7,7 @@ import ActivationOrGradientChart from './ActivationOrGradientChart';
 import TsneClusterGraph from './TsneClusterGraph';
 import ClusterGraph from './ClusterGraph';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
-import { fetchNodeLineDataBlueNoiceSampling, fetchNodeScalars, fetchNodeTensors } from '../../api/layerlevel';
+import { fetchNodeLineDataBlueNoiceSampling, fetchNodeScalars, fetchNodeTensors, fetchClusterData } from '../../api/layerlevel';
 import { activationsData } from '../../mock/mockDataForLayerLevel';
 import { ShowActivationOrGradient } from "../../store/global-states.type"
 import {
@@ -71,6 +71,7 @@ const LayerLevel: React.FC = () => {
 	const [brushedOrNot, setBrushedOrNot] = useState(false);
 	const [childNodeId, setChildNodeId] = useState(null);
 	const [clusterStep, setClusterStep] = useState(null);
+	const [clusterData, setClusterData] = useState(null);
 	const [activations, setActivations] = useState([]);
 	const [tsneGraph, setTsneGraph] = useState({});
 	const [activationOrGradientData, setActivationOrGradientData] = useState([] as DataToShow[]);
@@ -126,6 +127,10 @@ const LayerLevel: React.FC = () => {
 
 	}, [brushedStep, brushedOrNot, currentStep])
 
+	useEffect(() => {
+		getClusterData(currentMSGraphName, childNodeId, clusterStep, fetchDataType);
+	}, [clusterStep])
+
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: type });
 		let nodeScalars = data.data.data;
@@ -150,6 +155,13 @@ const LayerLevel: React.FC = () => {
 		dataTransform.push({ id: "mean", data: mean, color: "#4B0082" })
 
 		setActivationOrGradientData(dataTransform);
+	}
+
+	const getClusterData = async (graphName, nodeId, currStep, type) => {
+		let data = await fetchClusterData({ graph_name: graphName, node_id: nodeId, current_step: currStep, type: type });
+		let cluster = data.data.data;
+
+		setClusterData(cluster);
 	}
 
 	const getNodeTensors = async (graphName, nodeId, startStep, endStep, type) => {
@@ -221,7 +233,7 @@ const LayerLevel: React.FC = () => {
 					<div className="layer-container-box cluster-box">
 						{/* <TsneClusterGraph activations={tsneGraph} /> */}
 						<ClusterGraph
-							nodeTensors={nodeTensors}
+							clusterData={clusterData}
 							clusterStep={clusterStep} />
 					</div>
 
