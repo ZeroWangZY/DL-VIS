@@ -76,7 +76,6 @@ const Snapshot: React.FC = () => {
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
-      console.log(node.getBoundingClientRect().height);
       setSvgHeight(node.getBoundingClientRect().height - 15);
       setSvgWidth(node.getBoundingClientRect().width - 60);
     }
@@ -143,7 +142,9 @@ const Snapshot: React.FC = () => {
     context.selectAll(".area").remove(); // 清除原折线图
     context.selectAll(".brush").remove();
 
+    // dataArrToShow[0].data.length < 2的原因是 下方_index可能对应的数据为空，出错
     if (dataArrToShow.length === 0) return;
+
     //到此，所有要显示的折线图数据都在dataArrToShow里面了。
 
     const bisect = d3.bisector((d: any) => d.x).left;
@@ -296,21 +297,24 @@ const Snapshot: React.FC = () => {
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
         // 所以_index最大是 max_step - 2
         if (_index === max_step - 1) _index = max_step - 2;
-        let index =
-          x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
-            ? _index
-            : _index - 1;
-        let clickNumber = dataExample.data[index].x;
-        setLocalCurrentStep(clickNumber);
-        setCursorLinePos(x1Scale(clickNumber));
-        let newDetailInfoOfCurrentStep = [];
-        for (let i = 0; i < dataArrToShow.length; i++) {
-          newDetailInfoOfCurrentStep.push({
-            "name": dataArrToShow[i].id,
-            "value": dataArrToShow[i].data[clickNumber - 1].y,
-          })
+
+        if (0 <= (_index - 1) && _index < dataExample.data.length) {
+          let index =
+            x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
+              ? _index
+              : _index - 1;
+          let clickNumber = dataExample.data[index].x;
+          setLocalCurrentStep(clickNumber);
+          setCursorLinePos(x1Scale(clickNumber));
+          let newDetailInfoOfCurrentStep = [];
+          for (let i = 0; i < dataArrToShow.length; i++) {
+            newDetailInfoOfCurrentStep.push({
+              "name": dataArrToShow[i].id,
+              "value": dataArrToShow[i].data[clickNumber - 1].y,
+            })
+          }
+          setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
         }
-        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       })
       .on("mouseleave", function () {
         setLocalCurrentStep(null);
@@ -327,17 +331,20 @@ const Snapshot: React.FC = () => {
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
         // 所以_index最大是 max_step - 2
         if (_index === max_step - 1) _index = max_step - 2;
-        let index =
-          x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
-            ? _index
-            : _index - 1;
-        let clickNumber = dataExample.data[index].x;
 
-        modifyGlobalStates(
-          GlobalStatesModificationType.SET_CURRENT_STEP,
-          clickNumber
-        );
-        setFixCursorLinePos(x1Scale(clickNumber));
+        if (0 <= (_index - 1) && _index < dataExample.data.length) {
+          let index =
+            x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
+              ? _index
+              : _index - 1;
+          let clickNumber = dataExample.data[index].x;
+
+          modifyGlobalStates(
+            GlobalStatesModificationType.SET_CURRENT_STEP,
+            clickNumber
+          );
+          setFixCursorLinePos(x1Scale(clickNumber));
+        }
       });
   };
 

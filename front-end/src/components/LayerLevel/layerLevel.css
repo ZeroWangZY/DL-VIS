@@ -62,7 +62,9 @@
     pointer-events: all;
 }
 
-.detailLineChart-grid .tick line {
+.layerLevel-detailInfo-yAxisLine {
+    stroke: black;
+    stroke-width: 2;
     opacity: 0.2;
 }
 

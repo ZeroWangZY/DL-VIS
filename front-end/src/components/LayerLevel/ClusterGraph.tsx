@@ -5,13 +5,11 @@ import { isFunction } from "util";
 
 interface Props {
   nodeTensors: Array<Array<Array<number>>>;
-  start_step: number;
-  end_step: number;
   clusterStep: number;
 }
 
 const ClusterGraph: React.FC<Props> = (props: Props) => {
-  const { start_step, end_step, nodeTensors, clusterStep } = props;
+  const { nodeTensors, clusterStep } = props;
   const svgRef = useRef();
   const graphWidth = 160 + 150;
   const graphHeight = 160 + 150;
@@ -24,7 +22,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   const clusterHeight = chartAreaHeight - margin.top - margin.bottom;
 
   useEffect(() => {
-    if (!nodeTensors || nodeTensors.length === 0 || start_step < 0 || !clusterStep) return;
+    if (!nodeTensors || nodeTensors.length === 0 || !clusterStep) return;
 
     const data = nodeTensors[clusterStep];
     // data 的是二维的，layerLevel中进行了flat操作。
@@ -71,8 +69,8 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       .attr('transform', (d) => {
         let left = margin.left + xScale(d[0]);
         let top = yScale(d[1]) + margin.top;
-        if(left >= chartAreaHeight -2) {
-          left = chartAreaHeight -2;
+        if (left >= chartAreaHeight - 2) {
+          left = chartAreaHeight - 2;
         }
         return `translate(${left}, ${top})`;
       })
@@ -87,10 +85,10 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         }
         else {
           const text: any = g.append('text')
-          .text(`(${i})`)
-          .style('font-size', 14)
-          .style('visibility', 'visible');
-          const {width, height} = text.node().getBoundingClientRect();
+            .text(`(${i})`)
+            .style('font-size', 14)
+            .style('visibility', 'visible');
+          const { width, height } = text.node().getBoundingClientRect();
 
           let x = 10;
           let y = 0;
@@ -100,7 +98,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
             x = -(Math.ceil(width) + 10);
           }
           // y边界的处理
-          if(yScale(d[1]) + margin.top <= Math.ceil(height)) {
+          if (yScale(d[1]) + margin.top <= Math.ceil(height)) {
             y = (Math.ceil(height) + 5 - yScale(d[1]) - margin.top);
           }
           text.attr("x", x).attr("y", y);
@@ -112,7 +110,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         g.select('text').transition().duration(500).style('visibility', 'hidden');
       })
 
-  }, [nodeTensors, start_step, clusterStep])
+  }, [nodeTensors, clusterStep])
 
   return (
     <div className="layerLevel-cluster-container" style={{ height: graphHeight }}>

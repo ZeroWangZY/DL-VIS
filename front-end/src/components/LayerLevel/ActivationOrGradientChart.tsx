@@ -23,6 +23,7 @@ interface Props {
   is_training: boolean,
   max_step: number,
   setBrushedStep: { ([]): void };
+  setBrushedOrNot: { (boolean): void };
 }
 
 const useStyles = makeStyles({
@@ -38,7 +39,7 @@ const useStyles = makeStyles({
 
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
-  const { activationOrGradientData, max_step, setBrushedStep } = props;
+  const { activationOrGradientData, max_step, setBrushedStep, setBrushedOrNot } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
@@ -280,11 +281,24 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         return;
       }
       let s = selection.slice().map(x1Scale.invert, x1Scale);
-      s[0] = Math.ceil(s[0]);
-      s[1] = Math.floor(s[1]);
-      s = s.sort((a, b) => a - b);
-      if (s[1] - s[0] > focusBrushStep) {
-        s[1] = s[0] + focusBrushStep;
+
+      if (Math.abs(s[0] - s[1]) < 1 && Math.floor(s[0]) === Math.floor(s[1])) { // 刷选距离小于1，且中间没有包含任何step
+        let begStep = Math.round(s[0]);
+        modifyGlobalStates(
+          GlobalStatesModificationType.SET_CURRENT_STEP,
+          begStep
+        );
+        s[0] = Math.max(1, begStep); // 不能小于1
+        s[0] = Math.min(max_step-1, s[0]); // 不能大于 max_step-1
+
+        s[1] = Math.min(max_step - 1, s[0] + 1); 
+      } else {
+        s[0] = Math.ceil(s[0]);
+        s[1] = Math.floor(s[1]);
+        s = s.sort((a, b) => a - b);
+        if (s[1] - s[0] > focusBrushStep) {
+          s[1] = s[0] + focusBrushStep;
+        }
       }
       // console.log('selection: ', s);
       // const tempNewX1Domain = s.map(x1Scale.invert, x1Scale);
@@ -300,6 +314,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       // }
 
       setBrushedStep(s);
+      setBrushedOrNot(true);
       // Test代码
       // let beginPos = Math.floor(Math.random() * 3) + 300;
       // setBrushedStep([beginPos, beginPos + 9]);
@@ -392,22 +407,25 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
         // 所以_index最大是 max_step - 2
         if (_index === max_step - 1) _index = max_step - 2;
-        let index =
-          x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
-            ? _index
-            : _index - 1;
-        let clickNumber = dataExample.data[index].x;
-        setLocalCurrentStep(clickNumber);
-        setCursorLinePos(x1Scale(clickNumber));
 
-        let newDetailInfoOfCurrentStep = [];
-        for (let i = 0; i < dataArrToShow.length; i++) {
-          newDetailInfoOfCurrentStep.push({
-            "name": dataArrToShow[i].id,
-            "value": dataArrToShow[i].data[clickNumber - 1].y,
-          })
+        if (0 <= (_index - 1) && _index < dataExample.data.length) {
+          let index =
+            x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
+              ? _index
+              : _index - 1;
+          let clickNumber = dataExample.data[index].x;
+          setLocalCurrentStep(clickNumber);
+          setCursorLinePos(x1Scale(clickNumber));
+
+          let newDetailInfoOfCurrentStep = [];
+          for (let i = 0; i < dataArrToShow.length; i++) {
+            newDetailInfoOfCurrentStep.push({
+              "name": dataArrToShow[i].id,
+              "value": dataArrToShow[i].data[clickNumber - 1].y,
+            })
+          }
+          setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
         }
-        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
       })
       .on("mouseleave", function () {
         setLocalCurrentStep(null);
@@ -424,16 +442,19 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         // 而数组从0开始存储，所以数组中是[0, max_step-1)
         // 所以_index最大是 max_step - 2
         if (_index === max_step - 1) _index = max_step - 2;
-        let index =
-          x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
-            ? _index
-            : _index - 1;
-        let clickNumber = dataExample.data[index].x;
-        modifyGlobalStates(
-          GlobalStatesModificationType.SET_CURRENT_STEP,
-          clickNumber
-        );
-        setFixCursorLinePos(x1Scale(clickNumber));
+
+        if (0 <= (_index - 1) && _index < dataExample.data.length) {
+          let index =
+            x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
+              ? _index
+              : _index - 1;
+          let clickNumber = dataExample.data[index].x;
+          modifyGlobalStates(
+            GlobalStatesModificationType.SET_CURRENT_STEP,
+            clickNumber
+          );
+          setFixCursorLinePos(x1Scale(clickNumber));
+        }
       });
   };
 

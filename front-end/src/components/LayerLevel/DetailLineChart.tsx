@@ -48,7 +48,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     minValueOfDataToShow
   } = props;
 
-  const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
+  const { layerLevel_checkBoxState, currentStep, max_step } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
   const svgRef = useRef();
@@ -70,7 +70,9 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const chartWidth = svgWidth - margin.left - margin.right;
 
   useEffect(() => {
+    if (start_step < 0 || end_step < 0 || !start_step || !end_step) return;
     if (!dataArrToShow || dataArrToShow.length === 0) return;
+    console.log(start_step, end_step);
 
     DrawLineChart(minValueOfDataToShow, maxValueOfDataToShow, dataArrToShow);
 
@@ -80,11 +82,14 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     const totalSteps = end_step - start_step + 1;
     const ticksBetweenTwoSteps = dataArrToShow[0].data.length / totalSteps;
 
-    let focus = d3.select(svgRef.current).select("g.layerLevel-detailInfo-focus");
+    const svg = d3.select(svgRef.current);
+    let focus = svg.select("g.layerLevel-detailInfo-focus");
     focus.selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.selectAll(".layerLevel-detailInfo-area").remove(); // 清除原折线图
     focus.selectAll(".detailLineChart-grid").remove();
+    svg.selectAll(".layerLevel-detailInfo-text").remove();
+    svg.selectAll(".layerLevel-detailInfo-yAxisLine").remove();
 
     const bisect = d3.bisector((d: any) => d.x).left;
     //拿第一组数据查询
@@ -115,22 +120,48 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .attr("stroke", data.color);
     }
 
-    // add the X gridlines
-    console.log(totalSteps, totalSteps * ticksBetweenTwoSteps);
-    const yGridLine = d3.axisTop(xScale)
-      .tickSize(-chartHeight)
-      .ticks(totalSteps);
+    // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, max_step-1)]
+    // 坐标刻度为 ： start_step , .... Math.min(end_step, max_step-1)
+    // Math.min(end_step, max_step-1) === start_step时，不画线，直接标上值
 
+    svg.append("text")
+      .attr("class", "layerLevel-detailInfo-text")
+      .text(`${start_step}`)
+      .attr("x", margin.left)
+      .attr("y", margin.top - 2)
+      .attr("text-anchor", "middle");
+
+    if (Math.min(end_step, max_step - 1) !== start_step) {
+      let numberOfLineToDraw = Math.min(end_step, max_step - 1) - start_step; // 比如[345,346],还需要画1根线
+      let widthBetweenToLines = chartWidth / (numberOfLineToDraw + 1);
+
+      for (let i = 1; i <= numberOfLineToDraw; i++) {
+        let xPos = margin.left + widthBetweenToLines * i;
+        // 长度为 chartHeight
+        svg.append("text")
+          .attr("class", "layerLevel-detailInfo-text")
+          .text(`${start_step + i}`)
+          .attr("x", xPos)
+          .attr("y", margin.top - 2)
+          .attr("text-anchor", "middle");
+
+        svg.append("line")
+          .attr("class", "layerLevel-detailInfo-yAxisLine")
+          .attr("x1", xPos)
+          .attr("y1", margin.top)
+          .attr("x2", xPos)
+          .attr("y2", margin.top + chartHeight);
+      }
+    }
     focus
       .append("g")
       .attr("class", "axis axis--y")
       .call(d3.axisLeft(yScale));
 
     let yGrid = focus.append("g").attr("class", "detailLineChart-grid");
-    yGrid.call(yGridLine).selectAll("text").style("opacity", "0.8");
     yGrid.selectAll("path.domain").remove();  // 删除横线。
 
-    d3.select(svgRef.current)
+    svg
       .select("rect.layerLevel-detailInfo-zoom")
       .on("click", function () {
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
