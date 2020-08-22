@@ -64,15 +64,24 @@ const LayerLevel: React.FC = () => {
 	const processedGraph = useProcessedGraph();
 	const { nodeMap } = processedGraph;
 
-	const { selectedNodeId, showActivationOrGradient, currentMSGraphName, is_training, max_step } = useGlobalStates();
+	const { selectedNodeId, showActivationOrGradient, currentMSGraphName, is_training, max_step, currentStep } = useGlobalStates();
 
 	const [nodeTensors, setNodeTensors] = useState(null);
 	const [brushedStep, setBrushedStep] = useState(null);
+	const [brushedOrNot, setBrushedOrNot] = useState(false);
 	const [childNodeId, setChildNodeId] = useState(null);
 	const [clusterStep, setClusterStep] = useState(null);
 	const [activations, setActivations] = useState([]);
 	const [tsneGraph, setTsneGraph] = useState({});
 	const [activationOrGradientData, setActivationOrGradientData] = useState([] as DataToShow[]);
+
+	let initialBrushedStep = []; // 如果brushedOrNot===false时的初始刷选位置
+	if (currentStep) {
+		let end = Math.min(max_step - 1, currentStep);
+		initialBrushedStep = [end - 1, end];
+	} else {
+		initialBrushedStep = [1, 2];
+	}
 
 	const [detailLineChartData, setDetailLineChartData] = useState(null);
 	const [minValueOfDetailLineChartData, setMinValueOfDetailLineChartData] = useState(-100);
@@ -100,19 +109,22 @@ const LayerLevel: React.FC = () => {
 	}, [childNodeId, currentMSGraphName, is_training, max_step, showActivationOrGradient])
 
 	useEffect(() => {
-		if (!childNodeId) return;
-
 		console.log("brushedStep", brushedStep);
+		let brushedStartStep = 1, brushedEndStep = 1;
+		if (brushedOrNot === false) {
+			[brushedStartStep, brushedEndStep] = initialBrushedStep;
+		} else {
+			[brushedStartStep, brushedEndStep] = brushedStep;
+		}
 
 		const maxGap = 10;
-		const [brushedStartStep, brushedEndStep] = brushedStep;
 		if (brushedEndStep - brushedStartStep <= maxGap) {
 			getNodeTensors(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
 
 			getNodeLineDataBlueNoiceSampling(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
 		}
 
-	}, [brushedStep])
+	}, [brushedStep, brushedOrNot, currentStep])
 
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: type });
@@ -158,7 +170,7 @@ const LayerLevel: React.FC = () => {
 	}
 
 	const getNodeLineDataBlueNoiceSampling = async (graphName, nodeId, startStep, endStep, type) => {
-		let data = await fetchNodeLineDataBlueNoiceSampling({ graph_name: graphName, node_id: nodeId, start_step: startStep, end_step: endStep, type: type });
+		let data = await fetchNodeLineDataBlueNoiceSampling({ graph_name: graphName, node_id: nodeId, start_step: startStep, end_step: endStep + 1, type: type });
 		let originalLineData = data.data.data;
 		console.log(originalLineData);
 
@@ -198,8 +210,8 @@ const LayerLevel: React.FC = () => {
 				<div className="layer-container">
 					<div className="layer-container-box detail-box">
 						<DetailLineChart
-							start_step={brushedStep !== null ? brushedStep[0] : -1}
-							end_step={brushedStep !== null ? brushedStep[1] : -1}
+							start_step={brushedOrNot === true ? brushedStep[0] : initialBrushedStep[0]}
+							end_step={brushedOrNot === true ? brushedStep[1] : initialBrushedStep[1]}
 							dataArrToShow={detailLineChartData}
 							setClusterStep={setClusterStep}
 							minValueOfDataToShow={minValueOfDetailLineChartData}
@@ -209,8 +221,6 @@ const LayerLevel: React.FC = () => {
 					<div className="layer-container-box cluster-box">
 						{/* <TsneClusterGraph activations={tsneGraph} /> */}
 						<ClusterGraph
-							start_step={brushedStep !== null ? brushedStep[0] : -1}
-							end_step={brushedStep !== null ? brushedStep[1] : -1}
 							nodeTensors={nodeTensors}
 							clusterStep={clusterStep} />
 					</div>
@@ -221,7 +231,8 @@ const LayerLevel: React.FC = () => {
 								activationOrGradientData={activationOrGradientData}
 								is_training={is_training}
 								max_step={max_step}
-								setBrushedStep={setBrushedStep} />}
+								setBrushedStep={setBrushedStep}
+								setBrushedOrNot={setBrushedOrNot} />}
 					</div>
 				</div>
 			)}

@@ -276,7 +276,7 @@ def blueNoiseSmapling(rate, originalData):
     
     segmentCountOfEachGroup = [0 for n in range(segmentGroupNum)]; # 统计选中的所有折线图中,每个group的总数
     
-    for i in range(1, samplingLineNum):
+    for i in range(0, samplingLineNum):
         maxFillScore = -9999999;
         index = -1;
         newSegmentCountOfEachGroup = [];
@@ -312,7 +312,7 @@ def get_node_lineData_blueNoiceSampling(request):
         graph_name = request.GET.get('graph_name', default='lenet')
         node_id = request.GET.get('node_id')
         start_step = int(request.GET.get('start_step', default='1'))
-        end_step = int(request.GET.get('end_step', default='10'))
+        end_step = int(request.GET.get('end_step', default='10')) # 开区间
         type = request.GET.get('type', default='activation')
         if end_step - start_step > 20:
             return HttpResponse(json.dumps({
