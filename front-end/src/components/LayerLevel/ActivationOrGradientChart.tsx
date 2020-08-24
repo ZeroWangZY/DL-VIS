@@ -286,13 +286,18 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (!selection) {
         return;
       }
-      // 删除focus brush
-      d3.select(brushGRef.current).selectAll('.focusBrush').remove();
       // 添加mousemove
       setIsMouseMove(true);
       d3.select(svgRef.current)
-      .select(".layerLevel-lineChart-zoom-g")
-      .on("mousemove",  mouseMoveHandler);
+        .select(".layerLevel-lineChart-zoom-g")
+        .on("mousemove", mouseMoveHandler);
+      // 触发mouseup事件
+      // d3.select(svgRef.current)
+      //   .select(".layerLevel-lineChart-zoom-g")
+      //   .dispatch('mouseup');
+      // 删除focus brush
+      d3.select(brushGRef.current).select('.focusBrush').call(focusBrush.move, null);
+
       //console.log('brush end: ', isMousemove);
       let s = selection.slice().map(x1Scale.invert, x1Scale);
 
@@ -375,14 +380,27 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       d3.select(brushG).select('.focusBrush').call(focusBrush.move, s.map(x1Scale));
     };
 
+    const focusBrushStart = () => {
+      const selection = d3.event.selection;
+      if(!selection) {
+        return;
+      }
+      // cancel mousemove and add brush after this is clicked.
+      setIsMouseMove(false);
+      setCursorLinePos(null);
+    };
+
     const focusBrush = d3
       .brushX()
       .extent([
         [0, 0],
         [svgWidth, height],
       ])
+      .on('start', focusBrushStart)
       .on('brush', focusBrushHandler)
       .on("end", focusBrushended);
+
+    d3.select(brushG).select('.focusBrush').call(focusBrush);
 
     const brush = d3
       .brushX()
@@ -431,6 +449,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       }
       setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
     };
+
     d3.select(svgRef.current)
       .select(".layerLevel-lineChart-zoom-g")
       .on("mousemove", function () {
@@ -612,6 +631,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               height={height}
               ref={zoomRef}
             />
+            <g className="focusBrush"></g>
           </g>
         </g>
         <g
