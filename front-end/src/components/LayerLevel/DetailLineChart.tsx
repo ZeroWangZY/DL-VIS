@@ -18,6 +18,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { toExponential } from "../Snapshot/Snapshot"
 import { max } from "d3";
 import { fetchNodeLineDataBlueNoiceSampling } from '../../api/layerlevel';
+import { configConsumerProps } from "antd/lib/config-provider";
 
 
 interface Props {
@@ -109,6 +110,15 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y))
 
+    svg.select(".layerLevel-detailInfo-zoom")
+      .on("click", function () {
+        let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+        let x = xScale.invert(mouseX);
+
+        let _index = bisect(dataExample.data, x, 1);
+        setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
+      })
+
     for (let i = 0, len = dataArrToShow.length; i < len; i++) {
       let data = dataArrToShow[i];
       focus
@@ -116,8 +126,40 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .datum(data.data)
         .attr("class", "layerLevel-detailInfo-area")
         .attr("d", focusAreaLineGenerator)
-        .attr("fill", "none")
-        .attr("stroke", data.color);
+        .attr("stroke", data.color)
+        .attr("stroke-width", 1)
+        .on("mouseover", function (d) {
+          d3.select(this)
+            .attr("stroke-width", 2)
+            .attr("stroke", "red");
+
+          const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+          const mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+          let x = xScale.invert(mouseX);
+
+          let _index = bisect(dataExample.data, x, 1);
+          console.log(_index)
+          getLineInfoLabel(xScale(_index), mouseY, i, _index);
+        })
+        .on("mouseout", function (d) {
+          d3.select(this)
+            .attr("stroke", data.color)
+            .attr("stroke-width", 1);
+
+          focus.selectAll(".layerLevel-detailInfo-area-text").remove();
+        })
+    }
+
+    function getLineInfoLabel(xPos, yPos, i, index) { // 在(x,y)位置画一个信息框，里面是index
+      focus.selectAll(".layerLevel-detailInfo-area-text").remove();
+
+      focus.append('text')
+        .attr("class", "layerLevel-detailInfo-area-text")
+        .attr("x", xPos)
+        .attr("y", yPos)
+        .text(`(${index})`)
+        .style('font-size', 14)
+        .style('visibility', 'visible');
     }
 
     // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, max_step-1)]
@@ -161,17 +203,6 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     let yGrid = focus.append("g").attr("class", "detailLineChart-grid");
     yGrid.selectAll("path.domain").remove();  // 删除横线。
 
-    svg
-      .select("rect.layerLevel-detailInfo-zoom")
-      .on("click", function () {
-        let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-        let x = xScale.invert(mouseX);
-
-        let _index = bisect(dataExample.data, x, 1);
-
-        console.log(Math.floor(_index / ticksBetweenTwoSteps));
-        setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
-      })
   }
 
   return (
@@ -190,17 +221,20 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       <svg
         style={{ height: chartAreaHeight + "px", width: "100%" }}
         ref={svgRef}>
+        <g >
+          <rect
+            className="layerLevel-detailInfo-zoom"
+            width={chartWidth}
+            height={chartHeight}
+            transform={`translate(${margin.left},${margin.top})`}
+          />
+        </g>
         <g
           className="layerLevel-detailInfo-focus"
           transform={`translate(${margin.left},${margin.top})`}
         >
         </g>
-        <rect
-          className="layerLevel-detailInfo-zoom"
-          width={chartWidth}
-          height={chartHeight}
-          transform={`translate(${margin.left},${margin.top})`}
-        />
+
       </svg>
     </div>
   );
