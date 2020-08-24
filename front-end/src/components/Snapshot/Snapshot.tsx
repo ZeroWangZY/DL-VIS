@@ -132,7 +132,7 @@ const Snapshot: React.FC = () => {
     focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
-    focus.select('.focus-axis').selectAll(".snapshot-grid").remove();
+    focus.selectAll(".snapshot-grid").remove();
 
     let context = d3.select(svgRef.current).select("g.context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标

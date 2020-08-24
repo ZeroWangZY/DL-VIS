@@ -124,10 +124,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     // 因为当dataArrToShow为空的时候，没有任何绘制，但是也要将原来的绘制结果删除
     // 所以把这一段代码放在 if(dataArrToShow.length === 0) 之前
     let focus = d3.select(svgRef.current).select("g.layerLevel-lineChart-focus");
-    focus.selectAll(".axis--y").remove(); // 清除原来的坐标
-    focus.selectAll(".axis--x").remove(); // 清除原来的坐标
-    focus.selectAll(".area").remove(); // 清除原折线图
-    focus.selectAll(".activationOrGradient-grid").remove();
+    focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
+    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+    focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
+    // focus.selectAll(".activationOrGradient-grid").remove();
     // console.log('清空focusBrush');
     // d3.select(brushGRef.current).selectAll('.focusBrush').remove();
 
@@ -185,6 +185,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     for (let i = 0; i < dataArrToShow.length; i++) {
       let data = dataArrToShow[i];
       focus
+        .select('.focus-axis')
         .append("path")
         .datum(data.data)
         .attr("class", "area")
@@ -194,12 +195,14 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     }
 
     focus
+      .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x1Scale));
 
     focus
+      .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--y")
       .call(d3.axisLeft(focusAreaYScale).ticks(5).tickSize(3).tickPadding(2));
@@ -213,8 +216,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     //   .style("opacity", "0")
 
     // add the Y gridlines
-    focus.append("g")
-      .attr("class", "activationOrGradient-grid")
+    focus
+      .select('g.activationOrGradient-grid')
       .call(d3.axisLeft(focusAreaYScale).tickSize(-svgWidth))
       .selectAll("text")
       .style("opacity", "0")
@@ -247,8 +250,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
       // const t1 = focus.transition().duration(750);
       const xAxis: any = d3.axisBottom(x1Scale);
-      focus.selectAll(".area").attr("d", focusAreaLineGenerator);
-      focus.select(".axis--x").call(xAxis);
+      focus.select('.focus-axis').selectAll(".area").attr("d", focusAreaLineGenerator);
+      focus.select('.focus-axis').select(".axis--x").call(xAxis);
     };
 
     // focus的zoom event
@@ -581,6 +584,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
+          <g className="focus-axis"></g>
+          <g className="activationOrGradient-grid"></g>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }
