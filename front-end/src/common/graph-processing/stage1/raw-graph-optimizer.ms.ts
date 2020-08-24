@@ -69,7 +69,7 @@ function keepOnlyBackbone(rawGarph: RawGraph) {
   const reservedParameters = []
   for (const node of rawGarph.node) {
     for (const input of node.input) {
-      existConstsAndParameters.add(input)
+      existConstsAndParameters.add(input.name)
     }
   }
   for (const cst of rawGarph.constVals) {
