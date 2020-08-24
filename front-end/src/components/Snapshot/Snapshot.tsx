@@ -132,7 +132,7 @@ const Snapshot: React.FC = () => {
     focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
     focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
-    focus.selectAll(".snapshot-grid").remove();
+    // focus.selectAll(".snapshot-grid").remove();
 
     let context = d3.select(svgRef.current).select("g.context");
     context.selectAll(".axis--x").remove(); // 清除原来的坐标
@@ -222,8 +222,7 @@ const Snapshot: React.FC = () => {
     //   .style("opacity", "0")
 
     // add the Y gridlines
-    focus.append("g")
-      .attr("class", "snapshot-grid")
+    focus.select('g.snapshot-grid')
       .call(d3.axisLeft(focusAreaYScale).tickSize(-svgWidth))
       .selectAll("text")
       .style("opacity", "0")
@@ -435,6 +434,7 @@ const Snapshot: React.FC = () => {
               }}
             />
           )}
+          <g className="snapshot-grid"></g>
           <g className="focus-axis"></g>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
