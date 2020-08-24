@@ -572,6 +572,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           className="layerLevel-lineChart-focus"
           transform={`translate(${margin.left},${margin.top})`}
         >
+          <g className="activationOrGradient-grid"></g>
+          <g className="focus-axis"></g>
           {cursorLinePos !== null && (
             <line
               x1={cursorLinePos}
@@ -584,8 +586,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
-          <g className="activationOrGradient-grid"></g>
-          <g className="focus-axis"></g>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }

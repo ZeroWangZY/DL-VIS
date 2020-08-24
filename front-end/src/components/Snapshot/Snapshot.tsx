@@ -422,6 +422,8 @@ const Snapshot: React.FC = () => {
           className="focus"
           transform={`translate(${margin.left},${margin.top})`}
         >
+          <g className="snapshot-grid"></g>
+          <g className="focus-axis"></g>
           {cursorLinePos !== null && (
             <line
               x1={cursorLinePos}
@@ -434,8 +436,6 @@ const Snapshot: React.FC = () => {
               }}
             />
           )}
-          <g className="snapshot-grid"></g>
-          <g className="focus-axis"></g>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }
