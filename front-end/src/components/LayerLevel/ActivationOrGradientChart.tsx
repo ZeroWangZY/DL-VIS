@@ -220,7 +220,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .select('g.activationOrGradient-grid')
       .call(d3.axisLeft(focusAreaYScale).tickSize(-svgWidth))
       .selectAll("text")
-      .style("opacity", "0")
+      .style("opacity", "0");
 
     for (let i = 0; i < dataArrToShow.length; i++) {
       let data = dataArrToShow[i];
@@ -584,8 +584,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
-          <g className="focus-axis"></g>
           <g className="activationOrGradient-grid"></g>
+          <g className="focus-axis"></g>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }
