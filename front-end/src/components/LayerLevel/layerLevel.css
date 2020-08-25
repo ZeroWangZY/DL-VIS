@@ -79,8 +79,10 @@ path.layerLevel-detailInfo-area{
     pointer-events: stroke;
     z-index: 5;
     opacity: 0.4;
+    stroke-width: 1;
 }
 path.layerLevel-detailInfo-area.hovered{
     z-index: 9999;
     opacity: 1;
+    stroke-width: 2;
 }
