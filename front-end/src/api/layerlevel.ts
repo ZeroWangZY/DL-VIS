@@ -36,7 +36,7 @@ interface fetchNodeLineDataBlueNoiceSamplingParams {
 
 export const fetchNodeLineDataBlueNoiceSampling =
   (params: fetchNodeLineDataBlueNoiceSamplingParams): Promise<{ data }> =>
-    fireAjax('GET', '/python/api/get_node_lineData_blueNoiceSampling', params);
+    fireAjax('GET', '/python/api/get_node_line', params);
 
 interface fetchClusterData {
   "graph_name": string,
