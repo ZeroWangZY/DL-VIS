@@ -119,6 +119,7 @@ const LayerLevel: React.FC = () => {
 		} else {
 			[brushedStartStep, brushedEndStep] = brushedStep;
 		}
+		setClusterStep(brushedStartStep);
 
 		const maxGap = 10;
 		if (brushedEndStep - brushedStartStep <= maxGap) {

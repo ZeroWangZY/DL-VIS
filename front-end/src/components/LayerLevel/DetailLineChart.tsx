@@ -19,6 +19,7 @@ import { toExponential } from "../Snapshot/Snapshot"
 import { max } from "d3";
 import { fetchNodeLineDataBlueNoiceSampling } from '../../api/layerlevel';
 import { configConsumerProps } from "antd/lib/config-provider";
+import { useProcessedGraph } from "../../store/processedGraph";
 
 
 interface Props {
@@ -49,8 +50,11 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     minValueOfDataToShow
   } = props;
 
-  const { layerLevel_checkBoxState, currentStep, max_step } = useGlobalStates();
+  const { layerLevel_checkBoxState, currentStep, max_step, selectedNodeId } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
+
+  const processedGraph = useProcessedGraph();
+  const { nodeMap } = processedGraph;
 
   const svgRef = useRef();
   const zoomRef = useRef();
@@ -138,7 +142,6 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           let x = xScale.invert(mouseX);
 
           let _index = bisect(dataExample.data, x, 1);
-          console.log(_index)
           getLineInfoLabel(xScale(_index), mouseY, i, _index);
         })
         .on("mouseout", function (d) {
@@ -215,7 +218,9 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           left: margin.left,
           fontSize: "14px"
         }}>
-        数据实例指标变化图
+        <span>
+          {"数据实例指标变化图 (层: " + `${nodeMap[selectedNodeId].displayedName}` + " 迭代: " + `${start_step}` + "-" + `${end_step}` + ")"}
+        </span>
       </div>
 
       <svg

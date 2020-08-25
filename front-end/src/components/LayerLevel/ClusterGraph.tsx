@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import TSNE from 'tsne-js';
 import * as d3 from 'd3';
 import { isFunction } from "util";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { useProcessedGraph } from "../../store/processedGraph";
 
 interface Props {
   clusterData: Array<Array<number>>;
@@ -11,8 +16,8 @@ interface Props {
 const ClusterGraph: React.FC<Props> = (props: Props) => {
   const { clusterData, clusterStep } = props;
   const svgRef = useRef();
-  const graphWidth = 160 + 150;
-  const graphHeight = 160 + 150;
+  const graphWidth = 310;
+  const graphHeight = 310;
 
   const titleAreaHeight = 16 // graphHeight * 0.1;
   const chartAreaHeight = graphHeight - titleAreaHeight;
@@ -20,6 +25,10 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   const margin = { left: 10, right: 10, top: 5, bottom: 5 }; // 整个cluster与外层之间的margin
   const clusterWidth = graphWidth - margin.left - margin.right;
   const clusterHeight = chartAreaHeight - margin.top - margin.bottom;
+  const processedGraph = useProcessedGraph();
+  const { nodeMap } = processedGraph;
+  const { selectedNodeId } = useGlobalStates();
+
 
   useEffect(() => {
     if (!clusterData || clusterData.length === 0 || !clusterStep) return;
@@ -102,12 +111,15 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         className="layerLevel-detailInfo-title"
         style={{
           height: titleAreaHeight + "px",
-          width: "80%",
+          width: "95%",
           position: 'relative',
           left: margin.left,
           fontSize: "14px"
         }}>
-        数据实例指标投影图
+        <span>
+          {"投影图(" + `${nodeMap[selectedNodeId].displayedName}` + " 迭代: " + `${clusterStep}` + ")"}
+        </span>
+
       </div>
 
       <svg

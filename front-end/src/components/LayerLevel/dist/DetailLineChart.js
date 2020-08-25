@@ -5,10 +5,13 @@ var d3 = require("d3");
 var global_states_1 = require("../../store/global-states");
 var global_configuration_1 = require("../../store/global-configuration");
 require("./ActivationOrGradientChart.css");
+var processedGraph_1 = require("../../store/processedGraph");
 var DetailLineChart = function (props) {
     var start_step = props.start_step, end_step = props.end_step, dataArrToShow = props.dataArrToShow, setClusterStep = props.setClusterStep, maxValueOfDataToShow = props.maxValueOfDataToShow, minValueOfDataToShow = props.minValueOfDataToShow;
-    var _a = global_states_1.useGlobalStates(), layerLevel_checkBoxState = _a.layerLevel_checkBoxState, currentStep = _a.currentStep, max_step = _a.max_step;
+    var _a = global_states_1.useGlobalStates(), layerLevel_checkBoxState = _a.layerLevel_checkBoxState, currentStep = _a.currentStep, max_step = _a.max_step, selectedNodeId = _a.selectedNodeId;
     var layerLevelcolorMap = global_configuration_1.useGlobalConfigurations().layerLevelcolorMap;
+    var processedGraph = processedGraph_1.useProcessedGraph();
+    var nodeMap = processedGraph.nodeMap;
     var svgRef = react_1.useRef();
     var zoomRef = react_1.useRef();
     var _b = react_1.useState(650), svgWidth = _b[0], setSvgWidth = _b[1];
@@ -81,7 +84,6 @@ var DetailLineChart = function (props) {
                 var mouseY = d3.mouse(this)[1];
                 var x = xScale.invert(mouseX);
                 var _index = bisect(dataExample.data, x, 1);
-                console.log(_index);
                 getLineInfoLabel(xScale(_index), mouseY, i, _index);
             })
                 .on("mouseout", function (d) {
@@ -146,7 +148,8 @@ var DetailLineChart = function (props) {
                 position: 'relative',
                 left: margin.left,
                 fontSize: "14px"
-            } }, "\u6570\u636E\u5B9E\u4F8B\u6307\u6807\u53D8\u5316\u56FE"),
+            } },
+            react_1["default"].createElement("span", null, "数据实例指标变化图 (层: " + ("" + nodeMap[selectedNodeId].displayedName) + " 迭代: " + ("" + start_step) + "-" + ("" + end_step) + ")")),
         react_1["default"].createElement("svg", { style: { height: chartAreaHeight + "px", width: "100%" }, ref: svgRef },
             react_1["default"].createElement("g", null,
                 react_1["default"].createElement("rect", { className: "layerLevel-detailInfo-zoom", width: chartWidth, height: chartHeight, transform: "translate(" + margin.left + "," + margin.top + ")" })),

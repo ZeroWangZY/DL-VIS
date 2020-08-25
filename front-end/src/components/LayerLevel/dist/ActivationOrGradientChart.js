@@ -50,6 +50,7 @@ exports.__esModule = true;
 var react_1 = require("react");
 var d3 = require("d3");
 var global_states_1 = require("../../store/global-states");
+var processedGraph_1 = require("../../store/processedGraph");
 var global_configuration_1 = require("../../store/global-configuration");
 var styles_1 = require("@material-ui/core/styles");
 var global_states_type_1 = require("../../store/global-states.type");
@@ -87,6 +88,9 @@ var ActivationOrGradientChart = function (props) {
     var _h = react_1.useState(activationOrGradientData), dataArrToShow = _h[0], setDataArrToShow = _h[1];
     var _j = react_1.useState([]), DetailInfoOfCurrentStep = _j[0], setDetailInfoOfCurrentStep = _j[1];
     var _k = react_1.useState(null), showDomain = _k[0], setShowDomain = _k[1];
+    var processedGraph = processedGraph_1.useProcessedGraph();
+    var nodeMap = processedGraph.nodeMap;
+    var selectedNodeId = global_states_1.useGlobalStates().selectedNodeId;
     var measuredRef = react_1.useCallback(function (node) {
         if (node !== null) {
             setSvgWidth(node.getBoundingClientRect().width - 70);
@@ -484,7 +488,9 @@ var ActivationOrGradientChart = function (props) {
                     react_1["default"].createElement("div", { style: { clear: 'both' } }))); }))));
     };
     return (react_1["default"].createElement("div", { className: "layerLevel-lineChart-container", ref: measuredRef, style: { userSelect: 'none', height: "100%" } },
-        react_1["default"].createElement("div", { className: "layerLevel-lineChart-checkbox", style: { height: titleAreaHeight + "px", width: "70%", position: 'relative', top: "-10px", left: margin.left } },
+        react_1["default"].createElement("div", { className: "layerLevel-lineChart-title", style: { height: titleAreaHeight + "px", width: "350px", position: 'relative', left: margin.left, float: "left" } },
+            react_1["default"].createElement("span", null, "模型指标统计概览图(" + ("" + nodeMap[selectedNodeId].displayedName) + ")")),
+        react_1["default"].createElement("div", { className: "layerLevel-lineChart-checkbox", style: { height: titleAreaHeight + "px", width: "50%", position: 'relative', top: "-10px", left: margin.left, float: "left" } },
             react_1["default"].createElement(FormGroup_1["default"], { row: true },
                 react_1["default"].createElement(FormControlLabel_1["default"], { control: react_1["default"].createElement(Checkbox_1["default"], { style: { color: layerLevelcolorMap.get("max") }, checked: layerLevel_checkBoxState.showMax, onChange: handleChange, name: "showMax" }), label: react_1["default"].createElement(Typography_1["default"], { style: { fontSize: "14px" } }, "max") }),
                 react_1["default"].createElement(FormControlLabel_1["default"], { control: react_1["default"].createElement(Checkbox_1["default"], { style: { color: layerLevelcolorMap.get("min") }, checked: layerLevel_checkBoxState.showMin, onChange: handleChange, name: "showMin" }), label: react_1["default"].createElement(Typography_1["default"], { style: { fontSize: "14px" } }, "min") }),

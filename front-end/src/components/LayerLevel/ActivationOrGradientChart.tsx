@@ -4,6 +4,7 @@ import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
+import { useProcessedGraph } from "../../store/processedGraph";
 import {
   useGlobalConfigurations
 } from "../../store/global-configuration";
@@ -57,6 +58,11 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const [dataArrToShow, setDataArrToShow] = useState(activationOrGradientData);
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [showDomain, setShowDomain] = useState(null);
+  const processedGraph = useProcessedGraph();
+
+  const { nodeMap } = processedGraph;
+  const { selectedNodeId } = useGlobalStates();
+
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setSvgWidth(node.getBoundingClientRect().width - 70);
@@ -308,9 +314,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           begStep
         );
         s[0] = Math.max(1, begStep); // 不能小于1
-        s[0] = Math.min(max_step-1, s[0]); // 不能大于 max_step-1
+        s[0] = Math.min(max_step - 1, s[0]); // 不能大于 max_step-1
 
-        s[1] = Math.min(max_step - 1, s[0] + 1); 
+        s[1] = Math.min(max_step - 1, s[0] + 1);
       } else {
         s[0] = Math.ceil(s[0]);
         s[1] = Math.floor(s[1]);
@@ -382,7 +388,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
     const focusBrushStart = () => {
       const selection = d3.event.selection;
-      if(!selection) {
+      if (!selection) {
         return;
       }
       // cancel mousemove and add brush after this is clicked.
@@ -562,8 +568,13 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   return (
     <div className="layerLevel-lineChart-container" ref={measuredRef} style={{ userSelect: 'none', height: "100%" }}>
       {/* <div style={{ display: "inline" }}> */}
+      <div className="layerLevel-lineChart-title" style={{ height: titleAreaHeight + "px", width: "350px", position: 'relative', left: margin.left, float: "left" }}>
+        <span>
+          {"模型指标统计概览图(" + `${nodeMap[selectedNodeId].displayedName}` + ")"}
+        </span>
+      </div>
 
-      <div className="layerLevel-lineChart-checkbox" style={{ height: titleAreaHeight + "px", width: "70%", position: 'relative', top: "-10px", left: margin.left }}>
+      <div className="layerLevel-lineChart-checkbox" style={{ height: titleAreaHeight + "px", width: "50%", position: 'relative', top: "-10px", left: margin.left, float: "left" }}>
         <FormGroup row>
           <FormControlLabel
             control={<Checkbox style={{ color: layerLevelcolorMap.get("max") }} checked={layerLevel_checkBoxState.showMax} onChange={handleChange} name="showMax" />}
@@ -639,7 +650,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           transform={`translate(${margin2.left},${margin2.top})`}
         ></g>
       </svg>
-    </div>
+    </div >
   );
 }
 export default ActivationOrGradientChart;
