@@ -110,6 +110,8 @@ const LayerLevel: React.FC = () => {
 	}, [childNodeId, currentMSGraphName, is_training, max_step, showActivationOrGradient])
 
 	useEffect(() => {
+		if (!childNodeId) return;
+
 		console.log("brushedStep", brushedStep);
 		let brushedStartStep = 1, brushedEndStep = 1;
 		if (brushedOrNot === false) {
@@ -125,11 +127,12 @@ const LayerLevel: React.FC = () => {
 			getNodeLineDataBlueNoiceSampling(currentMSGraphName, childNodeId, brushedStartStep, brushedEndStep, fetchDataType);
 		}
 
-	}, [brushedStep, brushedOrNot, currentStep])
+	}, [brushedStep, brushedOrNot, currentStep, childNodeId])
 
 	useEffect(() => {
+		if (!clusterStep) return;
 		getClusterData(currentMSGraphName, childNodeId, clusterStep, fetchDataType);
-	}, [clusterStep])
+	}, [clusterStep, childNodeId])
 
 	const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
 		let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: type });

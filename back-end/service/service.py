@@ -2,24 +2,34 @@ import numpy as np
 import math
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+import sys
+sys.path.append("..")
+from dao.node_mapping import alex_node_map
 
-def get_node_data():
-    filename1 = 'data/output_tensors/26-conv2-activation.npy'
-    filename2 = 'data/output_tensors/27-conv2-activation.npy'
-    filename3 = 'data/output_tensors/28-conv2-activation.npy'
-    filename4 = 'data/output_tensors/29-conv2-activation.npy'
-    filename5 = 'data/output_tensors/30-conv2-activation.npy'
-    tensor1 = np.load(filename1)
-    tensor2 = np.load(filename2)
-    tensor3 = np.load(filename3)
-    tensor4 = np.load(filename4)
-    tensor5 = np.load(filename5)
-    res_tensors = np.array(
-        [np.sum(tensor1, axis=1).tolist(), np.sum(tensor2, axis=1).tolist(), np.sum(tensor3, axis=1).tolist(),
-         np.sum(tensor4, axis=1).tolist(), np.sum(tensor5, axis=1).tolist()])
+def get_node_data(start_step, end_step, node_id, type):
+    # 最多15个step，否则报错
+    # if (end_step - start_step > 15):
+        # return ERROR
+    tensorList = []
+    for i in range(start_step, end_step):
+        filename = 'data/output_tensors/'+ str(i) + "-" + alex_node_map[node_id] + "-" + type + ".npy"
+        tensorList.append(np.load(filename))
 
+    if alex_node_map[node_id].find("fc") >= 0:
+        print("FC层")
+        res_tensors = np.array(
+            [tensor for tensor in tensorList]
+        )
+        print(res_tensors.shape)
+    else:
+        print("conv层")
+        res_tensors = np.array(
+            [np.sum(tensor, axis=1).tolist() for tensor in tensorList]
+        )
+        print(res_tensors.shape)
+    
     # flat处理
-    flattenTensors=res_tensors.reshape(len(res_tensors), len(tensor1), -1)
+    flattenTensors=res_tensors.reshape(len(res_tensors), len(tensorList[0]), -1)
 
     return flattenTensors
 
@@ -31,7 +41,7 @@ def get_node_line_service(graph_name, node_id, start_step, end_step, type):
         }), content_type="application/json")
 
     # res_tensors = get_node_data()
-    flattenTensors = get_node_data()
+    flattenTensors = get_node_data(start_step, end_step, node_id, type)
     
     # ToLineData
     totalSteps = len(flattenTensors) # 共选中了多少steps
@@ -61,7 +71,7 @@ def get_node_line_service(graph_name, node_id, start_step, end_step, type):
     return result
 
 def get_cluster_data_service(graph_name, node_id, current_step, type):
-    flattenTensors = get_node_data()
+    flattenTensors = get_node_data(current_step, current_step + 1, node_id, type)
     # Tsne降维 并返回结果。
     currentStep = 0
     originalData = flattenTensors[currentStep]
