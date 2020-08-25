@@ -131,11 +131,11 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .attr("class", "layerLevel-detailInfo-area")
         .attr("d", focusAreaLineGenerator)
         .attr("stroke", data.color)
-        .attr("stroke-width", 1)
         .on("mouseover", function (d) {
           d3.select(this)
             .attr("stroke-width", 2)
             .attr("stroke", "red");
+          d3.select(this).classed("hovered", true);
 
           const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
           const mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
@@ -147,7 +147,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .on("mouseout", function (d) {
           d3.select(this)
             .attr("stroke", data.color)
-            .attr("stroke-width", 1);
+          d3.select(this).classed("hovered", false);
 
           focus.selectAll(".layerLevel-detailInfo-area-text").remove();
         })

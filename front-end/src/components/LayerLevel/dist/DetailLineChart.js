@@ -75,11 +75,11 @@ var DetailLineChart = function (props) {
                 .attr("class", "layerLevel-detailInfo-area")
                 .attr("d", focusAreaLineGenerator)
                 .attr("stroke", data.color)
-                .attr("stroke-width", 1)
                 .on("mouseover", function (d) {
                 d3.select(this)
                     .attr("stroke-width", 2)
                     .attr("stroke", "red");
+                d3.select(this).classed("hovered", true);
                 var mouseX = d3.mouse(this)[0];
                 var mouseY = d3.mouse(this)[1];
                 var x = xScale.invert(mouseX);
@@ -88,8 +88,8 @@ var DetailLineChart = function (props) {
             })
                 .on("mouseout", function (d) {
                 d3.select(this)
-                    .attr("stroke", data.color)
-                    .attr("stroke-width", 1);
+                    .attr("stroke", data.color);
+                d3.select(this).classed("hovered", false);
                 focus.selectAll(".layerLevel-detailInfo-area-text").remove();
             });
         };
