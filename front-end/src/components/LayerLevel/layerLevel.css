@@ -86,3 +86,7 @@ path.layerLevel-detailInfo-area.hovered{
     opacity: 1;
     stroke-width: 2;
 }
+.layerLevel-cluster-graph{
+    margin: 5px;
+    box-shadow: 0 0 0 5px #388aac;
+}
