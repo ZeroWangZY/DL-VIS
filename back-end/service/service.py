@@ -77,7 +77,7 @@ def get_cluster_data_service(graph_name, node_id, current_step, type):
     originalData = flattenTensors[currentStep]
 
     data_pca = PCA(n_components=min(50, len(originalData))).fit_transform(originalData)  ## 先进行pca
-    data_pca_tsne = TSNE(n_components=2).fit_transform(data_pca)
+    data_pca_tsne = TSNE(n_components=2, perplexity=3).fit_transform(data_pca)
     maxV = np.max(data_pca_tsne)
     meanV = np.mean(data_pca_tsne)
     minV = np.min(data_pca_tsne)
@@ -120,7 +120,15 @@ def blue_noise_sampling(rate, originalData):
     stepNum = len(originalData[0]) # 折线中包含多少个数据点
     
     samplingLineNum = round(rate * lineNum) # 要采样的折线图数量
-    samplingLineNum = 20 if samplingLineNum > 20 else samplingLineNum
+    if samplingLineNum > 200:
+        samplingLineNum = 200;
+    elif samplingLineNum < 100:
+        if lineNum > 100:
+            samplingLineNum = 100;
+        else:
+            samplingLineNum = lineNum;
+
+    # samplingLineNum = 100 # 50 if samplingLineNum > 50 else samplingLineNum
     segmentGroupNum = 5
     samplingSegmentNum = samplingLineNum * (stepNum - 1) # 采样的数据中一共包含多少个segment
     segmentNumberInEachGroup = math.floor(samplingSegmentNum / segmentGroupNum)
