@@ -21,7 +21,8 @@ from service.service import get_node_line_service, get_cluster_data_service, get
 DB_FILES = {
     'normal': 'data/alex-normal-8000.db',
     'param_error': 'data/alexnet-parameter-outlier-sigma-1.db',
-    'lr_error': 'data/alexnet-lr-0.00001.db'
+    'lr_error': 'data/alexnet-lr-0.00001.db',
+    'with_activation': 'data/alexnet-with-activation-tensors.db'
 }
 
 db_file = DB_FILES['normal']
@@ -291,6 +292,14 @@ def emit_action(request):
         is_training = False
     elif action == 'set_lr_error_data':
         db_file = DB_FILES['lr_error']
+        dp = DataHelper(db_file)
+        DB_MAX_STEP = int(dp.get_metadata('max_step'))
+        dp.close()
+        del dp
+        max_step = DB_MAX_STEP
+        is_training = False
+    elif action == 'set_with_activation_data':
+        db_file = DB_FILES['with_activation']
         dp = DataHelper(db_file)
         DB_MAX_STEP = int(dp.get_metadata('max_step'))
         dp.close()
