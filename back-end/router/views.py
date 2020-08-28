@@ -270,8 +270,8 @@ def get_tensor_heatmap(request):
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
         node_id = request.GET.get('node_id')
-        step = int(request.GET.get('start_step', default='1'))
-        data_index = int(request.GET.get('start_step', default='1'))
+        step = int(request.GET.get('step', default='1'))
+        data_index = int(request.GET.get('data_index', default='1'))
         type = request.GET.get('type', default='activation')
 
         result = get_tensor_heatmap_service(step, node_id, data_index, type)

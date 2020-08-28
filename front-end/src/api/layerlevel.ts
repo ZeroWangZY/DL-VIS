@@ -38,11 +38,23 @@ export const fetchNodeLineDataBlueNoiceSampling =
   (params: fetchNodeLineDataBlueNoiceSamplingParams): Promise<{ data }> =>
     fireAjax('GET', '/python/api/get_node_line', params);
 
-interface fetchClusterData {
+interface FetchClusterDataParam {
   "graph_name": string,
   "node_id": string,
   "current_step": number,
   "type": string
 }
-export const fetchClusterData = (params: fetchClusterData): Promise<{ data }> =>
+export const fetchClusterData = (params: FetchClusterDataParam): Promise<{ data }> =>
   fireAjax('GET', '/python/api/get_cluster_data', params);
+
+
+interface FetchTensorHeatMapDataParam {
+  "graph_name": string,
+  "node_id": string,
+  "step": number,
+  "data_index": number,
+  "type": string
+}
+
+export const fetchTensorHeatmapBase64 = (params: FetchTensorHeatMapDataParam): Promise<{ data }> => 
+  fireAjax('GET', '/python/api/get_tensor_heatmap', params)
