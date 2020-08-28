@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/get_node_tensors', views.get_node_tensors),
     path('api/get_cluster_data', views.get_cluster_data),
     path('api/get_node_line', views.get_node_line),
+    path('api/get_tensor_heatmap', views.get_tensor_heatmap),
 
     path('api/emit_action', views.emit_action)
 ]

@@ -16,7 +16,8 @@ from dao.node_mapping import alex_node_map
 import random
 import math
 
-from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service
+from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
+    get_tensor_heatmap_service
 
 DB_FILES = {
     'normal': 'data/alex-normal-8000.db',
@@ -189,6 +190,7 @@ def get_node_scalars(request):
         "data": None
     }), content_type="application/json")
 
+
 def get_node_tensors(request):
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
@@ -201,7 +203,7 @@ def get_node_tensors(request):
                 "message": "do not support such large steps",
                 "data": None
             }), content_type="application/json")
-        
+
         if start_step % 3 == 0:
             res = np.random.randn(end_step - start_step, 16, 24, 24, 3)
         elif start_step % 3 == 1:
@@ -237,14 +239,42 @@ def get_cluster_data(request):
         "data": None
     }), content_type="application/json")
 
+
 def get_node_line(request):
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
         node_id = request.GET.get('node_id')
         start_step = int(request.GET.get('start_step', default='1'))
-        end_step = int(request.GET.get('end_step', default='10')) # 开区间
+        end_step = int(request.GET.get('end_step', default='10'))  # 开区间
         type = request.GET.get('type', default='activation')
+
+        if end_step - start_step > 20:
+            return HttpResponse(json.dumps({
+                "message": "do not support such large steps",
+                "data": None
+            }), content_type="application/json")
+
         result = get_node_line_service(graph_name, node_id, start_step, end_step, type)
+
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": result
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
+
+def get_tensor_heatmap(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_id = request.GET.get('node_id')
+        step = int(request.GET.get('start_step', default='1'))
+        data_index = int(request.GET.get('start_step', default='1'))
+        type = request.GET.get('type', default='activation')
+
+        result = get_tensor_heatmap_service(step, node_id, data_index, type)
 
         return HttpResponse(json.dumps({
             "message": "success",
