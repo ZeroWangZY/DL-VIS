@@ -9,6 +9,8 @@ import TensorHeatmap, {
   TensorHeatmapProps,
   TensorMetadata,
 } from "./TensorHeatmap";
+import { makeStyles } from "@material-ui/core/styles";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 interface Props {
   dataArrToShow: Array<Array<number>>;
@@ -18,9 +20,21 @@ interface Props {
   minValueOfDataToShow: number;
   maxValueOfDataToShow: number;
   childNodeId: string | null;
+  showLoading: boolean;
 }
 
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 4, 3),
+    marginLeft: "40px",
+  },
+}));
+
 const DetailLineChart: React.FC<Props> = (props: Props) => {
+  const classes = useStyles();
+
   const {
     start_step,
     end_step,
@@ -28,7 +42,8 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     setClusterStep,
     maxValueOfDataToShow,
     minValueOfDataToShow,
-    childNodeId
+    childNodeId,
+    showLoading
   } = props;
 
   const {
@@ -41,6 +56,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const { nodeMap } = processedGraph;
 
   const svgRef = useRef();
+  const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
   const [svgWidth, setSvgWidth] = useState(650);
   const [svgHeight, setSvgHeight] = useState(140);
   const [selectedTensor, setSelectedTensor] = useState<TensorMetadata>({
@@ -67,12 +83,13 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const chartWidth = svgWidth - margin.left - margin.right;
 
   useEffect(() => {
+    if (showLoading) return;
     if (start_step < 0 || end_step < 0 || !start_step || !end_step) return;
     if (!dataArrToShow || dataArrToShow.length === 0) return;
-    console.log(start_step, end_step);
+    // console.log(start_step, end_step);
 
     DrawLineChart(minValueOfDataToShow, maxValueOfDataToShow, dataArrToShow);
-  }, [dataArrToShow, minValueOfDataToShow, maxValueOfDataToShow, svgWidth]);
+  }, [dataArrToShow, minValueOfDataToShow, maxValueOfDataToShow, svgWidth, showLoading]);
 
   const DrawLineChart = (minValue, maxValue, dataArrToShow) => {
     const totalSteps = end_step - start_step + 1;
@@ -115,8 +132,13 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
     });
 
-    for (let i = 0, len = dataArrToShow.length; i < len; i++) {
-      let data = dataArrToShow[i];
+    // function toTopLevel(targetElement: SVGSVGElement) {
+    //   let parent = targetElement.parentNode;
+    //   parent.appendChild(targetElement);
+    // }
+
+    for (let idx = 0, len = dataArrToShow.length; idx < len; idx++) {
+      let data = dataArrToShow[idx];
       focus
         .append("path")
         .datum(data.data)
@@ -124,7 +146,10 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .attr("d", focusAreaLineGenerator)
         .attr("stroke", data.color)
         .on("mouseover", function (d) {
-          d3.select(this).attr("stroke-width", 2).attr("stroke", "red");
+          // toTopLevel((this as any) as SVGSVGElement);
+          d3.select(this).raise(); // 将高亮的折线显示在最上层。
+
+          d3.select(this).attr("stroke", "red");
           d3.select(this).classed("hovered", true);
 
           const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
@@ -134,10 +159,12 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           const batchSize =
             dataExample.data.length / (end_step - start_step + 1);
           let step = Math.floor(start_step + _index / batchSize);
-          getLineInfoLabel(xScale(_index), mouseY, i, step, _index % batchSize);
+          getLineInfoLabel(xScale(_index), mouseY, idx, step, _index % batchSize);
         })
         .on("click", function (d) {
           const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+          const mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+
           let x = xScale.invert(mouseX);
           let _index = bisect(dataExample.data, x, 1);
           const batchSize =
@@ -150,6 +177,8 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
             dataIndex: _index,
             nodeId: childNodeId
           });
+
+          setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
           setIsShowingTensorHeatmap(true);
         })
         .on("mouseout", function (d) {
@@ -242,27 +271,40 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         </span>
       </div>
 
-      <svg
-        style={{ height: chartAreaHeight + "px", width: "100%" }}
-        ref={svgRef}
-      >
-        <g>
-          <rect
-            className="layerLevel-detailInfo-zoom"
-            width={chartWidth}
-            height={chartHeight}
+      {showLoading && (
+        <div className={classes.paper}
+          style={{ height: chartHeight, marginLeft: margin.left }}>
+          <h2>
+            正在获取数据实例指标变化图数据
+          </h2>
+          {showLoading && <CircularProgress />}
+        </div>
+      )}
+
+      {!showLoading && (
+        <svg
+          style={{ height: chartAreaHeight + "px", width: "100%" }}
+          ref={svgRef}
+        >
+          <g>
+            <rect
+              className="layerLevel-detailInfo-zoom"
+              width={chartWidth}
+              height={chartHeight}
+              transform={`translate(${margin.left},${margin.top})`}
+            />
+          </g>
+          <g
+            className="layerLevel-detailInfo-focus"
             transform={`translate(${margin.left},${margin.top})`}
-          />
-        </g>
-        <g
-          className="layerLevel-detailInfo-focus"
-          transform={`translate(${margin.left},${margin.top})`}
-        ></g>
-      </svg>
+          ></g>
+        </svg>
+      )}
       <TensorHeatmap
         tensorMetadata={selectedTensor}
         isShowing={isShowingTensorHeatmap}
         setIsShowing={setIsShowingTensorHeatmap}
+        anchorPosition={anchorPosition}
       />
     </div>
   );

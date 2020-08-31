@@ -5,6 +5,9 @@ import {
   Theme,
   ThemeProvider,
 } from "@material-ui/core/styles";
+import Modal from "@material-ui/core/Modal";
+import Backdrop from "@material-ui/core/Backdrop";
+import Fade from "@material-ui/core/Fade";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
@@ -37,6 +40,17 @@ const useStyles = makeStyles((theme: Theme) =>
       minWidth: 120,
       width: "80%",
     },
+    modal: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    paper: {
+      backgroundColor: theme.palette.background.paper,
+      border: "2px solid #000",
+      boxShadow: theme.shadows[5],
+      padding: theme.spacing(2, 4, 3),
+    },
   })
 );
 
@@ -48,6 +62,7 @@ interface GraphMetadata {
 
 const GraphSelector = (props) => {
   const classes = useStyles();
+  const [loadingGraphData, setLoadingGraphData] = useState<boolean>(false);
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [msGraphMetadatas, setMsGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [showSelector, setShowSelector] = useState<boolean>(true);
@@ -98,6 +113,8 @@ const GraphSelector = (props) => {
   useEffect(() => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
 
+    setLoadingGraphData(true);
+
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
     if (hashPath.length >= 3) { // 路径中包含graphname时，读取summary数据，禁用选择器
@@ -113,6 +130,7 @@ const GraphSelector = (props) => {
           GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
           graphName
         );
+        setLoadingGraphData(false);
         setMsRawGraph(parsedGraph);
       });
     } else {                                                        // 路径中不包含graphname时，读取local数据，激活选择器
@@ -128,9 +146,10 @@ const GraphSelector = (props) => {
           graphName
         );
         setMsRawGraph(parsedGraph);
+        setLoadingGraphData(false);
       });
     }
-    
+
   }, [
     currentMsGraphIndex,
     currentLayout,
@@ -195,6 +214,27 @@ const GraphSelector = (props) => {
             ))}
           </Select>
         )}
+
+        <Modal
+          aria-labelledby="transition-modal-title"
+          aria-describedby="transition-modal-description"
+          className={classes.modal}
+          open={loadingGraphData}
+          // onClose={loadingGraphData}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+          }}
+        >
+          <Fade in={loadingGraphData}>
+            <div className={classes.paper}>
+              <h2 id="transition-modal-title">
+                loading
+              </h2>
+            </div>
+          </Fade>
+        </Modal>
 
         {isTfGraph &&
           graphMetadatas.length > 0 &&

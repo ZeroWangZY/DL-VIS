@@ -74,19 +74,21 @@
     z-index: 5;
 }
 
-path.layerLevel-detailInfo-area{
+path.layerLevel-detailInfo-area {
     fill: none;
     pointer-events: stroke;
-    z-index: 5;
     opacity: 0.4;
     stroke-width: 1;
+    position: relative;
 }
-path.layerLevel-detailInfo-area.hovered{
-    z-index: 9999;
+
+path.layerLevel-detailInfo-area.hovered {
     opacity: 1;
-    stroke-width: 2;
+    stroke-width: 4;
+    position: relative;
 }
-.layerLevel-cluster-graph{
+
+.layerLevel-cluster-graph {
     margin: 5px;
     box-shadow: 0 0 0 5px #388aac;
 }

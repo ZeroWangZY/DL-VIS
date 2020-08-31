@@ -4,6 +4,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
 import Fade from "@material-ui/core/Fade";
+import Popover from "@material-ui/core/Popover";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { fetchTensorHeatmapBase64 } from "../../api/layerlevel";
 
@@ -17,6 +18,7 @@ export interface TensorMetadata {
 export interface TensorHeatmapProps {
   tensorMetadata: TensorMetadata;
   isShowing: boolean;
+  anchorPosition: { top: number, left: number };
   setIsShowing: (boolean) => void;
 }
 
@@ -38,7 +40,8 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
   props: TensorHeatmapProps
 ) => {
   const classes = useStyles();
-  const { tensorMetadata, isShowing, setIsShowing } = props;
+  const { tensorMetadata, isShowing, setIsShowing, anchorPosition } = props;
+  console.log(anchorPosition);
   const { type, step, dataIndex, nodeId } = tensorMetadata;
   const isValid = type !== null && step != null && dataIndex !== null;
   const show = isValid && isShowing;
@@ -68,37 +71,37 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
       if (res.data.message === "success") {
         setImgSrc(res.data.data);
         setShowLoading(false);
-      } else console.warn("获取张量热力图失败: " + res.data.messag);
+      } else console.warn("获取张量热力图失败: " + res.data.message);
     });
   }, [type, step, dataIndex]);
 
   return (
     <div>
-      <Modal
-        aria-labelledby="transition-modal-title"
-        aria-describedby="transition-modal-description"
-        className={classes.modal}
+      <Popover
         open={show}
         onClose={handleClose}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
+        anchorReference="anchorPosition"
+        anchorPosition={anchorPosition}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
       >
-        <Fade in={show}>
-          <div className={classes.paper}>
-            <h2 id="transition-modal-title">
-              data type:{" "}
-              {type === ShowActivationOrGradient.ACTIVATION && "activation"}{" "}
-              {type === ShowActivationOrGradient.GRADIENT && "gradient"}; step:{" "}
-              {step} ; data index: {dataIndex}
-            </h2>
-            {showLoading && <CircularProgress />}
-            {imgSrc && !showLoading && <img src={imgSrc} />}
-          </div>
-        </Fade>
-      </Modal>
+        <div className={classes.paper}>
+          <h2 id="transition-modal-title">
+            data type:{" "}
+            {type === ShowActivationOrGradient.ACTIVATION && "activation"}{" "}
+            {type === ShowActivationOrGradient.GRADIENT && "gradient"}; step:{" "}
+            {step} ; data index: {dataIndex}
+          </h2>
+          {showLoading && <CircularProgress />}
+          {imgSrc && !showLoading && <img src={imgSrc} />}
+        </div>
+      </Popover>
     </div>
   );
 };

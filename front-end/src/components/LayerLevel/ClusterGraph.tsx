@@ -37,23 +37,19 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       setContainerWidth(node.getBoundingClientRect().width);
     }
   }, []);
-  console.log(containerWidth);
   let clusterGraphContainerHeight = containerHeight - margin.top - margin.bottom - titleAreaHeight;
   let clusterGraphContainerWidth = containerWidth - margin.left - margin.right;
-
-  console.log("clusterGraphContainerWidth", clusterGraphContainerWidth);
 
   const margin2 = { left: 4, top: 4 };
   let clusterGraphHeight = clusterGraphContainerHeight - margin2.top * 2;
   let clusterGraphWidth = clusterGraphContainerWidth - margin2.left * 2;
-  console.log("clusterGraphWidth", clusterGraphWidth);
 
   useEffect(() => {
     if (!clusterData || clusterData.length === 0 || !clusterStep) return;
 
     const dataset = clusterData;
-    console.log("tsne降维后的数据: ", dataset);
-    console.log(dataset);
+    // console.log("tsne降维后的数据: ", dataset);
+    // console.log(dataset);
     // 以下是绘制散点图
     let svg = d3.select(svgRef.current);
     svg.selectAll("g").remove();

@@ -13,7 +13,6 @@ import {
 import { ShowActivationOrGradient } from "../../store/global-states.type";
 import { useGlobalStates } from "../../store/global-states";
 import { useProcessedGraph } from "../../store/processedGraph";
-import { useVisGraph } from "../../store/visGraph";
 import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
 import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode";
 
@@ -43,7 +42,6 @@ const LayerLevel: React.FC = () => {
     history.push("/");
   };
 
-  const visGraph = useVisGraph();
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
 
@@ -64,6 +62,7 @@ const LayerLevel: React.FC = () => {
   const [activationOrGradientData, setActivationOrGradientData] = useState(
     [] as DataToShow[]
   );
+  const [loadingDetailLineChartData, setLoadingDetailLineChartData] = useState<boolean>(false);
 
   let initialBrushedStep = []; // 如果brushedOrNot===false时的初始刷选位置
   if (currentStep) {
@@ -111,7 +110,7 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!childNodeId) return;
 
-    console.log("brushedStep", brushedStep);
+    // console.log("brushedStep", brushedStep);
     let brushedStartStep = 1,
       brushedEndStep = 1;
     if (brushedOrNot === false) {
@@ -145,49 +144,59 @@ const LayerLevel: React.FC = () => {
     endStep,
     type
   ) => {
-    let data = await fetchNodeScalars({
+    await fetchNodeScalars({
       graph_name: graphName,
       node_id: nodeIds,
       start_step: startStep,
       end_step: endStep,
       type: type,
-    });
-    let nodeScalars = data.data.data;
+    }).then((res) => {
+      if (res.data.message === "success") {
+        let nodeScalars = res.data.data;
 
-    let max: Point[] = [],
-      min: Point[] = [],
-      mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
-    let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-    if (showActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
-      for (let scalar of nodeScalar) {
-        max.push({ x: scalar.step, y: scalar.activation_max });
-        min.push({ x: scalar.step, y: scalar.activation_min });
-        mean.push({ x: scalar.step, y: scalar.activation_mean });
-      }
-    else if (showActivationOrGradient === ShowActivationOrGradient.GRADIENT)
-      for (let scalar of nodeScalar) {
-        max.push({ x: scalar.step, y: scalar.gradient_max });
-        min.push({ x: scalar.step, y: scalar.gradient_min });
-        mean.push({ x: scalar.step, y: scalar.gradient_mean });
-      }
-    let dataTransform = [];
-    dataTransform.push({ id: "max", data: max, color: "#C71585" });
-    dataTransform.push({ id: "min", data: min, color: "#DC143C" });
-    dataTransform.push({ id: "mean", data: mean, color: "#4B0082" });
+        let max: Point[] = [],
+          min: Point[] = [],
+          mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
+        let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
+        if (showActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
+          for (let scalar of nodeScalar) {
+            max.push({ x: scalar.step, y: scalar.activation_max });
+            min.push({ x: scalar.step, y: scalar.activation_min });
+            mean.push({ x: scalar.step, y: scalar.activation_mean });
+          }
+        else if (showActivationOrGradient === ShowActivationOrGradient.GRADIENT)
+          for (let scalar of nodeScalar) {
+            max.push({ x: scalar.step, y: scalar.gradient_max });
+            min.push({ x: scalar.step, y: scalar.gradient_min });
+            mean.push({ x: scalar.step, y: scalar.gradient_mean });
+          }
+        let dataTransform = [];
+        dataTransform.push({ id: "max", data: max, color: "#C71585" });
+        dataTransform.push({ id: "min", data: min, color: "#DC143C" });
+        dataTransform.push({ id: "mean", data: mean, color: "#4B0082" });
 
-    setActivationOrGradientData(dataTransform);
+        setActivationOrGradientData(dataTransform);
+      } else {
+        console.log("获取最大值/最小值/均值数据失败：" + res.data.message);
+      }
+    })
+
   };
 
   const getClusterData = async (graphName, nodeId, currStep, type) => {
-    let data = await fetchClusterData({
+    fetchClusterData({
       graph_name: graphName,
       node_id: nodeId,
       current_step: currStep,
       type: type,
-    });
-    let cluster = data.data.data;
-
-    setClusterData(cluster);
+    }).then((res) => {
+      if (res.data.message === "success") {
+        let cluster = res.data.data;
+        setClusterData(cluster);
+      } else {
+        console.warn("获取tsne降维数据失败: " + res.data.message)
+      }
+    })
   };
 
   const getNodeLineDataBlueNoiceSampling = async (
@@ -197,39 +206,47 @@ const LayerLevel: React.FC = () => {
     endStep,
     type
   ) => {
-    let data = await fetchNodeLineDataBlueNoiceSampling({
+    setLoadingDetailLineChartData(true);
+    fetchNodeLineDataBlueNoiceSampling({
       graph_name: graphName,
       node_id: nodeId,
       start_step: startStep,
       end_step: endStep + 1,
       type: type,
-    });
-    let originalLineData = data.data.data;
-    console.log(originalLineData);
+    }).then((res) => {
+      if (res.data.message === "success") {
+        let originalLineData = res.data.data;
+        // console.log(originalLineData);
 
-    let lineNumber = originalLineData.length;
+        let lineNumber = originalLineData.length;
 
-    let dataArrToShow = [];
-    for (let i = 0; i < lineNumber; i++) {
-      dataArrToShow.push({ id: "Detail_Info" + i, data: [], color: "#388aac" });
-    }
-    let maxValue = -Infinity,
-      minValue = Infinity;
-    for (let lineIndex = 0; lineIndex < lineNumber; lineIndex++) {
-      let line = originalLineData[lineIndex];
-      for (let i = 0, len = line.length; i < len; i++) {
-        let xValue = i,
-          yValue = line[i];
-        if (yValue > maxValue) maxValue = yValue;
-        if (yValue < minValue) minValue = yValue;
+        let dataArrToShow = [];
+        for (let i = 0; i < lineNumber; i++) {
+          dataArrToShow.push({ id: "Detail_Info" + i, data: [], color: "#388aac" });
+        }
+        let maxValue = -Infinity,
+          minValue = Infinity;
+        for (let lineIndex = 0; lineIndex < lineNumber; lineIndex++) {
+          let line = originalLineData[lineIndex];
+          for (let i = 0, len = line.length; i < len; i++) {
+            let xValue = i,
+              yValue = line[i];
+            if (yValue > maxValue) maxValue = yValue;
+            if (yValue < minValue) minValue = yValue;
 
-        dataArrToShow[lineIndex].data.push({ x: xValue, y: yValue });
+            dataArrToShow[lineIndex].data.push({ x: xValue, y: yValue });
+          }
+        }
+
+        setLoadingDetailLineChartData(false);
+        setDetailLineChartData(dataArrToShow);
+        setMinValueOfDetailLineChartData(minValue);
+        setMaxValueOfDetailLineChartData(maxValue);
+      } else {
+        console.log("获取采样后的折线图失败：", res.data.message);
       }
-    }
+    })
 
-    setDetailLineChartData(dataArrToShow);
-    setMinValueOfDetailLineChartData(minValue);
-    setMaxValueOfDetailLineChartData(maxValue);
   };
 
   return (
@@ -249,6 +266,7 @@ const LayerLevel: React.FC = () => {
               minValueOfDataToShow={minValueOfDetailLineChartData}
               maxValueOfDataToShow={maxValueOfDetailLineChartData}
               childNodeId={childNodeId}
+              showLoading={loadingDetailLineChartData}
             />
           </div>
 
