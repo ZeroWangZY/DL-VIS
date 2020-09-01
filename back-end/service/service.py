@@ -12,7 +12,18 @@ import base64
 
 def get_tensor_heatmap_service(step, node_id, data_index, type):
     res_tensors = get_node_data(step, step + 1, node_id, type)
-    tensor = res_tensors[0][data_index]
+    if alex_node_map[node_id].find("fc") >= 0:
+        tensor = res_tensors[0][data_index]
+        fclength = tensor.shape[0]
+        h = math.ceil(fclength ** 0.5)
+        w = math.ceil(fclength / h)
+        if fclength % h != 0:
+            maxScore = np.max(tensor)          # 最大值对应的颜色最浅
+            for i in range(h - fclength % h):
+                tensor.append(maxScore)
+        tensor = tensor.reshape(h, w)
+    else:
+        tensor = res_tensors[0][data_index]
     fig = plt.figure()
     plt.imshow(tensor, cmap='hot', interpolation='nearest')
     sio = BytesIO()
@@ -20,6 +31,7 @@ def get_tensor_heatmap_service(step, node_id, data_index, type):
     sio.seek(0)
     data = base64.b64encode(sio.read())
     src = 'data:image/png;base64,' + data.decode('utf-8')
+    plt.close()
 
     return src
 
@@ -49,7 +61,6 @@ def get_node_data(start_step, end_step, node_id, type):
 
 
 def get_node_line_service(graph_name, node_id, start_step, end_step, type):
-
     res_tensors = get_node_data(start_step, end_step, node_id, type)
     # flat处理
     flattenTensors = res_tensors.reshape(len(res_tensors), len(res_tensors[0]), -1)
