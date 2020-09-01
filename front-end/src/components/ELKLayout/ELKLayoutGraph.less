@@ -10,7 +10,7 @@
   position: absolute;
   left: -17px;
   top: 2px;
-};
+}
 
 #elk-svg {
   width: 100%;
@@ -28,6 +28,7 @@
   background: url("@{public_url}/assets/ConvIcon.svg");
   @IconsStyle();
 }
+
 .nodeitem-1.layertype-RNN text::before {
   background: url("@{public_url}/assets/RnnIcon.svg");
   @IconsStyle();
@@ -41,41 +42,60 @@
 /* 路径模式节点高亮 */
 .node.startNode.expanded-node rect.elk-label-container {
   stroke-width: 2px !important;
-  stroke: @start_node_stroke_color !important;
-}
-.node.startNode .elk-label-container {
-  stroke-width: 2px !important;
-  stroke: @start_node_stroke_color !important;
-}
-.node.startNode circle {
-  stroke: @start_node_stroke_color !important;
-}
-.node.startNode .label-container{
-  stroke-width: 3px !important;
-  stroke: @start_node_stroke_color !important;
-}
-.node.endNode.expanded-node rect.elk-label-container {
-  stroke-width: 2px !important;
-  stroke: @end_node_stroke_color !important;
-}
-.node.endNode .elk-label-container {
-  stroke-width: 2px !important;
-  stroke: @end_node_stroke_color !important;
-}
-.node.endNode circle {
-  stroke: @end_node_stroke_color !important;
-}
-.node.endNode .label-container{
-  stroke-width: 3px !important;
-  stroke: @end_node_stroke_color !important;
+  stroke: @start_node_stroke_color  !important;
 }
 
-.node rect,
-ellipse,
-circle {
-  fill: #fff;
-  stroke-width: 1px;
-  stroke: #808080;
+.node.startNode .elk-label-container {
+  stroke-width: 2px !important;
+  stroke: @start_node_stroke_color  !important;
+}
+
+.node.startNode circle {
+  stroke: @start_node_stroke_color  !important;
+}
+
+.node.startNode .label-container {
+  stroke-width: 3px !important;
+  stroke: @start_node_stroke_color  !important;
+}
+
+.node.endNode.expanded-node rect.elk-label-container {
+  stroke-width: 2px !important;
+  stroke: @end_node_stroke_color  !important;
+}
+
+.node.endNode .elk-label-container {
+  stroke-width: 2px !important;
+  stroke: @end_node_stroke_color  !important;
+}
+
+.node.endNode circle {
+  stroke: @end_node_stroke_color  !important;
+}
+
+.node.endNode .label-container {
+  stroke-width: 3px !important;
+  stroke: @end_node_stroke_color  !important;
+}
+
+.node {
+  rect {
+    fill: #fff;
+    stroke-width: 1px;
+    stroke: #808080;
+  }
+
+  ellipse {
+    fill: #fff;
+    stroke-width: 1px;
+    stroke: #808080;
+  }
+
+  circle {
+    fill: #fff;
+    stroke-width: 1px;
+    stroke: #808080;
+  }
 }
 
 .node rect.elk-label-container {

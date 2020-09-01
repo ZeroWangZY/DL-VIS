@@ -41,7 +41,6 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
 ) => {
   const classes = useStyles();
   const { tensorMetadata, isShowing, setIsShowing, anchorPosition } = props;
-  console.log(anchorPosition);
   const { type, step, dataIndex, nodeId } = tensorMetadata;
   const isValid = type !== null && step != null && dataIndex !== null;
   const show = isValid && isShowing;

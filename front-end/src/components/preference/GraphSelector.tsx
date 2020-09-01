@@ -26,6 +26,7 @@ import { fetchLocalMsGraph, fetchSummaryGraph } from "../../api";
 import { setMsRawGraph } from "../../store/rawGraph.ms";
 import useGraphPipeline from "../GraphPipeline/GraphPipeline";
 import fetchBackendData from "../FetchBackendData/FetchBackendData";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import Typography from "@material-ui/core/Typography";
 import { useGlobalStates, modifyGlobalStates } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
@@ -50,7 +51,7 @@ const useStyles = makeStyles((theme: Theme) =>
       border: "2px solid #000",
       boxShadow: theme.shadows[5],
       padding: theme.spacing(2, 4, 3),
-    },
+    }
   })
 );
 
@@ -220,7 +221,6 @@ const GraphSelector = (props) => {
           aria-describedby="transition-modal-description"
           className={classes.modal}
           open={loadingGraphData}
-          // onClose={loadingGraphData}
           closeAfterTransition
           BackdropComponent={Backdrop}
           BackdropProps={{
@@ -229,9 +229,7 @@ const GraphSelector = (props) => {
         >
           <Fade in={loadingGraphData}>
             <div className={classes.paper}>
-              <h2 id="transition-modal-title">
-                loading
-              </h2>
+              <CircularProgress thickness={3.6} size={100} />
             </div>
           </Fade>
         </Modal>
