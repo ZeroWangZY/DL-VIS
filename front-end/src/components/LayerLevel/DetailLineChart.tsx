@@ -26,9 +26,12 @@ interface Props {
 const useStyles = makeStyles((theme) => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
+    // boxShadow: theme.shadows[5],
+    // padding: theme.spacing(2, 4, 3),
     marginLeft: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
 }));
 
@@ -273,11 +276,12 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
 
       {showLoading && (
         <div className={classes.paper}
-          style={{ height: chartHeight, marginLeft: margin.left }}>
-          <h2>
-            正在获取数据实例指标变化图数据
-          </h2>
-          {showLoading && <CircularProgress />}
+          style={{
+            height: chartHeight,
+            marginLeft: margin.left,
+            background: "rgba(0,0,0,0.1)",
+          }}>
+          {showLoading && <CircularProgress size={60} />}
         </div>
       )}
 

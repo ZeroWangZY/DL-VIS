@@ -8,6 +8,7 @@ from dao.node_mapping import alex_node_map
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+import time
 
 
 def get_tensor_heatmap_service(step, node_id, data_index, type):
@@ -45,17 +46,17 @@ def get_node_data(start_step, end_step, node_id, type):
         tensorList.append(np.load(filename))
 
     if alex_node_map[node_id].find("fc") >= 0:
-        print("FC层")
+        # print("FC层")
         res_tensors = np.array(
             [tensor for tensor in tensorList]
         )
-        print(res_tensors.shape)
+        # print(res_tensors.shape)
     else:
-        print("conv层")
+        # print("conv层")
         res_tensors = np.array(
             [np.sum(tensor, axis=1).tolist() for tensor in tensorList]
         )
-        print(res_tensors.shape)
+        # print(res_tensors.shape)
 
     return res_tensors
 
@@ -65,31 +66,11 @@ def get_node_line_service(graph_name, node_id, start_step, end_step, type):
     # flat处理
     flattenTensors = res_tensors.reshape(len(res_tensors), len(res_tensors[0]), -1)
 
-    # ToLineData
-    totalSteps = len(flattenTensors) # 共选中了多少steps
-    ticksBetweenSteps = len(flattenTensors[0]) # 每两个step之间的ticks数量
-    lineNumber = len(flattenTensors[0][0]) # 折线数量
-
-    dataArrToShow=[]
-
-    for line in range(0, lineNumber):
-        dataArrToShow.append([])
-
-    minValue=1000000.0
-    maxValue=-1000000000
-    for step in range(0, totalSteps):
-        for tick in range(0, ticksBetweenSteps):
-            for line in range(0, lineNumber):
-                value = flattenTensors[step][tick][line]
-                if value > maxValue:
-                    maxValue = value
-                if value < minValue:
-                    minValue = value
-                dataArrToShow[line].append(value) # 第一维四舍五入取整
-    Line = np.array(dataArrToShow)
+    reshapeTensors = flattenTensors.transpose(2, 0, 1)
+    line = reshapeTensors.reshape(reshapeTensors.shape[0], -1)
 
     rate = 0.05
-    result = blue_noise_sampling(0.05, Line)
+    result = blue_noise_sampling(0.05, line)
     return result
 
 def get_cluster_data_service(graph_name, node_id, current_step, type):
@@ -160,7 +141,7 @@ def blue_noise_sampling(rate, originalData):
     section = []
     for i in range(0, segmentGroupNum+1):
         section.append(i * gap)
-    
+
     segmentGroupInfo = []#每条折线图的每个segment属于哪个group
     # 比如segmentGroupInfo[i][j]表示第i条折线图的第j个segment属于哪个group
     for lineIndex in range(0,lineNum): # for lineIndex in range(0,lineNum):
@@ -176,7 +157,7 @@ def blue_noise_sampling(rate, originalData):
                     segmentAngleGroup.append(j)
         segmentGroupInfo.append(segmentAngleGroup)
     #print(segmentGroupInfo)
-    
+
     # 以下是根据分类结果，计算fill rate并且采样
     samplingResult = []
     selectedLineIndex = set() # 被选中折线的index

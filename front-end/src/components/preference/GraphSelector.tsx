@@ -45,13 +45,17 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      "&>div": {
+        backgroundColor: "rgba(0,0,0,0.1)",
+      }
     },
-    paper: {
-      backgroundColor: theme.palette.background.paper,
-      border: "2px solid #000",
-      boxShadow: theme.shadows[5],
-      padding: theme.spacing(2, 4, 3),
-    }
+
+    // paper: {
+    //   background: "none",
+    //   border: "2px solid #000",
+    //   boxShadow: theme.shadows[5],
+    //   padding: theme.spacing(2, 4, 3),
+    // }
   })
 );
 
@@ -221,15 +225,10 @@ const GraphSelector = (props) => {
           aria-describedby="transition-modal-description"
           className={classes.modal}
           open={loadingGraphData}
-          closeAfterTransition
-          BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
         >
           <Fade in={loadingGraphData}>
-            <div className={classes.paper}>
-              <CircularProgress thickness={3.6} size={100} />
+            <div>
+              <CircularProgress size={100} />
             </div>
           </Fade>
         </Modal>
