@@ -45,17 +45,10 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      "&>div": {
-        backgroundColor: "rgba(0,0,0,0.1)",
+      "&>div:first-child": {
+        backgroundColor: "rgba(0,0,0,0.1) !important",
       }
     },
-
-    // paper: {
-    //   background: "none",
-    //   border: "2px solid #000",
-    //   boxShadow: theme.shadows[5],
-    //   padding: theme.spacing(2, 4, 3),
-    // }
   })
 );
 
@@ -227,7 +220,7 @@ const GraphSelector = (props) => {
           open={loadingGraphData}
         >
           <Fade in={loadingGraphData}>
-            <div>
+            <div >
               <CircularProgress size={100} />
             </div>
           </Fade>

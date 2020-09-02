@@ -63,15 +63,7 @@ const LayerLevel: React.FC = () => {
     [] as DataToShow[]
   );
   const [loadingDetailLineChartData, setLoadingDetailLineChartData] = useState<boolean>(false);
-
-  let initialBrushedStep = []; // 如果brushedOrNot===false时的初始刷选位置
-  if (currentStep) {
-    let end = Math.min(max_step - 1, currentStep);
-    initialBrushedStep = [end - 1, end];
-  } else {
-    initialBrushedStep = [1, 2];
-  }
-
+  const [loadingClusterData, setLoadingClusterData] = useState<boolean>(false);
   const [detailLineChartData, setDetailLineChartData] = useState(null);
   const [
     minValueOfDetailLineChartData,
@@ -81,6 +73,14 @@ const LayerLevel: React.FC = () => {
     maxValueOfDetailLineChartData,
     setMaxValueOfDetailLineChartData,
   ] = useState(100);
+
+  let initialBrushedStep = []; // 如果brushedOrNot===false时的初始刷选位置
+  if (currentStep) {
+    let end = Math.min(max_step - 1, currentStep);
+    initialBrushedStep = [end - 1, end];
+  } else {
+    initialBrushedStep = [1, 2];
+  }
 
   const fetchDataType =
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
@@ -110,7 +110,6 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!childNodeId) return;
 
-    // console.log("brushedStep", brushedStep);
     let brushedStartStep = 1,
       brushedEndStep = 1;
     if (brushedOrNot === false) {
@@ -184,6 +183,7 @@ const LayerLevel: React.FC = () => {
   };
 
   const getClusterData = async (graphName, nodeId, currStep, type) => {
+    setLoadingClusterData(true);
     fetchClusterData({
       graph_name: graphName,
       node_id: nodeId,
@@ -193,6 +193,7 @@ const LayerLevel: React.FC = () => {
       if (res.data.message === "success") {
         let cluster = res.data.data;
         setClusterData(cluster);
+        setLoadingClusterData(false);
       } else {
         console.warn("获取tsne降维数据失败: " + res.data.message)
       }
@@ -216,7 +217,6 @@ const LayerLevel: React.FC = () => {
     }).then((res) => {
       if (res.data.message === "success") {
         let originalLineData = res.data.data;
-        // console.log(originalLineData);
 
         let lineNumber = originalLineData.length;
 
@@ -271,8 +271,12 @@ const LayerLevel: React.FC = () => {
           </div>
 
           <div className="layer-container-box cluster-box">
-            {/* <TsneClusterGraph activations={tsneGraph} /> */}
-            <ClusterGraph clusterData={clusterData} clusterStep={clusterStep} />
+            <ClusterGraph
+              clusterData={clusterData}
+              clusterStep={clusterStep}
+              loadingDetailLineChartData={loadingDetailLineChartData}
+              loadingClusterData={loadingClusterData}
+            />
           </div>
 
           <div className="layer-container-box line-box">

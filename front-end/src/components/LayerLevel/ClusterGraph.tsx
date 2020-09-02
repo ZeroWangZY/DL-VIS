@@ -7,14 +7,28 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { useProcessedGraph } from "../../store/processedGraph";
+import { makeStyles } from "@material-ui/core/styles";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 interface Props {
   clusterData: Array<Array<number>>;
   clusterStep: number;
+  loadingDetailLineChartData: boolean;
+  loadingClusterData: boolean;
 }
 
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    backgroundColor: theme.palette.background.paper,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+}));
+
 const ClusterGraph: React.FC<Props> = (props: Props) => {
-  const { clusterData, clusterStep } = props;
+  const { clusterData, clusterStep, loadingDetailLineChartData, loadingClusterData } = props;
+  const classes = useStyles();
   const svgRef = useRef();
 
   const titleAreaHeight = 16 // graphHeight * 0.1;
@@ -45,11 +59,10 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   let clusterGraphWidth = clusterGraphContainerWidth - margin2.left * 2;
 
   useEffect(() => {
+    if (loadingDetailLineChartData || loadingClusterData) return;
     if (!clusterData || clusterData.length === 0 || !clusterStep) return;
 
     const dataset = clusterData;
-    // console.log("tsne降维后的数据: ", dataset);
-    // console.log(dataset);
     // 以下是绘制散点图
     let svg = d3.select(svgRef.current);
     svg.selectAll("g").remove();
@@ -116,7 +129,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         g.select('text').transition().duration(500).style('visibility', 'hidden');
       })
 
-  }, [clusterData, clusterStep, containerWidth])
+  }, [clusterData, clusterStep, containerWidth, loadingDetailLineChartData, loadingClusterData])
 
   return (
     <div className="layerLevel-cluster-container" ref={measuredRef} style={{ height: containerHeight }}>
@@ -131,7 +144,6 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         <span>
           {"投影图(" + `${nodeMap[selectedNodeId].displayedName}` + " 迭代: " + `${clusterStep}` + ")"}
         </span>
-
       </div>
 
       <div
@@ -143,11 +155,25 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
           height: clusterGraphContainerHeight,
           width: clusterGraphContainerWidth,
         }}>
-        <svg
-          style={{ height: clusterGraphContainerHeight + "px", width: clusterGraphContainerWidth + "px" }}
-          ref={svgRef}>
-        </svg>
+        {(!loadingDetailLineChartData && !loadingClusterData) ?
+          (
+            <svg
+              style={{ height: clusterGraphContainerHeight + "px", width: clusterGraphContainerWidth + "px" }}
+              ref={svgRef}>
+            </svg>
+          ) :
+          (
+            <div className={classes.paper}
+              style={{
+                height: clusterGraphContainerHeight,
+                background: "rgba(0,0,0,0.1)",
+              }}>
+              <CircularProgress size={60} />
+            </div>
+          )
+        }
       </div>
+
     </div>
   );
 }

@@ -26,9 +26,6 @@ interface Props {
 const useStyles = makeStyles((theme) => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
-    // boxShadow: theme.shadows[5],
-    // padding: theme.spacing(2, 4, 3),
-    marginLeft: "40px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
@@ -281,7 +278,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
             marginLeft: margin.left,
             background: "rgba(0,0,0,0.1)",
           }}>
-          {showLoading && <CircularProgress size={60} />}
+          <CircularProgress size={60} />
         </div>
       )}
 
