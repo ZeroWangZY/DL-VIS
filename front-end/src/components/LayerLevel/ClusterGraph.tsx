@@ -45,7 +45,7 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   const containerHeight = 310;
   const [containerWidth, setContainerWidth] = useState(260);
 
-  const margin = { left: 40, right: 40, top: 16, bottom: 20 }; // cluster graph画布 外层 的div 更外层div之间的便宜偏移
+  const margin = { left: 40, right: 40, top: 10, bottom: 25}; // cluster graph画布 外层 的div 更外层div之间的便宜偏移
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setContainerWidth(node.getBoundingClientRect().width);
