@@ -10,11 +10,6 @@ import {
   ThemeProvider,
 } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
-import Radio from "@material-ui/core/Radio";
-import RadioGroup from "@material-ui/core/RadioGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import FormLabel from "@material-ui/core/FormLabel";
 import Snapshot from "../Snapshot/Snapshot";
 import "./index.less";
 import LayerLevel from "../LayerLevel/LayerLevel"
@@ -100,22 +95,35 @@ function TabPanel(params: TabPanelProps) {
   );
 }
 
-export default () => {
+interface Props {
+  setFixedHeight: { (string): void }
+}
+
+export default (props: Props) => {
+  const { setFixedHeight } = props;
   const classes = useStyles();
   const theme = useTheme();
   const [value, setValue] = useState({ right: 0, outerBottom: 0, innerBottom: 0 });
   const { selectedNodeId, showActivationOrGradient } = useGlobalStates();
-	const processedGraph = useProcessedGraph();
+  const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
+
+  useEffect(() => {
+    if (selectedNodeId === "" && value.outerBottom !== 0) {
+      setValue({ ...value, outerBottom: 0 });
+      setFixedHeight("360px");
+    } else
+      return;
+  }, [selectedNodeId])
 
   const toggleTab = (pos: Position) => (
     event: React.ChangeEvent<{}>,
     newValue: number
   ) => {
-    modifyGlobalStates(
-      GlobalStatesModificationType.SET_BOTTOMINFOTYPE,
-      newValue
-    );
+    if (newValue === 0)
+      setFixedHeight("360px");
+    else if (newValue === 1)
+      setFixedHeight("565px");
 
     setValue({ ...value, [pos]: newValue });
   };

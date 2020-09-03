@@ -13,7 +13,6 @@ export interface GlobalStates {
   layerLevel_checkBoxState: LayerLevelCheckBoxState,
   showActivationOrGradient: ShowActivationOrGradient,
   nodeScalarType: NodeScalarType,
-  bottomInfoType: BottomInfoType
 }
 
 export enum GlobalStatesModificationType {
@@ -25,7 +24,6 @@ export enum GlobalStatesModificationType {
   SET_LAYERLEVEL_CHECKBOXSTATE,
   SET_SHOWACTIVATIONORGRADIENT,
   SET_NODESCALARTYPE,
-  SET_BOTTOMINFOTYPE,
 }
 
 export enum ShowActivationOrGradient {

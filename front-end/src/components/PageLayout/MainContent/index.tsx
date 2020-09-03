@@ -5,28 +5,12 @@ import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import "./index.less";
 import LayerLevel from "../../LayerLevel/LayerLevel";
 import ELKLayout from "../../ELKLayout/ELKLayout";
-import {
-  useGlobalStates,
-  modifyGlobalStates,
-} from "../../../store/global-states";
-import {
-  BottomInfoType
-} from "../../../store/global-states.type";
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
 
 export default () => {
-  const { bottomInfoType } = useGlobalStates();
-  const [fixedHeight, setFixedHeight] = useState("300px");
-  useEffect(() => {
-    if (bottomInfoType === BottomInfoType.MODELINFO)
-      setFixedHeight("360px");
-    if (bottomInfoType === BottomInfoType.LAYERINFO)
-      setFixedHeight("565px");
-  }, [bottomInfoType]);
-
-  // const fixedHeight = "415px"; // 原为 360px
+  const [fixedHeight, setFixedHeight] = useState("360px");
 
   return (
     <Router>
@@ -36,7 +20,7 @@ export default () => {
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
             <div className="vertical-bottom-wrapper">
-              <DanymicInfo />
+              <DanymicInfo setFixedHeight={setFixedHeight}/>
               <div
                 className="expand-btn"
                 onClick={visibility ? onHide : onShow}
