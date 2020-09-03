@@ -284,6 +284,7 @@ const LayerLevel: React.FC = () => {
                 max_step={max_step}
                 setBrushedStep={setBrushedStep}
                 setBrushedOrNot={setBrushedOrNot}
+                loadingData={loadingDetailLineChartData || loadingClusterData}
               />
             )}
           </div>

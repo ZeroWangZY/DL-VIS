@@ -20,11 +20,12 @@ import { toExponential } from "../Snapshot/Snapshot"
 import _ from 'lodash';
 
 interface Props {
-  activationOrGradientData: DataToShow[],
-  is_training: boolean,
-  max_step: number,
+  activationOrGradientData: DataToShow[];
+  is_training: boolean;
+  max_step: number;
   setBrushedStep: { ([]): void };
   setBrushedOrNot: { (boolean): void };
+  loadingData: boolean;
 }
 
 const useStyles = makeStyles({
@@ -40,7 +41,7 @@ const useStyles = makeStyles({
 
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
-  const { activationOrGradientData, max_step, setBrushedStep, setBrushedOrNot } = props;
+  const { activationOrGradientData, max_step, setBrushedStep, setBrushedOrNot, loadingData } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
@@ -120,9 +121,8 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   }, activationOrGradientData)
 
   useEffect(() => {
-    //console.log('useEffect: ', isMousemove);
     computeAndDrawLine();
-  }, [dataArrToShow, svgWidth, currentStep]);
+  }, [dataArrToShow, svgWidth, currentStep, loadingData]);
 
   const computeAndDrawLine = async () => {
     if (!max_step || dataArrToShow.length === 0) return;
@@ -324,8 +324,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         }
       }
 
-      setBrushedStep(s);
-      setBrushedOrNot(true);
+      if (!loadingData) {
+        setBrushedStep(s);
+        setBrushedOrNot(true);
+      }
 
       // x1Scale.domain(newX1Domain);
       d3.select(brushG).select('.focusBrush').call(focusBrush.move, null);
