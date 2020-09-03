@@ -65,14 +65,6 @@ const LayerLevel: React.FC = () => {
   const [loadingDetailLineChartData, setLoadingDetailLineChartData] = useState<boolean>(false);
   const [loadingClusterData, setLoadingClusterData] = useState<boolean>(false);
   const [detailLineChartData, setDetailLineChartData] = useState(null);
-  const [
-    minValueOfDetailLineChartData,
-    setMinValueOfDetailLineChartData,
-  ] = useState(-100);
-  const [
-    maxValueOfDetailLineChartData,
-    setMaxValueOfDetailLineChartData,
-  ] = useState(100);
 
   let initialBrushedStep = []; // 如果brushedOrNot===false时的初始刷选位置
   if (currentStep) {
@@ -110,8 +102,7 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!childNodeId) return;
 
-    let brushedStartStep = 1,
-      brushedEndStep = 1;
+    let brushedStartStep = 1, brushedEndStep = 1;
     if (brushedOrNot === false) {
       [brushedStartStep, brushedEndStep] = initialBrushedStep;
     } else {
@@ -240,8 +231,6 @@ const LayerLevel: React.FC = () => {
 
         setLoadingDetailLineChartData(false);
         setDetailLineChartData(dataArrToShow);
-        setMinValueOfDetailLineChartData(minValue);
-        setMaxValueOfDetailLineChartData(maxValue);
       } else {
         console.log("获取采样后的折线图失败：", res.data.message);
       }
@@ -263,8 +252,6 @@ const LayerLevel: React.FC = () => {
               }
               dataArrToShow={detailLineChartData}
               setClusterStep={setClusterStep}
-              minValueOfDataToShow={minValueOfDetailLineChartData}
-              maxValueOfDataToShow={maxValueOfDetailLineChartData}
               childNodeId={childNodeId}
               showLoading={loadingDetailLineChartData}
             />

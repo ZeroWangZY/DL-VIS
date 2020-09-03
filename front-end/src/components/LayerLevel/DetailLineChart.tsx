@@ -17,8 +17,6 @@ interface Props {
   start_step: number;
   end_step: number;
   setClusterStep: { (number): void };
-  minValueOfDataToShow: number;
-  maxValueOfDataToShow: number;
   childNodeId: string | null;
   showLoading: boolean;
 }
@@ -40,8 +38,6 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     end_step,
     dataArrToShow,
     setClusterStep,
-    maxValueOfDataToShow,
-    minValueOfDataToShow,
     childNodeId,
     showLoading
   } = props;
@@ -86,12 +82,11 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     if (showLoading) return;
     if (start_step < 0 || end_step < 0 || !start_step || !end_step) return;
     if (!dataArrToShow || dataArrToShow.length === 0) return;
-    // console.log(start_step, end_step);
 
-    DrawLineChart(minValueOfDataToShow, maxValueOfDataToShow, dataArrToShow);
-  }, [dataArrToShow, minValueOfDataToShow, maxValueOfDataToShow, svgWidth, showLoading]);
+    DrawLineChart(dataArrToShow);
+  }, [dataArrToShow, svgWidth, showLoading]);
 
-  const DrawLineChart = (minValue, maxValue, dataArrToShow) => {
+  const DrawLineChart = (dataArrToShow) => {
     const totalSteps = end_step - start_step + 1;
     const ticksBetweenTwoSteps = dataArrToShow[0].data.length / totalSteps;
 
@@ -112,6 +107,16 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .scaleLinear()
       .range([0, chartWidth])
       .domain([0, dataArrToShow[0].data.length]);
+
+    //minValue, maxValue, 
+    let minValue = Infinity, maxValue = -Infinity;
+    for (let line of dataArrToShow) {
+      let data = line.data;
+      for (let point of data) {
+        minValue = Math.min(minValue, point.y);
+        maxValue = Math.max(maxValue, point.y);
+      }
+    }
 
     let yScale = d3
       .scaleLinear()
