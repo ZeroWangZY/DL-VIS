@@ -263,6 +263,16 @@ const LayerLevel: React.FC = () => {
               clusterStep={clusterStep}
               loadingDetailLineChartData={loadingDetailLineChartData}
               loadingClusterData={loadingClusterData}
+              start_step={
+                brushedOrNot === true ? brushedStep[0] : initialBrushedStep[0]
+              }
+              end_step={
+                brushedOrNot === true ? brushedStep[1] : initialBrushedStep[1]
+              }
+              dataArrToShow={detailLineChartData}
+              setClusterStep={setClusterStep}
+              childNodeId={childNodeId}
+              showLoading={loadingDetailLineChartData}
             />
           </div>
 

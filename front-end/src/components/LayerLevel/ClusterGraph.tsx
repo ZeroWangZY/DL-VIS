@@ -9,12 +9,22 @@ import {
 import { useProcessedGraph } from "../../store/processedGraph";
 import { makeStyles } from "@material-ui/core/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import TensorHeatmap, {
+  TensorHeatmapProps,
+  TensorMetadata,
+} from "./TensorHeatmap";
 
 interface Props {
   clusterData: Array<Array<number>>;
   clusterStep: number;
   loadingDetailLineChartData: boolean;
   loadingClusterData: boolean;
+  dataArrToShow: Array<Array<number>>;
+  start_step: number;
+  end_step: number;
+  setClusterStep: { (number): void };
+  childNodeId: string | null;
+  showLoading: boolean;
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -27,10 +37,20 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ClusterGraph: React.FC<Props> = (props: Props) => {
-  const { clusterData, clusterStep, loadingDetailLineChartData, loadingClusterData } = props;
+  const {
+    clusterData,
+    clusterStep,
+    loadingDetailLineChartData,
+    loadingClusterData,
+    start_step,
+    end_step,
+    dataArrToShow,
+    setClusterStep,
+    childNodeId,
+    showLoading } = props;
   const classes = useStyles();
   const svgRef = useRef();
-
+  const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
   const titleAreaHeight = 16 // graphHeight * 0.1;
   // const chartAreaHeight = graphHeight - titleAreaHeight;
 
@@ -39,13 +59,23 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
   // const clusterHeight = chartAreaHeight - margin.top - margin.bottom;
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
-  const { selectedNodeId } = useGlobalStates();
+  const { selectedNodeId, showActivationOrGradient } = useGlobalStates();
+
+  const [selectedTensor, setSelectedTensor] = useState<TensorMetadata>({
+    type: showActivationOrGradient,
+    step: null,
+    dataIndex: null,
+    nodeId: null
+  });
+  const [isShowingTensorHeatmap, setIsShowingTensorHeatmap] = useState<boolean>(
+    false
+  );
 
   // new 
   const containerHeight = 310;
   const [containerWidth, setContainerWidth] = useState(260);
 
-  const margin = { left: 40, right: 40, top: 10, bottom: 25}; // cluster graph画布 外层 的div 更外层div之间的便宜偏移
+  const margin = { left: 40, right: 40, top: 10, bottom: 25 }; // cluster graph画布 外层 的div 更外层div之间的便宜偏移
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setContainerWidth(node.getBoundingClientRect().width);
@@ -71,6 +101,10 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
       maxVal_x = d3.max(dataset, (d) => { return d[0] }),
       minVal_y = d3.min(dataset, (d) => { return d[1] }),
       maxVal_y = d3.max(dataset, (d) => { return d[1] });
+
+    const bisect = d3.bisector((d: any) => d.x).left;
+    //拿第一组数据查询
+    const dataExample: any = dataArrToShow[0];
 
     let xScale = d3.scaleLinear()
       .domain([minVal_x, maxVal_x])
@@ -128,6 +162,26 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
         const g = d3.select(this.parentNode);
         g.select('text').transition().duration(500).style('visibility', 'hidden');
       })
+      .on('click', function (d, i) {
+        const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+        const mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+
+        let x = xScale.invert(mouseX);
+        let _index = bisect(dataExample.data, x, 1);
+        const batchSize =
+          dataExample.data.length / (end_step - start_step + 1);
+        let step = Math.floor(start_step + _index / batchSize);
+        _index %= batchSize;
+        setSelectedTensor({
+          type: showActivationOrGradient,
+          step: step,
+          dataIndex: i,
+          nodeId: childNodeId
+        });
+
+        setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
+        setIsShowingTensorHeatmap(true);
+      })
 
   }, [clusterData, clusterStep, containerWidth, loadingDetailLineChartData, loadingClusterData])
 
@@ -173,7 +227,12 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
           )
         }
       </div>
-
+      <TensorHeatmap
+        tensorMetadata={selectedTensor}
+        isShowing={isShowingTensorHeatmap}
+        setIsShowing={setIsShowingTensorHeatmap}
+        anchorPosition={anchorPosition}
+      />
     </div>
   );
 }
