@@ -55,24 +55,27 @@ const LayerLevel: React.FC = () => {
   } = useGlobalStates();
 
   const [brushedStep, setBrushedStep] = useState(null);
-  const [brushedOrNot, setBrushedOrNot] = useState(false);
+  const [brushed, setBrushed] = useState(false);
   const [childNodeId, setChildNodeId] = useState(null);
   const [clusterStep, setClusterStep] = useState(null);
   const [clusterData, setClusterData] = useState(null);
-  const [activationOrGradientData, setActivationOrGradientData] = useState(
-    [] as DataToShow[]
-  );
+  const [activationOrGradientData, setActivationOrGradientData] = useState<DataToShow[]>([]);
   const [loadingDetailLineChartData, setLoadingDetailLineChartData] = useState<boolean>(false);
   const [loadingClusterData, setLoadingClusterData] = useState<boolean>(false);
   const [detailLineChartData, setDetailLineChartData] = useState(null);
 
-  let initialBrushedStep = []; // 如果brushedOrNot===false时的初始刷选位置
-  if (currentStep) {
-    let end = Math.min(max_step - 1, currentStep);
-    initialBrushedStep = [end - 1, end];
-  } else {
-    initialBrushedStep = [1, 2];
-  }
+  // let initialBrushedStep = []; // 如果brushed===false时的初始刷选位置
+  // if (currentStep) {
+  //   let end = Math.min(max_step - 1, currentStep);
+  //   initialBrushedStep = [end - 1, end];
+  // } else {
+  //   initialBrushedStep = [1, 2];
+  // }
+  // 还没有刷选时，初始化detailInfoGraph的起止位置
+  const initialBrushedStep =
+    currentStep ?
+      [Math.min(max_step - 1, currentStep) - 1, Math.min(max_step - 1, currentStep)] :
+      [1, 2]
 
   const fetchDataType =
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
@@ -100,17 +103,32 @@ const LayerLevel: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (!childNodeId) return;
-
+    if (!childNodeId || brushed) return;
+    // 用户还没有刷选，只是改变currentStep位置
     let brushedStartStep = 1, brushedEndStep = 1;
-    if (brushedOrNot === false) {
-      [brushedStartStep, brushedEndStep] = initialBrushedStep;
-    } else {
-      [brushedStartStep, brushedEndStep] = brushedStep;
-    }
+
+    [brushedStartStep, brushedEndStep] = initialBrushedStep;
+
     setClusterStep(brushedStartStep);
 
+    getNodeLineDataBlueNoiceSampling(
+      currentMSGraphName,
+      childNodeId,
+      brushedStartStep,
+      brushedEndStep,
+      fetchDataType
+    );
+
+  }, [currentStep, childNodeId])
+
+  useEffect(() => {
+    if (!childNodeId || !brushedStep || !brushedStep.length) return;
+
+    const [brushedStartStep, brushedEndStep] = brushedStep;
+
+    setClusterStep(brushedStartStep);
     const maxGap = 10;
+
     if (brushedEndStep - brushedStartStep <= maxGap) {
       getNodeLineDataBlueNoiceSampling(
         currentMSGraphName,
@@ -120,7 +138,7 @@ const LayerLevel: React.FC = () => {
         fetchDataType
       );
     }
-  }, [brushedStep, brushedOrNot, currentStep, childNodeId]);
+  }, [brushedStep, childNodeId]);
 
   useEffect(() => {
     if (!clusterStep) return;
@@ -245,10 +263,10 @@ const LayerLevel: React.FC = () => {
           <div className="layer-container-box detail-box">
             <DetailLineChart
               start_step={
-                brushedOrNot === true ? brushedStep[0] : initialBrushedStep[0]
+                brushed === true ? brushedStep[0] : initialBrushedStep[0]
               }
               end_step={
-                brushedOrNot === true ? brushedStep[1] : initialBrushedStep[1]
+                brushed === true ? brushedStep[1] : initialBrushedStep[1]
               }
               dataArrToShow={detailLineChartData}
               setClusterStep={setClusterStep}
@@ -264,10 +282,10 @@ const LayerLevel: React.FC = () => {
               loadingDetailLineChartData={loadingDetailLineChartData}
               loadingClusterData={loadingClusterData}
               start_step={
-                brushedOrNot === true ? brushedStep[0] : initialBrushedStep[0]
+                brushed === true ? brushedStep[0] : initialBrushedStep[0]
               }
               end_step={
-                brushedOrNot === true ? brushedStep[1] : initialBrushedStep[1]
+                brushed === true ? brushedStep[1] : initialBrushedStep[1]
               }
               dataArrToShow={detailLineChartData}
               setClusterStep={setClusterStep}
@@ -282,8 +300,9 @@ const LayerLevel: React.FC = () => {
                 activationOrGradientData={activationOrGradientData}
                 is_training={is_training}
                 max_step={max_step}
+                brushedStep={brushedStep}
                 setBrushedStep={setBrushedStep}
-                setBrushedOrNot={setBrushedOrNot}
+                setBrushed={setBrushed}
                 loadingData={loadingDetailLineChartData || loadingClusterData}
               />
             )}

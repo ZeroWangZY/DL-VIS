@@ -23,8 +23,9 @@ interface Props {
   activationOrGradientData: DataToShow[];
   is_training: boolean;
   max_step: number;
+  brushedStep: [];
   setBrushedStep: { ([]): void };
-  setBrushedOrNot: { (boolean): void };
+  setBrushed: { (boolean): void };
   loadingData: boolean;
 }
 
@@ -41,7 +42,7 @@ const useStyles = makeStyles({
 
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
-  const { activationOrGradientData, max_step, setBrushedStep, setBrushedOrNot, loadingData } = props;
+  const { activationOrGradientData, max_step, brushedStep, setBrushedStep, setBrushed, loadingData } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
@@ -326,7 +327,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
       if (!loadingData) {
         setBrushedStep(s);
-        setBrushedOrNot(true);
+        setBrushed(true);
       }
 
       // x1Scale.domain(newX1Domain);

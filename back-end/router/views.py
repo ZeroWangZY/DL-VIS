@@ -254,8 +254,13 @@ def get_node_line(request):
                 "data": None
             }), content_type="application/json")
 
-        result = get_node_line_service(graph_name, node_id, start_step, end_step, type)
-
+        try:
+            result = get_node_line_service(graph_name, node_id, start_step, end_step, type)
+        except FileNotFoundError:
+            return HttpResponse(json.dumps({
+                "message": "failure",
+                "data": ""
+            }), content_type="application/json")
         return HttpResponse(json.dumps({
             "message": "success",
             "data": result
