@@ -6,6 +6,8 @@ import sys
 sys.path.append("..")
 from dao.node_mapping import alex_node_map
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 from io import BytesIO
 import base64
 import time
