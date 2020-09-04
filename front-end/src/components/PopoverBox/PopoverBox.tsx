@@ -57,8 +57,8 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
         anchorEl={anchorEl}
         onClose={currentNodetype < 0 ? handleClosePopoverWithoutDeselect : handleClosePopover}//多选时关闭不取消已勾选项
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: 'top',
+          horizontal: 'left',
         }}
         transformOrigin={{
           vertical: 'top',
