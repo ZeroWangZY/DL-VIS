@@ -197,15 +197,25 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     function getLineInfoLabel(xPos, yPos, i, step, index) {
       // 在(x,y)位置画一个信息框，里面是index
       focus.selectAll(".layerLevel-detailInfo-area-text").remove();
-
-      focus
+       
+        
+      const text = focus
         .append("text")
         .attr("class", "layerLevel-detailInfo-area-text")
-        .attr("x", xPos)
-        .attr("y", yPos)
         .text(`(step: ${step}, index: ${index})`)
         .style("font-size", 14)
         .style("visibility", "visible");
+      
+      const {width, height} = text.node().getBoundingClientRect();
+      let x = xPos;
+      let y = yPos;
+      if(xPos + width > chartWidth) {
+        x = xPos - width;
+      }
+      if(yPos + height > chartHeight) {
+        y = yPos - height;
+      } 
+      text.attr('x', x).attr('y', y);
     }
 
     // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, max_step-1)]
