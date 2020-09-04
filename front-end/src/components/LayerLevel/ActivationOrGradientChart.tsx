@@ -293,6 +293,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (!selection) {
         return;
       }
+
       // 添加mousemove
       setIsMouseMove(true);
       d3.select(svgRef.current)
@@ -302,8 +303,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       // d3.select(svgRef.current)
       //   .select(".layerLevel-lineChart-zoom-g")
       //   .dispatch('mouseup');
-
-      //console.log('brush end: ', isMousemove);
       let s = selection.slice().map(x1Scale.invert, x1Scale);
 
       if (Math.abs(s[0] - s[1]) < 1 && Math.floor(s[0]) === Math.floor(s[1])) { // 刷选距离小于1，且中间没有包含任何step
@@ -354,6 +353,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (!selection) {
         return;
       }
+      
+      setIsMouseMove(false);
+
       let s = selection.slice();
       // 节流
       if (isSameArray(brushSelection, s)) {
@@ -374,6 +376,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       if (!selection) {
         return;
       }
+
       // cancel mousemove and add brush after this is clicked.
       setIsMouseMove(false);
       setCursorLinePos(null);
@@ -390,7 +393,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       .on("end", focusBrushended);
 
     d3.select(brushG).select('.focusBrush').call(focusBrush);
-
+    
     const brush = d3
       .brushX()
       .extent([
@@ -448,7 +451,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       })
       .on("click", function () {
         // cancel mousemove and add brush after this is clicked.
-        setIsMouseMove(false);
+        setIsMouseMove(true);
         setCursorLinePos(null);
 
         let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
