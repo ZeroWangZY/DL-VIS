@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TransitionMotion } from "react-motion";
 import { useVisGraph } from "../../store/visGraph";
 import { useStyledGraph } from "../../store/styledGraph";
@@ -19,15 +19,12 @@ import {
 } from "../../store/processedGraph";
 import {
   useGlobalConfigurations,
-  modifyGlobalConfigurations,
 } from "../../store/global-configuration";
-import { GlobalConfigurationsModificationType } from "../../store/global-configuration.type";
 import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-// import { LineGroup } from "../LineCharts/index";
 import LineGroup from "./LineGroup"
 import { produceLayoutGraph, LAYERNODESIZEINDIAGNOSISMODE } from "../../common/graph-processing/stage4/produce-layout-graph";
 
@@ -148,13 +145,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             layerNodeId={node.id}
           />
         </foreignObject>
-
-        {/* <LineGroup
-          transform={`translate(-${rectWidth / 2},-${(rectHeight * 3) / 8})`}
-          width={rectWidth}
-          height={(rectHeight * 3) / 4}
-          data={lineChartData.has(node.id) ? lineChartData.get(node.id) : []}
-        /> */}
       </g>
     );
   };

@@ -21,8 +21,8 @@ import _ from 'lodash';
 
 interface Props {
   activationOrGradientData: DataToShow[];
-  is_training: boolean;
-  max_step: number;
+  isTraining: boolean;
+  maxStep: number;
   brushedStep: [];
   setBrushedStep: { ([]): void };
   setBrushed: { (boolean): void };
@@ -42,7 +42,7 @@ const useStyles = makeStyles({
 
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
-  const { activationOrGradientData, max_step, brushedStep, setBrushedStep, setBrushed, loadingData } = props;
+  const { activationOrGradientData, maxStep, brushedStep, setBrushedStep, setBrushed, loadingData } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
 
@@ -74,7 +74,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
   // let XScale = d3.scaleLinear()
   //   .rangeRound([0, svgWidth])
-  //   .domain([1, max_step]);
+  //   .domain([1, maxStep]);
 
   const titleAreaHeight = svgHeight * 0.1;
   const chartAreaHeight = svgHeight - titleAreaHeight;
@@ -126,7 +126,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   }, [dataArrToShow, svgWidth, currentStep, loadingData]);
 
   const computeAndDrawLine = async () => {
-    if (!max_step || dataArrToShow.length === 0) return;
+    if (!maxStep || dataArrToShow.length === 0) return;
     // 首先清除上一次的svg绘制结果。
     // 因为当dataArrToShow为空的时候，没有任何绘制，但是也要将原来的绘制结果删除
     // 所以把这一段代码放在 if(dataArrToShow.length === 0) 之前
@@ -154,7 +154,7 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < dataArrToShow.length; i++) {
       let LineData: Point[] = dataArrToShow[i].data;
-      for (let j = 1; j < max_step; j++) {
+      for (let j = 1; j < maxStep; j++) {
         let point: Point = LineData[j];
         if (!point) continue;
         minY = Math.min(minY, point.y);
@@ -164,10 +164,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
 
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, svgWidth])
-      .domain([1, max_step]);
+      .domain([1, maxStep]);
     let x2Scale = d3.scaleLinear()
       .rangeRound([0, svgWidth])
-      .domain([1, max_step]);
+      .domain([1, maxStep]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
@@ -313,9 +313,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           begStep
         );
         s[0] = Math.max(1, begStep); // 不能小于1
-        s[0] = Math.min(max_step - 1, s[0]); // 不能大于 max_step-1
+        s[0] = Math.min(maxStep - 1, s[0]); // 不能大于 maxStep-1
 
-        s[1] = Math.min(max_step - 1, s[0] + 1);
+        s[1] = Math.min(maxStep - 1, s[0] + 1);
       } else {
         s[0] = Math.ceil(s[0]);
         s[1] = Math.floor(s[1]);
@@ -417,10 +417,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
       let _index = bisect(dataExample.data, x, 1);
       _index = _index === 0 ? 1 : _index;
 
-      // 因为data中是[1, max_step]的数组,共max_step-1个数
-      // 而数组从0开始存储，所以数组中是[0, max_step-1)
-      // 所以_index最大是 max_step - 2
-      if (_index === max_step - 1) _index = max_step - 2;
+      // 因为data中是[1, maxStep]的数组,共maxStep-1个数
+      // 而数组从0开始存储，所以数组中是[0, maxStep-1)
+      // 所以_index最大是 maxStep - 2
+      if (_index === maxStep - 1) _index = maxStep - 2;
       let index =
         x - dataExample.data[_index - 1].x > dataExample.data[_index].x - x
           ? _index
@@ -457,10 +457,10 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
         let _index = bisect(dataExample.data, x, 1);
         _index = _index === 0 ? 1 : _index;
 
-        // 因为data中是[1, max_step]的数组,共max_step-1个数
-        // 而数组从0开始存储，所以数组中是[0, max_step-1)
-        // 所以_index最大是 max_step - 2
-        if (_index === max_step - 1) _index = max_step - 2;
+        // 因为data中是[1, maxStep]的数组,共maxStep-1个数
+        // 而数组从0开始存储，所以数组中是[0, maxStep-1)
+        // 所以_index最大是 maxStep - 2
+        if (_index === maxStep - 1) _index = maxStep - 2;
 
         if (0 <= (_index - 1) && _index < dataExample.data.length) {
           let index =

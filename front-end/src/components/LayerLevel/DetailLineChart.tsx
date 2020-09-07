@@ -43,7 +43,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   } = props;
 
   const {
-    max_step,
+    maxStep,
     selectedNodeId,
     showActivationOrGradient,
   } = useGlobalStates();
@@ -197,12 +197,10 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     function getLineInfoLabel(xPos, yPos, i, step, index) {
       // 在(x,y)位置画一个信息框，里面是index
       focus.selectAll(".layerLevel-detailInfo-area-text").remove();
-       
-        
       const text = focus
         .append("text")
         .attr("class", "layerLevel-detailInfo-area-text")
-        .text(`(step: ${step}, index: ${index})`)
+        .text(`(step: ${step}, index: ${Math.round(index)})`)
         .style("font-size", 14)
         .style("visibility", "visible");
       
@@ -218,9 +216,9 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       text.attr('x', x).attr('y', y);
     }
 
-    // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, max_step-1)]
-    // 坐标刻度为 ： start_step , .... Math.min(end_step, max_step-1)
-    // Math.min(end_step, max_step-1) === start_step时，不画线，直接标上值
+    // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, maxStep-1)]
+    // 坐标刻度为 ： start_step , .... Math.min(end_step, maxStep-1)
+    // Math.min(end_step, maxStep-1) === start_step时，不画线，直接标上值
 
     svg
       .append("text")
@@ -230,8 +228,8 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .attr("y", margin.top - 2)
       .attr("text-anchor", "middle");
 
-    if (Math.min(end_step, max_step - 1) !== start_step) {
-      let numberOfLineToDraw = Math.min(end_step, max_step - 1) - start_step; // 比如[345,346],还需要画1根线
+    if (Math.min(end_step, maxStep - 1) !== start_step) {
+      let numberOfLineToDraw = Math.min(end_step, maxStep - 1) - start_step; // 比如[345,346],还需要画1根线
       let widthBetweenToLines = chartWidth / (numberOfLineToDraw + 1);
 
       for (let i = 1; i <= numberOfLineToDraw; i++) {

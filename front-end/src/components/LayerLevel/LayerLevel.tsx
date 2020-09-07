@@ -49,8 +49,8 @@ const LayerLevel: React.FC = () => {
     selectedNodeId,
     showActivationOrGradient,
     currentMSGraphName,
-    is_training,
-    max_step,
+    isTraining,
+    maxStep,
     currentStep,
   } = useGlobalStates();
 
@@ -66,7 +66,7 @@ const LayerLevel: React.FC = () => {
 
   // let initialBrushedStep = []; // 如果brushed===false时的初始刷选位置
   // if (currentStep) {
-  //   let end = Math.min(max_step - 1, currentStep);
+  //   let end = Math.min(maxStep - 1, currentStep);
   //   initialBrushedStep = [end - 1, end];
   // } else {
   //   initialBrushedStep = [1, 2];
@@ -74,7 +74,7 @@ const LayerLevel: React.FC = () => {
   // 还没有刷选时，初始化detailInfoGraph的起止位置
   const initialBrushedStep =
     currentStep ?
-      [Math.min(max_step - 1, currentStep) - 1, Math.min(max_step - 1, currentStep)] :
+      [Math.min(maxStep - 1, currentStep) - 1, Math.min(maxStep - 1, currentStep)] :
       [1, 2]
 
   const fetchDataType =
@@ -93,12 +93,12 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getNodeScalars(currentMSGraphName, childNodeId, 1, max_step, fetchDataType);
+    getNodeScalars(currentMSGraphName, childNodeId, 1, maxStep, fetchDataType);
   }, [
     childNodeId,
     currentMSGraphName,
-    is_training,
-    max_step,
+    isTraining,
+    maxStep,
     showActivationOrGradient,
   ]);
 
@@ -298,8 +298,8 @@ const LayerLevel: React.FC = () => {
             {activationOrGradientData.length !== 0 && (
               <ActivationOrGradientChart
                 activationOrGradientData={activationOrGradientData}
-                is_training={is_training}
-                max_step={max_step}
+                isTraining={isTraining}
+                maxStep={maxStep}
                 brushedStep={brushedStep}
                 setBrushedStep={setBrushedStep}
                 setBrushed={setBrushed}

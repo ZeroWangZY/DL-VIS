@@ -18,8 +18,8 @@ let globalStates: GlobalStates = {
   currentMSGraphName: null,
   currentStep: null,
   selectedNodeId: null,
-  is_training: null,
-  max_step: null,
+  isTraining: null,
+  maxStep: null,
   layerLevel_checkBoxState: checkBoxInitial,
   showActivationOrGradient: ShowActivationOrGradient.ACTIVATION,
   nodeScalarType: NodeScalarType.ACTIVATION,
@@ -48,12 +48,12 @@ export const modifyGlobalStates = (
       break;
     case GlobalStatesModificationType.SET_IS_TRAINING:
       globalStates = Object.assign({}, globalStates, {
-        is_training: payload,
+        isTraining: payload,
       });
       break;
-    case GlobalStatesModificationType.SET_MAX_SETP:
+    case GlobalStatesModificationType.SET_MAX_STEP:
       globalStates = Object.assign({}, globalStates, {
-        max_step: payload,
+        maxStep: payload,
       });
       break;
     case GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME:

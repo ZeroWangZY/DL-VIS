@@ -37,7 +37,7 @@ interface layerNodeScalar {
 
 const LineGroup: React.FC<Props> = (props: Props) => {
   const { svgWidth, svgHeight, layerNodeId } = props;
-  const { currentStep, max_step, currentMSGraphName, nodeScalarType } = useGlobalStates();
+  const { currentStep, maxStep, currentMSGraphName, nodeScalarType } = useGlobalStates();
   const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
 
@@ -55,12 +55,12 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     let endStep = 0;
     let startStep = 0;
     let halfOfStepNumberInLayernode = Math.floor(stepNumberInLayernode / 2);
-    if (!currentStep) { // 当没有选中某个step的时候，折线图跟随着max_step变化
-      endStep = max_step;
-      startStep = (max_step - stepNumberInLayernode >= 1 ? max_step - stepNumberInLayernode : 1);
+    if (!currentStep) { // 当没有选中某个step的时候，折线图跟随着maxStep变化
+      endStep = maxStep;
+      startStep = (maxStep - stepNumberInLayernode >= 1 ? maxStep - stepNumberInLayernode : 1);
     } else { // 如果选中某个step, 则显示他的前面halfOfStepNumberInLayernode个，后面halfOfStepNumberInLayernode个
       startStep = (currentStep - halfOfStepNumberInLayernode >= 1 ? currentStep - halfOfStepNumberInLayernode : 1);
-      endStep = (currentStep + halfOfStepNumberInLayernode > max_step ? max_step : currentStep + halfOfStepNumberInLayernode);
+      endStep = (currentStep + halfOfStepNumberInLayernode > maxStep ? maxStep : currentStep + halfOfStepNumberInLayernode);
     }
 
     return [startStep, endStep];
@@ -76,7 +76,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
 
     getNodeScalars(currentMSGraphName, childNodeId, startStep, endStep, nodeScalarType);
-  }, [layerNodeId, currentStep, max_step, nodeScalarType])
+  }, [layerNodeId, currentStep, maxStep, nodeScalarType])
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
     const typeArray = ['activation', 'gradient', 'weight'];
@@ -112,7 +112,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < dataArrToShow.length; i++) {
       let LineData: Point[] = dataArrToShow[i].data;
-      for (let j = 1; j < max_step; j++) {
+      for (let j = 1; j < maxStep; j++) {
         let point: Point = LineData[j];
         if (!point) continue;
         minY = Math.min(minY, point.y);

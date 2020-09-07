@@ -70,7 +70,7 @@ const Snapshot: React.FC = () => {
   });
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [showDomain, setShowDomain] = useState(null);
-  const { currentStep, currentMSGraphName, is_training, max_step } = useGlobalStates();
+  const { currentStep, currentMSGraphName, isTraining, maxStep } = useGlobalStates();
   const { modelLevelcolorMap } = useGlobalConfigurations();
 
   const measuredRef = useCallback((node) => {
@@ -88,7 +88,7 @@ const Snapshot: React.FC = () => {
 
   let XScale = d3.scaleLinear()
     .rangeRound([0, svgWidth])
-    .domain([1, max_step]);
+    .domain([1, maxStep]);
 
   //trainLoss, testLoss,trainAccuracy ,testAccuracy,learningRate;
   const handleChange = (event) => { // checkBox状态控制
@@ -109,12 +109,12 @@ const Snapshot: React.FC = () => {
   }
 
   useEffect(() => {
-    if (!max_step || !currentMSGraphName) return;
+    if (!maxStep || !currentMSGraphName) return;
     computeAndDrawLine();
-  }, [is_training, max_step, currentMSGraphName, checkBoxState, svgWidth, currentStep]);
+  }, [isTraining, maxStep, currentMSGraphName, checkBoxState, svgWidth, currentStep]);
 
   const computeAndDrawLine = async () => {
-    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, max_step, modelLevelcolorMap);
+    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, maxStep, modelLevelcolorMap);
 
     // 将要显示的数据拿出来
     let dataArrToShow = [];
@@ -152,7 +152,7 @@ const Snapshot: React.FC = () => {
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < dataArrToShow.length; i++) {
       let LineData: Point[] = dataArrToShow[i].data;
-      for (let j = 1; j < max_step; j++) {
+      for (let j = 1; j < maxStep; j++) {
         let point: Point = LineData[j];
         if (!point) continue;
         minY = Math.min(minY, point.y);
@@ -162,10 +162,10 @@ const Snapshot: React.FC = () => {
 
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, svgWidth])
-      .domain([1, max_step]);
+      .domain([1, maxStep]);
     let x2Scale = d3.scaleLinear()
       .rangeRound([0, svgWidth])
-      .domain([1, max_step]);
+      .domain([1, maxStep]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
@@ -293,10 +293,10 @@ const Snapshot: React.FC = () => {
         let _index = bisect(dataExample.data, x, 1);
         _index = _index === 0 ? 1 : _index;
 
-        // 因为data中是[1, max_step]的数组,共max_step-1个数
-        // 而数组从0开始存储，所以数组中是[0, max_step-1)
-        // 所以_index最大是 max_step - 2
-        if (_index === max_step - 1) _index = max_step - 2;
+        // 因为data中是[1, maxStep]的数组,共maxStep-1个数
+        // 而数组从0开始存储，所以数组中是[0, maxStep-1)
+        // 所以_index最大是 maxStep - 2
+        if (_index === maxStep - 1) _index = maxStep - 2;
 
         if (0 <= (_index - 1) && _index < dataExample.data.length) {
           let index =
@@ -327,10 +327,10 @@ const Snapshot: React.FC = () => {
         let _index = bisect(dataExample.data, x, 1);
         _index = _index === 0 ? 1 : _index;
 
-        // 因为data中是[1, max_step]的数组,共max_step-1个数
-        // 而数组从0开始存储，所以数组中是[0, max_step-1)
-        // 所以_index最大是 max_step - 2
-        if (_index === max_step - 1) _index = max_step - 2;
+        // 因为data中是[1, maxStep]的数组,共maxStep-1个数
+        // 而数组从0开始存储，所以数组中是[0, maxStep-1)
+        // 所以_index最大是 maxStep - 2
+        if (_index === maxStep - 1) _index = maxStep - 2;
 
         if (0 <= (_index - 1) && _index < dataExample.data.length) {
           let index =
