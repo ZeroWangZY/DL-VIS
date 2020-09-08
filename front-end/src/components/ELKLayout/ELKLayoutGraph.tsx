@@ -415,14 +415,15 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   };
   // 点击空白处取消所有选择
   const handleBgClick = () => {
-    //  setSelectedNodeId ("");
-    if (selectedNodeId !== "")
+    if (selectedNodeId !== "") {
       modifyGlobalStates(
         GlobalStatesModificationType.SET_SELECTEDNODE,
         ""
       );
-    cleanPathFinding();
+      cleanPathFinding();
+    }
   };
+
   function cleanPathFinding() {
     setStartNodeId(null);
     setEndNodeId(null);
@@ -552,7 +553,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         outputG.attr("transform", d3.event.transform);
       })
       .on("end", () => {
-        setTransform(d3.event.transform);
+        // setTransform(d3.event.transform);
       });
     svg.call(zoom).on("dblclick.zoom", null);
 
@@ -582,24 +583,23 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     setBgRectHeight(svgHeight);
   }, []);
 
-  useEffect(()=>{
-    setTimeout(()=>{
-      if(isFirstAddEventListener && shouldShowDisplaySwitchPopover){
+  useEffect(() => {
+    setTimeout(() => {
+      if (isFirstAddEventListener && shouldShowDisplaySwitchPopover) {
         isFirstAddEventListener = false;
         const dom = document.querySelector(".ant-popover-inner-content")
-        if(dom){
-          dom.addEventListener("mouseout", function(e){
-            console.log((e.target as any).className)
-            if(e.target && (e.target as any).className === "ant-popover-inner-content"){
+        if (dom) {
+          dom.addEventListener("mouseout", function (e) {
+            if (e.target && (e.target as any).className === "ant-popover-inner-content") {
               popoverFlag = !popoverFlag;
-              if(popoverFlag){
+              if (popoverFlag) {
                 toggleShouldShowDisplaySwitchPopover(false);
-              } 
+              }
             }
-          },false)
+          }, false)
         }
       }
-    },50)
+    }, 50)
   }, [shouldShowDisplaySwitchPopover])
 
   const isPopoverOpen = Boolean(anchorEl);
@@ -616,26 +616,26 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
   const nodeScalarTypes = (<div id="popoverParent">
     {
-      ['activation','gradient','weight','none'].map((type,i)=>
-        <p 
+      ['activation', 'gradient', 'weight', 'none'].map((type, i) =>
+        <p
           id={`#item_${i}`}
-          className={`dataTypeItem ${i===3?"selected":""}`}
-          style={{ cursor: "pointer"}} 
-          onClick={(e)=>{
+          className={`dataTypeItem ${i === 3 ? "selected" : ""}`}
+          style={{ cursor: "pointer" }}
+          onClick={(e) => {
             d3.select("#popoverParent").selectAll("p").classed("selected", false)
             e.currentTarget.className += " selected"
-            if(i!==3){
+            if (i !== 3) {
               modifyGlobalConfigurations(
                 GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
               );
-              modifyGlobalStates(GlobalStatesModificationType.SET_NODESCALARTYPE,i)
+              modifyGlobalStates(GlobalStatesModificationType.SET_NODESCALARTYPE, i)
             } else {
               modifyGlobalConfigurations(
                 GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE
               );
             }
           }}>
-            {type}
+          {type}
         </p>
       )
     }
@@ -722,8 +722,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         <g id="gBrushHolder"></g>
       </svg>
 
-      <NodeInfoCard />
-
       <div className="minimap-container">
         <MiniMap
           graph={svgRef.current}
@@ -788,27 +786,27 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleClicked={canvasBackToRight}
         prompt={"Reset Layout"}
       />
-      <Popover 
-        placement="right" 
-        title={<span>Data Type</span>} 
+      <Popover
+        placement="right"
+        title={<span>Data Type</span>}
         content={nodeScalarTypes}
-        getPopupContainer={()=>document.querySelector("#elk-graph")} 
+        getPopupContainer={() => document.querySelector("#elk-graph")}
         trigger="hover"
         visible={shouldShowDisplaySwitchPopover}
-        >
-          <InteractiveIcon
-            id="display-switch"
-            className={
-              diagnosisMode ? "interactive-on-button" : "interactive-button"
-            }
-            position={{
-              left: 10,
-              bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
-            }}
-            src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
-            handleHover={()=>{toggleShouldShowDisplaySwitchPopover(true)}}
-            prompt={"Layer Display"}
-          />
+      >
+        <InteractiveIcon
+          id="display-switch"
+          className={
+            diagnosisMode ? "interactive-on-button" : "interactive-button"
+          }
+          position={{
+            left: 10,
+            bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
+          }}
+          src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
+          handleHover={() => { toggleShouldShowDisplaySwitchPopover(true) }}
+          prompt={"Layer Display"}
+        />
       </Popover>
     </div>
   );

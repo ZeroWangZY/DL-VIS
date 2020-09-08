@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
@@ -42,37 +42,48 @@ const useStyles = makeStyles({
 const NodeInfoCard: React.FC = () => {
   const { selectedNodeId } = useGlobalStates();
 
+  const [nodeInfoCardContent, setNodeInfoCardContent] = useState([]);
   const visGraph = useVisGraph();
   const processedGraph = useProcessedGraph();
   const classes = useStyles();
-  if (
-    !selectedNodeId ||
-    !visGraph ||
-    !visGraph.visNodeMap ||
-    !processedGraph ||
-    !processedGraph.nodeMap
-  )
-    return <div></div>;
 
-  const { nodeMap } = processedGraph;
-  const { visNodeMap } = visGraph;
-
-  let selectedNode = null; // selectedNodes包含所有选中节点
-  let isStackedNode = false;
-  if (visNodeMap[selectedNodeId] instanceof StackedOpNodeImp) {
-    // 选中堆叠子图
-    isStackedNode = true;
-    selectedNode = visNodeMap[selectedNodeId];
-  } else if (selectedNodeId !== null) { // 传入的参数是string
-    selectedNode = nodeMap[selectedNodeId];
-  }
-
-  const getDisplayedName = (nodeId) => {
-    if (isStackedNode) return visNodeMap[nodeId].displayedName;
+  const getDisplayedName = (nodeId, nodeMap) => {
     return nodeMap[nodeId].displayedName;
   };
 
-  const getContents = (selectedNode): any[] => { // 如果选中多个节点，则将每个节点信息依次展示
+  useEffect(() => {
+    if (
+      !selectedNodeId ||
+      !visGraph ||
+      !visGraph.visNodeMap ||
+      !processedGraph ||
+      !processedGraph.nodeMap ||
+      selectedNodeId.length === 0
+    )
+      return;
+
+    const { nodeMap } = processedGraph;
+    const { visNodeMap } = visGraph;
+
+    let selectedNode = null; // selectedNodes包含所有选中节点
+    let isStackedNode = false;
+
+    if (visNodeMap[selectedNodeId] instanceof StackedOpNodeImp) {
+      // 选中堆叠子图
+      isStackedNode = true;
+      selectedNode = visNodeMap[selectedNodeId];
+    } else if (selectedNodeId !== null) { // 传入的参数是string
+      selectedNode = nodeMap[selectedNodeId];
+    }
+
+    if (isStackedNode)
+      setNodeInfoCardContent(getStackedNodeContents(selectedNode, visNodeMap))
+    else
+      setNodeInfoCardContent(getContents(selectedNode, nodeMap))
+  }, [selectedNodeId])
+
+  const getContents = (selectedNode, nodeMap): any[] => { // 如果选中多个节点，则将每个节点信息依次展示
+    let startTime = new Date().getTime()
     let contents = [];
     if (selectedNode === undefined || selectedNode === null) return [];
 
@@ -127,9 +138,9 @@ const NodeInfoCard: React.FC = () => {
         </Typography>
         {Array.from(selectedNode.inputNode).map((d, i) => (
           <Typography className={classes.content} key={"inputNode" + i}>
-            {getDisplayedName(d).length <= 25
-              ? getDisplayedName(d)
-              : getDisplayedName(d).slice(0, 25) + "..."}
+            {getDisplayedName(d, nodeMap).length <= 25
+              ? getDisplayedName(d, nodeMap)
+              : getDisplayedName(d, nodeMap).slice(0, 25) + "..."}
           </Typography>
         ))}
 
@@ -138,9 +149,9 @@ const NodeInfoCard: React.FC = () => {
         </Typography>
         {Array.from(selectedNode.outputNode).map((d, i) => (
           <Typography className={classes.content} key={"outputNode" + i}>
-            {getDisplayedName(d).length <= 25
-              ? getDisplayedName(d)
-              : getDisplayedName(d).slice(0, 25) + "..."}
+            {getDisplayedName(d, nodeMap).length <= 25
+              ? getDisplayedName(d, nodeMap)
+              : getDisplayedName(d, nodeMap).slice(0, 25) + "..."}
           </Typography>
         ))}
 
@@ -173,9 +184,9 @@ const NodeInfoCard: React.FC = () => {
             </Typography>
             {constVals.map((d, i) => (
               <Typography className={classes.content} key={"constNode" + i}>
-                {getDisplayedName(d).length <= 25
-                  ? getDisplayedName(d)
-                  : getDisplayedName(d).slice(0, 25) + "..."}
+                {getDisplayedName(d, nodeMap).length <= 25
+                  ? getDisplayedName(d, nodeMap)
+                  : getDisplayedName(d, nodeMap).slice(0, 25) + "..."}
               </Typography>
             ))}
 
@@ -184,19 +195,21 @@ const NodeInfoCard: React.FC = () => {
             </Typography>
             {parameters.map((d, i) => (
               <Typography className={classes.content} key={"parameterNode" + i}>
-                {getDisplayedName(d).length <= 25
-                  ? getDisplayedName(d)
-                  : getDisplayedName(d).slice(0, 25) + "..."}
+                {getDisplayedName(d, nodeMap).length <= 25
+                  ? getDisplayedName(d, nodeMap)
+                  : getDisplayedName(d, nodeMap).slice(0, 25) + "..."}
               </Typography>
             ))}
           </>
         )}
       </CardContent>
     )
+    let endTime = new Date().getTime();
+    console.log("NodeInfoCard耗时: ", endTime - startTime)
     return contents;
   };
 
-  const getStackedNodeContents = (selectedNode): any[] => {
+  const getStackedNodeContents = (selectedNode, visNodeMap): any[] => {
     let contents = [];
     if (selectedNode === undefined || selectedNode === null) return [];
 
@@ -218,9 +231,9 @@ const NodeInfoCard: React.FC = () => {
         </Typography>
         {Array.from(selectedNode.nodesContained).map((d, i) => (
           <Typography className={classes.content} key={"nodesContained" + i}>
-            {getDisplayedName(d).length <= 25
-              ? getDisplayedName(d)
-              : getDisplayedName(d).slice(0, 25) + "..."}
+            {getDisplayedName(d, visNodeMap).length <= 25
+              ? getDisplayedName(d, visNodeMap)
+              : getDisplayedName(d, visNodeMap).slice(0, 25) + "..."}
           </Typography>
         ))}
       </div>
@@ -231,9 +244,7 @@ const NodeInfoCard: React.FC = () => {
 
   return (
     <div className={"info-card"}>
-      {isStackedNode
-        ? getStackedNodeContents(selectedNode)
-        : getContents(selectedNode)}
+      {nodeInfoCardContent}
     </div>
   );
 };
