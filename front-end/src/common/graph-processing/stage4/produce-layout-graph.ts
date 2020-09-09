@@ -603,11 +603,11 @@ function genLabel(id) {
   return [
     {
       id,
-      text: "",
+      text: " ",
       layoutOptions: {
         "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
       },
-      width: 10.0,
+      width: 96.0,
       height: 15.0,
     },
   ];
