@@ -81,7 +81,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   );
   //路径选取模式相关功能：
   const togglePathFindingMode = () => {
-    console.log(isPathFindingMode);
     modifyGlobalConfigurations(
       GlobalConfigurationsModificationType.SET_ISPATHFINDINGMODE
     );
@@ -334,6 +333,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const handleRightClick = () => {
     const e = d3.event;
     e.preventDefault();
+
     if (!isPathFindingMode) {
       //路径模式未开启，可以编辑节点类型
       let selectedG = d3.select(svgRef.current).selectAll("g.selected");
@@ -370,7 +370,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         }
       } else {
         // 已有选中节点，则选项为聚合
-        //setAnchorEl(e.target);
         setLeft(e.pageX);
         setTop(e.pageY);
         setCurrentNodetype(-1);
@@ -379,9 +378,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     } else {
       //路径模式开启，处理点选逻辑
       setCurrentNodetype(0); //设置一下currentNodeType，否则默认为-1表示选中了多个节点，会影响路径模式下的popover
+
       e.currentTarget.classList.add("selected");
+
       setEditingNodeId(e.currentTarget.getAttribute("id"));
-      //setAnchorEl(e.target);
+
       setLeft(e.pageX);
       setTop(e.pageY);
     }
