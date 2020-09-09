@@ -292,13 +292,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
   });
 
-  const animationFinished = () => {
-    console.log("animationFinished")
-  }
-
   return (
     <TransitionMotion
-      didLeave={animationFinished()}
       styles={styledGraph === null ? [] : styledGraph.nodeStyles}
     >
       {(interpolatedStyles) => (
