@@ -160,7 +160,6 @@ const MiniMap1: React.FC<Props> = (props: Props) => {
 
   //-------------------------以下是拖动矩形框-->改变output图的位置------------------------------------
   useEffect(() => {
-    console.log("transform改变");
     const dragmove = () => {
       viewpointCoord.x = d3.event.x;  //d3.event.x y表示小矩形左上角的位置
       viewpointCoord.y = d3.event.y;

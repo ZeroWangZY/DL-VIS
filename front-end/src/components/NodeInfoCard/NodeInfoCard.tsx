@@ -83,7 +83,6 @@ const NodeInfoCard: React.FC = () => {
   }, [selectedNodeId])
 
   const getContents = (selectedNode, nodeMap): any[] => { // 如果选中多个节点，则将每个节点信息依次展示
-    let startTime = new Date().getTime()
     let contents = [];
     if (selectedNode === undefined || selectedNode === null) return [];
 
@@ -204,8 +203,6 @@ const NodeInfoCard: React.FC = () => {
         )}
       </CardContent>
     )
-    let endTime = new Date().getTime();
-    console.log("NodeInfoCard耗时: ", endTime - startTime)
     return contents;
   };
 

@@ -32,7 +32,8 @@ let globalConfigurations: GlobalConfigurations = {
   shouldOptimizeProcessedGraph: false,
   currentLayout: LayoutType.ELK_FOR_MS,
   modelLevelcolorMap: modelLevelcolorMap,
-  layerLevelcolorMap: layerLevelcolorMap
+  layerLevelcolorMap: layerLevelcolorMap,
+  isPathFindingMode: false,
 };
 
 const broadcast = () => {
@@ -46,6 +47,11 @@ export const modifyGlobalConfigurations = (
   payload: any = null
 ) => {
   switch (operation) {
+    case GlobalConfigurationsModificationType.SET_ISPATHFINDINGMODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        isPathFindingMode: !globalConfigurations.isPathFindingMode,
+      });
+      break;
     case GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         diagnosisMode: true,

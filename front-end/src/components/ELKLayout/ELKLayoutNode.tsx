@@ -13,7 +13,6 @@ import {
 import * as d3 from "d3";
 import styles from "../../CSSVariables/CSSVariables.less";
 import {
-  useProcessedGraph,
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
@@ -32,7 +31,6 @@ interface Props {
   currentNotShowLineChartID: string[];
   iteration: number;
   layoutModificationMode: boolean;
-  isPathFindingMode: boolean;
   startNodeId: string;
   endNodeId: string;
 }
@@ -45,17 +43,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { currentNotShowLineChartID, iteration, layoutModificationMode, isPathFindingMode, startNodeId, endNodeId } = props;
-  const graphForLayout = useProcessedGraph();
-  const { diagnosisMode } = useGlobalConfigurations();
+  const { currentNotShowLineChartID, iteration, layoutModificationMode, startNodeId, endNodeId } = props;
+  const { diagnosisMode, isPathFindingMode } = useGlobalConfigurations();
   const { selectedNodeId } = useGlobalStates();
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
-
-  const [lineChartData, setLineChartData] = useState(new Map());
-  let _lineChartData = new Map();
-
 
   const handleClick = (id) => {
     if (selectedNodeId !== id)

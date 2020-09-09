@@ -13,6 +13,7 @@ export interface GlobalConfigurations {
   currentLayout: LayoutType;
   modelLevelcolorMap: Map<string, string>;
   layerLevelcolorMap: Map<string, string>;
+  isPathFindingMode: boolean;
 }
 
 export enum LayoutType {
@@ -24,6 +25,7 @@ export enum LayoutType {
 }
 
 export enum GlobalConfigurationsModificationType {
+  SET_ISPATHFINDINGMODE,
   SET_DIAGNOSIS_MODE,
   UNSET_DIAGNOSIS_MODE,
   TOGGLE_DIAGNOSIS_MODE,

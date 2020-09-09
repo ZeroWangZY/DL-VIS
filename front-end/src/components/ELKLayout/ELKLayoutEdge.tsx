@@ -1,14 +1,16 @@
 import React from "react";
 import { TransitionMotion } from "react-motion";
 import { useStyledGraph } from "../../store/styledGraph";
-import styles from "../../CSSVariables/CSSVariables.less";
+import {
+  useGlobalConfigurations,
+} from "../../store/global-configuration";
 
 const ELKLayoutEdge: React.FC<{
   highlightPath: Set<string>;
-  isPathFindingMode: boolean;
 }> = (props) => {
-  const { highlightPath, isPathFindingMode } = props;
+  const { highlightPath } = props;
   const styledGraph = useStyledGraph();
+  const { isPathFindingMode } = useGlobalConfigurations();
 
   return (
     <g className="edges" pointerEvents="none">
@@ -21,7 +23,7 @@ const ELKLayoutEdge: React.FC<{
               <g
                 className={`edgePath ${
                   d.data.isModuleEdge ? "moduleEdge" : ""
-                }`}
+                  }`}
                 key={d.key}
               >
                 {d.data.drawData.map((link, i) => (
@@ -49,11 +51,11 @@ const ELKLayoutEdge: React.FC<{
                 className={
                   `edgePath ${d.data.originalSource} ${d.data.originalTarget} ${d.data.originalSource}to${d.data.originalTarget}` +
                   `${
-                    highlightPath.has(
-                      d.data.originalSource + " " + d.data.originalTarget
-                    ) && isPathFindingMode
-                      ? " highlightPath"
-                      : ""
+                  highlightPath.has(
+                    d.data.originalSource + " " + d.data.originalTarget
+                  ) && isPathFindingMode
+                    ? " highlightPath"
+                    : ""
                   }`
                 }
                 key={d.key}

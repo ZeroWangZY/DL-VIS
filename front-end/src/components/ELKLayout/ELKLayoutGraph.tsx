@@ -25,8 +25,6 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-import { useHistory } from "react-router-dom";
-import NodeInfoCard from "../NodeInfoCard/NodeInfoCard";
 import MiniMap from "../MiniMap/MiniMap";
 import PopoverBox from "../PopoverBox/PopoverBox";
 import InteractiveIcon from "../InteractiveIcon/InteractiveIcon";
@@ -53,22 +51,16 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     iconPadding = 5,
     firstIconBottom = 30; //左下角交互图标高度，图标上下间隔，最下面一个图标距离底边的距离
 
-  const history = useHistory();
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
   const {
     diagnosisMode,
-    isHiddenInterModuleEdges,
+    isPathFindingMode
   } = useGlobalConfigurations();
   const { selectedNodeId } = useGlobalStates();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
-  // const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
-  // const handleChangeTransform = function (transform) {
-  //   if (transform === null || transform === undefined) return;
-  //   setTransform(transform);
-  // };
 
   const graphForLayout = useProcessedGraph();
   const [selectMode, setSelectMode] = useState(false); // 单选模式
@@ -88,9 +80,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     false
   );
   //路径选取模式相关功能：
-  const [isPathFindingMode, setIsPathFindingMode] = useState(false);
   const togglePathFindingMode = () => {
-    setIsPathFindingMode(!isPathFindingMode);
+    console.log(isPathFindingMode);
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.SET_ISPATHFINDINGMODE
+    );
   };
   const [startNodeId, setStartNodeId] = useState<string>(null);
   const [endNodeId, setEndNodeId] = useState<string>(null);
@@ -548,11 +542,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   };
 
   function canvasBackToRight() {
-    // setTransform({
-    //   x: 0,
-    //   y: 0,
-    //   k: 1,
-    // });
     const outputG = d3.select(outputRef.current);
     outputG.attr("transform", "translate(0,0) scale(1)");
     updateZoomofD3(d3.zoomIdentity);
@@ -560,16 +549,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
-    // const outputG = d3.select(outputRef.current);
-
-    // let zoom = zoomofD3
-    //   .on("zoom", function () {
-    //     outputG.attr("transform", d3.event.transform);
-    //   })
-    //   .on("end", () => {
-    //     // setTransform(d3.event.transform);
-    //   });
-    // svg.call(zoom).on("dblclick.zoom", null);
 
     // 获得背景rect的高度
     const svgNode = svg.node() as HTMLElement;
@@ -725,14 +704,12 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
               layoutModificationMode={layoutModificationMode}
-              isPathFindingMode={isPathFindingMode}
               startNodeId={startNodeId}
               endNodeId={endNodeId}
             />
             <ELKLayoutPort />
             <ELKLayoutEdge
               highlightPath={highlightPath}
-              isPathFindingMode={isPathFindingMode}
             />
           </g>
         </svg>
@@ -763,7 +740,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         currentShowLineChart={currentShowLineChart}
         handleLineChartToggle={handleLineChartToggle}
         handleModifyNodetype={handleModifyNodetype}
-        isPathFindingMode={isPathFindingMode}
         handleSetStart={handleSetStart}
         handleSetEnd={handleSetEnd}
       />

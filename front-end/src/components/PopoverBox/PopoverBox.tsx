@@ -10,6 +10,9 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
 import { NodeType, LayerType } from '../../common/graph-processing/stage2/processed-graph'
+import {
+  useGlobalConfigurations,
+} from "../../store/global-configuration";
 
 interface Props {
   isPopoverOpen: boolean;
@@ -26,7 +29,6 @@ interface Props {
   currentShowLineChart: boolean;
   handleLineChartToggle: { (e: any): void };
   handleModifyNodetype: { (): void };
-  isPathFindingMode?: boolean;
   handleSetStart?: { (): void };
   handleSetEnd?: { (): void }
 }
@@ -47,16 +49,16 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
     currentShowLineChart,
     handleLineChartToggle,
     handleModifyNodetype,
-    isPathFindingMode,
     handleSetStart,
     handleSetEnd
   } = props;
+  const { isPathFindingMode } = useGlobalConfigurations();
 
   return (
     <div className={'popover-box'}>
       <Popover
         open={isPopoverOpen}
-        anchorPosition={{left, top}}
+        anchorPosition={{ left, top }}
         onClose={currentNodetype < 0 ? handleClosePopoverWithoutDeselect : handleClosePopover}//多选时关闭不取消已勾选项
         anchorOrigin={{
           vertical: 'top',
