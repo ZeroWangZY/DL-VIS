@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as d3 from 'd3';
 import './MiniMap.css'
+import { useStyledGraph } from "../../store/styledGraph";
 
 let fitK = 1;
 let iTime;
@@ -14,54 +15,67 @@ interface Transform {
 }
 interface Props {
   graph: HTMLElement;
-  outputG: HTMLElement;
   outputSVG: HTMLElement;
-  transform: Transform;
+  outputG: HTMLElement;
   updateZoomofD3: any;
-  handleChangeTransform: { (transform: Transform): void };
 }
 
-const MiniMap: React.FC<Props> = (props: Props) => {
-  if (props.graph === undefined || props.graph === null) return (<div />); // 没有输入
-  const { graph, outputG, outputSVG, transform, handleChangeTransform, updateZoomofD3 } = props;
+// 由于output-G的大小可能大于mainsvg的大小。这个时候就需要将output-G按比例缩小，
+// 使得它的大小不超过mainsvg，这样用canvas画图的时候就很方便了
+// 比如mainsvg的大小是 [500,500]，outputSvg大小是：[200,1500]
+// 此时，就要将outputsvg的大小缩小3倍, fitK = 1/3 之后outputSvg的大小为 [200/3,500];
+// 再比如mainsvg的大小是[500,500],outputSvg大小是:[750,1500]
+// 要保证outputSvg缩小后，mainSvg能装得下，fitK = 1/3 ,outputsvg之后的大小为[250,500]
+// 而不应该 fitK = 500/750 = 2/3 ,之后outputSvg大小为[500,1000] 显然不正确。
+function ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight) {
+  let fitK
+  if (outputsvgWidth > svgWidth && outputsvgHeight > svgHeight) {
+    fitK = svgWidth / outputsvgWidth
+    if (outputsvgHeight * fitK > svgHeight)
+      fitK = svgHeight / outputsvgHeight
+  }
+  else if (outputsvgWidth > svgWidth) {
+    fitK = svgWidth / outputsvgWidth
+  }
+  else if (outputsvgHeight > svgHeight) {
+    fitK = svgHeight / outputsvgHeight
+  }
 
+  return fitK
+}
+
+const MiniMap1: React.FC<Props> = (props: Props) => {
+  if (props.graph === undefined || props.graph === null) return (<div />); // 没有输入
+  const { graph, outputG, outputSVG, updateZoomofD3 } = props;
+  const styledGraph = useStyledGraph();
+  const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, k: 1 });
   let outputSVGToDrawInCanvas = null;
 
   const rectRef = useRef();
   const canvasRef = useRef();
+
+  useEffect(() => {
+    let zoom = d3.zoom()
+      .on("zoom", function () {
+        d3.select(outputG).attr("transform", d3.event.transform);
+      })
+      .on("end", () => {
+        setTransform(d3.event.transform);
+      });
+    d3.select(graph).call(zoom).on("dblclick.zoom", null);
+  }, [])
+
   const scale = 4; // minimap大小为原来svg图大小的四分之一
 
   const mainSvgSize = {
     width: d3.select(graph).node().getBoundingClientRect().width,
     height: d3.select(graph).node().getBoundingClientRect().height
   }; // mainSvg大小
+
   const minimapSize = { width: mainSvgSize.width / scale, height: mainSvgSize.height / scale }
 
   let viewpointCoord = { x: -transform.x * fitK / transform.k / scale, y: -transform.y * fitK / transform.k / scale };    // 矩形的初始坐标
 
-  // 由于output-G的大小可能大于mainsvg的大小。这个时候就需要将output-G按比例缩小，
-  // 使得它的大小不超过mainsvg，这样用canvas画图的时候就很方便了
-  // 比如mainsvg的大小是 [500,500]，outputSvg大小是：[200,1500]
-  // 此时，就要将outputsvg的大小缩小3倍, fitK = 1/3 之后outputSvg的大小为 [200/3,500];
-  // 再比如mainsvg的大小是[500,500],outputSvg大小是:[750,1500]
-  // 要保证outputSvg缩小后，mainSvg能装得下，fitK = 1/3 ,outputsvg之后的大小为[250,500]
-  // 而不应该 fitK = 500/750 = 2/3 ,之后outputSvg大小为[500,1000] 显然不正确。
-  function ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight) {
-    let fitK
-    if (outputsvgWidth > svgWidth && outputsvgHeight > svgHeight) {
-      fitK = svgWidth / outputsvgWidth
-      if (outputsvgHeight * fitK > svgHeight)
-        fitK = svgHeight / outputsvgHeight
-    }
-    else if (outputsvgWidth > svgWidth) {
-      fitK = svgWidth / outputsvgWidth
-    }
-    else if (outputsvgHeight > svgHeight) {
-      fitK = svgHeight / outputsvgHeight
-    }
-
-    return fitK
-  }
   const updateRect = (x, y) => { // 更新矩形框的位置
     d3.select(rectRef.current).attr("transform", `translate(${x},${y}) scale(${1 / transform.k})`)
   }
@@ -118,34 +132,33 @@ const MiniMap: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (outputSVG === null) return;
 
-    clearTimeout(iTime);
-    iTime = setTimeout(() => { // 用来保证仅在最后一次调用时延时画图
-      const svgWidth = mainSvgSize.width;
-      const svgHeight = mainSvgSize.height;
-      const outputsvgWidth = d3.select(outputSVG).node().getBoundingClientRect().width / transform.k;
-      const outputsvgHeight = d3.select(outputSVG).node().getBoundingClientRect().height / transform.k; //未缩放之前的大小
+    console.log("svg绘制改变")
+    const svgWidth = mainSvgSize.width;
+    const svgHeight = mainSvgSize.height;
+    const outputsvgWidth = d3.select(outputSVG).node().getBoundingClientRect().width / transform.k;
+    const outputsvgHeight = d3.select(outputSVG).node().getBoundingClientRect().height / transform.k; //未缩放之前的大小
 
-      if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth)
-        fitK = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
-      else
-        fitK = 1;
+    if (outputsvgHeight > svgHeight || outputsvgWidth > svgWidth)
+      fitK = ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight)
+    else
+      fitK = 1;
 
-      if (fitK === 1)
-        d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-          .attr('width', minimapSize.width)
-          .attr("height", minimapSize.height)
-      else {
-        d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
-          .attr('width', minimapSize.width * fitK)
-          .attr("height", minimapSize.height * fitK)
-      }
-      outputSVGToDrawInCanvas = outputSVG.cloneNode(true);
-      drawInCanvas(outputSVGToDrawInCanvas, fitK);
-    }, 500);
-  })
+    if (fitK === 1)
+      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+        .attr('width', minimapSize.width)
+        .attr("height", minimapSize.height)
+    else {
+      d3.select(rectRef.current)  // 更改canvas和rect大小以适应不同的显示比例
+        .attr('width', minimapSize.width * fitK)
+        .attr("height", minimapSize.height * fitK)
+    }
+    outputSVGToDrawInCanvas = outputSVG.cloneNode(true);
+    drawInCanvas(outputSVGToDrawInCanvas, fitK);
+  }, [styledGraph])
 
   //-------------------------以下是拖动矩形框-->改变output图的位置------------------------------------
   useEffect(() => {
+    console.log("transform改变");
     const dragmove = () => {
       viewpointCoord.x = d3.event.x;  //d3.event.x y表示小矩形左上角的位置
       viewpointCoord.y = d3.event.y;
@@ -153,21 +166,20 @@ const MiniMap: React.FC<Props> = (props: Props) => {
 
       // 更新svg图的位置
       const outputSVGTransform = d3.zoomTransform(outputSVG)
-                                  .translate(-d3.event.x * transform.k * scale / fitK, -d3.event.y * transform.k * scale / fitK)
-                                  .scale(transform.k)
+        .translate(-d3.event.x * transform.k * scale / fitK, -d3.event.y * transform.k * scale / fitK)
+        .scale(transform.k)
       updateZoomofD3(outputSVGTransform)
       d3.select(outputG).attr("transform",
         `translate(${-d3.event.x * transform.k * scale / fitK},${-d3.event.y * transform.k * scale / fitK}) scale(${transform.k})`
       )
     };
     const dragend = () => { // 拖拽结束，设置transform
-      handleChangeTransform({ x: -viewpointCoord.x * transform.k * scale / fitK, y: -viewpointCoord.y * transform.k * scale / fitK, k: transform.k })
+      setTransform({ x: -viewpointCoord.x * transform.k * scale / fitK, y: -viewpointCoord.y * transform.k * scale / fitK, k: transform.k })
       // setViewpointCoord({ x: d3.event.x, y: d3.event.y })
     }
 
     let drag = d3.drag().subject(Object).on('drag', dragmove).on("end", dragend);
 
-    // TODO: 每次transform改变都会重新绑定drag时间，是否会导致堆栈过多？！
     d3.select(rectRef.current).datum(viewpointCoord as any).call(drag);
   }, [transform])
 
@@ -188,13 +200,13 @@ const MiniMap: React.FC<Props> = (props: Props) => {
             transform={`translate(${viewpointCoord.x},${viewpointCoord.y}) scale(${1 / transform.k})`}
             width={minimapSize.width}
             height={minimapSize.height}
-            style={{'fill': '#c0d3ff', 'fillOpacity': 0.3, 'strokeWidth': 0}}
+            style={{ 'fill': '#c0d3ff', 'fillOpacity': 0.3, 'strokeWidth': 0 }}
           />
         </g>
       </svg>
-      <canvas ref={canvasRef} width={minimapSize.width} height={minimapSize.height} style={{'border':'none'}}/>
+      <canvas ref={canvasRef} width={minimapSize.width} height={minimapSize.height} style={{ 'border': 'none' }} />
     </div>
   );
 }
 
-export default MiniMap;
+export default MiniMap1;

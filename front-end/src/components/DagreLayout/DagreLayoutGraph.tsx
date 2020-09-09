@@ -1062,9 +1062,9 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
           graph={svgRef.current}
           outputSVG={outputSVGRef.current}
           outputG={outputRef.current}
-          transform={transform}
+          // transform={transform}
           updateZoomofD3={null}
-          handleChangeTransform={handleChangeTransform}
+          // handleChangeTransform={handleChangeTransform}
         // outputSVG_Copy={(outputSVGRef.current) ? (outputSVGRef.current as any).cloneNode(true) : null}
         />
       </div>

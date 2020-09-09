@@ -63,11 +63,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const { selectedNodeId } = useGlobalStates();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
-  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
-  const handleChangeTransform = function (transform) {
-    if (transform === null || transform === undefined) return;
-    setTransform(transform);
-  };
+  // const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  // const handleChangeTransform = function (transform) {
+  //   if (transform === null || transform === undefined) return;
+  //   setTransform(transform);
+  // };
 
   const graphForLayout = useProcessedGraph();
   const [selectMode, setSelectMode] = useState(false); // 单选模式
@@ -547,11 +547,11 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   };
 
   function canvasBackToRight() {
-    setTransform({
-      x: 0,
-      y: 0,
-      k: 1,
-    });
+    // setTransform({
+    //   x: 0,
+    //   y: 0,
+    //   k: 1,
+    // });
     const outputG = d3.select(outputRef.current);
     outputG.attr("transform", "translate(0,0) scale(1)");
     updateZoomofD3(d3.zoomIdentity);
@@ -559,16 +559,16 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
-    const outputG = d3.select(outputRef.current);
+    // const outputG = d3.select(outputRef.current);
 
-    let zoom = zoomofD3
-      .on("zoom", function () {
-        outputG.attr("transform", d3.event.transform);
-      })
-      .on("end", () => {
-        // setTransform(d3.event.transform);
-      });
-    svg.call(zoom).on("dblclick.zoom", null);
+    // let zoom = zoomofD3
+    //   .on("zoom", function () {
+    //     outputG.attr("transform", d3.event.transform);
+    //   })
+    //   .on("end", () => {
+    //     // setTransform(d3.event.transform);
+    //   });
+    // svg.call(zoom).on("dblclick.zoom", null);
 
     // 获得背景rect的高度
     const svgNode = svg.node() as HTMLElement;
@@ -742,9 +742,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           graph={svgRef.current}
           outputSVG={outputSVGRef.current}
           outputG={outputRef.current}
-          transform={transform}
           updateZoomofD3={updateZoomofD3}
-          handleChangeTransform={handleChangeTransform}
         />
       </div>
       <PopoverBox

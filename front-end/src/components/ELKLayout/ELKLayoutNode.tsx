@@ -292,8 +292,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
   });
 
+  const animationFinished = () => {
+    console.log("animationFinished")
+  }
+
   return (
     <TransitionMotion
+      didLeave={animationFinished()}
       styles={styledGraph === null ? [] : styledGraph.nodeStyles}
     >
       {(interpolatedStyles) => (
@@ -321,7 +326,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 onMouseLeave={() => {
                   offHighlightedLine(linkedEdges)
                 }}
-                //onContextMenu={(e) => handleRightClick(e)}
+              //onContextMenu={(e) => handleRightClick(e)}
               >
                 {getLabelContainer(
                   d.data,
