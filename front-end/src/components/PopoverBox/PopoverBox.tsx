@@ -13,7 +13,8 @@ import { NodeType, LayerType } from '../../common/graph-processing/stage2/proces
 
 interface Props {
   isPopoverOpen: boolean;
-  anchorEl: any;
+  left: any;
+  top: any;
   currentNodetype: number;
   handleClosePopoverWithoutDeselect: { (): void };
   handleClosePopover: { (): void };
@@ -33,7 +34,8 @@ interface Props {
 const PopoverBox: React.FC<Props> = (props: Props) => {
   const {
     isPopoverOpen,
-    anchorEl,
+    left,
+    top,
     currentNodetype,
     handleClosePopoverWithoutDeselect,
     handleClosePopover,
@@ -54,12 +56,13 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
     <div className={'popover-box'}>
       <Popover
         open={isPopoverOpen}
-        anchorEl={anchorEl}
+        anchorPosition={{left, top}}
         onClose={currentNodetype < 0 ? handleClosePopoverWithoutDeselect : handleClosePopover}//多选时关闭不取消已勾选项
         anchorOrigin={{
           vertical: 'top',
           horizontal: 'left',
         }}
+        anchorReference='anchorPosition'
         transformOrigin={{
           vertical: 'top',
           horizontal: 'left',

@@ -1068,9 +1068,10 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         // outputSVG_Copy={(outputSVGRef.current) ? (outputSVGRef.current as any).cloneNode(true) : null}
         />
       </div>
-      <PopoverBox
+      {/* <PopoverBox
         isPopoverOpen={isPopoverOpen}
-        anchorEl={anchorEl}
+        left={null}
+        top={null}
         currentNodetype={currentNodetype}
         handleClosePopoverWithoutDeselect={handleClosePopoverWithoutDeselect}
         handleClosePopover={handleClosePopover}
@@ -1082,7 +1083,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
         currentShowLineChart={currentShowLineChart}
         handleLineChartToggle={handleLineChartToggle}
         handleModifyNodetype={handleModifyNodetype}
-      />
+      /> */}
     </div >
   );
 }

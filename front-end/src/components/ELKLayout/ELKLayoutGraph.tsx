@@ -71,7 +71,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
   const graphForLayout = useProcessedGraph();
   const [selectMode, setSelectMode] = useState(false); // 单选模式
-  const [anchorEl, setAnchorEl] = useState(null); // popover的位置
+  //const [anchorEl, setAnchorEl] = useState(null); // popover的位置
+  const [top, setTop] = useState(null);
+  const [left, setLeft] = useState(null);
   const [currentNodetype, setCurrentNodetype] = useState<number>(-1);
   const [currentLayertype, setCurrentLayertype] = useState<string>(null);
   const [currentShowLineChart, setCurrentShowLineChart] = useState<boolean>(
@@ -334,7 +336,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   // 两种情况：
   // 1. 当前没有选中的节点，右击一个节点，如果为group node或者layer node，则可以修改节点类型或者进行ungroup
   // 2. 当前有选中的节点，右击，可以选择是否聚合
-  const handleRightClick = (e) => {
+  const handleRightClick = () => {
+    const e = d3.event;
     e.preventDefault();
     if (!isPathFindingMode) {
       //路径模式未开启，可以编辑节点类型
@@ -366,11 +369,15 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           if (node.type === NodeType.LAYER) {
             setCurrentLayertype((node as LayerNode).layerType);
           }
-          setAnchorEl(e.target);
+          //setAnchorEl(e.target);
+          setLeft(e.pageX);
+          setTop(e.pageY);
         }
       } else {
         // 已有选中节点，则选项为聚合
-        setAnchorEl(e.target);
+        //setAnchorEl(e.target);
+        setLeft(e.pageX);
+        setTop(e.pageY);
         setCurrentNodetype(-1);
         setCurrentLayertype(null);
       }
@@ -379,7 +386,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       setCurrentNodetype(0); //设置一下currentNodeType，否则默认为-1表示选中了多个节点，会影响路径模式下的popover
       e.currentTarget.classList.add("selected");
       setEditingNodeId(e.currentTarget.getAttribute("id"));
-      setAnchorEl(e.target);
+      //setAnchorEl(e.target);
+      setLeft(e.pageX);
+      setTop(e.pageY);
     }
   };
   // 关闭popover
@@ -387,13 +396,17 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     node = d3.select(".nodes").selectAll(".node");
     node.classed("selected", false);
     node.classed("previouslySelected", false);
-    setAnchorEl(null);
+    //setAnchorEl(null);
+    setTop(null);
+    setLeft(null);
     //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
     // setCurrentNodetype(-1);
     setCurrentLayertype(null);
   };
   const handleClosePopoverWithoutDeselect = () => {
-    setAnchorEl(null);
+    //setAnchorEl(null);
+    setTop(null);
+    setLeft(null);
     //关闭时更新以下state会导致popover重新渲染出现内容重叠问题
     // setCurrentNodetype(-1);
     setCurrentLayertype(null);
@@ -602,7 +615,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     }, 50)
   }, [shouldShowDisplaySwitchPopover])
 
-  const isPopoverOpen = Boolean(anchorEl);
+  const isPopoverOpen = Boolean(left !== null && top !== null);
 
   const handleLayoutModify = () => {
     setLayoutModificationMode(!layoutModificationMode);
@@ -640,6 +653,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       )
     }
   </div>)
+
+  d3.selectAll('.nodes').on('contextmenu', handleRightClick);
 
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
@@ -704,7 +719,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         <svg id="output-svg" ref={outputSVGRef}>
           <g className="output" id="output-g" ref={outputRef}>
             <ELKLayoutNode
-              handleRightClick={handleRightClick}
+              //handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
               layoutModificationMode={layoutModificationMode}
@@ -734,7 +749,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       </div>
       <PopoverBox
         isPopoverOpen={isPopoverOpen}
-        anchorEl={anchorEl}
+        // anchorEl={anchorEl}
+        left={left !== null ? left : -500}
+        top={top !== null ? top : -500}
         currentNodetype={currentNodetype}
         handleClosePopoverWithoutDeselect={handleClosePopoverWithoutDeselect}
         handleClosePopover={handleClosePopover}

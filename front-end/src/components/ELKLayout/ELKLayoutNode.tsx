@@ -29,7 +29,6 @@ import LineGroup from "./LineGroup"
 import { produceLayoutGraph, LAYERNODESIZEINDIAGNOSISMODE } from "../../common/graph-processing/stage4/produce-layout-graph";
 
 interface Props {
-  handleRightClick: { (e: any): void };
   currentNotShowLineChartID: string[];
   iteration: number;
   layoutModificationMode: boolean;
@@ -46,7 +45,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { handleRightClick, currentNotShowLineChartID, iteration, layoutModificationMode, isPathFindingMode, startNodeId, endNodeId } = props;
+  const { currentNotShowLineChartID, iteration, layoutModificationMode, isPathFindingMode, startNodeId, endNodeId } = props;
   const graphForLayout = useProcessedGraph();
   const { diagnosisMode } = useGlobalConfigurations();
   const { selectedNodeId } = useGlobalStates();
@@ -322,7 +321,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 onMouseLeave={() => {
                   offHighlightedLine(linkedEdges)
                 }}
-                onContextMenu={(e) => handleRightClick(e)}
+                //onContextMenu={(e) => handleRightClick(e)}
               >
                 {getLabelContainer(
                   d.data,
