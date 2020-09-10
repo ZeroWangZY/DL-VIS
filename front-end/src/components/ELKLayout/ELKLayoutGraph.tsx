@@ -378,7 +378,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     } else {
       //路径模式开启，处理点选逻辑
       setCurrentNodetype(0); //设置一下currentNodeType，否则默认为-1表示选中了多个节点，会影响路径模式下的popover
-
+      
       e.currentTarget.classList.add("selected");
 
       setEditingNodeId(e.currentTarget.getAttribute("id"));
@@ -636,7 +636,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       }
     </div>)
 
-  d3.selectAll('.nodes').on('contextmenu', handleRightClick);
+  d3.selectAll('.node').on('contextmenu', handleRightClick);
 
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
