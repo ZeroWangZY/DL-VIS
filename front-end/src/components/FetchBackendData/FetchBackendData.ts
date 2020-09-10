@@ -7,15 +7,18 @@ import {
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { fetchMetadata } from '../../api/modelLevel';
 
-let updateGlobalStatesTunc = null;
+let timer = null;
 
 const fetchBackendData = () => {
-  const { currentMSGraphName, isTraining, maxStep } = useGlobalStates();
+  const { currentMSGraphName } = useGlobalStates();
 
   useEffect(() => {
     if (!currentMSGraphName) return;
 
-    setInterval(function fetch() {
+    if (timer !== null)
+      clearInterval(timer);
+
+    timer = setInterval(function fetch() {
       fetchMetadata({ graph_name: currentMSGraphName }).then((data) => {
         const maxStep = data.data.data.max_step;
         const isTraining = data.data.data.is_training;

@@ -53,14 +53,17 @@ const NodeInfoCard: React.FC = () => {
 
   useEffect(() => {
     if (
-      !selectedNodeId ||
       !visGraph ||
       !visGraph.visNodeMap ||
       !processedGraph ||
-      !processedGraph.nodeMap ||
-      selectedNodeId.length === 0
+      !processedGraph.nodeMap
     )
       return;
+
+    if (!selectedNodeId || selectedNodeId.length === 0) {
+      setNodeInfoCardContent([]);
+      return;
+    }
 
     const { nodeMap } = processedGraph;
     const { visNodeMap } = visGraph;
