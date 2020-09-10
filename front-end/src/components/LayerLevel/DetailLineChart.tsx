@@ -19,6 +19,7 @@ interface Props {
   setClusterStep: { (number): void };
   childNodeId: string | null;
   showLoading: boolean;
+  clusterStep: number
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -39,7 +40,8 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     dataArrToShow,
     setClusterStep,
     childNodeId,
-    showLoading
+    showLoading,
+    clusterStep
   } = props;
 
   const {
@@ -129,18 +131,99 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y));
 
-    svg.select(".layerLevel-detailInfo-zoom").on("click", function () {
-      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-      let x = xScale.invert(mouseX);
+    // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, maxStep-1)]
+    // 坐标刻度为 ： start_step , .... Math.min(end_step, maxStep-1)
+    // Math.min(end_step, maxStep-1) === start_step时，不画线，直接标上值
+    svg
+      .append("text")
+      .attr("class", "layerLevel-detailInfo-text")
+      .text(`${start_step}`)
+      .attr("x", margin.left)
+      .attr("y", margin.top - 2)
+      .attr("text-anchor", "middle");
 
-      let _index = bisect(dataExample.data, x, 1);
-      setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
-    });
+    let bgRectArea = svg.select(".layerLevel-detailInfo-bgRectArea");
+    let clickedRect = [];
 
-    // function toTopLevel(targetElement: SVGSVGElement) {
-    //   let parent = targetElement.parentNode;
-    //   parent.appendChild(targetElement);
-    // }
+    if (Math.min(end_step, maxStep - 1) !== start_step) {
+      let numberOfLineToDraw = Math.min(end_step, maxStep - 1) - start_step; // 比如[345,346],还需要画1根线
+      let widthBetweenToLines = chartWidth / (numberOfLineToDraw + 1);
+
+      let bgRectWidth = chartWidth / (numberOfLineToDraw + 1); // 每块的宽度
+      bgRectArea.append("rect")
+        .attr("class", "layerLevel-detailInfo-bg")
+        .attr("width", bgRectWidth)
+        .attr("height", chartHeight)
+        .on("mouseover", function () {
+          d3.select(this).classed("hovered", true);
+        })
+        .on("mouseout", function () {
+          d3.select(this).classed("hovered", false);
+        })
+        .on("click", function () {
+          d3.select(this).classed("clicked", true);
+          setClusterStep(start_step);
+        })
+
+      for (let i = 1; i <= numberOfLineToDraw; i++) {
+        let xPos = margin.left + widthBetweenToLines * i;
+        // 长度为 chartHeight
+        svg
+          .append("text")
+          .attr("class", "layerLevel-detailInfo-text")
+          .text(`${start_step + i}`)
+          .attr("x", xPos)
+          .attr("y", margin.top - 2)
+          .attr("text-anchor", "middle");
+
+        svg
+          .append("line")
+          .attr("class", "layerLevel-detailInfo-yAxisLine")
+          .attr("x1", xPos)
+          .attr("y1", margin.top)
+          .attr("x2", xPos)
+          .attr("y2", margin.top + chartHeight);
+
+        bgRectArea.append("rect")
+          .attr("class", "layerLevel-detailInfo-bg")
+          .attr("width", bgRectWidth)
+          .attr("height", chartHeight)
+          .attr("transform", "translate(" + (bgRectWidth * i) + ", 0)")
+          .on("mouseover", function () {
+            d3.select(this).classed("hovered", true);
+          })
+          .on("mouseout", function () {
+            d3.select(this).classed("hovered", false);
+          })
+          .on("click", function () {
+            d3.select(this).classed("clicked", true);
+            setClusterStep(i + start_step);
+          })
+      }
+    } else { // 只选择了一个step的情况
+      bgRectArea.append("rect")
+        .attr("class", "layerLevel-detailInfo-bg")
+        .attr("width", chartWidth)
+        .attr("height", chartHeight)
+        .on("mouseover", function () {
+          d3.select(this).classed("hovered", true);
+        })
+        .on("mouseout", function () {
+          d3.select(this).classed("hovered", false);
+        })
+        .on("click", function () {
+          d3.select(this).classed("clicked", true);
+          setClusterStep(start_step);
+        })
+    }
+
+    // svg.select(".layerLevel-detailInfo-zoom").on("click", function () {
+    //   let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+    //   let x = xScale.invert(mouseX);
+
+    //   let _index = bisect(dataExample.data, x, 1);
+    //   setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
+    // });
 
     for (let idx = 0, len = dataArrToShow.length; idx < len; idx++) {
       let data = dataArrToShow[idx];
@@ -203,55 +286,19 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .text(`(step: ${step}, index: ${Math.round(index)})`)
         .style("font-size", 14)
         .style("visibility", "visible");
-      
-      const {width, height} = text.node().getBoundingClientRect();
+
+      const { width, height } = text.node().getBoundingClientRect();
       let x = xPos;
       let y = yPos;
-      if(xPos + width > chartWidth) {
+      if (xPos + width > chartWidth) {
         x = xPos - width;
       }
-      if(yPos + height > chartHeight) {
+      if (yPos + height > chartHeight) {
         y = yPos - height;
-      } 
+      }
       text.attr('x', x).attr('y', y);
     }
 
-    // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, maxStep-1)]
-    // 坐标刻度为 ： start_step , .... Math.min(end_step, maxStep-1)
-    // Math.min(end_step, maxStep-1) === start_step时，不画线，直接标上值
-
-    svg
-      .append("text")
-      .attr("class", "layerLevel-detailInfo-text")
-      .text(`${start_step}`)
-      .attr("x", margin.left)
-      .attr("y", margin.top - 2)
-      .attr("text-anchor", "middle");
-
-    if (Math.min(end_step, maxStep - 1) !== start_step) {
-      let numberOfLineToDraw = Math.min(end_step, maxStep - 1) - start_step; // 比如[345,346],还需要画1根线
-      let widthBetweenToLines = chartWidth / (numberOfLineToDraw + 1);
-
-      for (let i = 1; i <= numberOfLineToDraw; i++) {
-        let xPos = margin.left + widthBetweenToLines * i;
-        // 长度为 chartHeight
-        svg
-          .append("text")
-          .attr("class", "layerLevel-detailInfo-text")
-          .text(`${start_step + i}`)
-          .attr("x", xPos)
-          .attr("y", margin.top - 2)
-          .attr("text-anchor", "middle");
-
-        svg
-          .append("line")
-          .attr("class", "layerLevel-detailInfo-yAxisLine")
-          .attr("x1", xPos)
-          .attr("y1", margin.top)
-          .attr("x2", xPos)
-          .attr("y2", margin.top + chartHeight);
-      }
-    }
     focus.append("g").attr("class", "axis axis--y").call(d3.axisLeft(yScale));
 
     let yGrid = focus.append("g").attr("class", "detailLineChart-grid");
@@ -300,14 +347,19 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           style={{ height: chartAreaHeight + "px", width: "100%" }}
           ref={svgRef}
         >
-          <g>
+          {/* <g>
             <rect
               className="layerLevel-detailInfo-zoom"
               width={chartWidth}
               height={chartHeight}
               transform={`translate(${margin.left},${margin.top})`}
             />
-          </g>
+          </g> */}
+          <g
+            className="layerLevel-detailInfo-bgRectArea"
+            transform={`translate(${margin.left},${margin.top})`}
+          ></g>
+
           <g
             className="layerLevel-detailInfo-focus"
             transform={`translate(${margin.left},${margin.top})`}

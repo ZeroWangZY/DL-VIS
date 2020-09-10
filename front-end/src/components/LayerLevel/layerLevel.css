@@ -92,3 +92,18 @@ path.layerLevel-detailInfo-area.hovered {
     margin: 5px;
     box-shadow: 0 0 0 1px rgb(204, 204, 204);
 }
+
+rect.layerLevel-detailInfo-bg {
+    fill: palegreen;
+    opacity: 0.2;
+}
+
+rect.layerLevel-detailInfo-bg.hovered {
+    fill: palegreen;
+    opacity: 0.5;
+}
+
+rect.layerLevel-detailInfo-bg.clicked {
+    fill: OrangeRed;
+    opacity: 0.5;
+}

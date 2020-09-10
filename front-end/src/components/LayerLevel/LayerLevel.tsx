@@ -270,6 +270,7 @@ const LayerLevel: React.FC = () => {
               }
               dataArrToShow={detailLineChartData}
               setClusterStep={setClusterStep}
+              clusterStep={clusterStep}
               childNodeId={childNodeId}
               showLoading={loadingDetailLineChartData}
             />
