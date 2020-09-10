@@ -59,7 +59,6 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     isPathFindingMode
   } = useGlobalConfigurations();
   const { selectedNodeId } = useGlobalStates();
-
   const [bgRectHeight, setBgRectHeight] = useState(0);
 
   const graphForLayout = useProcessedGraph();
@@ -330,8 +329,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   // 两种情况：
   // 1. 当前没有选中的节点，右击一个节点，如果为group node或者layer node，则可以修改节点类型或者进行ungroup
   // 2. 当前有选中的节点，右击，可以选择是否聚合
-  const handleRightClick = () => {
-    const e = d3.event;
+  const handleRightClick = (e) => {
+    //const e = d3.event;
     e.preventDefault();
 
     if (!isPathFindingMode) {
@@ -636,7 +635,9 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
       }
     </div>)
 
-  d3.selectAll('.node').on('contextmenu', handleRightClick);
+  // useEffect(() => {
+  //   d3.selectAll('.node').on('contextmenu', handleRightClick);
+  // });
 
   return (
     <div id="elk-graph" style={{ height: "100%" }}>
@@ -701,7 +702,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         <svg id="output-svg" ref={outputSVGRef}>
           <g className="output" id="output-g" ref={outputRef}>
             <ELKLayoutNode
-              //handleRightClick={handleRightClick}
+              handleRightClick={handleRightClick}
               currentNotShowLineChartID={currentNotShowLineChartID}
               iteration={iteration}
               layoutModificationMode={layoutModificationMode}

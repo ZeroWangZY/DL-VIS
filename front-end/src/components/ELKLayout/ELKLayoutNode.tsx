@@ -33,6 +33,7 @@ interface Props {
   layoutModificationMode: boolean;
   startNodeId: string;
   endNodeId: string;
+  handleRightClick: (e: any) => void
 }
 
 const antiShakeDistance = 2;
@@ -43,13 +44,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
   const hoverEdgePathStrokeWidth = styles.hover_edge_path_stroke_width;
 
-  const { currentNotShowLineChartID, iteration, layoutModificationMode, startNodeId, endNodeId } = props;
+  const { currentNotShowLineChartID, iteration, layoutModificationMode, startNodeId, endNodeId, handleRightClick } = props;
   const { diagnosisMode, isPathFindingMode } = useGlobalConfigurations();
   const { selectedNodeId } = useGlobalStates();
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
-
   const handleClick = (id) => {
     if (selectedNodeId !== id)
       modifyGlobalStates(
@@ -240,7 +240,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     d3.selectAll("g .node").on(".drag", null);
     let selectionNodes = d3.selectAll("g .child-node");
     if (selectionNodes.size() === 0) return;
-
     if (layoutModificationMode) {
       selectionNodes.call(d3.drag().on("start", dragStarted));
     }
@@ -284,7 +283,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
     }
   });
-
   return (
     <TransitionMotion
       styles={styledGraph === null ? [] : styledGraph.nodeStyles}
@@ -314,7 +312,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 onMouseLeave={() => {
                   offHighlightedLine(linkedEdges)
                 }}
-              //onContextMenu={(e) => handleRightClick(e)}
+                onContextMenu={(e) => handleRightClick(e)}
               >
                 {getLabelContainer(
                   d.data,
