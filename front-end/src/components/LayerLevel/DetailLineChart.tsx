@@ -143,7 +143,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .attr("text-anchor", "middle");
 
     let bgRectArea = svg.select(".layerLevel-detailInfo-bgRectArea");
-    let clickedRect = [];
+    let clickedRect = null;
 
     if (Math.min(end_step, maxStep - 1) !== start_step) {
       let numberOfLineToDraw = Math.min(end_step, maxStep - 1) - start_step; // 比如[345,346],还需要画1根线
@@ -161,7 +161,10 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           d3.select(this).classed("hovered", false);
         })
         .on("click", function () {
+          if (clickedRect !== null)
+            clickedRect.classed("clicked", false);
           d3.select(this).classed("clicked", true);
+          clickedRect = d3.select(this);
           setClusterStep(start_step);
         })
 
@@ -196,7 +199,10 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
             d3.select(this).classed("hovered", false);
           })
           .on("click", function () {
+            if (clickedRect !== null)
+              clickedRect.classed("clicked", false);
             d3.select(this).classed("clicked", true);
+            clickedRect = d3.select(this);
             setClusterStep(i + start_step);
           })
       }
@@ -212,7 +218,10 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           d3.select(this).classed("hovered", false);
         })
         .on("click", function () {
+          if (clickedRect !== null)
+            clickedRect.classed("clicked", false);
           d3.select(this).classed("clicked", true);
+          clickedRect = d3.select(this);
           setClusterStep(start_step);
         })
     }
