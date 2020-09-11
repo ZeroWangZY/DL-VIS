@@ -94,16 +94,16 @@ path.layerLevel-detailInfo-area.hovered {
 }
 
 rect.layerLevel-detailInfo-bg {
-    fill: palegreen;
-    opacity: 0.2;
+    fill: #000000;
+    opacity: 0.1;
 }
 
 rect.layerLevel-detailInfo-bg.hovered {
-    fill: palegreen;
-    opacity: 0.5;
+    fill: 	#000000;
+    opacity: 0.2;
 }
 
 rect.layerLevel-detailInfo-bg.clicked {
-    fill: OrangeRed;
-    opacity: 0.5;
+    fill: #000000;
+    opacity: 0.3;
 }

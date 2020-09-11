@@ -76,7 +76,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
   const titleAreaHeight = svgHeight * 0.1;
   const chartAreaHeight = svgHeight - titleAreaHeight;
 
-  const margin = { top: 15, left: 40, bottom: 5, right: 40 }; // chart与外层之间的margin
+  const margin = { top: 0, left: 40, bottom: 5, right: 40 }; // chart与外层之间的margin
   const chartHeight = chartAreaHeight - margin.top - margin.bottom; // chart的高度
   const chartWidth = svgWidth - margin.left - margin.right;
 
@@ -104,6 +104,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     const bisect = d3.bisector((d: any) => d.x).left;
     //拿第一组数据查询
     const dataExample = dataArrToShow[0];
+    console.log(dataArrToShow);
 
     let xScale = d3
       .scaleLinear()
@@ -131,23 +132,12 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y));
 
-    // 需要竖线数量：刷选得到的数据范围是：[start_step, Math.min(end_step, maxStep-1)]
-    // 坐标刻度为 ： start_step , .... Math.min(end_step, maxStep-1)
-    // Math.min(end_step, maxStep-1) === start_step时，不画线，直接标上值
-    svg
-      .append("text")
-      .attr("class", "layerLevel-detailInfo-text")
-      .text(`${start_step}`)
-      .attr("x", margin.left)
-      .attr("y", margin.top - 2)
-      .attr("text-anchor", "middle");
-
     let bgRectArea = svg.select(".layerLevel-detailInfo-bgRectArea");
     let clickedRect = null;
 
     if (Math.min(end_step, maxStep - 1) !== start_step) {
       let numberOfLineToDraw = Math.min(end_step, maxStep - 1) - start_step; // 比如[345,346],还需要画1根线
-      let widthBetweenToLines = chartWidth / (numberOfLineToDraw + 1);
+      // let widthBetweenToLines = chartWidth / (numberOfLineToDraw + 1);
 
       let bgRectWidth = chartWidth / (numberOfLineToDraw + 1); // 每块的宽度
       bgRectArea.append("rect")
@@ -169,23 +159,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         })
 
       for (let i = 1; i <= numberOfLineToDraw; i++) {
-        let xPos = margin.left + widthBetweenToLines * i;
-        // 长度为 chartHeight
-        svg
-          .append("text")
-          .attr("class", "layerLevel-detailInfo-text")
-          .text(`${start_step + i}`)
-          .attr("x", xPos)
-          .attr("y", margin.top - 2)
-          .attr("text-anchor", "middle");
-
-        svg
-          .append("line")
-          .attr("class", "layerLevel-detailInfo-yAxisLine")
-          .attr("x1", xPos)
-          .attr("y1", margin.top)
-          .attr("x2", xPos)
-          .attr("y2", margin.top + chartHeight);
+        // let xPos = margin.left + widthBetweenToLines * i;
 
         bgRectArea.append("rect")
           .attr("class", "layerLevel-detailInfo-bg")
@@ -226,14 +200,6 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         })
     }
 
-    // svg.select(".layerLevel-detailInfo-zoom").on("click", function () {
-    //   let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-    //   let x = xScale.invert(mouseX);
-
-    //   let _index = bisect(dataExample.data, x, 1);
-    //   setClusterStep(Math.floor(_index / ticksBetweenTwoSteps) + start_step);
-    // });
-
     for (let idx = 0, len = dataArrToShow.length; idx < len; idx++) {
       let data = dataArrToShow[idx];
       focus
@@ -243,7 +209,6 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
         .attr("d", focusAreaLineGenerator)
         .attr("stroke", data.color)
         .on("mouseover", function (d) {
-          // toTopLevel((this as any) as SVGSVGElement);
           d3.select(this).raise(); // 将高亮的折线显示在最上层。
 
           d3.select(this).attr("stroke", "red");
@@ -356,14 +321,6 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           style={{ height: chartAreaHeight + "px", width: "100%" }}
           ref={svgRef}
         >
-          {/* <g>
-            <rect
-              className="layerLevel-detailInfo-zoom"
-              width={chartWidth}
-              height={chartHeight}
-              transform={`translate(${margin.left},${margin.top})`}
-            />
-          </g> */}
           <g
             className="layerLevel-detailInfo-bgRectArea"
             transform={`translate(${margin.left},${margin.top})`}
