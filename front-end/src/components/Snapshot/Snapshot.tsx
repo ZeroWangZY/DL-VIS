@@ -32,8 +32,8 @@ const useStyles = makeStyles({
     minWidth: 275,
   },
   title: {
-    fontSize: 14,
-    color: "white",
+    fontSize: 13,
+    color: "#333",
     textAlign: "left",
   },
 });
@@ -212,6 +212,10 @@ const Snapshot: React.FC = () => {
       .attr("class", "axis axis--y")
       .call(d3.axisLeft(focusAreaYScale));
 
+    focus.select('.focus-axis')
+      .select(".axis--y")
+      .selectAll("line")
+      .remove();
 
     // add the X gridlines
     // focus.append("g")
@@ -351,38 +355,35 @@ const Snapshot: React.FC = () => {
   const getDetailInfoRect = (xPos, height) => {
     let fontSize = 14;
     let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
-    let contextWidth = 150;
-
-    let containerWidth = contextWidth + 10, containerHeight = contextHeight + 10;
-
-    if (xPos + containerWidth > svgWidth) xPos = xPos - containerWidth - 20; // 靠近右边界，将这一部分放到竖线前面显示
+    let containerWidth = 160;
+    xPos += margin.left;
+    if (xPos + containerWidth > svgWidth) xPos = xPos - containerWidth - 10; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
 
     return (
-      <foreignObject
-        x={xPos}
-        y={height / 2 - contextHeight / 2}
-        width={containerWidth + 10}
-        height={contextHeight + 40}
-      >
-        <div className="DetailInfoContainer">
-          <div className={classes.title} style={{ marginLeft: '23px' }}>
-            {"iteration: " + localCurrentStep}
-          </div>
-          {DetailInfoOfCurrentStep.map((d, i) => (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span className="DotBeforeDetailInfo" style={{ background: modelLevelcolorMap.get(d.name), float: 'left' }}></span>
-              <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
-                {d.value === null && (d.name + ": null")}
-                {d.value !== null &&
-                  (d.name + ": " + toExponential(d.value))
-                }
-              </div>
-              <div style={{ clear: 'both' }}></div>
-            </div>
-          ))}
+      <div
+        className="DetailInfoContainer"
+        style={{
+          left: xPos,
+          top: height / 2 - contextHeight / 2,
+          width: containerWidth,
+          }}>
+        <div className={classes.title} style={{ marginLeft: '8px', marginTop: '8px' }}>
+          {"Iteration: " + localCurrentStep}
         </div>
-      </foreignObject>
+        {DetailInfoOfCurrentStep.map((d, i) => (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span className="DotBeforeDetailInfo" style={{ background: modelLevelcolorMap.get(d.name), float: 'left' }}></span>
+            <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
+              {d.value === null && (d.name + ": null")}
+              {d.value !== null &&
+                (d.name + ": " + toExponential(d.value))
+              }
+            </div>
+            <div style={{ clear: 'both' }}></div>
+          </div>
+        ))}
+      </div>
     )
   };
 
@@ -431,14 +432,11 @@ const Snapshot: React.FC = () => {
               y1={height}
               y2={0}
               style={{
-                stroke: "grey",
+                stroke: "#e1e1e1",
                 strokeWidth: 1,
               }}
             />
           )}
-          {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
-            getDetailInfoRect(cursorLinePos, height)
-          }
           {fixCursorLinePos !== null && (
             <line
               className="fixCursorLine"
@@ -464,6 +462,9 @@ const Snapshot: React.FC = () => {
           transform={`translate(${margin.left},${margin.top})`}
         />
       </svg>
+      {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
+        getDetailInfoRect(cursorLinePos, height)
+      }
     </div >
   );
 };
