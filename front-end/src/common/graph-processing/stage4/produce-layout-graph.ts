@@ -9,6 +9,7 @@ import {
   DataNodeImp,
   OperationNodeImp,
   DataType,
+  GroupNodeImp,
 } from "../stage2/processed-graph";
 import { VisGraph, StackedOpNodeImp } from "../stage3/vis-graph.type";
 import {
@@ -270,10 +271,10 @@ async function generateLayout(
         edges
       },
       options: {
-        "org.eclipse.elk.algorithm": "layered", 
+        "org.eclipse.elk.algorithm": "layered",
         "org.eclipse.elk.layered.nodePlacement.strategy": networkSimplex
-        ? "NETWORK_SIMPLEX"
-        : "INTERACTIVE",
+          ? "NETWORK_SIMPLEX"
+          : "INTERACTIVE",
         "org.eclipse.elk.portAlignment.east": "CENTER",
         "org.eclipse.elk.portAlignment.west": "CENTER",
         "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
@@ -294,10 +295,10 @@ async function generateLayout(
       return result.json();
     })
     let layoutGraph: Promise<LayoutGraph> = elkLayout.then((result) => {
-        let { id, children: tempChildren, edges: tempEdges } = result;
-        children = _.merge(children, tempChildren);
-        edges = _.merge(edges, tempEdges||[]);
-        return new LayoutGraphImp(id, children, edges, elkNodeMap);
+      let { id, children: tempChildren, edges: tempEdges } = result;
+      children = _.merge(children, tempChildren);
+      edges = _.merge(edges, tempEdges || []);
+      return new LayoutGraphImp(id, children, edges, elkNodeMap);
     })
     return layoutGraph;
   }
@@ -389,7 +390,8 @@ export const generateNode = (
   inPort: PortType,
   outPort: PortType,
   leafNum: number,
-  fixedNodeHeight: boolean
+  fixedNodeHeight: boolean,
+  needToSetMinWidth: boolean,
 ): LayoutNode => {
   let ports = [];
   // if (inPort !== PortType.None) {
@@ -467,7 +469,7 @@ export const generateNode = (
         : node.type === NodeType.LAYER && fixedNodeHeight
           ? LAYERNODESIZEINDIAGNOSISMODE.height
           : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
-    labels: genLabel(node.id + "_label"),
+    labels: genLabel(node.id + "_label", node, needToSetMinWidth),
     isStacked: node instanceof StackedOpNodeImp,
   };
 };
@@ -487,6 +489,27 @@ function processNodes(
       let edges = [];
       let parentId = nodeId;
       let subNodes = groups[parentId];
+
+      // ----判断是否应该给groupNode的子节点设置一个最小宽度
+      let needToSetMinWidth = true;
+      for (let child of subNodes) {
+        if (visNodeMap[child] instanceof LayerNodeImp ||
+          visNodeMap[child] instanceof GroupNodeImp) { // 如果子节点含有groupNode或者LayerNode不用设置最小宽度
+          needToSetMinWidth = false;
+          break;
+        } else { // 如果node的子节点是operationNode或者stackNode
+          let outputNodes = visNodeMap[child].outputNode;
+          // 如果某个子节点的outputNode是也在此groupNode或者LayerNode下面的话，也不要设置最小宽度
+          for (let outputNode of outputNodes) {
+            if (subNodes.has(outputNode)) {
+              needToSetMinWidth = false;
+              break;
+            }
+          }
+          if (needToSetMinWidth === false) break;
+        }
+      }
+
       for (let id of subNodes) {
         const node = visNodeMap[id];
         const [inPort, outPort] = isPort(visNodeMap[id], visNodeMap[id]);
@@ -497,7 +520,8 @@ function processNodes(
           inPort,
           outPort,
           leafNum,
-          fixedNodeHeight
+          fixedNodeHeight,
+          needToSetMinWidth,
         );
         processChildren(id, child, children);
         let source = id;
@@ -592,23 +616,39 @@ function processNodes(
       node.type == NodeType.GROUP || node.type == NodeType.LAYER
         ? node.leafOperationNodeCount
         : 0;
-    let newNode = generateNode(node, inPort, outPort, leafNum, fixedNodeHeight);
+    let newNode = generateNode(node, inPort, outPort, leafNum, fixedNodeHeight, false);
     processChildren(nodeId, newNode, newNodes);
   }
   return newNodes;
 }
 
 // Label会被添加在展开后的groupNode中，ELK会考虑Label的大小，从而方便绘制时有放label的地方
-function genLabel(id) {
-  return [
-    {
-      id,
-      text: " ",
-      layoutOptions: {
-        "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
+function genLabel(id, node: BaseNode, needToSetMinWidth) {
+
+  if (needToSetMinWidth) {
+    return [
+      {
+        id,
+        text: " ",
+        layoutOptions: {
+          "nodeLabels.placement": "[INSIDE, V_TOP, H_CENTER]",
+        },
+        width: 96.0,
+        height: 15.0,
       },
-      width: 96.0,
-      height: 15.0,
-    },
-  ];
+    ];
+  }
+  else {
+    return [
+      {
+        id,
+        text: "",
+        layoutOptions: {
+          "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
+        },
+        width: 10.0,
+        height: 15.0,
+      },
+    ];
+  }
 }
