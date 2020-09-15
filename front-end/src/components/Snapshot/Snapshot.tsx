@@ -27,16 +27,16 @@ interface checkBoxState {
   checkedE: boolean;
 }
 
-const useStyles = makeStyles({
-  root: {
-    minWidth: 275,
-  },
-  title: {
-    fontSize: 13,
-    color: "#333",
-    textAlign: "left",
-  },
-});
+// const useStyles = makeStyles({
+//   root: {
+//     minWidth: 275,
+//   },
+//   // title: {
+//   //   fontSize: 13,
+//   //   color: "#333",
+//   //   textAlign: "left",
+//   // },
+// });
 
 export const toExponential = (value: number): string => { // 将小数或者大整数转换为科学计数法，保留两位小数
   if (value === 0) return "0";
@@ -57,7 +57,7 @@ const Snapshot: React.FC = () => {
   const svgRef = useRef();
   const [svgHeight, setSvgHeight] = useState(270);
   const [svgWidth, setSvgWidth] = useState(1800);
-  const classes = useStyles();
+  // const classes = useStyles();
   const [fixCursorLinePos, setFixCursorLinePos] = useState(null);
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [localCurrentStep, setLocalCurrentStep] = useState(null);
@@ -368,13 +368,13 @@ const Snapshot: React.FC = () => {
           top: height / 2 - contextHeight / 2,
           width: containerWidth,
           }}>
-        <div className={classes.title} style={{ marginLeft: '8px', marginTop: '8px' }}>
+        <div style={{ marginLeft: '8px', marginTop: '8px' }}>
           {"Iteration: " + localCurrentStep}
         </div>
         {DetailInfoOfCurrentStep.map((d, i) => (
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span className="DotBeforeDetailInfo" style={{ background: modelLevelcolorMap.get(d.name), float: 'left' }}></span>
-            <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
+            <div style={{ display: 'inline-block', float: 'left' }}>
               {d.value === null && (d.name + ": null")}
               {d.value !== null &&
                 (d.name + ": " + toExponential(d.value))

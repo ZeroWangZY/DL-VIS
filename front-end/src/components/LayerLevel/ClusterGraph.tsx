@@ -104,84 +104,86 @@ const ClusterGraph: React.FC<Props> = (props: Props) => {
 
     const bisect = d3.bisector((d: any) => d.x).left;
     //拿第一组数据查询
-    const dataExample: any = dataArrToShow[0];
+    if (dataArrToShow && dataArrToShow.length) {
+      const dataExample: any = dataArrToShow[0];
 
-    let xScale = d3.scaleLinear()
-      .domain([minVal_x, maxVal_x])
-      .range([0, clusterGraphWidth]);
+      let xScale = d3.scaleLinear()
+        .domain([minVal_x, maxVal_x])
+        .range([0, clusterGraphWidth]);
 
-    let yScale = d3.scaleLinear()
-      .domain([minVal_y, maxVal_y])
-      .range([clusterGraphHeight, 0]);
+      let yScale = d3.scaleLinear()
+        .domain([minVal_y, maxVal_y])
+        .range([clusterGraphHeight, 0]);
 
-    //绘制圆
-    let circle = svg.selectAll("g")
-      .data(dataset)
-      .enter()
-      .append("g")
-      .attr('transform', (d) => {
-        let left = margin2.left + xScale(d[0]);
-        let top = yScale(d[1]) + margin2.top;
-        if (left >= clusterGraphWidth - 2) {
-          left = clusterGraphWidth - 2;
-        }
-        return `translate(${left}, ${top})`;
-      })
-      .append('circle')
-      .attr("class", "cluster-circle")
-      .attr("r", 2)
-      .on("mouseover", function (d, i) {  //hover
-        d3.select(this).attr("r", 5);
-        const g = d3.select(this.parentNode);
-        if (g.select('text').size() === 1) {
-          g.select('text').transition().duration(500).style('visibility', 'visible');
-        }
-        else {
-          const text: any = g.append('text')
-            .text(`(${i})`)
-            .style('font-size', 14)
-            .style('visibility', 'visible');
-          const { width, height } = text.node().getBoundingClientRect();
-
-          let x = 10;
-          let y = 0;
-          // 判断text的位置是否超出svg的边界
-          // x边界的处理
-          if (margin2.left + xScale(d[0]) + Math.ceil(width) + 10 >= clusterGraphWidth) {
-            x = -(Math.ceil(width) + 10);
+      //绘制圆
+      let circle = svg.selectAll("g")
+        .data(dataset)
+        .enter()
+        .append("g")
+        .attr('transform', (d) => {
+          let left = margin2.left + xScale(d[0]);
+          let top = yScale(d[1]) + margin2.top;
+          if (left >= clusterGraphWidth - 2) {
+            left = clusterGraphWidth - 2;
           }
-          // y边界的处理
-          if (yScale(d[1]) + margin2.top <= Math.ceil(height)) {
-            y = (Math.ceil(height) + 5 - yScale(d[1]) - margin2.top);
+          return `translate(${left}, ${top})`;
+        })
+        .append('circle')
+        .attr("class", "cluster-circle")
+        .attr("r", 2)
+        .on("mouseover", function (d, i) {  //hover
+          d3.select(this).attr("r", 5);
+          const g = d3.select(this.parentNode);
+          if (g.select('text').size() === 1) {
+            g.select('text').transition().duration(500).style('visibility', 'visible');
           }
-          text.attr("x", x).attr("y", y);
-        }
-      })
-      .on("mouseout", function (d, i) {
-        d3.select(this).transition().duration(500).attr("r", 2);
-        const g = d3.select(this.parentNode);
-        g.select('text').transition().duration(500).style('visibility', 'hidden');
-      })
-      .on('click', function (d, i) {
-        const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-        const mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+          else {
+            const text: any = g.append('text')
+              .text(`(${i})`)
+              .style('font-size', 14)
+              .style('visibility', 'visible');
+            const { width, height } = text.node().getBoundingClientRect();
 
-        let x = xScale.invert(mouseX);
-        let _index = bisect(dataExample.data, x, 1);
-        const batchSize =
-          dataExample.data.length / (end_step - start_step + 1);
-        let step = Math.floor(start_step + _index / batchSize);
-        _index %= batchSize;
-        setSelectedTensor({
-          type: showActivationOrGradient,
-          step: step,
-          dataIndex: i,
-          nodeId: childNodeId
-        });
+            let x = 10;
+            let y = 0;
+            // 判断text的位置是否超出svg的边界
+            // x边界的处理
+            if (margin2.left + xScale(d[0]) + Math.ceil(width) + 10 >= clusterGraphWidth) {
+              x = -(Math.ceil(width) + 10);
+            }
+            // y边界的处理
+            if (yScale(d[1]) + margin2.top <= Math.ceil(height)) {
+              y = (Math.ceil(height) + 5 - yScale(d[1]) - margin2.top);
+            }
+            text.attr("x", x).attr("y", y);
+          }
+        })
+        .on("mouseout", function (d, i) {
+          d3.select(this).transition().duration(500).attr("r", 2);
+          const g = d3.select(this.parentNode);
+          g.select('text').transition().duration(500).style('visibility', 'hidden');
+        })
+        .on('click', function (d, i) {
+          const mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+          const mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
 
-        setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
-        setIsShowingTensorHeatmap(true);
-      })
+          let x = xScale.invert(mouseX);
+          let _index = bisect(dataExample.data, x, 1);
+          const batchSize =
+            dataExample.data.length / (end_step - start_step + 1);
+          let step = Math.floor(start_step + _index / batchSize);
+          _index %= batchSize;
+          setSelectedTensor({
+            type: showActivationOrGradient,
+            step: step,
+            dataIndex: i,
+            nodeId: childNodeId
+          });
+
+          setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
+          setIsShowingTensorHeatmap(true);
+        })
+    }
 
   }, [clusterData, clusterStep, containerWidth, loadingDetailLineChartData, loadingClusterData])
 

@@ -29,24 +29,11 @@ interface Props {
   loadingData: boolean;
 }
 
-const useStyles = makeStyles({
-  root: {
-    minWidth: 275,
-  },
-  title: {
-    fontSize: 14,
-    color: "white",
-    textAlign: "left",
-  },
-});
-
 // TODO: 在调用此组件的时候就告诉它准确的宽和高。
 const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const { activationOrGradientData, maxStep, brushedStep, setBrushedStep, setBrushed, loadingData } = props;
   const { layerLevel_checkBoxState, currentStep } = useGlobalStates();
   const { layerLevelcolorMap } = useGlobalConfigurations();
-
-  const classes = useStyles();
 
   const svgRef = useRef();
   const zoomRef = useRef();
@@ -483,38 +470,37 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
   const getDetailInfoRect = (xPos, height) => {
     let fontSize = 14;
     let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
-    let contextWidth = 150;
+    let contextWidth = 120;
 
     let containerWidth = contextWidth + 10, containerHeight = contextHeight + 10;
-
-    if (xPos + containerWidth > svgWidth) xPos = xPos - containerWidth - 20; // 靠近右边界，将这一部分放到竖线前面显示
+    xPos += margin.left;
+    if (xPos + containerWidth > svgWidth) xPos = xPos - containerWidth - 10; // 靠近右边界，将这一部分放到竖线前面显示
     else xPos += 10;// gap
 
     return (
-      <foreignObject
-        x={xPos}
-        y={height / 2 - contextHeight / 2 - 10}
-        width={containerWidth + 10}
-        height={contextHeight + 40}
-      >
-        <div className="DetailInfoContainer">
-          <div className={classes.title} style={{ marginLeft: '23px' }}>
-            {"iteration: " + localCurrentStep}
-          </div>
-          {DetailInfoOfCurrentStep.map((d, i) => (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span className="DotBeforeDetailInfo" style={{ background: layerLevelcolorMap.get(d.name), float: 'left' }}></span>
-              <div className={classes.title} style={{ display: 'inline-block', float: 'left' }}>
-                {d.value === null && (d.name + ": null")}
-                {d.value !== null &&
-                  (d.name + ": " + toExponential(d.value))
-                }
-              </div>
-              <div style={{ clear: 'both' }}></div>
-            </div>
-          ))}
+      <div
+        className="DetailInfoContainer"
+        style={{
+          left: xPos,
+          top: height / 2 - contextHeight / 2,
+          width: containerWidth,
+          }}>
+        <div style={{ marginLeft: '8px', marginTop: '8px' }}>
+          {"iteration: " + localCurrentStep}
         </div>
-      </foreignObject>
+        {DetailInfoOfCurrentStep.map((d, i) => (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span className="DotBeforeDetailInfo" style={{ background: layerLevelcolorMap.get(d.name), float: 'left' }}></span>
+            <div style={{ display: 'inline-block', float: 'left' }}>
+              {d.value === null && (d.name + ": null")}
+              {d.value !== null &&
+                (d.name + ": " + toExponential(d.value))
+              }
+            </div>
+            <div style={{ clear: 'both' }}></div>
+          </div>
+        ))}
+      </div>
     )
   };
 
@@ -569,10 +555,6 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
               }}
             />
           )}
-          {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
-            getDetailInfoRect(cursorLinePos, height)
-          }
-
           {fixCursorLinePos !== null && (
             <line
               x1={fixCursorLinePos}
@@ -603,6 +585,9 @@ const ActivationOrGradientChart: React.FC<Props> = (props: Props) => {
           transform={`translate(${margin2.left},${margin2.top})`}
         ></g>
       </svg>
+      {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
+        getDetailInfoRect(cursorLinePos, height)
+      }
     </div >
   );
 }
