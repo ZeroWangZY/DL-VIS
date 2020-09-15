@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import * as d3 from 'd3';
 import './MiniMap.css'
 import { useStyledGraph } from "../../store/styledGraph";
+import {
+  useGlobalStates
+} from "../../store/global-states";
 
 let fitK = 1;
-let iTime;
+let timer = null;
 
-// TODO: 传入的数据是motion过后的图，而不是motion中间的
-// TODO: zoom中拖动，矩形框移动
 interface Transform {
   x: number;
   y: number;
@@ -44,12 +45,13 @@ function ScaleToFit(outputsvgWidth, outputsvgHeight, svgWidth, svgHeight) {
   return fitK
 }
 
-const MiniMap1: React.FC<Props> = (props: Props) => {
+const MiniMap: React.FC<Props> = (props: Props) => {
   if (props.graph === undefined || props.graph === null) return (<div />); // 没有输入
   const { graph, outputG, outputSVG, updateZoomofD3 } = props;
   const styledGraph = useStyledGraph();
+
+  const { selectedNodeId } = useGlobalStates();
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, k: 1 });
-  let outputSVGToDrawInCanvas = null;
 
   const rectRef = useRef();
   const canvasRef = useRef();
@@ -113,6 +115,11 @@ const MiniMap1: React.FC<Props> = (props: Props) => {
       .select("g.output")
       .attr("transform", `translate(0,0) scale(${fitK})`)
 
+    d3.select(outputSVG_Copy as HTMLElement) // 隐藏所有的label
+      .selectAll(".my-label")
+      .selectAll("text")
+      .style("opacity", "0")
+
     let svgStyle = d3.select(outputSVG_Copy as HTMLElement).append('style').text(stylesText);
 
     let svgXml = (new XMLSerializer()).serializeToString(outputSVG_Copy)
@@ -132,7 +139,10 @@ const MiniMap1: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (outputSVG === null) return;
 
-    setTimeout(() => {
+    if (timer !== null)
+      clearTimeout(timer);
+
+    timer = setTimeout(() => {
       const svgWidth = mainSvgSize.width;
       const svgHeight = mainSvgSize.height;
       const outputsvgWidth = d3.select(outputSVG).node().getBoundingClientRect().width / transform.k;
@@ -152,11 +162,11 @@ const MiniMap1: React.FC<Props> = (props: Props) => {
           .attr('width', minimapSize.width * fitK)
           .attr("height", minimapSize.height * fitK)
       }
-      outputSVGToDrawInCanvas = outputSVG.cloneNode(true);
+      let outputSVGToDrawInCanvas = outputSVG.cloneNode(true);
       drawInCanvas(outputSVGToDrawInCanvas, fitK);
-    }, 1000)
+    }, 500)
 
-  }, [styledGraph])
+  }, [styledGraph, selectedNodeId])
 
   //-------------------------以下是拖动矩形框-->改变output图的位置------------------------------------
   useEffect(() => {
@@ -185,13 +195,12 @@ const MiniMap1: React.FC<Props> = (props: Props) => {
   }, [transform])
 
   return (
-    <div className={'mini-map'}>
+    <div className={'mini-map'} style={{ width: minimapSize.width, height: minimapSize.height }}>
       <svg>
         <defs>
           <filter id="minimapDropShadow" x="-20%" y="-20%" width="150%" height="150%">
             <feOffset result="offOut" in="SourceGraphic" dx="1" dy="1"></feOffset>
             <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0"></feColorMatrix>
-            {/* <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="2"></feGaussianBlur> */}
             <feBlend in="SourceGraphic" in2="blurOut" mode="normal"></feBlend>
           </filter>
         </defs>
@@ -210,4 +219,4 @@ const MiniMap1: React.FC<Props> = (props: Props) => {
   );
 }
 
-export default MiniMap1;
+export default MiniMap;
