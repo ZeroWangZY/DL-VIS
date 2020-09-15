@@ -3,6 +3,7 @@ import "./ELKLayoutGraph.less";
 import styles from "../../CSSVariables/CSSVariables.less";
 import * as d3 from "d3";
 import { Popover, Button, Tooltip } from 'antd';
+// import { Popover } from '@material-ui/core';
 import {
   useProcessedGraph,
   modifyProcessedGraph,
@@ -627,32 +628,33 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     );
   };
 
-  const nodeScalarTypes = (<div id="popoverParent">
-    {
-      ['activation', 'gradient', 'weight', 'none'].map((type, i) =>
-        <p
-          id={`#item_${i}`}
-          className={`dataTypeItem ${i === 3 ? "selected" : ""}`}
-          style={{ cursor: "pointer" }}
-          onClick={(e) => {
-            d3.select("#popoverParent").selectAll("p").classed("selected", false)
-            e.currentTarget.className += " selected"
-            if (i !== 3) {
-              modifyGlobalConfigurations(
-                GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
-              );
-              modifyGlobalStates(GlobalStatesModificationType.SET_NODESCALARTYPE, i)
-            } else {
-              modifyGlobalConfigurations(
-                GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE
-              );
-            }
-          }}>
-          {type}
-        </p>
-      )
-    }
-  </div>)
+  const nodeScalarTypes = (
+    <div id="popoverParent">
+      {
+        ['activation', 'gradient', 'weight', 'none'].map((type, i) =>
+          <p
+            id={`#item_${i}`}
+            className={`dataTypeItem ${i === 3 ? "selected" : ""}`}
+            style={{ cursor: "pointer" }}
+            onClick={(e) => {
+              d3.select("#popoverParent").selectAll("p").classed("selected", false)
+              e.currentTarget.className += " selected"
+              if (i !== 3) {
+                modifyGlobalConfigurations(
+                  GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE
+                );
+                modifyGlobalStates(GlobalStatesModificationType.SET_NODESCALARTYPE, i)
+              } else {
+                modifyGlobalConfigurations(
+                  GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE
+                );
+              }
+            }}>
+            {type}
+          </p>
+        )
+      }
+    </div>)
 
   d3.selectAll('.nodes').on('contextmenu', handleRightClick);
 
@@ -801,26 +803,27 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         handleClicked={canvasBackToRight}
         prompt={"Reset Layout"}
       />
+
       <Popover
         placement="right"
         title={<span>Data Type</span>}
         content={nodeScalarTypes}
         getPopupContainer={() => document.querySelector("#elk-graph")}
         trigger="hover"
-        visible={shouldShowDisplaySwitchPopover}
       >
-        <InteractiveIcon
+        <img
           id="display-switch"
           className={
             diagnosisMode ? "interactive-on-button" : "interactive-button"
           }
-          position={{
+          style={{
+            position: "absolute",
             left: 10,
             bottom: firstIconBottom + 3 * (iconHeight + iconPadding),
+            width: "18px",
           }}
           src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
-          handleHover={() => { toggleShouldShowDisplaySwitchPopover(true) }}
-          prompt={"Layer Display"}
+          title={"Layer Display"}
         />
       </Popover>
     </div>
