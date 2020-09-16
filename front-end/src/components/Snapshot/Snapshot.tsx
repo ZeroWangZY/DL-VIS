@@ -210,22 +210,54 @@ const Snapshot: React.FC = () => {
     }
 
     const xTicks = 10;
-    const xGap = maxXticks / xTicks;
-    const xTicksValues = [];
-    for (let i = 0; i <= xTicks; i++) {
-      xTicksValues.push(
-        i * xGap
-      );
+
+    const getXticksValues = (startStep, endStep) => {
+      const xGap = (endStep - startStep) / xTicks;
+      const xTicksValues = [];
+      for (let i = 0; i <= xTicks - 1; i++) {
+        xTicksValues.push(
+          startStep + i * xGap
+        );
+      }
+      xTicksValues.push(endStep);
+      return xTicksValues;
     }
 
+    const xTicksValues = getXticksValues(1, maxStep);
+
+    // const xGap = (maxStep - 1) / xTicks;
+    // const xTicksValues = [];
+    // for (let i = 0; i <= xTicks - 1; i++) {
+    //   xTicksValues.push(
+    //     1 + i * xGap
+    //   );
+    // }
+    // xTicksValues.push(maxStep);
+
     const yTicks = 10;
-    const yGap = maxYticks / yTicks;
-    const yTicksValues = [];
-    for (let i = 0; i <= yTicks; i++) {
-      yTicksValues.push(
-        minY + i * yGap  
-      );
+
+    const getYticksValues = (startStep, endStep) => {
+      const yGap = (endStep - startStep) / yTicks;
+      const yTicksValues = [];
+      for (let i = 0; i <= yTicks - 1; i++) {
+        yTicksValues.push(
+          startStep + i * yGap
+        );
+      }
+      yTicksValues.push(maxYticks);
+      return yTicksValues;
     }
+
+    const yTicksValues = getYticksValues(0, maxYticks);
+
+    // const yGap = maxYticks / yTicks;
+    // const yTicksValues = [];
+    // for (let i = 0; i <= yTicks - 1; i++) {
+    //   yTicksValues.push(
+    //     minY + i * yGap
+    //   );
+    // }
+    // yTicksValues.push(maxYticks);
 
     const focusAxisX = d3.axisBottom(x1Scale).ticks(xTicks).tickValues(xTicksValues);
     const focusAxisY = d3.axisLeft(focusAreaYScale).ticks(yTicks).tickValues(yTicksValues);
@@ -272,7 +304,6 @@ const Snapshot: React.FC = () => {
         .attr("fill", "none")
         .attr("stroke", data.color);
     }
-
     const contextAxis = d3.axisBottom(x2Scale).ticks(xTicks).tickValues(xTicksValues);
 
     context
@@ -293,8 +324,18 @@ const Snapshot: React.FC = () => {
 
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
 
+      const domain = s.map(x2Scale.invert, x2Scale);
       focus.select('.focus-axis').selectAll(".area").attr("d", focusAreaLineGenerator);
-      focus.select('.focus-axis').select(".axis--x").call(focusAxisX);
+      // const xGap = (domain[1] - domain[0]) / xTicks;
+      // const xTicksValues = [];
+      // for (let i = 0; i <= xTicks - 1; i++) {
+      //   xTicksValues.push(
+      //     domain[0] + i * xGap
+      //   );
+      // }
+      // xTicksValues.push(domain[1]);
+      const xTicksValues = getXticksValues(domain[0], domain[1]);
+      focus.select('.focus-axis').select(".axis--x").call(focusAxisX.ticks(xTicks).tickValues(xTicksValues));
     };
 
     const brushedStart = () => {
