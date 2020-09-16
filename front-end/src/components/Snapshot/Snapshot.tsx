@@ -187,8 +187,18 @@ const Snapshot: React.FC = () => {
       .x((d) => x2Scale(d.x))
       .y((d) => contextAreaYScale(d.y))
 
+    let maxXticks = 0;
+    let maxYticks = 0;
+
     for (let i = 0; i < dataArrToShow.length; i++) {
       let data = dataArrToShow[i];
+
+      for (let val of data.data) {
+        const { x, y } = val;
+        maxXticks = Math.max(maxXticks, x);
+        maxYticks = Math.max(maxYticks, y);
+      }
+
       focus
         .select('.focus-axis')
         .append("path")
@@ -199,18 +209,39 @@ const Snapshot: React.FC = () => {
         .attr("stroke", data.color);
     }
 
+    const xTicks = 10;
+    const xGap = maxXticks / xTicks;
+    const xTicksValues = [];
+    for (let i = 0; i <= xTicks; i++) {
+      xTicksValues.push(
+        i * xGap
+      );
+    }
+
+    const yTicks = 10;
+    const yGap = maxYticks / yTicks;
+    const yTicksValues = [];
+    for (let i = 0; i <= yTicks; i++) {
+      yTicksValues.push(
+        minY + i * yGap  
+      );
+    }
+
+    const focusAxisX = d3.axisBottom(x1Scale).ticks(xTicks).tickValues(xTicksValues);
+    const focusAxisY = d3.axisLeft(focusAreaYScale).ticks(yTicks).tickValues(yTicksValues);
+
     focus
       .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x1Scale));
+      .call(focusAxisX);
 
     focus
       .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--y")
-      .call(d3.axisLeft(focusAreaYScale));
+      .call(focusAxisY);
 
     focus.select('.focus-axis')
       .select(".axis--y")
@@ -224,10 +255,9 @@ const Snapshot: React.FC = () => {
     //   .call(d3.axisBottom(x1Scale).tickSize(-height))
     //   .selectAll("text")
     //   .style("opacity", "0")
-
     // add the Y gridlines
     focus.select('g.snapshot-grid')
-      .call(d3.axisLeft(focusAreaYScale).tickSize(-svgWidth))
+      .call(focusAxisY.tickSize(-svgWidth))
       .selectAll("text")
       .style("opacity", "0")
 
@@ -243,11 +273,13 @@ const Snapshot: React.FC = () => {
         .attr("stroke", data.color);
     }
 
+    const contextAxis = d3.axisBottom(x2Scale).ticks(xTicks).tickValues(xTicksValues);
+
     context
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height2 + ")")
-      .call(d3.axisBottom(x2Scale));
+      .call(contextAxis);
 
     // brush部分
 
@@ -262,7 +294,7 @@ const Snapshot: React.FC = () => {
       setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
 
       focus.select('.focus-axis').selectAll(".area").attr("d", focusAreaLineGenerator);
-      focus.select('.focus-axis').select(".axis--x").call(d3.axisBottom(x1Scale));
+      focus.select('.focus-axis').select(".axis--x").call(focusAxisX);
     };
 
     const brushedStart = () => {
@@ -367,7 +399,7 @@ const Snapshot: React.FC = () => {
           left: xPos,
           top: height / 2 - contextHeight / 2,
           width: containerWidth,
-          }}>
+        }}>
         <div style={{ marginLeft: '8px', marginTop: '8px' }}>
           {"Iteration: " + localCurrentStep}
         </div>
