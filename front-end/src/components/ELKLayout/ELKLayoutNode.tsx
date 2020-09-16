@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { TransitionMotion } from "react-motion";
 import { useVisGraph } from "../../store/visGraph";
 import { useStyledGraph } from "../../store/styledGraph";
 import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
+import { notification } from 'antd';
 import {
   LayerNodeContainer
 } from "../LayerNodeGraph/LayerNodeGraph";
@@ -283,6 +284,19 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       }
     }
   });
+
+  const openNotification = useCallback((id) => {
+    notification.open({
+      message: 'Complete Node Id',
+      description:
+        id,
+      onClick: () => {
+        console.log('Notification Clicked!');
+      },
+      duration: 3
+    });
+  }, []);
+
   return (
     <TransitionMotion
       styles={styledGraph === null ? [] : styledGraph.nodeStyles}
@@ -321,7 +335,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   d.style.rectWidth,
                   d.style.rectHeight
                 )}
-                <g className="my-label">
+                <g className="my-label" onMouseEnter={d.data.label.length > maxLabelLength ? () => openNotification(d.data.label) : null}>
                   {showLineChart(d.data) &&
                     getLineChartAndText(
                       d.data,
