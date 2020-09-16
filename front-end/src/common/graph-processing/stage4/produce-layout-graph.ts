@@ -624,31 +624,15 @@ function processNodes(
 
 // Label会被添加在展开后的groupNode中，ELK会考虑Label的大小，从而方便绘制时有放label的地方
 function genLabel(id, node: BaseNode, needToSetMinWidth) {
-
-  if (needToSetMinWidth) {
-    return [
-      {
-        id,
-        text: " ",
-        layoutOptions: {
-          "nodeLabels.placement": "[INSIDE, V_TOP, H_CENTER]",
-        },
-        width: 96.0,
-        height: 15.0,
+  return [
+    {
+      id,
+      text: needToSetMinWidth ? " " : "",
+      layoutOptions: {
+        "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
       },
-    ];
-  }
-  else {
-    return [
-      {
-        id,
-        text: "",
-        layoutOptions: {
-          "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]",
-        },
-        width: 10.0,
-        height: 15.0,
-      },
-    ];
-  }
+      width: needToSetMinWidth ? 96.0 : 10.0,
+      height: 15.0,
+    },
+  ];
 }

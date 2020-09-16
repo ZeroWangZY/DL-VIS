@@ -166,7 +166,7 @@ const MiniMap: React.FC<Props> = (props: Props) => {
       drawInCanvas(outputSVGToDrawInCanvas, fitK);
     }, 500)
 
-  }, [styledGraph, selectedNodeId])
+  }, [styledGraph, selectedNodeId, mainSvgSize.width, mainSvgSize.height])
 
   //-------------------------以下是拖动矩形框-->改变output图的位置------------------------------------
   useEffect(() => {

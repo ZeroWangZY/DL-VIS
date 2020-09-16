@@ -104,7 +104,7 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
     const bisect = d3.bisector((d: any) => d.x).left;
     //拿第一组数据查询
     const dataExample = dataArrToShow[0];
-    console.log(dataArrToShow);
+    // console.log(dataArrToShow);
 
     let xScale = d3
       .scaleLinear()
