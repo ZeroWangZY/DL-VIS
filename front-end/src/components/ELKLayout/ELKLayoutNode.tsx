@@ -287,12 +287,9 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
   const openNotification = useCallback((id) => {
     notification.open({
-      message: 'Complete Node Id',
+      message: '完整的节点ID',
       description:
         id,
-      onClick: () => {
-        console.log('Notification Clicked!');
-      },
       duration: 3
     });
   }, []);

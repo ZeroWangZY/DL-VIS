@@ -247,21 +247,28 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
           d3.select(this).attr("stroke", data.color);
           d3.select(this).classed("hovered", false);
 
-          focus.selectAll(".layerLevel-detailInfo-area-text").remove();
+          focus.selectAll(".layerLevel-detailInfo-area-text-container").remove();
         });
     }
 
     function getLineInfoLabel(xPos, yPos, i, step, index) {
       // 在(x,y)位置画一个信息框，里面是index
-      focus.selectAll(".layerLevel-detailInfo-area-text").remove();
-      const text = focus
+      focus.selectAll(".layerLevel-detailInfo-area-text-container").remove();
+      const textContainer = focus
+        .append('g')
+        .attr('class', 'layerLevel-detailInfo-area-text-container')
+        .attr('fill', 'rgba(255, 255, 255, 1)');
+
+      const text = textContainer
         .append("text")
         .attr("class", "layerLevel-detailInfo-area-text")
         .text(`(step: ${step}, index: ${Math.round(index)})`)
         .style("font-size", 14)
+        .attr('fill', 'black')
         .style("visibility", "visible");
 
       const { width, height } = text.node().getBoundingClientRect();
+
       let x = xPos;
       let y = yPos;
       if (xPos + width > chartWidth) {
@@ -270,7 +277,11 @@ const DetailLineChart: React.FC<Props> = (props: Props) => {
       if (yPos + height > chartHeight) {
         y = yPos - height;
       }
-      text.attr('x', x).attr('y', y);
+      textContainer.attr('transform', `translate(${x}, ${y})`);
+      textContainer.attr('width', width).attr('height', height);
+      text.attr('x', 0).attr('y', 12);
+      textContainer.append('rect').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height);
+      text.raise();
     }
 
     focus.append("g").attr("class", "axis axis--y").call(d3.axisLeft(yScale));
