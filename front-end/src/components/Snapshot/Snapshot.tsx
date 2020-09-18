@@ -225,15 +225,6 @@ const Snapshot: React.FC = () => {
 
     const xTicksValues = getXticksValues(1, maxStep);
 
-    // const xGap = (maxStep - 1) / xTicks;
-    // const xTicksValues = [];
-    // for (let i = 0; i <= xTicks - 1; i++) {
-    //   xTicksValues.push(
-    //     1 + i * xGap
-    //   );
-    // }
-    // xTicksValues.push(maxStep);
-
     const yTicks = 10;
 
     const getYticksValues = (startStep, endStep) => {
@@ -248,16 +239,7 @@ const Snapshot: React.FC = () => {
       return yTicksValues;
     }
 
-    const yTicksValues = getYticksValues(0, maxYticks);
-
-    // const yGap = maxYticks / yTicks;
-    // const yTicksValues = [];
-    // for (let i = 0; i <= yTicks - 1; i++) {
-    //   yTicksValues.push(
-    //     minY + i * yGap
-    //   );
-    // }
-    // yTicksValues.push(maxYticks);
+    const yTicksValues = getYticksValues(minY, maxY);
 
     const focusAxisX = d3.axisBottom(x1Scale).ticks(xTicks).tickValues(xTicksValues);
     const focusAxisY = d3.axisLeft(focusAreaYScale).ticks(yTicks).tickValues(yTicksValues);
