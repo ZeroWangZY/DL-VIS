@@ -78,13 +78,14 @@ const LayerLevel: React.FC = () => {
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
-      setSvgHeight(node.getBoundingClientRect().height - 15);
-      setSvgWidth(node.getBoundingClientRect().width - 60);
+      setSvgHeight(node.getBoundingClientRect().height);
+      setSvgWidth(node.getBoundingClientRect().width);
     }
   }, []);
 
   const margin = { top: 10, left: 30, bottom: 10, right: 30 };
   const gapHeight = 20; // 上下折线图之间的距离
+  const width = svgWidth - margin.left - margin.right;
   const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 6;
   const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
   const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下折线图比例是 5: 1
@@ -122,55 +123,136 @@ const LayerLevel: React.FC = () => {
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
     console.log(focus);
-    // focus.select('.focus-axis').selectAll(".testCircle").remove(); // 清除原来的坐标
-    // focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
-    // focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
+    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+    focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
 
-    // let context = d3.select(svgRef.current).select("g.context");
 
-    // let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
-    // for (let i = 0; i < layerScalarsData.length; i++) {
-    //   let tmp = layerScalarsData[i];
-    //   minY = Math.min(minY, Math.min(tmp.min, tmp.minOutlier));
-    //   maxY = Math.max(maxY, Math.max(tmp.max, tmp.maxOutlier));
-    // }
+    let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
+    let batchSize = 0; // batch大小
+    for (let i = 0; i < layerScalarsData.length; i++) {
+      let tmp = layerScalarsData[i];
+      minY = Math.min(minY, Math.min(tmp.min, tmp.minOutlier));
+      maxY = Math.max(maxY, Math.max(tmp.max, tmp.maxOutlier));
+      if (tmp.step === 2 && tmp.batch === 1)
+        batchSize = layerScalarsData[i - 1].batch;
+    }
 
-    // let x1Scale = d3.scaleLinear()
-    //   .rangeRound([0, svgWidth])
-    //   .domain([1, layerScalarsData.length]);
+    let x1Scale = d3.scaleLinear()
+      .rangeRound([0, width])
+      .domain([1, layerScalarsData.length]);
 
-    // let x2Scale = d3.scaleLinear()
-    //   .rangeRound([0, svgWidth])
-    //   .domain([1, layerScalarsData.length]);
+    let x2Scale = d3.scaleLinear()
+      .rangeRound([0, width])
+      .domain([1, layerScalarsData.length]);
 
-    // let focusAreaYScale = d3.scaleLinear()
-    //   .rangeRound([height, 0])
-    //   .domain([minY, maxY]);
-
-    // const focusAreaLineGenerator = d3
-    //   .line<LayerScalar>()
-    //   .curve(d3.curveMonotoneX)
-    //   .x((d) => x1Scale(d.step * d.batch))
-    //   .y((d) => focusAreaYScale(d.median))
-
-    focus.append("circle")
-      .attr("class", "testCircle")
-      .attr("cx", 50)
-      .attr("cy", 50)
-      .attr("r", 50)
-      .style("fill", "red");
+    let focusAreaYScale = d3.scaleLinear()
+      .rangeRound([height, 0])
+      .domain([minY, maxY]);
 
     // median 折线
-    // focus
-    //   .select('.focus-axis')
-    //   .append("path")
-    //   .datum(layerScalarsData)
-    //   .attr("class", "area")
-    //   .attr("d", focusAreaLineGenerator)
-    //   .attr("fill", "none")
-    //   .attr("stroke", "blue");
+    const focusAreaMedianLineGenerator = d3
+      .line<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => x1Scale((d.step - 1) * batchSize + d.batch))
+      .y((d) => focusAreaYScale(d.median))
+    focus
+      .select('.focus-axis')
+      .append("path")
+      .datum(layerScalarsData)
+      .attr("class", "area")
+      .attr("d", focusAreaMedianLineGenerator)
+      .attr("fill", "none")
+      .attr("stroke", "blue");
+
+    // Q1 - Q3部分
+    const focusAreaQ1Q3LineGenerator = d3
+      .area<LayerScalar>()
+      .x((d) => x1Scale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => focusAreaYScale(d.Q1))
+      .y1((d) => focusAreaYScale(d.Q3));
+
+    focus
+      .select('.focus-axis')
+      .append("path")
+      .datum(layerScalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .3)
+      .attr("stroke", "none")
+      .attr("d", focusAreaQ1Q3LineGenerator);
+
+    // min - max区域
+    const focusAreaMinMaxLineGenerator = d3
+      .area<LayerScalar>()
+      .x((d) => x1Scale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => focusAreaYScale(d.min))
+      .y1((d) => focusAreaYScale(d.max));
+
+    focus
+      .select('.focus-axis')
+      .append("path")
+      .datum(layerScalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .3)
+      .attr("stroke", "none")
+      .attr("d", focusAreaMinMaxLineGenerator);
+
+    // 画异常点：
+    // Add the line
+    for (let d of layerScalarsData) {
+      focus
+        .select('.focus-axis')
+        .append("circle")
+        .attr("class", "area")
+        .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
+        .attr("cy", focusAreaYScale(d.maxOutlier))
+        .attr("r", 1)
+        .attr("fill", "red");
+
+      focus
+        .select('.focus-axis')
+        .append("circle")
+        .attr("class", "area")
+        .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
+        .attr("cy", focusAreaYScale(d.minOutlier))
+        .attr("r", 1)
+        .attr("fill", "red");
+    }
 
 
+    // 增加坐标和横线
+    focus
+      .select('.focus-axis')
+      .append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x1Scale));
+
+    focus
+      .select('.focus-axis')
+      .append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(focusAreaYScale));
+
+    focus.select('.focus-axis')
+      .select(".axis--y")
+      .selectAll("line")
+      .remove();
+
+    focus.select('g.grid')
+      .call(d3.axisLeft(focusAreaYScale).tickSize(-width))
+      .selectAll("text")
+      .style("opacity", "0");
+
+    // --------------------context部分-----------------------------
+    let context = d3.select(svgRef.current).select("g.context");
+
+    context
+      .append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height2 + ")")
+      .call(d3.axisBottom(x2Scale));
   }
 
   const getLayerScalars = async (
@@ -204,11 +286,12 @@ const LayerLevel: React.FC = () => {
     <div className="layerLevel" ref={measuredRef}>
       {nodeMap[selectedNodeId] instanceof LayerNodeImp && (
         <div className="layer-container">
-          <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
+          <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
             <g
               className="focus"
               transform={`translate(${margin.left},${margin.top})`}
             >
+              <g className="grid"></g>
               <g className="focus-axis"></g>
             </g>
             <g
