@@ -123,7 +123,7 @@ export default (props: Props) => {
     if (newValue === 0)
       setFixedHeight("360px");
     else if (newValue === 1)
-      setFixedHeight("565px");
+      setFixedHeight("360px"); // 565px
 
     setValue({ ...value, [pos]: newValue });
   };

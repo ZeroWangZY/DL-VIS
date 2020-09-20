@@ -146,6 +146,30 @@ def get_metadata(request):
         "data": None
     }), content_type="application/json")
 
+def get_layer_scalars(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_ids = request.GET.getlist('node_id')
+        start_step = int(request.GET.get('start_step', default='1'))
+        end_step = int(request.GET.get('end_step', default='10'))
+        type = request.GET.get('type', default='activation')
+
+        data_helper = DataHelper(DB_FILES['with_activation'])
+        res = {}
+        node_id = node_ids[0];
+        db_node_id = alex_node_map.get(node_id)
+        if db_node_id != None:
+            res[node_id] = data_helper.get_layer_scalars( start_step, end_step)
+
+        data_helper.close()
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": res
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
 
 def get_node_scalars(request):
     if request.method == 'GET':

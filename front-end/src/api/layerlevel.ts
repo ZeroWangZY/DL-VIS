@@ -2,6 +2,17 @@ import fireAjax from './base'
 
 export const fetchActivations = (params) => fireAjax('POST', '', params);
 
+interface fetchLayerScalarsParams {
+  "graph_name": string,
+  "node_id": string[],
+  "start_step": number,
+  "end_step": number,
+  "type": string
+}
+export const fetchLayerScalars =
+  (params: fetchNodeScalarsParams): Promise<{ data }> =>
+    fireAjax('GET', '/python/api/get_layer_scalars', params);
+
 interface fetchNodeScalarsParams {
   "graph_name": string,
   "node_id": string[],
@@ -56,5 +67,5 @@ interface FetchTensorHeatMapDataParam {
   "type": string
 }
 
-export const fetchTensorHeatmapBase64 = (params: FetchTensorHeatMapDataParam): Promise<{ data }> => 
+export const fetchTensorHeatmapBase64 = (params: FetchTensorHeatMapDataParam): Promise<{ data }> =>
   fireAjax('GET', '/python/api/get_tensor_heatmap', params)

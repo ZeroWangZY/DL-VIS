@@ -1,14 +1,13 @@
-import React, { useEffect, useState, Children } from "react";
+import React, { useEffect, useState, Children, useRef, useCallback } from "react";
 import "./layerLevel.css";
+import * as d3 from "d3";
 import { useLineData } from "../../store/layerLevel";
 import { useHistory } from "react-router-dom";
 import DetailLineChart from "./DetailLineChart";
 import ActivationOrGradientChart from "./ActivationOrGradientChart";
 import ClusterGraph from "./ClusterGraph";
 import {
-  fetchNodeLineDataBlueNoiceSampling,
-  fetchNodeScalars,
-  fetchClusterData,
+  fetchLayerScalars
 } from "../../api/layerlevel";
 import { ShowActivationOrGradient } from "../../store/global-states.type";
 import { useGlobalStates } from "../../store/global-states";
@@ -29,6 +28,21 @@ export interface Point {
   x: number;
   y: number;
 }
+
+export interface LayerScalar {
+  step: number;
+  batch: number;
+  maxOutlier: number;
+  max: number;
+  Q3: number;
+  median: number;
+  mean: number;
+  Q1: number;
+  min: number;
+  minOutlier: number;
+}
+
+
 export interface DataToShow {
   id: string;
   data: Point[];
@@ -54,28 +68,26 @@ const LayerLevel: React.FC = () => {
     currentStep,
   } = useGlobalStates();
 
-  const [brushedStep, setBrushedStep] = useState(null);
-  const [brushed, setBrushed] = useState(false);
-  const [childNodeId, setChildNodeId] = useState(null);
-  const [clusterStep, setClusterStep] = useState(null);
-  const [clusterData, setClusterData] = useState(null);
-  const [activationOrGradientData, setActivationOrGradientData] = useState<DataToShow[]>([]);
-  const [loadingDetailLineChartData, setLoadingDetailLineChartData] = useState<boolean>(false);
-  const [loadingClusterData, setLoadingClusterData] = useState<boolean>(false);
-  const [detailLineChartData, setDetailLineChartData] = useState(null);
+  const svgRef = useRef();
+  const [svgHeight, setSvgHeight] = useState(270);
+  const [svgWidth, setSvgWidth] = useState(1800);
 
-  // let initialBrushedStep = []; // 如果brushed===false时的初始刷选位置
-  // if (currentStep) {
-  //   let end = Math.min(maxStep - 1, currentStep);
-  //   initialBrushedStep = [end - 1, end];
-  // } else {
-  //   initialBrushedStep = [1, 2];
-  // }
-  // 还没有刷选时，初始化detailInfoGraph的起止位置
-  const initialBrushedStep =
-    currentStep ?
-      [Math.min(maxStep - 1, currentStep) - 1, Math.min(maxStep - 1, currentStep)] :
-      [1, 2]
+  const [childNodeId, setChildNodeId] = useState(null);
+  const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
+  const [LoadingData, setLoadingData] = useState(false);
+
+  const measuredRef = useCallback((node) => {
+    if (node !== null) {
+      setSvgHeight(node.getBoundingClientRect().height - 15);
+      setSvgWidth(node.getBoundingClientRect().width - 60);
+    }
+  }, []);
+
+  const margin = { top: 10, left: 30, bottom: 10, right: 30 };
+  const gapHeight = 20; // 上下折线图之间的距离
+  const height = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 5 / 6;
+  const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
+  const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下折线图比例是 5: 1
 
   const fetchDataType =
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
@@ -93,7 +105,7 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getNodeScalars(currentMSGraphName, childNodeId, 1, maxStep, fetchDataType);
+    getLayerScalars(currentMSGraphName, childNodeId, 1, maxStep, fetchDataType);
   }, [
     childNodeId,
     currentMSGraphName,
@@ -103,56 +115,73 @@ const LayerLevel: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (!childNodeId || brushed) return;
-    // 用户还没有刷选，只是改变currentStep位置
-    let brushedStartStep = 1, brushedEndStep = 1;
+    if (layerScalarsData === null || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
+    computeAndDraw();
+  }, [layerScalarsData, svgWidth])
 
-    [brushedStartStep, brushedEndStep] = initialBrushedStep;
+  const computeAndDraw = () => {
+    let focus = d3.select(svgRef.current).select("g.focus");
+    console.log(focus);
+    // focus.select('.focus-axis').selectAll(".testCircle").remove(); // 清除原来的坐标
+    // focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+    // focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
 
-    setClusterStep(brushedStartStep);
+    // let context = d3.select(svgRef.current).select("g.context");
 
-    getNodeLineDataBlueNoiceSampling(
-      currentMSGraphName,
-      childNodeId,
-      brushedStartStep,
-      brushedEndStep,
-      fetchDataType
-    );
+    // let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
+    // for (let i = 0; i < layerScalarsData.length; i++) {
+    //   let tmp = layerScalarsData[i];
+    //   minY = Math.min(minY, Math.min(tmp.min, tmp.minOutlier));
+    //   maxY = Math.max(maxY, Math.max(tmp.max, tmp.maxOutlier));
+    // }
 
-  }, [currentStep, childNodeId])
+    // let x1Scale = d3.scaleLinear()
+    //   .rangeRound([0, svgWidth])
+    //   .domain([1, layerScalarsData.length]);
 
-  useEffect(() => {
-    if (!childNodeId || !brushedStep || !brushedStep.length) return;
+    // let x2Scale = d3.scaleLinear()
+    //   .rangeRound([0, svgWidth])
+    //   .domain([1, layerScalarsData.length]);
 
-    const [brushedStartStep, brushedEndStep] = brushedStep;
+    // let focusAreaYScale = d3.scaleLinear()
+    //   .rangeRound([height, 0])
+    //   .domain([minY, maxY]);
 
-    setClusterStep(brushedStartStep);
-    const maxGap = 10;
+    // const focusAreaLineGenerator = d3
+    //   .line<LayerScalar>()
+    //   .curve(d3.curveMonotoneX)
+    //   .x((d) => x1Scale(d.step * d.batch))
+    //   .y((d) => focusAreaYScale(d.median))
 
-    if (brushedEndStep - brushedStartStep <= maxGap) {
-      getNodeLineDataBlueNoiceSampling(
-        currentMSGraphName,
-        childNodeId,
-        brushedStartStep,
-        brushedEndStep,
-        fetchDataType
-      );
-    }
-  }, [brushedStep, childNodeId]);
+    focus.append("circle")
+      .attr("class", "testCircle")
+      .attr("cx", 50)
+      .attr("cy", 50)
+      .attr("r", 50)
+      .style("fill", "red");
 
-  useEffect(() => {
-    if (!clusterStep) return;
-    getClusterData(currentMSGraphName, childNodeId, clusterStep, fetchDataType);
-  }, [clusterStep, childNodeId]);
+    // median 折线
+    // focus
+    //   .select('.focus-axis')
+    //   .append("path")
+    //   .datum(layerScalarsData)
+    //   .attr("class", "area")
+    //   .attr("d", focusAreaLineGenerator)
+    //   .attr("fill", "none")
+    //   .attr("stroke", "blue");
 
-  const getNodeScalars = async (
+
+  }
+
+  const getLayerScalars = async (
     graphName,
     nodeIds,
     startStep,
     endStep,
     type
   ) => {
-    await fetchNodeScalars({
+    setLoadingData(true);
+    await fetchLayerScalars({
       graph_name: graphName,
       node_id: nodeIds,
       start_step: startStep,
@@ -160,154 +189,33 @@ const LayerLevel: React.FC = () => {
       type: type,
     }).then((res) => {
       if (res.data.message === "success") {
-        let nodeScalars = res.data.data;
-
-        let max: Point[] = [],
-          min: Point[] = [],
-          mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
-        let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-        if (showActivationOrGradient === ShowActivationOrGradient.ACTIVATION)
-          for (let scalar of nodeScalar) {
-            max.push({ x: scalar.step, y: scalar.activation_max });
-            min.push({ x: scalar.step, y: scalar.activation_min });
-            mean.push({ x: scalar.step, y: scalar.activation_mean });
-          }
-        else if (showActivationOrGradient === ShowActivationOrGradient.GRADIENT)
-          for (let scalar of nodeScalar) {
-            max.push({ x: scalar.step, y: scalar.gradient_max });
-            min.push({ x: scalar.step, y: scalar.gradient_min });
-            mean.push({ x: scalar.step, y: scalar.gradient_mean });
-          }
-        let dataTransform = [];
-        dataTransform.push({ id: "max", data: max, color: "#C71585" });
-        dataTransform.push({ id: "min", data: min, color: "#DC143C" });
-        dataTransform.push({ id: "mean", data: mean, color: "#4B0082" });
-
-        setActivationOrGradientData(dataTransform);
+        setLoadingData(false);
+        let layerScalars = res.data.data;
+        console.log(layerScalars[nodeIds[0]]);
+        setLayerScalarsData(layerScalars[nodeIds[0]]);
       } else {
-        console.log("获取最大值/最小值/均值数据失败：" + res.data.message);
-      }
-    })
-
-  };
-
-  const getClusterData = async (graphName, nodeId, currStep, type) => {
-    setLoadingClusterData(true);
-    fetchClusterData({
-      graph_name: graphName,
-      node_id: nodeId,
-      current_step: currStep,
-      type: type,
-    }).then((res) => {
-      if (res.data.message === "success") {
-        let cluster = res.data.data;
-        setClusterData(cluster);
-        setLoadingClusterData(false);
-      } else {
-        console.warn("获取tsne降维数据失败: " + res.data.message)
-      }
-    })
-  };
-
-  const getNodeLineDataBlueNoiceSampling = async (
-    graphName,
-    nodeId,
-    startStep,
-    endStep,
-    type
-  ) => {
-    setLoadingDetailLineChartData(true);
-    fetchNodeLineDataBlueNoiceSampling({
-      graph_name: graphName,
-      node_id: nodeId,
-      start_step: startStep,
-      end_step: endStep + 1,
-      type: type,
-    }).then((res) => {
-      if (res.data.message === "success") {
-        let originalLineData = res.data.data;
-
-        let lineNumber = originalLineData.length;
-
-        let dataArrToShow = [];
-        for (let i = 0; i < lineNumber; i++) {
-          dataArrToShow.push({ id: "Detail_Info" + i, data: [], color: "#388aac" });
-        }
-        let maxValue = -Infinity,
-          minValue = Infinity;
-        for (let lineIndex = 0; lineIndex < lineNumber; lineIndex++) {
-          let line = originalLineData[lineIndex];
-          for (let i = 0, len = line.length; i < len; i++) {
-            let xValue = i,
-              yValue = line[i];
-            if (yValue > maxValue) maxValue = yValue;
-            if (yValue < minValue) minValue = yValue;
-
-            dataArrToShow[lineIndex].data.push({ x: xValue, y: yValue });
-          }
-        }
-
-        setLoadingDetailLineChartData(false);
-        setDetailLineChartData(dataArrToShow);
-      } else {
-        console.log("获取采样后的折线图失败：", res.data.message);
+        console.log("获取layer数据失败：" + res.data.message);
       }
     })
 
   };
 
   return (
-    <div>
+    <div className="layerLevel" ref={measuredRef}>
       {nodeMap[selectedNodeId] instanceof LayerNodeImp && (
         <div className="layer-container">
-          <div className="layer-container-box detail-box">
-            <DetailLineChart
-              start_step={
-                brushed === true ? brushedStep[0] : initialBrushedStep[0]
-              }
-              end_step={
-                brushed === true ? brushedStep[1] : initialBrushedStep[1]
-              }
-              dataArrToShow={detailLineChartData}
-              setClusterStep={setClusterStep}
-              clusterStep={clusterStep}
-              childNodeId={childNodeId}
-              showLoading={loadingDetailLineChartData}
-            />
-          </div>
-
-          <div className="layer-container-box cluster-box">
-            <ClusterGraph
-              clusterData={clusterData}
-              clusterStep={clusterStep}
-              loadingDetailLineChartData={loadingDetailLineChartData}
-              loadingClusterData={loadingClusterData}
-              start_step={
-                brushed === true ? brushedStep[0] : initialBrushedStep[0]
-              }
-              end_step={
-                brushed === true ? brushedStep[1] : initialBrushedStep[1]
-              }
-              dataArrToShow={detailLineChartData}
-              setClusterStep={setClusterStep}
-              childNodeId={childNodeId}
-              showLoading={loadingDetailLineChartData}
-            />
-          </div>
-
-          <div className="layer-container-box line-box">
-            {activationOrGradientData.length !== 0 && (
-              <ActivationOrGradientChart
-                activationOrGradientData={activationOrGradientData}
-                isTraining={isTraining}
-                maxStep={maxStep}
-                brushedStep={brushedStep}
-                setBrushedStep={setBrushedStep}
-                setBrushed={setBrushed}
-                loadingData={loadingDetailLineChartData || loadingClusterData}
-              />
-            )}
-          </div>
+          <svg style={{ height: "95%", width: "100%" }} ref={svgRef}>
+            <g
+              className="focus"
+              transform={`translate(${margin.left},${margin.top})`}
+            >
+              <g className="focus-axis"></g>
+            </g>
+            <g
+              className="context"
+              transform={`translate(${margin2.left},${margin2.top})`}
+            ></g>
+          </svg>
         </div>
       )}
     </div>

@@ -5,6 +5,24 @@ class DataHelper():
         self.conn = sqlite3.connect(db_file)
         self.c = self.conn.cursor()
 
+    def get_layer_scalars(self, start_step, end_step):
+        cursor = self.c.execute("select * from LAYER_SCALARS where step >= %d and step < %d" % (start_step, end_step))
+        res = []
+        for row in cursor:
+            res.append({
+                "step": row[1],
+                "batch": row[2],
+                "maxOutlier": row[3],
+                "max": row[4],
+                "Q3": row[5],
+                "median": row[6],
+                "mean": row[7],
+                "Q1": row[8],
+                "min": row[9],
+                "minOutlier":row[10]
+            })
+        return res
+
     def get_model_scalars(self, start_step, end_step):
         cursor = self.c.execute("select * from MODEL_SCALARS where step >= %d and step < %d" % (start_step, end_step))
         res = []
