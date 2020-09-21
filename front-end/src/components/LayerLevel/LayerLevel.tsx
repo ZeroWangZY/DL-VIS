@@ -201,23 +201,25 @@ const LayerLevel: React.FC = () => {
     // 画异常点：
     // Add the line
     for (let d of layerScalarsData) {
-      focus
-        .select('.focus-axis')
-        .append("circle")
-        .attr("class", "area")
-        .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
-        .attr("cy", focusAreaYScale(d.maxOutlier))
-        .attr("r", 1)
-        .attr("fill", "red");
+      if (d.maxOutlier !== null) // 异常点
+        focus
+          .select('.focus-axis')
+          .append("circle")
+          .attr("class", "area")
+          .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
+          .attr("cy", focusAreaYScale(d.maxOutlier))
+          .attr("r", 1)
+          .attr("fill", "red");
 
-      focus
-        .select('.focus-axis')
-        .append("circle")
-        .attr("class", "area")
-        .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
-        .attr("cy", focusAreaYScale(d.minOutlier))
-        .attr("r", 1)
-        .attr("fill", "red");
+      if (d.minOutlier !== null) // 异常点
+        focus
+          .select('.focus-axis')
+          .append("circle")
+          .attr("class", "area")
+          .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
+          .attr("cy", focusAreaYScale(d.minOutlier))
+          .attr("r", 1)
+          .attr("fill", "red");
     }
 
 
@@ -272,9 +274,9 @@ const LayerLevel: React.FC = () => {
     }).then((res) => {
       if (res.data.message === "success") {
         setLoadingData(false);
-        let layerScalars = res.data.data;
-        console.log(layerScalars[nodeIds[0]]);
-        setLayerScalarsData(layerScalars[nodeIds[0]]);
+        let layerScalars = res.data.data[nodeIds[0]];
+        layerScalars = layerScalars.slice(0, 32 * 10); // 取10个step
+        setLayerScalarsData(layerScalars);
       } else {
         console.log("获取layer数据失败：" + res.data.message);
       }

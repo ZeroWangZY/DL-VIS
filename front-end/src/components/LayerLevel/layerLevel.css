@@ -99,11 +99,15 @@ rect.layerLevel-detailInfo-bg {
 }
 
 rect.layerLevel-detailInfo-bg.hovered {
-    fill: 	#000000;
+    fill: #000000;
     opacity: 0.2;
 }
 
 rect.layerLevel-detailInfo-bg.clicked {
     fill: #000000;
     opacity: 0.3;
+}
+
+.layer-container .grid .tick {
+    opacity: 0.2;
 }
