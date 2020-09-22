@@ -143,6 +143,10 @@ const LayerLevel: React.FC = () => {
 
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, width])
+      .domain([1, layerScalarsData.length]);
+    
+    let xScale = d3.scaleLinear()
+      .rangeRound([0, width])
       .domain([minStep, maxStep]);
 
     let x2Scale = d3.scaleLinear()
@@ -163,7 +167,7 @@ const LayerLevel: React.FC = () => {
       xTicksValues.push(i);
     }
 
-    const focusAxisX = d3.axisBottom(x1Scale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
+    const focusAxisX = d3.axisBottom(xScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
 
     // 增加坐标和横线
     focus
@@ -212,7 +216,9 @@ const LayerLevel: React.FC = () => {
           domain[1] += 1;
         }
       }
-      x1Scale.domain(domain);
+      const tempDomain = domain.map(xScale).map(x1Scale.invert);
+      xScale.domain(domain);
+      x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
       // const domain = s.map(x2Scale.invert, x2Scale);
       drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
@@ -277,7 +283,7 @@ const LayerLevel: React.FC = () => {
       .call(focusAxisX);
 
     brushSelection.raise();
-  }
+  };
 
   function drawChartArea(svgPart: any, xScale: any, yScale: any, batchSize: number): void {
     svgPart.selectAll(".area").remove(); // 清除原折线图
