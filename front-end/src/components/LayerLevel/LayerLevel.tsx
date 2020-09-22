@@ -14,6 +14,7 @@ import { useGlobalStates } from "../../store/global-states";
 import { useProcessedGraph } from "../../store/processedGraph";
 import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
 import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode";
+import * as _ from 'lodash';
 
 interface layerNodeScalar {
   step: number;
@@ -133,13 +134,20 @@ const LayerLevel: React.FC = () => {
       maxY = Math.max(maxY, tmp.upperBoundary);
     }
 
+    let minStep = Infinity, maxStep = -Infinity;
+    for (let item of layerScalarsData) {
+      const { step } = item;
+      minStep = Math.min(minStep, step);
+      maxStep = Math.max(maxStep, step);
+    }
+
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([1, layerScalarsData.length]);
+      .domain([minStep, maxStep]);
 
     let x2Scale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([1, layerScalarsData.length]);
+      .domain([minStep, maxStep]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
@@ -149,13 +157,21 @@ const LayerLevel: React.FC = () => {
 
     focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
     focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
+
+    const xTicksValues = [];
+    for (let i = minStep; i <= maxStep; i++) {
+      xTicksValues.push(i);
+    }
+
+    const focusAxisX = d3.axisBottom(x1Scale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
+
     // 增加坐标和横线
     focus
       .select('.focus-axis')
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x1Scale));
+      .call(focusAxisX);
 
     focus
       .select('.focus-axis')
@@ -181,23 +197,54 @@ const LayerLevel: React.FC = () => {
       .rangeRound([height2, 0])
       .domain([minY, maxY]);
 
-    const brushedStart = () => {
-      // console.log('brushedStart...');
+    const brushHandler = () => {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+      let s = d3.event.selection || x2Scale.range();
+      const domain = s.map(x2Scale.invert, x2Scale)
+      domain[0] = _.round(domain[0]);
+      domain[1] = _.round(domain[1]);
+      if (domain[0] === domain[1]) {
+        // 临界值处理，如果domain[0]此时为maxStep
+        if (domain[0] === maxStep) {
+          domain[0] -= 1;
+        }
+        else {
+          domain[1] += 1;
+        }
+      }
+      x1Scale.domain(domain);
+      setShowDomain(domain); // 设定brush选定显示区域的domain;
+      // const domain = s.map(x2Scale.invert, x2Scale);
+      drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
+
+      const xTicksValues = [];
+      for (let i = domain[0]; i <= domain[1]; i++) {
+        xTicksValues.push(i);
+      }
+
+      focus
+        .select('.focus-axis')
+        .select('.axis--x')
+        .call(focusAxisX.ticks(xTicksValues.length).tickValues(xTicksValues));
     };
 
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+      if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection || x2Scale.range();
-      x1Scale.domain(s.map(x2Scale.invert, x2Scale));
-
-      setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
-
-      // const domain = s.map(x2Scale.invert, x2Scale);
-      drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
-      focus
-        .select('.focus-axis')
-        .select('.axis--x')
-        .call(d3.axisBottom(x1Scale));
+      const domain = s.map(x2Scale.invert, x2Scale)
+      domain[0] = _.round(domain[0]);
+      domain[1] = _.round(domain[1]);
+      if (domain[0] === domain[1]) {
+        // 临界值处理，如果domain[0]此时为maxStep
+        if (domain[0] === maxStep) {
+          domain[0] -= 1;
+        }
+        else {
+          domain[1] += 1;
+        }
+      }
+      context.select('g.brush').call(brush.move, domain.map(x2Scale));
     };
 
     const brush = d3.brushX()
@@ -205,8 +252,8 @@ const LayerLevel: React.FC = () => {
         [0, 0],
         [width, height2],
       ])
-      .on("brush start", brushedStart)
-      .on("brush end", brushed);
+      .on("brush", brushHandler)
+      .on('end', brushed);
 
     let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
     if (showDomain === null)
@@ -227,7 +274,7 @@ const LayerLevel: React.FC = () => {
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height2 + ")")
-      .call(d3.axisBottom(x2Scale));
+      .call(focusAxisX);
 
     brushSelection.raise();
   }

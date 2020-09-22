@@ -285,14 +285,14 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
   });
 
-  const openNotification = useCallback((id) => {
-    notification.open({
-      message: '完整的节点ID',
-      description:
-        id,
-      duration: 3
-    });
-  }, []);
+  // const openNotification = useCallback((id) => {
+  //   notification.open({
+  //     message: '完整的节点ID',
+  //     description:
+  //       id,
+  //     duration: 3
+  //   });
+  // }, []);
 
   return (
     <TransitionMotion
@@ -332,7 +332,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   d.style.rectWidth,
                   d.style.rectHeight
                 )}
-                <g className="my-label" onMouseEnter={d.data.label.length > maxLabelLength ? () => openNotification(d.data.label) : null}>
+                <g className="my-label">
                   {showLineChart(d.data) &&
                     getLineChartAndText(
                       d.data,
