@@ -175,10 +175,50 @@ const LayerLevel: React.FC = () => {
 
     // --------------------context部分-----------------------------
     let context = d3.select(svgRef.current).select("g.context");
+    context.selectAll(".brush").remove();
 
     let contextAreaYScale = d3.scaleLinear()
       .rangeRound([height2, 0])
       .domain([minY, maxY]);
+
+    const brushedStart = () => {
+      // console.log('brushedStart...');
+    };
+
+    const brushed = () => {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+      let s = d3.event.selection || x2Scale.range();
+      x1Scale.domain(s.map(x2Scale.invert, x2Scale));
+
+      setShowDomain(s.map(x2Scale.invert, x2Scale)); // 设定brush选定显示区域的domain;
+
+      // const domain = s.map(x2Scale.invert, x2Scale);
+      drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
+      focus
+        .select('.focus-axis')
+        .select('.axis--x')
+        .call(d3.axisBottom(x1Scale));
+    };
+
+    const brush = d3.brushX()
+      .extent([
+        [0, 0],
+        [width, height2],
+      ])
+      .on("brush start", brushedStart)
+      .on("brush end", brushed);
+
+    let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
+    if (showDomain === null)
+      showRange = x2Scale.range();
+    else
+      showRange = [x2Scale(showDomain[0]), x2Scale(showDomain[1])];
+
+    const brushSelection = context
+      .append('g')
+      .attr('class', 'brush')
+      .call(brush)
+      .call(brush.move, showRange);
 
     drawChartArea(context, x2Scale, contextAreaYScale, batchSize);
 
@@ -189,6 +229,7 @@ const LayerLevel: React.FC = () => {
       .attr("transform", "translate(0," + height2 + ")")
       .call(d3.axisBottom(x2Scale));
 
+    brushSelection.raise();
   }
 
   function drawChartArea(svgPart: any, xScale: any, yScale: any, batchSize: number): void {
@@ -274,6 +315,11 @@ const LayerLevel: React.FC = () => {
       {nodeMap[selectedNodeId] instanceof LayerNodeImp && (
         <div className="layer-container">
           <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
+            <defs>
+              <clipPath id={"clip"}>
+                <rect width={width} height={height} />
+              </clipPath>
+            </defs>
             <g
               className="focus"
               transform={`translate(${margin.left},${margin.top})`}

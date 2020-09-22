@@ -74,6 +74,10 @@
     z-index: 5;
 }
 
+.area {
+    clip-path: url(#clip);
+}
+
 path.layerLevel-detailInfo-area {
     fill: none;
     pointer-events: stroke;
