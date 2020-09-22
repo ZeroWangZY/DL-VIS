@@ -32,14 +32,15 @@ export interface Point {
 export interface LayerScalar {
   step: number;
   batch: number;
-  maxOutlier: number;
-  max: number;
+  batchSize: number;
+  maximum: number;
+  upperBoundary: number;
   Q3: number;
   median: number;
   mean: number;
   Q1: number;
-  min: number;
-  minOutlier: number;
+  lowerBoundary: number;
+  minimumn: number;
 }
 
 
@@ -72,6 +73,7 @@ const LayerLevel: React.FC = () => {
   const [svgHeight, setSvgHeight] = useState(270);
   const [svgWidth, setSvgWidth] = useState(1800);
 
+  const [showDomain, setShowDomain] = useState(null);
   const [childNodeId, setChildNodeId] = useState(null);
   const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
   const [LoadingData, setLoadingData] = useState(false);
@@ -106,7 +108,7 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getLayerScalars(currentMSGraphName, childNodeId, 1, maxStep, fetchDataType);
+    getLayerScalars(currentMSGraphName, childNodeId, 1, 11, fetchDataType); // 取[1, 11) step
   }, [
     childNodeId,
     currentMSGraphName,
@@ -122,19 +124,13 @@ const LayerLevel: React.FC = () => {
 
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
-    console.log(focus);
-    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
-    focus.select('.focus-axis').selectAll(".area").remove(); // 清除原折线图
 
-
+    let batchSize = layerScalarsData[0].batchSize; // batch大小
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
-    let batchSize = 0; // batch大小
     for (let i = 0; i < layerScalarsData.length; i++) {
       let tmp = layerScalarsData[i];
-      minY = Math.min(minY, Math.min(tmp.min, tmp.minOutlier));
-      maxY = Math.max(maxY, Math.max(tmp.max, tmp.maxOutlier));
-      if (tmp.step === 2 && tmp.batch === 1)
-        batchSize = layerScalarsData[i - 1].batch;
+      minY = Math.min(minY, tmp.lowerBoundary);
+      maxY = Math.max(maxY, tmp.upperBoundary);
     }
 
     let x1Scale = d3.scaleLinear()
@@ -149,80 +145,10 @@ const LayerLevel: React.FC = () => {
       .rangeRound([height, 0])
       .domain([minY, maxY]);
 
-    // median 折线
-    const focusAreaMedianLineGenerator = d3
-      .line<LayerScalar>()
-      .curve(d3.curveMonotoneX)
-      .x((d) => x1Scale((d.step - 1) * batchSize + d.batch))
-      .y((d) => focusAreaYScale(d.median))
-    focus
-      .select('.focus-axis')
-      .append("path")
-      .datum(layerScalarsData)
-      .attr("class", "area")
-      .attr("d", focusAreaMedianLineGenerator)
-      .attr("fill", "none")
-      .attr("stroke", "blue");
+    drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
 
-    // Q1 - Q3部分
-    const focusAreaQ1Q3LineGenerator = d3
-      .area<LayerScalar>()
-      .x((d) => x1Scale((d.step - 1) * batchSize + d.batch))
-      .y0((d) => focusAreaYScale(d.Q1))
-      .y1((d) => focusAreaYScale(d.Q3));
-
-    focus
-      .select('.focus-axis')
-      .append("path")
-      .datum(layerScalarsData)
-      .attr("class", "area")
-      .attr("fill", "#69b3a2")
-      .attr("fill-opacity", .3)
-      .attr("stroke", "none")
-      .attr("d", focusAreaQ1Q3LineGenerator);
-
-    // min - max区域
-    const focusAreaMinMaxLineGenerator = d3
-      .area<LayerScalar>()
-      .x((d) => x1Scale((d.step - 1) * batchSize + d.batch))
-      .y0((d) => focusAreaYScale(d.min))
-      .y1((d) => focusAreaYScale(d.max));
-
-    focus
-      .select('.focus-axis')
-      .append("path")
-      .datum(layerScalarsData)
-      .attr("class", "area")
-      .attr("fill", "#69b3a2")
-      .attr("fill-opacity", .3)
-      .attr("stroke", "none")
-      .attr("d", focusAreaMinMaxLineGenerator);
-
-    // 画异常点：
-    // Add the line
-    for (let d of layerScalarsData) {
-      if (d.maxOutlier !== null) // 异常点
-        focus
-          .select('.focus-axis')
-          .append("circle")
-          .attr("class", "area")
-          .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
-          .attr("cy", focusAreaYScale(d.maxOutlier))
-          .attr("r", 1)
-          .attr("fill", "red");
-
-      if (d.minOutlier !== null) // 异常点
-        focus
-          .select('.focus-axis')
-          .append("circle")
-          .attr("class", "area")
-          .attr("cx", x1Scale((d.step - 1) * batchSize + d.batch))
-          .attr("cy", focusAreaYScale(d.minOutlier))
-          .attr("r", 1)
-          .attr("fill", "red");
-    }
-
-
+    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+    focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
     // 增加坐标和横线
     focus
       .select('.focus-axis')
@@ -250,11 +176,71 @@ const LayerLevel: React.FC = () => {
     // --------------------context部分-----------------------------
     let context = d3.select(svgRef.current).select("g.context");
 
+    let contextAreaYScale = d3.scaleLinear()
+      .rangeRound([height2, 0])
+      .domain([minY, maxY]);
+
+    drawChartArea(context, x2Scale, contextAreaYScale, batchSize);
+
+    context.selectAll(".axis--x").remove();
     context
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height2 + ")")
       .call(d3.axisBottom(x2Scale));
+
+  }
+
+  function drawChartArea(svgPart: any, xScale: any, yScale: any, batchSize: number): void {
+    svgPart.selectAll(".area").remove(); // 清除原折线图
+    // Q1 - Q3部分
+    const focusAreaQ1Q3LineGenerator = d3
+      .area<LayerScalar>()
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(d.Q1))
+      .y1((d) => yScale(d.Q3));
+
+    svgPart
+      .append("path")
+      .datum(layerScalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .5)
+      .attr("stroke", "none")
+      .attr("d", focusAreaQ1Q3LineGenerator);
+
+    // lowerBoundary - upperBoundary区域
+    const focusAreaBoundaryLineGenerator = d3
+      .area<LayerScalar>()
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(d.lowerBoundary))
+      .y1((d) => yScale(d.upperBoundary));
+
+    svgPart
+      .append("path")
+      .datum(layerScalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .5)
+      .attr("stroke", "none")
+      .attr("d", focusAreaBoundaryLineGenerator);
+
+    // median 折线
+    const focusAreaMedianLineGenerator = d3
+      .line<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y((d) => yScale(d.median))
+
+    svgPart
+      .append("path")
+      .datum(layerScalarsData)
+      .attr("class", "area")
+      .attr("d", focusAreaMedianLineGenerator)
+      .attr("fill", "none")
+      .attr("stroke", "blue");
+
+    // TODO: 画异常点：
   }
 
   const getLayerScalars = async (
@@ -275,7 +261,6 @@ const LayerLevel: React.FC = () => {
       if (res.data.message === "success") {
         setLoadingData(false);
         let layerScalars = res.data.data[nodeIds[0]];
-        layerScalars = layerScalars.slice(0, 32 * 10); // 取10个step
         setLayerScalarsData(layerScalars);
       } else {
         console.log("获取layer数据失败：" + res.data.message);

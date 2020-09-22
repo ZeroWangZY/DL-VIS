@@ -12,14 +12,15 @@ class DataHelper():
             res.append({
                 "step": row[1],
                 "batch": row[2],
-                "maxOutlier": row[3],
-                "max": row[4],
-                "Q3": row[5],
-                "median": row[6],
-                "mean": row[7],
-                "Q1": row[8],
-                "min": row[9],
-                "minOutlier":row[10]
+                "batchSize": row[3],
+                "maximum": row[4],
+                "upperBoundary": row[5],
+                "Q3": row[6],
+                "median": row[7],
+                "mean": row[8],
+                "Q1": row[9],
+                "lowerBoundary": row[10],
+                "minimum":row[11]
             })
         return res
 
