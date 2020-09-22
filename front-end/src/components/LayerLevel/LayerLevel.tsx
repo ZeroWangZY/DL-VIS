@@ -164,7 +164,6 @@ const LayerLevel: React.FC = () => {
     drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
 
     focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
-    focus.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
 
     const xTicksValues = [];
     for (let i = minStep; i <= maxStep; i++) {
@@ -182,21 +181,7 @@ const LayerLevel: React.FC = () => {
       .attr("transform", "translate(0," + height + ")")
       .call(focusAxisX);
 
-    focus
-      .select('.focus-axis')
-      .append("g")
-      .attr("class", "axis axis--y")
-      .call(d3.axisLeft(focusAreaYScale));
-
-    focus.select('.focus-axis')
-      .select(".axis--y")
-      .selectAll("line")
-      .remove();
-
-    focus.select('g.grid')
-      .call(d3.axisLeft(focusAreaYScale).tickSize(-width))
-      .selectAll("text")
-      .style("opacity", "0");
+    drawFocusAreaYAxisAndGrid(focus, focusAreaYScale); // 绘制横线和Y坐标
 
     // --------------------context部分-----------------------------
     let context = d3.select(svgRef.current).select("g.context");
@@ -210,17 +195,6 @@ const LayerLevel: React.FC = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || x2OtherScale.range();
       const domain = s.map(x2OtherScale.invert, x2OtherScale);
-      // domain[0] = _.round(domain[0]);
-      // domain[1] = _.round(domain[1]);
-      // if (domain[0] === domain[1]) {
-      //   // 临界值处理，如果domain[0]此时为maxStep
-      //   if (domain[0] === maxStep) {
-      //     domain[0] -= 1;
-      //   }
-      //   else {
-      //     domain[1] += 1;
-      //   }
-      // }
       const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
@@ -239,7 +213,7 @@ const LayerLevel: React.FC = () => {
         .call(focusAxisX.ticks(xTicksValues.length).tickValues(xTicksValues));
     };
 
-    const brushed = () => {
+    const brushEnd = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection || x2OtherScale.range();
@@ -256,15 +230,36 @@ const LayerLevel: React.FC = () => {
         }
       }
       context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
+
+      // 以当前选择的step之间的最大最小值重新更改 focusAreaYScale
+      // i.g. domain = [11, 23]， 显示的step包括 [11, 22]，
+      // 对应layerScalarsData中的 [batchSize * (11-1), batchSize * (23-1) - 1]
+      let tmpMinY = Infinity, tmpMaxY = -Infinity;
+      for (let i = batchSize * (domain[0] - 1); i <= batchSize * (domain[1] - 1) - 1; i++) {
+        let scalar = layerScalarsData[i];
+        tmpMinY = Math.min(tmpMinY, scalar.lowerBoundary);
+        tmpMaxY = Math.max(tmpMaxY, scalar.upperBoundary);
+      }
+
+      let tmpFocusAreaYScale = d3.scaleLinear()
+        .rangeRound([height, 0])
+        .domain([tmpMinY, tmpMaxY]);
+
+      drawChartArea(focus.select(".focus-axis"), x1Scale, tmpFocusAreaYScale, batchSize);
+      drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale);
     };
+
+    const brushStart = () => {
+    }
 
     const brush = d3.brushX()
       .extent([
         [0, 0],
         [width, height2],
       ])
+      .on("start", brushStart)
       .on("brush", brushHandler)
-      .on('end', brushed);
+      .on('end', brushEnd);
 
     let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
     if (showDomain === null)
@@ -290,11 +285,28 @@ const LayerLevel: React.FC = () => {
     brushSelection.raise();
   };
 
+  function drawFocusAreaYAxisAndGrid(focusPart: any, focusAreaYScale: any): void { // 绘制focus部分的坐标轴 和 平行的网格
+    focusPart.select('.focus-axis').select(".axis--y").selectAll("line").remove(); // 删除原来的网格线
+    focusPart.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
+
+    focusPart
+      .select('.focus-axis')
+      .append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(focusAreaYScale));
+
+    focusPart.select('g.grid')
+      .call(d3.axisLeft(focusAreaYScale).tickSize(-width))
+      .selectAll("text")
+      .style("opacity", "0");
+  }
+
   function drawChartArea(svgPart: any, xScale: any, yScale: any, batchSize: number): void {
     svgPart.selectAll(".area").remove(); // 清除原折线图
     // Q1 - Q3部分
     const focusAreaQ1Q3LineGenerator = d3
       .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
       .x((d) => xScale((d.step - 1) * batchSize + d.batch))
       .y0((d) => yScale(d.Q1))
       .y1((d) => yScale(d.Q3));
@@ -311,6 +323,7 @@ const LayerLevel: React.FC = () => {
     // lowerBoundary - upperBoundary区域
     const focusAreaBoundaryLineGenerator = d3
       .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
       .x((d) => xScale((d.step - 1) * batchSize + d.batch))
       .y0((d) => yScale(d.lowerBoundary))
       .y1((d) => yScale(d.upperBoundary));

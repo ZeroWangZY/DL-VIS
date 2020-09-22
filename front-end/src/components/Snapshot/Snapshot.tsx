@@ -320,16 +320,11 @@ const Snapshot: React.FC = () => {
       focus.select('.focus-axis').select(".axis--x").call(focusAxisX.ticks(xTicks).tickValues(xTicksValues));
     };
 
-    const brushedStart = () => {
-      // setFixCursorLinePos(null);
-    }
-
     const brush = d3.brushX()
       .extent([
         [0, 0],
         [svgWidth, height2],
       ])
-      .on("brush start", brushedStart)
       .on("brush end", brushed);
 
     let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
