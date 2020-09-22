@@ -144,12 +144,16 @@ const LayerLevel: React.FC = () => {
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, width])
       .domain([1, layerScalarsData.length]);
-    
-    let xScale = d3.scaleLinear()
+
+    let x1OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
       .domain([minStep, maxStep]);
 
     let x2Scale = d3.scaleLinear()
+      .rangeRound([0, width])
+      .domain([1, layerScalarsData.length]);
+
+    let x2OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
       .domain([minStep, maxStep]);
 
@@ -167,7 +171,8 @@ const LayerLevel: React.FC = () => {
       xTicksValues.push(i);
     }
 
-    const focusAxisX = d3.axisBottom(xScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
+    const focusAxisX = d3.axisBottom(x1OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
+    const contextAxisX = d3.axisBottom(x2OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
 
     // 增加坐标和横线
     focus
@@ -203,8 +208,8 @@ const LayerLevel: React.FC = () => {
 
     const brushHandler = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
-      let s = d3.event.selection || x2Scale.range();
-      const domain = s.map(x2Scale.invert, x2Scale)
+      let s = d3.event.selection || x2OtherScale.range();
+      const domain = s.map(x2OtherScale.invert, x2OtherScale)
       domain[0] = _.round(domain[0]);
       domain[1] = _.round(domain[1]);
       if (domain[0] === domain[1]) {
@@ -216,8 +221,8 @@ const LayerLevel: React.FC = () => {
           domain[1] += 1;
         }
       }
-      const tempDomain = domain.map(xScale).map(x1Scale.invert);
-      xScale.domain(domain);
+      const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
+      x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
       // const domain = s.map(x2Scale.invert, x2Scale);
@@ -237,8 +242,8 @@ const LayerLevel: React.FC = () => {
     const brushed = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
-      let s = d3.event.selection || x2Scale.range();
-      const domain = s.map(x2Scale.invert, x2Scale)
+      let s = d3.event.selection || x2OtherScale.range();
+      const domain = s.map(x2OtherScale.invert, x2OtherScale);
       domain[0] = _.round(domain[0]);
       domain[1] = _.round(domain[1]);
       if (domain[0] === domain[1]) {
@@ -250,7 +255,7 @@ const LayerLevel: React.FC = () => {
           domain[1] += 1;
         }
       }
-      context.select('g.brush').call(brush.move, domain.map(x2Scale));
+      context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
     };
 
     const brush = d3.brushX()
@@ -280,7 +285,7 @@ const LayerLevel: React.FC = () => {
       .append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height2 + ")")
-      .call(focusAxisX);
+      .call(contextAxisX);
 
     brushSelection.raise();
   };
