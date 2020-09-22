@@ -109,7 +109,7 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getLayerScalars(currentMSGraphName, childNodeId, 1, 11, fetchDataType); // 取[1, 11) step
+    getLayerScalars(currentMSGraphName, childNodeId, 1, 51, fetchDataType); // 取[1, 11) step
   }, [
     childNodeId,
     currentMSGraphName,
@@ -209,18 +209,18 @@ const LayerLevel: React.FC = () => {
     const brushHandler = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       let s = d3.event.selection || x2OtherScale.range();
-      const domain = s.map(x2OtherScale.invert, x2OtherScale)
-      domain[0] = _.round(domain[0]);
-      domain[1] = _.round(domain[1]);
-      if (domain[0] === domain[1]) {
-        // 临界值处理，如果domain[0]此时为maxStep
-        if (domain[0] === maxStep) {
-          domain[0] -= 1;
-        }
-        else {
-          domain[1] += 1;
-        }
-      }
+      const domain = s.map(x2OtherScale.invert, x2OtherScale);
+      // domain[0] = _.round(domain[0]);
+      // domain[1] = _.round(domain[1]);
+      // if (domain[0] === domain[1]) {
+      //   // 临界值处理，如果domain[0]此时为maxStep
+      //   if (domain[0] === maxStep) {
+      //     domain[0] -= 1;
+      //   }
+      //   else {
+      //     domain[1] += 1;
+      //   }
+      // }
       const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
