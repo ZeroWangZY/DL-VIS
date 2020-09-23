@@ -9,16 +9,16 @@
   /* background-color: brown */
 }
 
-.lineChart-checkbox{
+.lineChart-checkbox {
   align-items: center;
   /* overflow: hidden; */
 }
 
-.area {
+.lineChart-container .area {
   clip-path: url(#clip);
 }
 
-.zoom {
+.lineChart-container .zoom {
   /* cursor: move; */
   fill: none;
   pointer-events: all;

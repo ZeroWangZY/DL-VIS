@@ -74,8 +74,14 @@
     z-index: 5;
 }
 
-.area {
-    clip-path: url(#clip);
+.layerLevel .area {
+    clip-path: url(#layerLevel-clip);
+}
+
+.layerLevel .zoom {
+    /* cursor: move; */
+    fill: none;
+    pointer-events: all;
 }
 
 path.layerLevel-detailInfo-area {

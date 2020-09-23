@@ -51,6 +51,74 @@ export interface DataToShow {
   color: string;
 }
 
+const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yScale: any, batchSize: number): void => {
+  svgPart.selectAll(".area").remove(); // 清除原折线图
+  // Q1 - Q3部分
+  const focusAreaQ1Q3LineGenerator = d3
+    .area<LayerScalar>()
+    .curve(d3.curveMonotoneX)
+    .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+    .y0((d) => yScale(d.Q1))
+    .y1((d) => yScale(d.Q3));
+
+  svgPart
+    .append("path")
+    .datum(scalarsData)
+    .attr("class", "area")
+    .attr("fill", "#69b3a2")
+    .attr("fill-opacity", .5)
+    .attr("stroke", "none")
+    .attr("d", focusAreaQ1Q3LineGenerator);
+
+  // lowerBoundary - upperBoundary区域
+  const focusAreaBoundaryLineGenerator = d3
+    .area<LayerScalar>()
+    .curve(d3.curveMonotoneX)
+    .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+    .y0((d) => yScale(d.lowerBoundary))
+    .y1((d) => yScale(d.upperBoundary));
+
+  svgPart
+    .append("path")
+    .datum(scalarsData)
+    .attr("class", "area")
+    .attr("fill", "#69b3a2")
+    .attr("fill-opacity", .5)
+    .attr("stroke", "none")
+    .attr("d", focusAreaBoundaryLineGenerator);
+
+  // median 折线
+  const focusAreaMedianLineGenerator = d3
+    .line<LayerScalar>()
+    .curve(d3.curveMonotoneX)
+    .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+    .y((d) => yScale(d.median))
+
+  svgPart
+    .append("path")
+    .datum(scalarsData)
+    .attr("class", "area")
+    .attr("d", focusAreaMedianLineGenerator)
+    .attr("fill", "none")
+    .attr("stroke", "blue");
+}
+
+const drawFocusAreaYAxisAndGrid = (focusPart: any, focusAreaYScale: any, width: number): void => { // 绘制focus部分的坐标轴 和 平行的网格
+  focusPart.select('.focus-axis').select(".axis--y").selectAll("line").remove(); // 删除原来的网格线
+  focusPart.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
+
+  focusPart
+    .select('.focus-axis')
+    .append("g")
+    .attr("class", "axis axis--y")
+    .call(d3.axisLeft(focusAreaYScale));
+
+  focusPart.select('g.grid')
+    .call(d3.axisLeft(focusAreaYScale).tickSize(-width))
+    .selectAll("text")
+    .style("opacity", "0");
+}
+
 const LayerLevel: React.FC = () => {
   const linedata = useLineData();
   const history = useHistory();
@@ -161,7 +229,7 @@ const LayerLevel: React.FC = () => {
       .rangeRound([height, 0])
       .domain([minY, maxY]);
 
-    drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
+    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
 
     focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
 
@@ -170,8 +238,22 @@ const LayerLevel: React.FC = () => {
       xTicksValues.push(i);
     }
 
+<<<<<<< HEAD
     const focusAxisX = d3.axisBottom(x1OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f")).tickSizeOuter(0);
     const contextAxisX = d3.axisBottom(x2OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
+=======
+    const focusAxisX =
+      d3.axisBottom(x1OtherScale)
+        .ticks(xTicksValues.length)
+        .tickValues(xTicksValues)
+        .tickFormat(d3.format(".0f"));
+
+    const contextAxisX =
+      d3.axisBottom(x2OtherScale)
+        .ticks(xTicksValues.length)
+        .tickValues(xTicksValues)
+        .tickFormat(d3.format(".0f"));
+>>>>>>> fix: 增加交互
 
     // 增加坐标和横线
     focus
@@ -181,7 +263,7 @@ const LayerLevel: React.FC = () => {
       .attr("transform", "translate(0," + height + ")")
       .call(focusAxisX);
 
-    drawFocusAreaYAxisAndGrid(focus, focusAreaYScale); // 绘制横线和Y坐标
+    drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width); // 绘制横线和Y坐标
 
     // --------------------context部分-----------------------------
     let context = d3.select(svgRef.current).select("g.context");
@@ -201,8 +283,8 @@ const LayerLevel: React.FC = () => {
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
       // const domain = s.map(x2Scale.invert, x2Scale);
-      drawChartArea(focus.select(".focus-axis"), x1Scale, focusAreaYScale, batchSize);
-
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
+      drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
       const xTicksValues = [];
       for (let i = domain[0]; i <= domain[1]; i++) {
         xTicksValues.push(i);
@@ -259,8 +341,8 @@ const LayerLevel: React.FC = () => {
         .rangeRound([height, 0])
         .domain([tmpMinY, tmpMaxY]);
 
-      drawChartArea(focus.select(".focus-axis"), x1Scale, tmpFocusAreaYScale, batchSize);
-      drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize);
+      drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale, width);
     };
 
     const brushStart = () => {
@@ -287,7 +369,7 @@ const LayerLevel: React.FC = () => {
       .call(brush)
       .call(brush.move, showRange);
 
-    drawChartArea(context, x2Scale, contextAreaYScale, batchSize);
+    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize);
 
     context.selectAll(".axis--x").remove();
     context
@@ -297,77 +379,31 @@ const LayerLevel: React.FC = () => {
       .call(contextAxisX);
 
     brushSelection.raise();
+
+    // 交互部分：
+    const bisect = d3.bisector((d: any) => (d.step - 1) * batchSize + d.batch).left;
+
+    let zoomPart = d3.select(svgRef.current).select("rect.zoom");
+    zoomPart.on("mousemove", function () {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+      let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+
+      let x = x1Scale.invert(mouseX);
+      console.log(x);
+
+      let _index = bisect(layerScalarsData, x, 1);
+      console.log(_index);
+      _index = _index === 0 ? 1 : _index;
+
+
+    });
+    zoomPart.on("mouseleave", function () {
+
+    });
+    zoomPart.on("click", function () {
+
+    })
   };
-
-  function drawFocusAreaYAxisAndGrid(focusPart: any, focusAreaYScale: any): void { // 绘制focus部分的坐标轴 和 平行的网格
-    focusPart.select('.focus-axis').select(".axis--y").selectAll("line").remove(); // 删除原来的网格线
-    focusPart.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
-
-    focusPart
-      .select('.focus-axis')
-      .append("g")
-      .attr("class", "axis axis--y")
-      .call(d3.axisLeft(focusAreaYScale));
-
-    focusPart.select('g.grid')
-      .call(d3.axisLeft(focusAreaYScale).tickSize(-width))
-      .selectAll("text")
-      .style("opacity", "0");
-  }
-
-  function drawChartArea(svgPart: any, xScale: any, yScale: any, batchSize: number): void {
-    svgPart.selectAll(".area").remove(); // 清除原折线图
-    // Q1 - Q3部分
-    const focusAreaQ1Q3LineGenerator = d3
-      .area<LayerScalar>()
-      .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-      .y0((d) => yScale(d.Q1))
-      .y1((d) => yScale(d.Q3));
-
-    svgPart
-      .append("path")
-      .datum(layerScalarsData)
-      .attr("class", "area")
-      .attr("fill", "#69b3a2")
-      .attr("fill-opacity", .5)
-      .attr("stroke", "none")
-      .attr("d", focusAreaQ1Q3LineGenerator);
-
-    // lowerBoundary - upperBoundary区域
-    const focusAreaBoundaryLineGenerator = d3
-      .area<LayerScalar>()
-      .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-      .y0((d) => yScale(d.lowerBoundary))
-      .y1((d) => yScale(d.upperBoundary));
-
-    svgPart
-      .append("path")
-      .datum(layerScalarsData)
-      .attr("class", "area")
-      .attr("fill", "#69b3a2")
-      .attr("fill-opacity", .5)
-      .attr("stroke", "none")
-      .attr("d", focusAreaBoundaryLineGenerator);
-
-    // median 折线
-    const focusAreaMedianLineGenerator = d3
-      .line<LayerScalar>()
-      .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-      .y((d) => yScale(d.median))
-
-    svgPart
-      .append("path")
-      .datum(layerScalarsData)
-      .attr("class", "area")
-      .attr("d", focusAreaMedianLineGenerator)
-      .attr("fill", "none")
-      .attr("stroke", "blue");
-
-    // TODO: 画异常点：
-  }
 
   const getLayerScalars = async (
     graphName,
@@ -401,7 +437,7 @@ const LayerLevel: React.FC = () => {
         <div className="layer-container">
           <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
             <defs>
-              <clipPath id={"clip"}>
+              <clipPath id={"layerLevel-clip"}>
                 <rect width={width} height={height} />
               </clipPath>
             </defs>
@@ -416,6 +452,12 @@ const LayerLevel: React.FC = () => {
               className="context"
               transform={`translate(${margin2.left},${margin2.top})`}
             ></g>
+            <rect
+              className="zoom"
+              width={width}
+              height={height}
+              transform={`translate(${margin.left},${margin.top})`}
+            />
           </svg>
         </div>
       )}
