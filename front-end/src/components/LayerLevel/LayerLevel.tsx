@@ -238,10 +238,6 @@ const LayerLevel: React.FC = () => {
       xTicksValues.push(i);
     }
 
-<<<<<<< HEAD
-    const focusAxisX = d3.axisBottom(x1OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f")).tickSizeOuter(0);
-    const contextAxisX = d3.axisBottom(x2OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
-=======
     const focusAxisX =
       d3.axisBottom(x1OtherScale)
         .ticks(xTicksValues.length)
@@ -253,7 +249,6 @@ const LayerLevel: React.FC = () => {
         .ticks(xTicksValues.length)
         .tickValues(xTicksValues)
         .tickFormat(d3.format(".0f"));
->>>>>>> fix: 增加交互
 
     // 增加坐标和横线
     focus
