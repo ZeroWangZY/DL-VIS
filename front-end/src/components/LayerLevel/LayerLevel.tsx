@@ -170,7 +170,7 @@ const LayerLevel: React.FC = () => {
       xTicksValues.push(i);
     }
 
-    const focusAxisX = d3.axisBottom(x1OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
+    const focusAxisX = d3.axisBottom(x1OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f")).tickSizeOuter(0);
     const contextAxisX = d3.axisBottom(x2OtherScale).ticks(xTicksValues.length).tickValues(xTicksValues).tickFormat(d3.format(".0f"));
 
     // 增加坐标和横线
@@ -193,6 +193,7 @@ const LayerLevel: React.FC = () => {
 
     const brushHandler = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+      if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection || x2OtherScale.range();
       const domain = s.map(x2OtherScale.invert, x2OtherScale);
       const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
@@ -229,7 +230,20 @@ const LayerLevel: React.FC = () => {
           domain[1] += 1;
         }
       }
+      const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
+      x1OtherScale.domain(domain);
+      x1Scale.domain(tempDomain);
+      setShowDomain(domain); // 设定brush选定显示区域的domain;
+      const xTicksValues = [];
+      for (let i = domain[0]; i <= domain[1]; i++) {
+        xTicksValues.push(i);
+      }
       context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
+
+      focus
+        .select('.focus-axis')
+        .select('.axis--x')
+        .call(focusAxisX.ticks(xTicksValues.length).tickValues(xTicksValues));
 
       // 以当前选择的step之间的最大最小值重新更改 focusAreaYScale
       // i.g. domain = [11, 23]， 显示的step包括 [11, 22]，
