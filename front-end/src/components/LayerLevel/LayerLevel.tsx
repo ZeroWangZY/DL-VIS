@@ -165,6 +165,7 @@ const LayerLevel: React.FC = () => {
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
       ? "activation"
       : "gradient";
+  const testMaxStep = 51; // TODO : 将来会把它变为maxStep
 
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
@@ -177,7 +178,8 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getLayerScalars(currentMSGraphName, childNodeId, 1, 51, fetchDataType); // 取[1, 11) step
+    getLayerScalars(currentMSGraphName, childNodeId, 1, testMaxStep, fetchDataType); // 取[1, 11) step
+    // getLayerScalars(currentMSGraphName, childNodeId, 1, maxStep, fetchDataType); // 取[1, 11) step
   }, [
     childNodeId,
     currentMSGraphName,
@@ -202,20 +204,13 @@ const LayerLevel: React.FC = () => {
       maxY = Math.max(maxY, tmp.upperBoundary);
     }
 
-    let minStep = Infinity, maxStep = -Infinity;
-    for (let item of layerScalarsData) {
-      const { step } = item;
-      minStep = Math.min(minStep, step);
-      maxStep = Math.max(maxStep, step);
-    }
-
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, width])
       .domain([1, layerScalarsData.length]);
 
     let x1OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([minStep, maxStep]);
+      .domain([1, testMaxStep]);
 
     let x2Scale = d3.scaleLinear()
       .rangeRound([0, width])
@@ -223,7 +218,7 @@ const LayerLevel: React.FC = () => {
 
     let x2OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([minStep, maxStep]);
+      .domain([1, testMaxStep]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
@@ -231,10 +226,8 @@ const LayerLevel: React.FC = () => {
 
     drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
 
-    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
-
-    const xTicksValues = [];
-    for (let i = minStep; i <= maxStep; i++) {
+    const xTicksValues = []; // 坐标
+    for (let i = 1; i <= testMaxStep; i++) {
       xTicksValues.push(i);
     }
 
@@ -251,6 +244,7 @@ const LayerLevel: React.FC = () => {
         .tickFormat(d3.format(".0f"));
 
     // 增加坐标和横线
+    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
     focus
       .select('.focus-axis')
       .append("g")
@@ -272,13 +266,27 @@ const LayerLevel: React.FC = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection || x2OtherScale.range();
+
+      if (s[1] < s[0]) {
+        let temp = s[1];
+        s[1] = s[0];
+        s[0] = temp;
+      }
+
+      console.log("s: ", s);
+      console.log("x2OtherScale.invert: ", x2OtherScale.invert);
+      console.log("x2OtherScale: ", x2OtherScale);
       const domain = s.map(x2OtherScale.invert, x2OtherScale);
+      console.log("domain", domain);
+
       const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
+      console.log("tempDomain: ", tempDomain);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
       // const domain = s.map(x2Scale.invert, x2Scale);
       drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
+
       drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
       const xTicksValues = [];
       for (let i = domain[0]; i <= domain[1]; i++) {
@@ -295,6 +303,11 @@ const LayerLevel: React.FC = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection || x2OtherScale.range();
+      if (s[1] < s[0]) {
+        let temp = s[1];
+        s[1] = s[0];
+        s[0] = temp;
+      }
       const domain = s.map(x2OtherScale.invert, x2OtherScale);
       domain[0] = _.round(domain[0]);
       domain[1] = _.round(domain[1]);
@@ -350,7 +363,7 @@ const LayerLevel: React.FC = () => {
       ])
       .on("start", brushStart)
       .on("brush", brushHandler)
-      .on('end', brushEnd);
+    // .on('end', brushEnd);
 
     let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
     if (showDomain === null)
@@ -380,15 +393,13 @@ const LayerLevel: React.FC = () => {
 
     let zoomPart = d3.select(svgRef.current).select("rect.zoom");
     zoomPart.on("mousemove", function () {
-      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-      let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+      // let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+      // let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
 
-      let x = x1Scale.invert(mouseX);
-      console.log(x);
+      // let x = x1Scale.invert(mouseX);
 
-      let _index = bisect(layerScalarsData, x, 1);
-      console.log(_index);
-      _index = _index === 0 ? 1 : _index;
+      // let _index = bisect(layerScalarsData, x, 1);
+      // _index = _index === 0 ? 1 : _index;
 
 
     });
@@ -431,11 +442,11 @@ const LayerLevel: React.FC = () => {
       {nodeMap[selectedNodeId] instanceof LayerNodeImp && (
         <div className="layer-container">
           <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
-            <defs>
+            {/* <defs>
               <clipPath id={"layerLevel-clip"}>
                 <rect width={width} height={height} />
               </clipPath>
-            </defs>
+            </defs> */}
             <g
               className="focus"
               transform={`translate(${margin.left},${margin.top})`}
