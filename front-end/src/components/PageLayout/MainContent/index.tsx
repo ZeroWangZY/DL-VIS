@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import "./index.less";
 import LayerLevel from "../../LayerLevel/LayerLevel";
 import ELKLayout from "../../ELKLayout/ELKLayout";
+import RenderGraph from "../../threejs-render/RenderGraph";
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
@@ -50,7 +51,8 @@ export default () => {
                   <LayerLevel />
                 </Route>
                 <Route path="/">
-                  <ELKLayout />
+                  {/* <ELKLayout /> */}
+                  <RenderGraph />
                 </Route>
               </Switch>
             )}

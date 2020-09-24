@@ -86,6 +86,10 @@ export const generateEdgeStyles = (
         startPointY: spring(ofs.y + startPoint.y),
         endPointX: spring(ofs.x + endPoint.x),
         endPointY: spring(ofs.y + endPoint.y),
+        _startPointX: ofs.x + startPoint.x,
+        _startPointY: ofs.y + startPoint.y,
+        _endPointX: ofs.x + endPoint.x,
+        _endPointY: ofs.y + endPoint.y,
       },
     });
   }
@@ -149,6 +153,12 @@ export const generateNodeStyles = (
         rectHeight: spring(node.height),
         ellipseX: spring(node.width / 2),
         ellipseY: spring(node.height / 4),
+        _gNodeTransX: ofs.x + node.x + node.width / 2,
+        _gNodeTransY: ofs.y + node.y + node.height / 2,
+        _rectWidth: node.width,
+        _rectHeight: node.height,
+        _ellipseX: node.width / 2,
+        _ellipseY: node.height / 4,
       },
     });
     const [inPort, outPort] = node.ports;
