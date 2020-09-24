@@ -6,6 +6,10 @@ import { useHistory } from "react-router-dom";
 import DetailLineChart from "./DetailLineChart";
 import ActivationOrGradientChart from "./ActivationOrGradientChart";
 import ClusterGraph from "./ClusterGraph";
+import TensorHeatmap, {
+  TensorHeatmapProps,
+  TensorMetadata,
+} from "./TensorHeatmap";
 import {
   fetchLayerScalars
 } from "../../api/layerlevel";
@@ -15,6 +19,7 @@ import { useProcessedGraph } from "../../store/processedGraph";
 import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
 import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode";
 import * as _ from 'lodash';
+import { Domain } from "domain";
 
 interface layerNodeScalar {
   step: number;
@@ -64,7 +69,7 @@ const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yS
   svgPart
     .append("path")
     .datum(scalarsData)
-    .attr("class", "area")
+    .attr("class", "area Q1Q3Part")
     .attr("fill", "#69b3a2")
     .attr("fill-opacity", .5)
     .attr("stroke", "none")
@@ -85,7 +90,7 @@ const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yS
     .attr("fill", "#69b3a2")
     .attr("fill-opacity", .5)
     .attr("stroke", "none")
-    .attr("d", focusAreaBoundaryLineGenerator);
+    .attr("d", focusAreaBoundaryLineGenerator)
 
   // median 折线
   const focusAreaMedianLineGenerator = d3
@@ -119,6 +124,12 @@ const drawFocusAreaYAxisAndGrid = (focusPart: any, focusAreaYScale: any, width: 
     .style("opacity", "0");
 }
 
+const swapArrayElement = (s: [], a: number, b: number): void => {
+  let temp = s[a];
+  s[a] = s[b];
+  s[b] = temp;
+}
+
 const LayerLevel: React.FC = () => {
   const linedata = useLineData();
   const history = useHistory();
@@ -141,11 +152,23 @@ const LayerLevel: React.FC = () => {
   const svgRef = useRef();
   const [svgHeight, setSvgHeight] = useState(270);
   const [svgWidth, setSvgWidth] = useState(1800);
+  const [cursorLinePos, setCursorLinePos] = useState(null);
 
   const [showDomain, setShowDomain] = useState(null);
   const [childNodeId, setChildNodeId] = useState(null);
   const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
   const [LoadingData, setLoadingData] = useState(false);
+  const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
+  const [isShowingTensorHeatmap, setIsShowingTensorHeatmap] = useState<boolean>(
+    false
+  );
+  const [selectedTensor, setSelectedTensor] = useState<TensorMetadata>({
+    type: showActivationOrGradient,
+    step: null,
+    dataIndex: null,
+    nodeId: null
+  });
+  const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
@@ -165,7 +188,7 @@ const LayerLevel: React.FC = () => {
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
       ? "activation"
       : "gradient";
-  const testMaxStep = 51; // TODO : 将来会把它变为maxStep
+  const testMaxStep = 700; // TODO : 将来会把它变为maxStep
 
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
@@ -227,9 +250,7 @@ const LayerLevel: React.FC = () => {
     drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
 
     const xTicksValues = []; // 坐标
-    for (let i = 1; i <= testMaxStep; i++) {
-      xTicksValues.push(i);
-    }
+    produceXTicks(xTicksValues, 1, testMaxStep);
 
     const focusAxisX =
       d3.axisBottom(x1OtherScale)
@@ -265,33 +286,22 @@ const LayerLevel: React.FC = () => {
     const brushHandler = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
-      let s = d3.event.selection || x2OtherScale.range();
+      let s = d3.event.selection || x2OtherScale.range(); // s是刷选的实际范围
+      if (s[1] < s[0]) swapArrayElement(s, 0, 1);
+      const domain = s.map(x2OtherScale.invert); // 准确的刷选的step(带小数)
 
-      if (s[1] < s[0]) {
-        let temp = s[1];
-        s[1] = s[0];
-        s[0] = temp;
-      }
+      // TODO : tempDomain就不准确了！
+      const tempDomain = s.map(x2Scale.invert)// domain.map(x1OtherScale).map(x1Scale.invert);
 
-      console.log("s: ", s);
-      console.log("x2OtherScale.invert: ", x2OtherScale.invert);
-      console.log("x2OtherScale: ", x2OtherScale);
-      const domain = s.map(x2OtherScale.invert, x2OtherScale);
-      console.log("domain", domain);
-
-      const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
-      console.log("tempDomain: ", tempDomain);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
-      // const domain = s.map(x2Scale.invert, x2Scale);
+
       drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
 
       drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
       const xTicksValues = [];
-      for (let i = domain[0]; i <= domain[1]; i++) {
-        xTicksValues.push(i);
-      }
+      produceXTicks(xTicksValues, domain[0], domain[1]);
 
       focus
         .select('.focus-axis')
@@ -303,14 +313,13 @@ const LayerLevel: React.FC = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection || x2OtherScale.range();
-      if (s[1] < s[0]) {
-        let temp = s[1];
-        s[1] = s[0];
-        s[0] = temp;
-      }
-      const domain = s.map(x2OtherScale.invert, x2OtherScale);
-      domain[0] = _.round(domain[0]);
-      domain[1] = _.round(domain[1]);
+      if (s[1] < s[0]) swapArrayElement(s, 0, 1);
+
+      const domain = s.map(x2OtherScale.invert); // 准确的刷选的step(带小数)
+
+      domain[0] = Math.round(domain[0]); // 四舍五入
+      domain[1] = Math.round(domain[1]);
+
       if (domain[0] === domain[1]) {
         // 临界值处理，如果domain[0]此时为maxStep
         if (domain[0] === maxStep) {
@@ -320,14 +329,15 @@ const LayerLevel: React.FC = () => {
           domain[1] += 1;
         }
       }
-      const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert);
+
+      // console.log("domain: ", domain);
+      const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
+      // console.log(tempDomain);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
       const xTicksValues = [];
-      for (let i = domain[0]; i <= domain[1]; i++) {
-        xTicksValues.push(i);
-      }
+      produceXTicks(xTicksValues, domain[0], domain[1]);
       context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
 
       focus
@@ -363,7 +373,7 @@ const LayerLevel: React.FC = () => {
       ])
       .on("start", brushStart)
       .on("brush", brushHandler)
-    // .on('end', brushEnd);
+      .on('end', brushEnd);
 
     let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
     if (showDomain === null)
@@ -389,26 +399,90 @@ const LayerLevel: React.FC = () => {
     brushSelection.raise();
 
     // 交互部分：
-    const bisect = d3.bisector((d: any) => (d.step - 1) * batchSize + d.batch).left;
-
     let zoomPart = d3.select(svgRef.current).select("rect.zoom");
     zoomPart.on("mousemove", function () {
-      // let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-      // let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+      let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
 
-      // let x = x1Scale.invert(mouseX);
+      let x = x1Scale.invert(mouseX); // x 范围是x1的domain
+      x = Math.floor(x);
 
-      // let _index = bisect(layerScalarsData, x, 1);
-      // _index = _index === 0 ? 1 : _index;
+      let xPos = x1Scale(x);
+      setCursorLinePos(xPos);
 
+      let newDetailInfoOfCurrentStep = [];
 
+      newDetailInfoOfCurrentStep.push({
+        "step": Math.floor((x - 1) / 32) + 1,
+        "batch": (x - 1) % 32 + 1,
+      })
+      setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
     });
     zoomPart.on("mouseleave", function () {
-
+      setCursorLinePos(null);
     });
     zoomPart.on("click", function () {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+      let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
 
+      let x = x1Scale.invert(mouseX); // x 范围是x1的domain
+      x = Math.floor(x);
+
+      setSelectedTensor({
+        type: showActivationOrGradient,
+        step: Math.floor((x - 1) / 32) + 1,
+        dataIndex: (x - 1) % 32, // index从0开始
+        nodeId: childNodeId
+      });
+
+      setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
+      setIsShowingTensorHeatmap(true);
     })
+  };
+
+  const produceXTicks = (xTicksValues: number[], startStep: number, endStep: number) => {
+    let numberOfStep = endStep - startStep + 1;
+
+    if (numberOfStep <= 10)
+      for (let i = startStep; i <= endStep; i++) {
+        xTicksValues.push(i);
+      }
+    else {
+      let len = numberOfStep / 10; // 将所有的testMaxStep分为十份
+      for (let i = 0; i < 10; i++) {
+        xTicksValues.push(Math.floor(len * i + startStep));
+      }
+      xTicksValues.push(endStep);
+    }
+  }
+
+  const getDetailInfoRect = (xPos, height) => {
+    let fontSize = 14;
+    let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
+    let containerWidth = 160;
+    xPos += margin.left;
+    if (xPos + containerWidth > width) xPos = xPos - containerWidth - 10; // 靠近右边界，将这一部分放到竖线前面显示
+    else xPos += 10;// gap
+
+    return (
+      <div
+        className="DetailInfoContainer"
+        style={{
+          left: xPos,
+          top: height / 2 - contextHeight / 2,
+          width: containerWidth,
+        }}>
+        <div style={{ marginLeft: '8px', marginTop: '8px' }}>
+          {"step: " + DetailInfoOfCurrentStep[0].step}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+            {"batch: " + DetailInfoOfCurrentStep[0].batch}
+          </div>
+          <div style={{ clear: 'both' }}></div>
+        </div>
+      </div>
+    )
   };
 
   const getLayerScalars = async (
@@ -442,17 +516,29 @@ const LayerLevel: React.FC = () => {
       {nodeMap[selectedNodeId] instanceof LayerNodeImp && (
         <div className="layer-container">
           <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
-            {/* <defs>
+            <defs>
               <clipPath id={"layerLevel-clip"}>
                 <rect width={width} height={height} />
               </clipPath>
-            </defs> */}
+            </defs>
             <g
               className="focus"
               transform={`translate(${margin.left},${margin.top})`}
             >
               <g className="grid"></g>
               <g className="focus-axis"></g>
+              {cursorLinePos !== null && (
+                <line
+                  x1={cursorLinePos}
+                  x2={cursorLinePos}
+                  y1={height}
+                  y2={0}
+                  style={{
+                    stroke: "#e1e1e1",
+                    strokeWidth: 1,
+                  }}
+                />
+              )}
             </g>
             <g
               className="context"
@@ -465,6 +551,15 @@ const LayerLevel: React.FC = () => {
               transform={`translate(${margin.left},${margin.top})`}
             />
           </svg>
+          {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
+            getDetailInfoRect(cursorLinePos, height)
+          }
+          <TensorHeatmap
+            tensorMetadata={selectedTensor}
+            isShowing={isShowingTensorHeatmap}
+            setIsShowing={setIsShowingTensorHeatmap}
+            anchorPosition={anchorPosition}
+          />
         </div>
       )}
     </div>
