@@ -56,57 +56,7 @@ export interface DataToShow {
   color: string;
 }
 
-const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yScale: any, batchSize: number): void => {
-  svgPart.selectAll(".area").remove(); // 清除原折线图
-  // Q1 - Q3部分
-  const focusAreaQ1Q3LineGenerator = d3
-    .area<LayerScalar>()
-    .curve(d3.curveMonotoneX)
-    .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-    .y0((d) => yScale(d.Q1))
-    .y1((d) => yScale(d.Q3));
 
-  svgPart
-    .append("path")
-    .datum(scalarsData)
-    .attr("class", "area Q1Q3Part")
-    .attr("fill", "#69b3a2")
-    .attr("fill-opacity", .5)
-    .attr("stroke", "none")
-    .attr("d", focusAreaQ1Q3LineGenerator);
-
-  // lowerBoundary - upperBoundary区域
-  const focusAreaBoundaryLineGenerator = d3
-    .area<LayerScalar>()
-    .curve(d3.curveMonotoneX)
-    .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-    .y0((d) => yScale(d.lowerBoundary))
-    .y1((d) => yScale(d.upperBoundary));
-
-  svgPart
-    .append("path")
-    .datum(scalarsData)
-    .attr("class", "area")
-    .attr("fill", "#69b3a2")
-    .attr("fill-opacity", .5)
-    .attr("stroke", "none")
-    .attr("d", focusAreaBoundaryLineGenerator)
-
-  // median 折线
-  const focusAreaMedianLineGenerator = d3
-    .line<LayerScalar>()
-    .curve(d3.curveMonotoneX)
-    .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-    .y((d) => yScale(d.median))
-
-  svgPart
-    .append("path")
-    .datum(scalarsData)
-    .attr("class", "area")
-    .attr("d", focusAreaMedianLineGenerator)
-    .attr("fill", "none")
-    .attr("stroke", "blue");
-}
 
 const drawFocusAreaYAxisAndGrid = (focusPart: any, focusAreaYScale: any, width: number): void => { // 绘制focus部分的坐标轴 和 平行的网格
   focusPart.select('.focus-axis').select(".axis--y").selectAll("line").remove(); // 删除原来的网格线
@@ -188,7 +138,7 @@ const LayerLevel: React.FC = () => {
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
       ? "activation"
       : "gradient";
-  const testMaxStep = 700; // TODO : 将来会把它变为maxStep
+  const testMaxStep = 20; // TODO : 将来会把它变为maxStep
 
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
@@ -247,7 +197,7 @@ const LayerLevel: React.FC = () => {
       .rangeRound([height, 0])
       .domain([minY, maxY]);
 
-    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
+    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, testMaxStep]);
 
     const xTicksValues = []; // 坐标
     produceXTicks(xTicksValues, 1, testMaxStep);
@@ -296,8 +246,7 @@ const LayerLevel: React.FC = () => {
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
-
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, tempDomain);
 
       drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
       const xTicksValues = [];
@@ -359,7 +308,7 @@ const LayerLevel: React.FC = () => {
         .rangeRound([height, 0])
         .domain([tmpMinY, tmpMaxY]);
 
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, minY, maxY, tempDomain);
       drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale, width);
     };
 
@@ -387,7 +336,7 @@ const LayerLevel: React.FC = () => {
       .call(brush)
       .call(brush.move, showRange);
 
-    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize);
+    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, minY, maxY, [1, testMaxStep]);
 
     context.selectAll(".axis--x").remove();
     context
@@ -397,35 +346,133 @@ const LayerLevel: React.FC = () => {
       .call(contextAxisX);
 
     brushSelection.raise();
+  };
 
-    // 交互部分：
-    let zoomPart = d3.select(svgRef.current).select("rect.zoom");
-    zoomPart.on("mousemove", function () {
-      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-      let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
+  const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, domain: number[]): void => {
+    svgPart.selectAll(".area").remove(); // 清除原折线图
+    // Q1 - Q3部分
+    const focusAreaQ1Q3LineGenerator = d3
+      .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(d.Q1))
+      .y1((d) => yScale(d.Q3));
 
-      let x = x1Scale.invert(mouseX); // x 范围是x1的domain
-      x = Math.floor(x);
+    svgPart
+      .append("path")
+      .datum(scalarsData)
+      .attr("class", "area Q1Q3Part")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .8)
+      .attr("stroke", "none")
+      .attr("d", focusAreaQ1Q3LineGenerator)
+      .on("click", ClickHandler)
+      .on("mousemove", MouseMoveHandler)
+      .on("mouseleave", MouseLeaveHandler);
 
-      let xPos = x1Scale(x);
-      setCursorLinePos(xPos);
+    // lowerBoundary - upperBoundary区域
+    // 分成两部分画
+    const focusAreaBoundaryLineGenerator1 = d3
+      .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(d.lowerBoundary))
+      .y1((d) => yScale(d.Q1));
 
-      let newDetailInfoOfCurrentStep = [];
+    const focusAreaBoundaryLineGenerator2 = d3
+      .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(d.Q3))
+      .y1((d) => yScale(d.upperBoundary));
 
-      newDetailInfoOfCurrentStep.push({
-        "step": Math.floor((x - 1) / 32) + 1,
-        "batch": (x - 1) % 32 + 1,
+    svgPart
+      .append("path")
+      .datum(scalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .5)
+      .attr("stroke", "none")
+      .attr("d", focusAreaBoundaryLineGenerator1)
+      .on("click", ClickHandler)
+      .on("mousemove", MouseMoveHandler)
+      .on("mouseleave", MouseLeaveHandler);
+
+    svgPart
+      .append("path")
+      .datum(scalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", .5)
+      .attr("stroke", "none")
+      .attr("d", focusAreaBoundaryLineGenerator2)
+      .on("click", ClickHandler)
+      .on("mousemove", MouseMoveHandler)
+      .on("mouseleave", MouseLeaveHandler);
+
+    // median 折线
+    const focusAreaMedianLineGenerator = d3
+      .line<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y((d) => yScale(d.median))
+
+    svgPart
+      .append("path")
+      .datum(scalarsData)
+      .attr("class", "area")
+      .attr("d", focusAreaMedianLineGenerator)
+      .attr("fill", "none")
+      .attr("stroke", "blue")
+      .on("click", ClickHandler)
+      .on("mousemove", MouseMoveHandler)
+      .on("mouseleave", MouseLeaveHandler);
+
+    // console.log(domain);
+    // 外面的空白部分: outside
+    const focusAreaOutsideLineGenerator1 = d3
+      .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(minY))
+      .y1((d) => yScale(d.lowerBoundary));
+
+    const focusAreaOutsideLineGenerator2 = d3
+      .area<LayerScalar>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .y0((d) => yScale(d.upperBoundary))
+      .y1((d) => yScale(maxY));
+
+    svgPart
+      .append("path")
+      .datum(scalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", 0)
+      .attr("stroke", "none")
+      .attr("d", focusAreaOutsideLineGenerator1)
+      .on("click", function () {
+        console.log("outSide部分");
       })
-      setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
-    });
-    zoomPart.on("mouseleave", function () {
-      setCursorLinePos(null);
-    });
-    zoomPart.on("click", function () {
-      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-      let mouseY = d3.mouse((this as any) as SVGSVGElement)[1];
 
-      let x = x1Scale.invert(mouseX); // x 范围是x1的domain
+    svgPart
+      .append("path")
+      .datum(scalarsData)
+      .attr("class", "area")
+      .attr("fill", "#69b3a2")
+      .attr("fill-opacity", 0)
+      .attr("stroke", "none")
+      .attr("d", focusAreaOutsideLineGenerator2)
+      .on("click", function () {
+        console.log("outSide部分");
+      })
+
+
+    function ClickHandler() {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+
+      let x = xScale.invert(mouseX); // x 范围是x1的domain
       x = Math.floor(x);
 
       setSelectedTensor({
@@ -437,8 +484,30 @@ const LayerLevel: React.FC = () => {
 
       setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
       setIsShowingTensorHeatmap(true);
-    })
-  };
+    }
+
+    function MouseMoveHandler() {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+
+      let x = xScale.invert(mouseX); // x 范围是x1的domain
+      x = Math.floor(x);
+
+      let xPos = xScale(x);
+      setCursorLinePos(xPos);
+
+      let newDetailInfoOfCurrentStep = [];
+
+      newDetailInfoOfCurrentStep.push({
+        "step": Math.floor((x - 1) / 32) + 1,
+        "batch": (x - 1) % 32 + 1,
+      })
+      setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+    }
+
+    function MouseLeaveHandler() {
+      setCursorLinePos(null);
+    }
+  }
 
   const produceXTicks = (xTicksValues: number[], startStep: number, endStep: number) => {
     let numberOfStep = endStep - startStep + 1;
@@ -544,12 +613,12 @@ const LayerLevel: React.FC = () => {
               className="context"
               transform={`translate(${margin2.left},${margin2.top})`}
             ></g>
-            <rect
+            {/* <rect
               className="zoom"
               width={width}
               height={height}
               transform={`translate(${margin.left},${margin.top})`}
-            />
+            /> */}
           </svg>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
