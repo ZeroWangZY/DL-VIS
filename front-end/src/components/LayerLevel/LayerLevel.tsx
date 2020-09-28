@@ -138,7 +138,7 @@ const LayerLevel: React.FC = () => {
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
       ? "activation"
       : "gradient";
-  const testMaxStep = 20; // TODO : 将来会把它变为maxStep
+  const testMaxStep = 21; // TODO : 将来会把它变为maxStep
 
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
@@ -197,7 +197,7 @@ const LayerLevel: React.FC = () => {
       .rangeRound([height, 0])
       .domain([minY, maxY]);
 
-    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, testMaxStep]);
+    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, testMaxStep], [1, layerScalarsData.length], true);
 
     const xTicksValues = []; // 坐标
     produceXTicks(xTicksValues, 1, testMaxStep);
@@ -239,14 +239,12 @@ const LayerLevel: React.FC = () => {
       let s = d3.event.selection || x2OtherScale.range(); // s是刷选的实际范围
       if (s[1] < s[0]) swapArrayElement(s, 0, 1);
       const domain = s.map(x2OtherScale.invert); // 准确的刷选的step(带小数)
-
-      // TODO : tempDomain就不准确了！
-      const tempDomain = s.map(x2Scale.invert)// domain.map(x1OtherScale).map(x1Scale.invert);
+      const tempDomain = [(domain[0] - 1) * batchSize + 1, (domain[1] - 1) * batchSize + 1]// domain.map(x1OtherScale).map(x1Scale.invert);
 
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, tempDomain);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, domain, tempDomain, false);
 
       drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
       const xTicksValues = [];
@@ -280,7 +278,7 @@ const LayerLevel: React.FC = () => {
       }
 
       // console.log("domain: ", domain);
-      const tempDomain = domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
+      const tempDomain = [(domain[0] - 1) * batchSize + 1, (domain[1] - 1) * batchSize + 1] // domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
       // console.log(tempDomain);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
@@ -308,7 +306,7 @@ const LayerLevel: React.FC = () => {
         .rangeRound([height, 0])
         .domain([tmpMinY, tmpMaxY]);
 
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, minY, maxY, tempDomain);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, minY, maxY, domain, tempDomain, true);
       drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale, width);
     };
 
@@ -336,7 +334,7 @@ const LayerLevel: React.FC = () => {
       .call(brush)
       .call(brush.move, showRange);
 
-    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, minY, maxY, [1, testMaxStep]);
+    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, minY, maxY, [1, testMaxStep], [1, layerScalarsData.length], false);
 
     context.selectAll(".axis--x").remove();
     context
@@ -348,7 +346,7 @@ const LayerLevel: React.FC = () => {
     brushSelection.raise();
   };
 
-  const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, domain: number[]): void => {
+  const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, stepDomain: number[], batchDomain: number[], brushEnded: boolean): void => {
     svgPart.selectAll(".area").remove(); // 清除原折线图
     // Q1 - Q3部分
     const focusAreaQ1Q3LineGenerator = d3
@@ -444,29 +442,47 @@ const LayerLevel: React.FC = () => {
       .y0((d) => yScale(d.upperBoundary))
       .y1((d) => yScale(maxY));
 
-    svgPart
-      .append("path")
-      .datum(scalarsData)
-      .attr("class", "area")
-      .attr("fill", "#69b3a2")
-      .attr("fill-opacity", 0)
-      .attr("stroke", "none")
-      .attr("d", focusAreaOutsideLineGenerator1)
-      .on("click", function () {
-        console.log("outSide部分");
-      })
+    if (brushEnded) {
+      // xScale range是[0, width] domain是选中的batch范围
+      let s1 = [...stepDomain];
+      let s2 = [...batchDomain];
+      // console.log(s1);
+      // console.log(s2);
 
-    svgPart
-      .append("path")
-      .datum(scalarsData)
-      .attr("class", "area")
-      .attr("fill", "#69b3a2")
-      .attr("fill-opacity", 0)
-      .attr("stroke", "none")
-      .attr("d", focusAreaOutsideLineGenerator2)
-      .on("click", function () {
-        console.log("outSide部分");
-      })
+      let start = s2[0], end = Math.min(scalarsData.length, s2[1]);
+      for (let i = Math.max(0, start - 1); i < end; i += batchSize) {
+        // 上半部分
+        svgPart
+          .append("path")
+          .datum(scalarsData.slice(i, i + batchSize))
+          .attr("class", "area outsidePart upperPart" + i)
+          .attr("d", focusAreaOutsideLineGenerator1)
+          .on("mouseover", function () {
+            d3.select(this).classed("hovered", true);
+            svgPart.select(".area.outsidePart.bottomPart" + i).classed("hovered", true);
+          })
+          .on("mouseout", function () {
+            d3.select(this).classed("hovered", false);
+            svgPart.select(".area.outsidePart.bottomPart" + i).classed("hovered", false);
+          })
+
+        // 下半部分
+        svgPart
+          .append("path")
+          .datum(scalarsData.slice(i, i + batchSize))
+          .attr("class", "area outsidePart bottomPart" + i)
+          .attr("d", focusAreaOutsideLineGenerator2)
+          .on("mouseover", function () {
+            d3.select(this).classed("hovered", true);
+            svgPart.select(".area.outsidePart.upperPart" + i).classed("hovered", true);
+          })
+          .on("mouseout", function () {
+            d3.select(this).classed("hovered", false);
+            svgPart.select(".area.outsidePart.upperPart" + i).classed("hovered", false);
+          })
+      }
+
+    }
 
 
     function ClickHandler() {

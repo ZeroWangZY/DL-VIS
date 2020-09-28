@@ -78,6 +78,18 @@
     clip-path: url(#layerLevel-clip);
 }
 
+.layerLevel .area.outsidePart {
+    fill: #69b3a2;
+    opacity: 0;
+    stroke: none;
+}
+
+.layerLevel .area.outsidePart.hovered {
+    fill: #eea303;
+    opacity: 0.5;
+    stroke: none;
+}
+
 .layerLevel .zoom {
     /* cursor: move; */
     fill: none;
