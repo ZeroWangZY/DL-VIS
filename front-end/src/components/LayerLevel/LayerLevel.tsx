@@ -103,6 +103,7 @@ const LayerLevel: React.FC = () => {
   const [svgHeight, setSvgHeight] = useState(270);
   const [svgWidth, setSvgWidth] = useState(1800);
   const [cursorLinePos, setCursorLinePos] = useState(null);
+  const [mouseXPos, setMouseXPos] = useState(null);
 
   const [showDomain, setShowDomain] = useState(null);
   const [childNodeId, setChildNodeId] = useState(null);
@@ -462,9 +463,11 @@ const LayerLevel: React.FC = () => {
             svgPart.select(".area.outsidePart.bottomPart" + i).classed("hovered", true);
           })
           .on("mouseout", function () {
+            setMouseXPos(null);
             d3.select(this).classed("hovered", false);
             svgPart.select(".area.outsidePart.bottomPart" + i).classed("hovered", false);
           })
+          .on("mousemove", BlankPartMouseMoveHandler)
 
         // 下半部分
         svgPart
@@ -477,13 +480,28 @@ const LayerLevel: React.FC = () => {
             svgPart.select(".area.outsidePart.upperPart" + i).classed("hovered", true);
           })
           .on("mouseout", function () {
+            setMouseXPos(null);
             d3.select(this).classed("hovered", false);
             svgPart.select(".area.outsidePart.upperPart" + i).classed("hovered", false);
           })
+          .on("mousemove", BlankPartMouseMoveHandler)
       }
-
     }
 
+    function BlankPartMouseMoveHandler() {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+      let x = xScale.invert(mouseX); // x 范围是x1的domain
+      x = Math.floor(x);
+      setMouseXPos(mouseX);
+
+      let newDetailInfoOfCurrentStep = [];
+
+      newDetailInfoOfCurrentStep.push({
+        "step": Math.floor((x - 1) / 32) + 1,
+        "batch": -1,
+      })
+      setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+    }
 
     function ClickHandler() {
       let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
@@ -557,15 +575,16 @@ const LayerLevel: React.FC = () => {
           top: height / 2 - contextHeight / 2,
           width: containerWidth,
         }}>
-        <div style={{ marginLeft: '8px', marginTop: '8px' }}>
+        <div style={{ marginLeft: '8px', marginTop: '2px' }}>
           {"step: " + DetailInfoOfCurrentStep[0].step}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ marginLeft: '8px', marginTop: '2px' }}>
-            {"batch: " + DetailInfoOfCurrentStep[0].batch}
-          </div>
-          <div style={{ clear: 'both' }}></div>
-        </div>
+        { DetailInfoOfCurrentStep[0].batch >= 0 &&
+          (<div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+              {"batch: " + DetailInfoOfCurrentStep[0].batch}
+            </div>
+            <div style={{ clear: 'both' }}></div>
+          </div>)}
       </div>
     )
   };
@@ -629,15 +648,12 @@ const LayerLevel: React.FC = () => {
               className="context"
               transform={`translate(${margin2.left},${margin2.top})`}
             ></g>
-            {/* <rect
-              className="zoom"
-              width={width}
-              height={height}
-              transform={`translate(${margin.left},${margin.top})`}
-            /> */}
           </svg>
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
+          }
+          {mouseXPos !== null && DetailInfoOfCurrentStep.length &&
+            getDetailInfoRect(mouseXPos, height)
           }
           <TensorHeatmap
             tensorMetadata={selectedTensor}
