@@ -9,9 +9,8 @@ import {
 } from "../../types/layoutGraphForRender";
 import {
   addArrow,
-  addLine,
+  addRoundLine,
   addText,
-  addRect,
   addRoundRect,
   addElippseCurve,
 } from "./draw";
@@ -50,13 +49,14 @@ const Graph: React.FC = () => {
   };
 
   const addSceneLines = () => {
+    const width = container.current.clientWidth;
+    const height = container.current.clientHeight;
     styledGraph.linkStyles.forEach((link) => {
-      const linkData = [
-        { x: link.style._startPointX, y: link.style._startPointY },
-        ...link.data.junctionPoints,
-        { x: link.style._endPointX, y: link.style._endPointY },
-      ];
-      let line = addLine(linkData);
+      const linkData = link.data.linkData.map((link) => ({
+        x: link.x,
+        y: height - link.y,
+      }));
+      let line = addRoundLine(linkData);
       line.renderOrder = 2;
       scene.current.add(line);
       objects.current.push(line);
@@ -78,10 +78,11 @@ const Graph: React.FC = () => {
   };
 
   const addSceneLabel = () => {
+    const height = container.current.clientHeight;
     let texts = styledGraph.nodeStyles.map((node) => {
       return {
         label: node.data.label,
-        point: { x: node.style._gNodeTransX, y: node.style._gNodeTransY },
+        point: { x: node.style._gNodeTransX, y: height - node.style._gNodeTransY },
       };
     });
     let label = addText(
@@ -95,12 +96,14 @@ const Graph: React.FC = () => {
   };
 
   const addSceneRect = () => {
+    const height = container.current.clientHeight;
+
     styledGraph.nodeStyles.forEach((node) => {
-      let rect = addRect(
+      let rect = addRoundRect(
         node.style._rectWidth,
         node.style._rectHeight,
         node.style._gNodeTransX,
-        node.style._gNodeTransY,
+        height - node.style._gNodeTransY,
         node.key
       );
       scene.current.add(rect);

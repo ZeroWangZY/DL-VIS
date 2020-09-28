@@ -10,17 +10,6 @@ let addArrow = function(from, to) {
     return arrowHelper
 }
 
-let addLine = function(data) {
-    let material = new THREE.LineBasicMaterial({ color: 0x333333 });
-    let points = [];
-    for (let i = 0; i < data.length; i++) {
-        points.push(new THREE.Vector3(data[i].x, data[i].y, 0));
-    }
-    let geometry = new THREE.BufferGeometry().setFromPoints(points);
-    let line = new THREE.Line(geometry, material);
-    return line
-}
-
 let addText = function(texts, size, canvasWidth, canvasHeight) {
     let canvas = document.createElement("canvas");
     let context = canvas.getContext("2d");
@@ -52,13 +41,105 @@ let addText = function(texts, size, canvasWidth, canvasHeight) {
     return mesh;
 }
 
-let addRect = function(width, height, x, y, id) {
+let addRoundLine = function(data) {
+    console.log(data)
+    const borderRadius = 5;
+    const getCurve = (p0, p1, p2) => {
+        let clockWise;
+        let start = 0,
+            end = 0;
+        let rx = 0,
+            ry = 0;
+        let d11 = { x: p1.x, y: p1.y },
+            d12 = { x: p1.x, y: p1.y };
+        if (p1.y === p0.y) {
+            if (p1.x > p0.x) {
+                d11.x -= borderRadius;
+                end = 0;
+                if (p2.y > p1.y) {
+                    d12.y += borderRadius;
+                    start = -0.5 * Math.PI;
+                    clockWise = false;
+                } else {
+                    d12.y -= borderRadius;
+                    start = 0.5 * Math.PI;
+                    clockWise = true;
+                }
+            } else {
+                d11.x += borderRadius;
+                end = Math.PI;
+                if (p2.y > p1.y) {
+                    d12.y += borderRadius;
+                    start = -0.5 * Math.PI;
+                    clockWise = true;
+                } else {
+                    d12.y -= borderRadius;
+                    start = 0.5 * Math.PI;
+                    clockWise = false;
+                }
+            }
+            rx = d11.x;
+            ry = d12.y
+        } else {
+            if (p1.y > p0.y) {
+                d11.y -= borderRadius;
+                end = 0.5 * Math.PI;
+                if (p2.x > p1.x) {
+                    d12.x += borderRadius;
+                    start = Math.PI;
+                    clockWise = true;
+                } else {
+                    d12.x -= borderRadius;
+                    start = 0;
+                    clockWise = false;
+                }
+            } else {
+                d11.y += borderRadius;
+                end = -0.5 * Math.PI;
+                if (p2.x > p1.x) {
+                    d12.x += borderRadius;
+                    start = Math.PI;
+                    clockWise = false;
+                } else {
+                    d12.x -= borderRadius;
+                    start = 0;
+                    clockWise = true;
+                }
+            }
+            ry = d11.y
+            rx = d12.x;
+        }
+        return { start, end, clockWise, d11, d12, rx, ry }
+    }
+    let material = new THREE.LineBasicMaterial({ color: 0x333333 });
+    let points = [];
+    points.push(new THREE.Vector2(data[0].x, data[0].y));
+    for (let i = 2; i < data.length; i++) {
+        let p0 = data[i - 2],
+            p1 = data[i - 1],
+            p2 = data[i];
+        let curve = getCurve(p0, p1, p2);
+
+        let arc = new THREE.ArcCurve(curve.rx, curve.ry, borderRadius, curve.start, curve.end, curve.clockWise);
+        let arcPoints = arc.getPoints(20);
+        points.push(new THREE.Vector2(curve.d11.x, curve.d11.y));
+        points.push(...arcPoints);
+        points.push(new THREE.Vector2(curve.d12.x, curve.d12.y));
+    }
+    points.push(new THREE.Vector2(data[data.length - 1].x, data[data.length - 1].y));
+    console.log(points)
+    let geometry = new THREE.BufferGeometry().setFromPoints(points);
+    let line = new THREE.Line(geometry, material);
+    return line
+}
+
+let addRoundRect = function(width, height, x, y, id) {
     let shape = new THREE.Shape();
-    shape.absarc(0.5 * width - 0.125 * height, 0.375 * height, 0.125 * height, 0 / 180 * Math.PI, 90 / 180 * Math.PI, false);
-    shape.absarc(0.125 * height - 0.5 * width, 0.375 * height, 0.125 * height, 90 / 180 * Math.PI, 180 / 180 * Math.PI, false);
-    shape.absarc(0.125 * height - 0.5 * width, (-0.375) * height, 0.125 * height, 180 / 180 * Math.PI, 270 / 180 * Math.PI, false);
-    shape.absarc(0.5 * width - 0.125 * height, (-0.375) * height, 0.125 * height, 270 / 180 * Math.PI, 360 / 180 * Math.PI, false);
-    //shape.lineTo(0,0); 
+    const borderRadius = 5;
+    shape.absarc(0.5 * width - borderRadius, 0.5 * height - borderRadius, borderRadius, 0 / 180 * Math.PI, 90 / 180 * Math.PI, false);
+    shape.absarc(-0.5 * width + borderRadius, 0.5 * height - borderRadius, borderRadius, 90 / 180 * Math.PI, 180 / 180 * Math.PI, false);
+    shape.absarc(-0.5 * width + borderRadius, -0.5 * height + borderRadius, borderRadius, 180 / 180 * Math.PI, 270 / 180 * Math.PI, false);
+    shape.absarc(0.5 * width - borderRadius, -0.5 * height + borderRadius, borderRadius, 270 / 180 * Math.PI, 360 / 180 * Math.PI, false);
     let geometry = new THREE.ShapeGeometry(shape)
     let material = new THREE.MeshBasicMaterial({ color: 0xffffff })
     let rect = new THREE.Mesh(geometry, material)
@@ -77,25 +158,6 @@ let addRect = function(width, height, x, y, id) {
     return group
 }
 
-let addRoundRect = function(width, height, x, y, id) {
-
-    let geometry = new THREE.PlaneGeometry(width, height)
-    let material = new THREE.MeshBasicMaterial({ color: 0xffffff })
-    let circle = new THREE.Mesh(geometry, material)
-    circle.name = `${id} rect`
-    circle.position.set(x, y, 0)
-
-    let edges = new THREE.EdgesGeometry(geometry);
-    let line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x333333 }));
-    line.position.set(x, y, 0)
-    line.name = `${id} edge`
-    line.renderOrder = 1
-    circle.renderOrder = 0
-    let group = new THREE.Group();
-    group.add(line);
-    group.add(circle);
-    return group
-}
 let addElippseCurve = function(width, height, x, y) {
     var material = new THREE.LineBasicMaterial({ color: 0x000000, opacity: 1 });
     var ellipse = new THREE.EllipseCurve(0, 0, width, height, 0, 2.0 * Math.PI, false);
@@ -110,4 +172,4 @@ let addElippseCurve = function(width, height, x, y) {
 }
 
 
-export { addArrow, addLine, addText, addRect, addRoundRect, addElippseCurve };
+export { addArrow, addRoundLine, addText, addRoundRect, addElippseCurve };

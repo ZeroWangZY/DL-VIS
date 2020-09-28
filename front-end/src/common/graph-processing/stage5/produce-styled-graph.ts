@@ -71,6 +71,7 @@ export const generateEdgeStyles = (
         isModuleEdge: link.isModuleEdge,
         originalSource: link.originalSource,
         originalTarget: link.originalTarget,
+        linkData,
         lineData: hoverPath(ofs_x, linkData),
         drawData: strokeWidthAdaption(drawArcPath(ofs_x, linkData, linksCountMap, ofs)),
         junctionPoints:
