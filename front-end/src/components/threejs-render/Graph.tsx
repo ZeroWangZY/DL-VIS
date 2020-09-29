@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
-import { Event } from "./threeEvent.js";
+import * as d3 from "d3";
+import {Event} from "./threeEvent.js";
 import {
   LayoutGraph,
   DisplayedEdge,
@@ -15,6 +16,11 @@ import {
   addElippseCurve,
 } from "./draw";
 import { useStyledGraph } from "../../store/styledGraph";
+import {
+  NodeType,
+  LayerType,
+} from "../../common/graph-processing/stage2/processed-graph";
+
 import { clearThree, coordinateTransform } from "./util";
 import DragControls from "three-dragcontrols";
 import TransformControls from "three-transformcontrols";
@@ -32,6 +38,7 @@ const Graph: React.FC = () => {
   const sceneSetup = () => {
     const width = container.current.clientWidth;
     const height = container.current.clientHeight;
+    console.log(width, height)
     const margin = 10;
     camera.current = new THREE.OrthographicCamera(
       -margin,
@@ -80,9 +87,19 @@ const Graph: React.FC = () => {
   const addSceneLabel = () => {
     const height = container.current.clientHeight;
     let texts = styledGraph.nodeStyles.map((node) => {
+      const maxLabelLength = 10;
+      const isRect = node.data.type === NodeType.GROUP || node.data.type === NodeType.DATA;
+      const basic_y = height - node.style._gNodeTransY;
       return {
-        label: node.data.label,
-        point: { x: node.style._gNodeTransX, y: height - node.style._gNodeTransY },
+        label: node.data.label.slice(0, maxLabelLength) + (node.data.label.length > maxLabelLength ? "..." : ""),
+        point: { 
+          x: node.style._gNodeTransX, 
+          y: node.data.expand  
+          ? basic_y + node.style._rectHeight / 2 - 10 
+          : isRect 
+          ? basic_y 
+          : basic_y + node.style._rectHeight / 2 + 10 
+        },
       };
     });
     let label = addText(
@@ -144,29 +161,21 @@ const Graph: React.FC = () => {
       addSceneLabel();
       addSceneRect();
       addSceneEvent();
-      // container.current.addEventListener( 'click', (event)=>{
-      //     let clickObject = event.mouseClickHandle(event)
-      //     clickObject&&props.clickEvent(clickObject)
-      // }, true );
-      container.current.addEventListener(
-        "mousemove",
-        event.current.mouseOverHandle,
-        true
-      );
-      container.current.addEventListener(
-        "click",
-        event.current.mouseDragHandle,
-        true
-      );
+
       container.current.addEventListener(
         "dblclick",
+        event.current.mouseDoubleClickHandle,
+        true
+      );//双击展开和收起节点
+
+      container.current.addEventListener(
+        "mousewheel",//Firefox需要用DomMouseScroll
         event.current.mouseZoom,
         true
-      ); //双击画布放大
+      ); //滚轮缩放画布
 
-      document
-        .getElementById("zoomout")
-        .addEventListener("click", event.current.mouseZoomout, true);
+      d3.select(renderer.current.domElement).call(event.current.d3Zoom);//画布平移
+
       renderer.current.render(scene.current, camera.current);
     }
   });
@@ -174,14 +183,12 @@ const Graph: React.FC = () => {
   useEffect(() => {
     //componentWillUnmount
     return () => {
-      document.removeEventListener("click", event.current.mouseClickHandle);
-      document.removeEventListener("mousemove", event.current.mouseOverHandle);
-      document.removeEventListener("click", event.current.mouseDragHandle);
-      document.removeEventListener("dblclick", event.current.mouseZoom);
+      document.removeEventListener("dblclick", event.current.mouseDoubleClickHandle);
+      document.removeEventListener("mousewheel", event.current.mouseZoom);
     };
   }, []);
 
-  return <div className="render-graph" ref={container} />;
+  return <div className="render-graph" ref={container} style={{ width: "100%", height: "100%" }}/>;
 };
 
 export default Graph;

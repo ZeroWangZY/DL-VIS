@@ -42,9 +42,8 @@ let addText = function(texts, size, canvasWidth, canvasHeight) {
 }
 
 let addRoundLine = function(data) {
-    console.log(data)
     const borderRadius = 5;
-    const getCurve = (p0, p1, p2) => {
+    const getCurve = (p0, p1, p2) => { //生成正交边转折处的圆弧
         let clockWise;
         let start = 0,
             end = 0;
@@ -112,8 +111,8 @@ let addRoundLine = function(data) {
         return { start, end, clockWise, d11, d12, rx, ry }
     }
     let material = new THREE.LineBasicMaterial({ color: 0x333333 });
-    let points = [];
-    points.push(new THREE.Vector2(data[0].x, data[0].y));
+    let points = []; //用于存放所有的线段端点和圆弧的采样点
+    points.push(new THREE.Vector2(data[0].x, data[0].y)); //线段起点
     for (let i = 2; i < data.length; i++) {
         let p0 = data[i - 2],
             p1 = data[i - 1],
@@ -121,16 +120,16 @@ let addRoundLine = function(data) {
         let curve = getCurve(p0, p1, p2);
 
         let arc = new THREE.ArcCurve(curve.rx, curve.ry, borderRadius, curve.start, curve.end, curve.clockWise);
-        let arcPoints = arc.getPoints(20);
-        points.push(new THREE.Vector2(curve.d11.x, curve.d11.y));
+        let arcPoints = arc.getPoints(10);
+        //将转角处点p1分裂为d11和d12，中间用圆弧相连
+        points.push(new THREE.Vector2(curve.d11.x, curve.d11.y)); //圆弧起点
         points.push(...arcPoints);
-        points.push(new THREE.Vector2(curve.d12.x, curve.d12.y));
+        points.push(new THREE.Vector2(curve.d12.x, curve.d12.y)); //圆弧终点
     }
-    points.push(new THREE.Vector2(data[data.length - 1].x, data[data.length - 1].y));
-    console.log(points)
+    points.push(new THREE.Vector2(data[data.length - 1].x, data[data.length - 1].y)); //线段终点
     let geometry = new THREE.BufferGeometry().setFromPoints(points);
     let line = new THREE.Line(geometry, material);
-    return line
+    return line;
 }
 
 let addRoundRect = function(width, height, x, y, id) {

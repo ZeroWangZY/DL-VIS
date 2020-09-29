@@ -1,28 +1,25 @@
-.contanier{
-  height: 700px;
-  width: 1000px
+.contanier {
+    height: 700px;
+    /* width: 1000px */
 }
-.float{
-  float: left;
+
+.float {
+    float: left;
     width: 200px;
     margin-right: 20px;
     height: 700px;
     background: antiquewhite;
 }
-.main{
+
+.main {
     overflow: hidden;
     height: 700px;
     /* background: beige; */
     padding: 10px;
 }
-.render-graph{
+
+.render-graph {
     width: 100%;
     height: 100%;
-    border: 1px solid black;
-}
-
-.button1{
-  width: 400px;
-  height:30px;
-  background:burlywood;
+    /* border: 1px solid black; */
 }
