@@ -94,10 +94,8 @@ const Graph: React.FC = () => {
         label: node.data.label.slice(0, maxLabelLength) + (node.data.label.length > maxLabelLength ? "..." : ""),
         point: { 
           x: node.style._gNodeTransX, 
-          y: node.data.expand  
-          ? basic_y + node.style._rectHeight / 2 - 10 
-          : isRect 
-          ? basic_y 
+          y: isRect 
+          ? basic_y + node.style._rectHeight / 2 - 10
           : basic_y + node.style._rectHeight / 2 + 10 
         },
       };
