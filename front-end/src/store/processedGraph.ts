@@ -25,6 +25,11 @@ export const setProcessedGraph = (newProcessedGraph: ProcessedGraph) => {
 }
 
 export const modifyProcessedGraph = (operation: ProcessedGraphModificationType, opts: OptionsDef) => {
+  _modifyProcessedGraph(operation, opts)
+  broadcastGraphChange()
+}
+
+const _modifyProcessedGraph = (operation: ProcessedGraphModificationType, opts: OptionsDef) => {
   let parentNode, nodeId, modifyOptions;
   switch (operation) {
     case ProcessedGraphModificationType.TOGGLE_EXPANDED:
@@ -38,7 +43,7 @@ export const modifyProcessedGraph = (operation: ProcessedGraphModificationType, 
 
         node = node as GroupNode;
         const currentExpanded = node.expanded;
-        modifyProcessedGraph(
+        _modifyProcessedGraph(
           ProcessedGraphModificationType.MODIFY_NODE_ATTR,
           {
             nodeId: nodeId,
@@ -124,7 +129,6 @@ export const modifyProcessedGraph = (operation: ProcessedGraphModificationType, 
     default:
       break;
   }
-  broadcastGraphChange()
 }
 
 export const useProcessedGraph = () => {

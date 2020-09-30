@@ -7,36 +7,54 @@ import {
     useGlobalStates,
     modifyGlobalStates,
 } from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
 import {
     modifyProcessedGraph,
     ProcessedGraphModificationType,
 } from "../../store/processedGraph";
+
+let dbClickTime = new Date().getTime();
+let update = 0;
 export class Event {
     mouse = new THREE.Vector2()
     raycaster = new THREE.Raycaster();
     selectObject = null
     constructor(props) {
-        this.camera = props.camera
-        this.scene = props.scene
-        this.renderer = props.renderer
-        this.width = props.width
-        this.height = props.height
-        this.objects = props.objects
+        this.camera = props.camera;
+        this.scene = props.scene;
+        this.renderer = props.renderer;
+        this.width = props.width;
+        this.height = props.height;
+        this.objects = props.objects;
         this.mouseDoubleClickHandle = this.mouseDoubleClickHandle.bind(this);
         this.getIntersects = this.getIntersects.bind(this);
         this.mouseZoom = this.mouseZoom.bind(this);
     }
 
     mouseDoubleClickHandle(event) {
-        let { object, id } = this.getIntersects(event)
-        console.log("clicked")
-        if (object) {
-            modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
-                nodeId: id,
-            });
-            return object
-        } else {
-            return null
+        const func = () => {
+            let { object, id } = this.getIntersects(event)
+            if (object) {
+                console.log("clicked: " + id)
+                modifyGlobalStates(
+                    GlobalStatesModificationType.SET_SELECTEDNODE,
+                    id
+                );
+                modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
+                    nodeId: id,
+                });
+            }
+        }
+        const maxTime = 10;
+        //防抖动
+        const lastClickTime = dbClickTime;
+        const currentClickTime = new Date().getTime();
+        dbClickTime = currentClickTime;
+        if (currentClickTime - lastClickTime < 2) { //时间间隔有效，则覆盖上一次点击
+            clearTimeout(update);
+            update = setTimeout(func, maxTime);
+        } else { //第一次点击，通常无效，因为至少会抖动一次
+            update = setTimeout(func, maxTime);
         }
     }
 
@@ -47,14 +65,15 @@ export class Event {
         this.raycaster.setFromCamera(this.mouse, this.camera);
         let intersects = this.raycaster.intersectObjects(this.scene.children, true);
         let select = null;
-        for (let i = 0; i < intersects.length; i++) {
+        //intersects[0]是"texture"，所以跳过
+        for (let i = 1; i < intersects.length; i++) {
             if (intersects[i].object.name.split(" ")[1] === "rect") {
-                if ((select === null) || (intersects[i].object.geometry.parameters.width < select.geometry.parameters.width && intersects[i].object.geometry.parameters.height < select.geometry.parameters.height)) {
+                if ((select === null) || (Math.abs(intersects[i].object.geometry.parameters.shapes.currentPoint.width) < Math.abs(select.geometry.parameters.shapes.currentPoint.width) && Math.abs(intersects[i].object.geometry.parameters.shapes.currentPoint.height) < Math.abs(select.geometry.parameters.shapes.currentPoint.height))) {
                     select = intersects[i].object;
                 }
             }
         }
-        return { object: select, id: select === null ? "" : select.name.split(" ")[0] };
+        return { object: select, id: select === null ? "null" : select.name.split(" ")[0] };
     }
 
     mouseZoom(event) {

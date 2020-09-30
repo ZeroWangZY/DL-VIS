@@ -9,25 +9,37 @@ import {
   Coordinate,
 } from "../../types/layoutGraphForRender";
 import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import {
   addArrow,
   addRoundLine,
   addText,
   addRoundRect,
   addElippseCurve,
 } from "./draw";
+import { useVisGraph } from "../../store/visGraph";
+import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
 import { useStyledGraph } from "../../store/styledGraph";
 import {
   NodeType,
   LayerType,
 } from "../../common/graph-processing/stage2/processed-graph";
-
+import {
+  modifyProcessedGraph,
+  ProcessedGraphModificationType,
+} from "../../store/processedGraph";
 import { clearThree, coordinateTransform } from "./util";
 import DragControls from "three-dragcontrols";
 import TransformControls from "three-transformcontrols";
 import TrackballControls from "three-trackballcontrols";
 
 const Graph: React.FC = () => {
+  const visGraph = useVisGraph();
+  const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
+  const { selectedNodeId } = useGlobalStates();
   const container = useRef<HTMLDivElement>();
   const camera = useRef<THREE.OrthographicCamera>();
   const scene = useRef<THREE.Scene>();
@@ -38,7 +50,6 @@ const Graph: React.FC = () => {
   const sceneSetup = () => {
     const width = container.current.clientWidth;
     const height = container.current.clientHeight;
-    console.log(width, height)
     const margin = 10;
     camera.current = new THREE.OrthographicCamera(
       -margin,
@@ -127,14 +138,24 @@ const Graph: React.FC = () => {
   };
 
   const addSceneEvent = () => {
-    event.current = new Event({
-      camera: camera.current,
-      scene: scene.current,
-      renderer: renderer.current,
-      width: container.current.clientWidth,
-      height: container.current.clientHeight,
-      objects: objects.current,
-    });
+    if(event.current === undefined){
+      event.current = new Event({
+        camera: camera.current,
+        scene: scene.current,
+        renderer: renderer.current,
+        width: container.current.clientWidth,
+        height: container.current.clientHeight,
+        objects: objects.current,
+      });
+    } else{
+      event.current.camera = camera.current;
+      event.current.camera = camera.current;
+      event.current.scene = scene.current;
+      event.current.renderer = renderer.current;
+      event.current.width = container.current.clientWidth;
+      event.current.height = container.current.clientHeight;
+      event.current.objects = objects.current;
+    }
   };
 
   useEffect(() => {
@@ -152,14 +173,14 @@ const Graph: React.FC = () => {
 
   useEffect(() => {
     //componentDidUpdate
-    console.log(styledGraph);
+    // console.log(visGraph)
+    // console.log(styledGraph)
     if (styledGraph !== null) {
       sceneSetup();
       addSceneLines();
       addSceneLabel();
       addSceneRect();
       addSceneEvent();
-
       container.current.addEventListener(
         "dblclick",
         event.current.mouseDoubleClickHandle,
