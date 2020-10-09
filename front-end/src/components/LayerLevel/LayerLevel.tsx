@@ -3,11 +3,7 @@ import "./layerLevel.css";
 import * as d3 from "d3";
 import { useLineData } from "../../store/layerLevel";
 import { useHistory } from "react-router-dom";
-import DetailLineChart from "./DetailLineChart";
-import ActivationOrGradientChart from "./ActivationOrGradientChart";
-import ClusterGraph from "./ClusterGraph";
 import TensorHeatmap, {
-  TensorHeatmapProps,
   TensorMetadata,
 } from "./TensorHeatmap";
 import {
@@ -19,7 +15,8 @@ import { useProcessedGraph } from "../../store/processedGraph";
 import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
 import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode";
 import * as _ from 'lodash';
-import { Domain } from "domain";
+import { makeStyles } from "@material-ui/core/styles";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 interface layerNodeScalar {
   step: number;
@@ -57,7 +54,6 @@ export interface DataToShow {
 }
 
 
-
 const drawFocusAreaYAxisAndGrid = (focusPart: any, focusAreaYScale: any, width: number): void => { // 绘制focus部分的坐标轴 和 平行的网格
   focusPart.select('.focus-axis').select(".axis--y").selectAll("line").remove(); // 删除原来的网格线
   focusPart.select('.focus-axis').selectAll(".axis--y").remove(); // 清除原来的坐标
@@ -80,8 +76,18 @@ const swapArrayElement = (s: [], a: number, b: number): void => {
   s[b] = temp;
 }
 
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    backgroundColor: theme.palette.background.paper,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+}));
+
 const LayerLevel: React.FC = () => {
   const linedata = useLineData();
+  const classes = useStyles();
   const history = useHistory();
   const goback = () => {
     history.push("/");
@@ -100,7 +106,7 @@ const LayerLevel: React.FC = () => {
   } = useGlobalStates();
 
   const svgRef = useRef();
-  const [svgHeight, setSvgHeight] = useState(270);
+  const [svgHeight, setSvgHeight] = useState(280);
   const [svgWidth, setSvgWidth] = useState(1800);
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [mouseXPos, setMouseXPos] = useState(null);
@@ -108,7 +114,10 @@ const LayerLevel: React.FC = () => {
   const [showDomain, setShowDomain] = useState(null);
   const [childNodeId, setChildNodeId] = useState(null);
   const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
-  const [LoadingData, setLoadingData] = useState(false);
+  const [samplingLayerScalarsData, setSamplingLayerScalarsData] = useState<LayerScalar[]>(null);
+  const [loadingData, setLoadingData] = useState(false);
+  const [drawing, setDrawing] = useState(false);
+
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [isShowingTensorHeatmap, setIsShowingTensorHeatmap] = useState<boolean>(
     false
@@ -139,7 +148,7 @@ const LayerLevel: React.FC = () => {
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
       ? "activation"
       : "gradient";
-  const testMaxStep = 21; // TODO : 将来会把它变为maxStep
+  const testMaxStep = 721; // TODO : 将来会把它变为maxStep
 
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
@@ -153,7 +162,6 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!childNodeId) return;
     getLayerScalars(currentMSGraphName, childNodeId, 1, testMaxStep, fetchDataType); // 取[1, 11) step
-    // getLayerScalars(currentMSGraphName, childNodeId, 1, maxStep, fetchDataType); // 取[1, 11) step
   }, [
     childNodeId,
     currentMSGraphName,
@@ -164,8 +172,14 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (layerScalarsData === null || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
+
+    console.log(layerScalarsData);
+    console.log(samplingLayerScalarsData);
+
+    setDrawing(true);
     computeAndDraw();
-  }, [layerScalarsData, svgWidth])
+    setDrawing(false);
+  }, [layerScalarsData, samplingLayerScalarsData, svgWidth])
 
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
@@ -278,9 +292,7 @@ const LayerLevel: React.FC = () => {
         }
       }
 
-      // console.log("domain: ", domain);
       const tempDomain = [(domain[0] - 1) * batchSize + 1, (domain[1] - 1) * batchSize + 1] // domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
-      // console.log(tempDomain);
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setShowDomain(domain); // 设定brush选定显示区域的domain;
@@ -347,7 +359,14 @@ const LayerLevel: React.FC = () => {
     brushSelection.raise();
   };
 
-  const drawChartArea = (svgPart: any, scalarsData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, stepDomain: number[], batchDomain: number[], brushEnded: boolean): void => {
+  const drawChartArea = (svgPart: any, scalarData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, stepDomain: number[], batchDomain: number[], brushEnded: boolean): void => {
+    let filteredScalarsData = scalarData;
+    let sampling = false;
+    if ((stepDomain[1] - stepDomain[0]) * batchSize > 640) {
+      sampling = true;
+      filteredScalarsData = getReservoirSamplingScalarData(layerScalarsData, Math.floor(640 * scalarData.length / batchSize / (stepDomain[1] - stepDomain[0])));
+    }
+
     svgPart.selectAll(".area").remove(); // 清除原折线图
     // Q1 - Q3部分
     const focusAreaQ1Q3LineGenerator = d3
@@ -359,7 +378,7 @@ const LayerLevel: React.FC = () => {
 
     svgPart
       .append("path")
-      .datum(scalarsData)
+      .datum(filteredScalarsData)
       .attr("class", "area Q1Q3Part")
       .attr("fill", "#69b3a2")
       .attr("fill-opacity", .8)
@@ -387,8 +406,8 @@ const LayerLevel: React.FC = () => {
 
     svgPart
       .append("path")
-      .datum(scalarsData)
-      .attr("class", "area")
+      .datum(filteredScalarsData)
+      .attr("class", "area LowerUpperBoundaryPart")
       .attr("fill", "#69b3a2")
       .attr("fill-opacity", .5)
       .attr("stroke", "none")
@@ -399,8 +418,8 @@ const LayerLevel: React.FC = () => {
 
     svgPart
       .append("path")
-      .datum(scalarsData)
-      .attr("class", "area")
+      .datum(filteredScalarsData)
+      .attr("class", "area LowerUpperBoundaryPart")
       .attr("fill", "#69b3a2")
       .attr("fill-opacity", .5)
       .attr("stroke", "none")
@@ -418,8 +437,8 @@ const LayerLevel: React.FC = () => {
 
     svgPart
       .append("path")
-      .datum(scalarsData)
-      .attr("class", "area")
+      .datum(filteredScalarsData)
+      .attr("class", "area medianLine")
       .attr("d", focusAreaMedianLineGenerator)
       .attr("fill", "none")
       .attr("stroke", "blue")
@@ -443,19 +462,19 @@ const LayerLevel: React.FC = () => {
       .y0((d) => yScale(d.upperBoundary))
       .y1((d) => yScale(maxY));
 
-    if (brushEnded) {
+    if (brushEnded && !sampling) {
       // xScale range是[0, width] domain是选中的batch范围
       let s1 = [...stepDomain];
       let s2 = [...batchDomain];
       // console.log(s1);
       // console.log(s2);
 
-      let start = s2[0], end = Math.min(scalarsData.length, s2[1]);
+      let start = s2[0], end = Math.min(filteredScalarsData.length, s2[1]);
       for (let i = Math.max(0, start - 1); i < end; i += batchSize) {
         // 上半部分
         svgPart
           .append("path")
-          .datum(scalarsData.slice(i, i + batchSize))
+          .datum(filteredScalarsData.slice(i, i + batchSize))
           .attr("class", "area outsidePart upperPart" + i)
           .attr("d", focusAreaOutsideLineGenerator1)
           .on("mouseover", function () {
@@ -467,12 +486,12 @@ const LayerLevel: React.FC = () => {
             d3.select(this).classed("hovered", false);
             svgPart.select(".area.outsidePart.bottomPart" + i).classed("hovered", false);
           })
-          .on("mousemove", BlankPartMouseMoveHandler)
+          .on("mousemove", OutsidePartPartMouseMoveHandler)
 
         // 下半部分
         svgPart
           .append("path")
-          .datum(scalarsData.slice(i, i + batchSize))
+          .datum(filteredScalarsData.slice(i, i + batchSize))
           .attr("class", "area outsidePart bottomPart" + i)
           .attr("d", focusAreaOutsideLineGenerator2)
           .on("mouseover", function () {
@@ -484,11 +503,11 @@ const LayerLevel: React.FC = () => {
             d3.select(this).classed("hovered", false);
             svgPart.select(".area.outsidePart.upperPart" + i).classed("hovered", false);
           })
-          .on("mousemove", BlankPartMouseMoveHandler)
+          .on("mousemove", OutsidePartPartMouseMoveHandler)
       }
     }
 
-    function BlankPartMouseMoveHandler() {
+    function OutsidePartPartMouseMoveHandler() {
       let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
       let x = xScale.invert(mouseX); // x 范围是x1的domain
       x = Math.floor(x);
@@ -589,6 +608,26 @@ const LayerLevel: React.FC = () => {
     )
   };
 
+  const getReservoirSamplingScalarData = (stream: LayerScalar[], k: number): LayerScalar[] => { // 从 stream中等概率提取k个元素，时间复杂度为O(n)
+    if (k > stream.length) return stream;
+    let reservoir = new Array(k);
+
+    for (let i = 0; i < k; i++)
+      reservoir[i] = stream[i];
+
+    for (let i = k; i < stream.length; i++) {
+      let p = Math.floor(Math.random() * (i + 1 - 0) + 0); // [0, i+1)之间的随机数 
+      if (p < k) reservoir[p] = stream[i];
+    }
+
+    reservoir.sort((a: LayerScalar, b: LayerScalar) => { // 排序
+      if (a.step === b.step) return a.batch - b.batch;
+      else return a.step - b.step;
+    })
+
+    return reservoir;
+  }
+
   const getLayerScalars = async (
     graphName,
     nodeIds,
@@ -608,6 +647,11 @@ const LayerLevel: React.FC = () => {
         setLoadingData(false);
         let layerScalars = res.data.data[nodeIds[0]];
         setLayerScalarsData(layerScalars);
+
+        if (layerScalars.length > 640) {
+          let tmp = getReservoirSamplingScalarData(layerScalars, 640);
+          setSamplingLayerScalarsData(tmp); // 采样640个点
+        }
       } else {
         console.log("获取layer数据失败：" + res.data.message);
       }
@@ -619,36 +663,51 @@ const LayerLevel: React.FC = () => {
     <div className="layerLevel" ref={measuredRef}>
       {nodeMap[selectedNodeId] instanceof LayerNodeImp && (
         <div className="layer-container">
-          <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
-            <defs>
-              <clipPath id={"layerLevel-clip"}>
-                <rect width={width} height={height} />
-              </clipPath>
-            </defs>
-            <g
-              className="focus"
-              transform={`translate(${margin.left},${margin.top})`}
-            >
-              <g className="grid"></g>
-              <g className="focus-axis"></g>
-              {cursorLinePos !== null && (
-                <line
-                  x1={cursorLinePos}
-                  x2={cursorLinePos}
-                  y1={height}
-                  y2={0}
-                  style={{
-                    stroke: "#e1e1e1",
-                    strokeWidth: 1,
-                  }}
-                />
-              )}
-            </g>
-            <g
-              className="context"
-              transform={`translate(${margin2.left},${margin2.top})`}
-            ></g>
-          </svg>
+          {(loadingData || drawing) && (
+            <div className={classes.paper}
+              style={{
+                height: svgHeight,
+                width: width,
+                marginLeft: margin.left,
+                background: "rgba(0,0,0,0.1)",
+              }}>
+              <CircularProgress size={60} />
+            </div>
+          )}
+
+
+          {!(loadingData || drawing) && (
+            <svg style={{ height: svgHeight, width: svgWidth }} ref={svgRef}>
+              <defs>
+                <clipPath id={"layerLevel-clip"}>
+                  <rect width={width} height={height} />
+                </clipPath>
+              </defs>
+              <g
+                className="focus"
+                transform={`translate(${margin.left},${margin.top})`}
+              >
+                <g className="grid"></g>
+                <g className="focus-axis"></g>
+                {cursorLinePos !== null && (
+                  <line
+                    x1={cursorLinePos}
+                    x2={cursorLinePos}
+                    y1={height}
+                    y2={0}
+                    style={{
+                      stroke: "#e1e1e1",
+                      strokeWidth: 1,
+                    }}
+                  />
+                )}
+              </g>
+              <g
+                className="context"
+                transform={`translate(${margin2.left},${margin2.top})`}
+              ></g>
+            </svg>
+          )}
           {cursorLinePos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(cursorLinePos, height)
           }
