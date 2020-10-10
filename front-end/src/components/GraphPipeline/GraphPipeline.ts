@@ -67,8 +67,6 @@ export default function useGraphPipeline() {
     const visGraphOptimizer = new VisGraphOptimizer()
     vGraph = visGraphOptimizer.optimize(vGraph)
     setVisGraph(vGraph)
-    console.log(vGraph);
-
   }, [processedGraph]);
 
   // VisGraph --> layoutGraph
@@ -77,7 +75,6 @@ export default function useGraphPipeline() {
     const lGraph = produceLayoutGraph(visGraph, { networkSimplex: true, fixedNodeHeight: diagnosisMode });
     lGraph.then(result => {
       setLayoutGraph(result);
-      console.log(result);
     })
   }, [visGraph, diagnosisMode]);
 
@@ -86,6 +83,5 @@ export default function useGraphPipeline() {
     if (!layoutGraph) return;
     const sGraph = produceStyledGraph(layoutGraph);
     setStyledGraph(sGraph);
-    console.log(sGraph);
   }, [layoutGraph]);
 }

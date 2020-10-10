@@ -10,17 +10,17 @@ let addArrow = function(from, to) {
     return arrowHelper
 }
 
-let addText = function(texts, size, canvasWidth, canvasHeight) {
+let addText = function(texts, canvasWidth, canvasHeight) {
     let canvas = document.createElement("canvas");
     let context = canvas.getContext("2d");
     canvas.width = canvasWidth * 5;
     canvas.height = canvasHeight * 5;
-    context.font = `normal ${size}px Arial`;
 
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillStyle = "black";
     texts.forEach(text => {
+        context.font = `normal ${text.size}px Arial`;
         context.fillText(text.label, text.point.x * 5, canvas.height - text.point.y * 5);
     });
 

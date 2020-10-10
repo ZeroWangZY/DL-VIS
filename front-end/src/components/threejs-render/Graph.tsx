@@ -36,8 +36,6 @@ import TransformControls from "three-transformcontrols";
 import TrackballControls from "three-trackballcontrols";
 
 const Graph: React.FC = () => {
-  const visGraph = useVisGraph();
-  const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
   const { selectedNodeId } = useGlobalStates();
   const container = useRef<HTMLDivElement>();
@@ -60,11 +58,12 @@ const Graph: React.FC = () => {
       1000
     );
     camera.current.position.z = 5;
-
-    scene.current = new THREE.Scene();
-
-    objects.current = [];
   };
+
+  const sceneUpdate = () => {
+    scene.current = new THREE.Scene();
+    objects.current = [];
+  }
 
   const addSceneLines = () => {
     const width = container.current.clientWidth;
@@ -107,13 +106,13 @@ const Graph: React.FC = () => {
           x: node.style._gNodeTransX, 
           y: isRect 
           ? basic_y + node.style._rectHeight / 2 - 10
-          : basic_y + node.style._rectHeight / 2 + 10 
+          : basic_y + node.style._rectHeight / 2 + 5 
         },
+        size: isRect ? 75 : 50
       };
     });
     let label = addText(
       texts,
-      75,
       container.current.clientWidth,
       container.current.clientHeight
     );
@@ -148,7 +147,7 @@ const Graph: React.FC = () => {
         objects: objects.current,
       });
     } else{
-      event.current.camera = camera.current;
+      console.log(camera.current.zoom)
       event.current.camera = camera.current;
       event.current.scene = scene.current;
       event.current.renderer = renderer.current;
@@ -161,6 +160,7 @@ const Graph: React.FC = () => {
   useEffect(() => {
     //componentDidMount
     sceneSetup();
+    sceneUpdate();
     const width = container.current.clientWidth;
     const height = container.current.clientHeight;
     renderer.current = new THREE.WebGLRenderer({
@@ -173,10 +173,8 @@ const Graph: React.FC = () => {
 
   useEffect(() => {
     //componentDidUpdate
-    // console.log(visGraph)
-    // console.log(styledGraph)
     if (styledGraph !== null) {
-      sceneSetup();
+      sceneUpdate();
       addSceneLines();
       addSceneLabel();
       addSceneRect();
