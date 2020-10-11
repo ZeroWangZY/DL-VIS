@@ -6,13 +6,14 @@ import { useHistory } from "react-router-dom";
 import TensorHeatmap, {
   TensorMetadata,
 } from "./TensorHeatmap";
+import RadarChart from "./RadarChart";
 import {
   fetchLayerScalars
 } from "../../api/layerlevel";
 import { ShowActivationOrGradient } from "../../store/global-states.type";
 import { useGlobalStates } from "../../store/global-states";
 import { useProcessedGraph } from "../../store/processedGraph";
-import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
+import { LayerNodeImp, LayerType } from "../../common/graph-processing/stage2/processed-graph";
 import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode";
 import * as _ from 'lodash';
 import { makeStyles } from "@material-ui/core/styles";
@@ -114,7 +115,6 @@ const LayerLevel: React.FC = () => {
   const [showDomain, setShowDomain] = useState(null);
   const [childNodeId, setChildNodeId] = useState(null);
   const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
-  const [samplingLayerScalarsData, setSamplingLayerScalarsData] = useState<LayerScalar[]>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [drawing, setDrawing] = useState(false);
 
@@ -122,6 +122,7 @@ const LayerLevel: React.FC = () => {
   const [isShowingTensorHeatmap, setIsShowingTensorHeatmap] = useState<boolean>(
     false
   );
+  const [isShowingRadarChart, setIsShowingRadarChart] = useState<boolean>(false);
   const [selectedTensor, setSelectedTensor] = useState<TensorMetadata>({
     type: showActivationOrGradient,
     step: null,
@@ -173,13 +174,10 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (layerScalarsData === null || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
 
-    console.log(layerScalarsData);
-    console.log(samplingLayerScalarsData);
-
     setDrawing(true);
     computeAndDraw();
     setDrawing(false);
-  }, [layerScalarsData, samplingLayerScalarsData, svgWidth])
+  }, [layerScalarsData, svgWidth])
 
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
@@ -292,35 +290,37 @@ const LayerLevel: React.FC = () => {
         }
       }
 
-      const tempDomain = [(domain[0] - 1) * batchSize + 1, (domain[1] - 1) * batchSize + 1] // domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
-      x1OtherScale.domain(domain);
-      x1Scale.domain(tempDomain);
-      setShowDomain(domain); // 设定brush选定显示区域的domain;
-      const xTicksValues = [];
-      produceXTicks(xTicksValues, domain[0], domain[1]);
-      context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
+      if (!(domain[0] === x1OtherScale.domain()[0] && domain[1] == x1OtherScale.domain()[1])) { // 移动brush
+        const tempDomain = [(domain[0] - 1) * batchSize + 1, (domain[1] - 1) * batchSize + 1] // domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
+        x1OtherScale.domain(domain);
+        x1Scale.domain(tempDomain);
+        setShowDomain(domain); // 设定brush选定显示区域的domain;
+        const xTicksValues = [];
+        produceXTicks(xTicksValues, domain[0], domain[1]);
+        context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
 
-      focus
-        .select('.focus-axis')
-        .select('.axis--x')
-        .call(focusAxisX.ticks(xTicksValues.length).tickValues(xTicksValues));
+        focus
+          .select('.focus-axis')
+          .select('.axis--x')
+          .call(focusAxisX.ticks(xTicksValues.length).tickValues(xTicksValues));
 
-      // 以当前选择的step之间的最大最小值重新更改 focusAreaYScale
-      // i.g. domain = [11, 23]， 显示的step包括 [11, 22]，
-      // 对应layerScalarsData中的 [batchSize * (11-1), batchSize * (23-1) - 1]
-      let tmpMinY = Infinity, tmpMaxY = -Infinity;
-      for (let i = batchSize * (domain[0] - 1); i <= batchSize * (domain[1] - 1) - 1; i++) {
-        let scalar = layerScalarsData[i];
-        tmpMinY = Math.min(tmpMinY, scalar.lowerBoundary);
-        tmpMaxY = Math.max(tmpMaxY, scalar.upperBoundary);
+        // 以当前选择的step之间的最大最小值重新更改 focusAreaYScale
+        // i.g. domain = [11, 23]， 显示的step包括 [11, 22]，
+        // 对应layerScalarsData中的 [batchSize * (11-1), batchSize * (23-1) - 1]
+        let tmpMinY = Infinity, tmpMaxY = -Infinity;
+        for (let i = batchSize * (domain[0] - 1); i <= batchSize * (domain[1] - 1) - 1; i++) {
+          let scalar = layerScalarsData[i];
+          tmpMinY = Math.min(tmpMinY, scalar.lowerBoundary);
+          tmpMaxY = Math.max(tmpMaxY, scalar.upperBoundary);
+        }
+
+        let tmpFocusAreaYScale = d3.scaleLinear()
+          .rangeRound([height, 0])
+          .domain([tmpMinY, tmpMaxY]);
+
+        drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, minY, maxY, domain, tempDomain, true);
+        drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale, width);
       }
-
-      let tmpFocusAreaYScale = d3.scaleLinear()
-        .rangeRound([height, 0])
-        .domain([tmpMinY, tmpMaxY]);
-
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, minY, maxY, domain, tempDomain, true);
-      drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale, width);
     };
 
     const brushStart = () => {
@@ -517,7 +517,7 @@ const LayerLevel: React.FC = () => {
 
       newDetailInfoOfCurrentStep.push({
         "step": Math.floor((x - 1) / 32) + 1,
-        "batch": -1,
+        "dataIndex": -1,
       })
       setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
     }
@@ -536,7 +536,11 @@ const LayerLevel: React.FC = () => {
       });
 
       setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
-      setIsShowingTensorHeatmap(true);
+
+      if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.FC)
+        setIsShowingRadarChart(true);
+      else
+        setIsShowingTensorHeatmap(true);
     }
 
     function MouseMoveHandler() {
@@ -552,7 +556,7 @@ const LayerLevel: React.FC = () => {
 
       newDetailInfoOfCurrentStep.push({
         "step": Math.floor((x - 1) / 32) + 1,
-        "batch": (x - 1) % 32 + 1,
+        "dataIndex": (x - 1) % 32 + 1,
       })
       setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
     }
@@ -597,10 +601,10 @@ const LayerLevel: React.FC = () => {
         <div style={{ marginLeft: '8px', marginTop: '2px' }}>
           {"step: " + DetailInfoOfCurrentStep[0].step}
         </div>
-        { DetailInfoOfCurrentStep[0].batch >= 0 &&
+        { DetailInfoOfCurrentStep[0].dataIndex >= 0 &&
           (<div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ marginLeft: '8px', marginTop: '2px' }}>
-              {"batch: " + DetailInfoOfCurrentStep[0].batch}
+              {"data index: " + DetailInfoOfCurrentStep[0].dataIndex}
             </div>
             <div style={{ clear: 'both' }}></div>
           </div>)}
@@ -628,6 +632,21 @@ const LayerLevel: React.FC = () => {
     return reservoir;
   }
 
+  const getAverageSamplingScalarData = (stream: LayerScalar[], k: number): LayerScalar[] => { // 从 stream中等概率提取k个元素，时间复杂度为O(n)
+    if (k > stream.length) return stream;
+    let res = new Array(k);  // 长度为k
+    console.log(stream.length, k);
+
+    let count = 0;
+    let groupNum = Math.floor(stream.length / k);
+    for (let i = 0; i < stream.length && count < k; i += groupNum) {
+      res[count++] = stream[i];
+    }
+    res[res.length - 1] = stream[stream.length - 1];
+
+    return res;
+  }
+
   const getLayerScalars = async (
     graphName,
     nodeIds,
@@ -647,11 +666,6 @@ const LayerLevel: React.FC = () => {
         setLoadingData(false);
         let layerScalars = res.data.data[nodeIds[0]];
         setLayerScalarsData(layerScalars);
-
-        if (layerScalars.length > 640) {
-          let tmp = getReservoirSamplingScalarData(layerScalars, 640);
-          setSamplingLayerScalarsData(tmp); // 采样640个点
-        }
       } else {
         console.log("获取layer数据失败：" + res.data.message);
       }
@@ -718,6 +732,12 @@ const LayerLevel: React.FC = () => {
             tensorMetadata={selectedTensor}
             isShowing={isShowingTensorHeatmap}
             setIsShowing={setIsShowingTensorHeatmap}
+            anchorPosition={anchorPosition}
+          />
+          <RadarChart
+            tensorMetadata={selectedTensor}
+            isShowing={isShowingRadarChart}
+            setIsShowing={setIsShowingRadarChart}
             anchorPosition={anchorPosition}
           />
         </div>
