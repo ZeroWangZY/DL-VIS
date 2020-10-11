@@ -145,21 +145,59 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .domain([minY, maxY]);
 
     const focusAreaLineGenerator = d3
-      .line<Point>()
+      .line<any>()
       .curve(d3.curveMonotoneX)
-      .x((d) => XScale(d.x))
-      .y((d) => focusAreaYScale(d.y))
+      .x((d) => XScale(d.meanx))
+      .y((d) => focusAreaYScale(d.meany))
 
-    for (let i = 0; i < dataArrToShow.length; i++) {
-      let data = dataArrToShow[i];
+    const focusAreaGenerator = d3
+      .area<any>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => XScale(d.minx))
+      .y0((d) => focusAreaYScale(d.miny))
+      .y1((d) => focusAreaYScale(d.maxy));
+
+    // 处理dataArrToshow数据，每三个元素为一组，其中第一个元素为max，第二个元素为min，
+    // 第三个元素为mean
+    const processedDataArrToShow = [];
+    for (let i = 0; i < dataArrToShow.length; i += 3) {
+      const maxData = dataArrToShow[i];
+      const minData = dataArrToShow[i + 1];
+      const meanData = dataArrToShow[i + 2];
+      const processedItem = {
+        data: []
+      };
+      maxData.data.forEach((item, index) => {
+        processedItem.data.push({
+          minx: minData.data[index].x,
+          miny: minData.data[index].y,
+          meanx: meanData.data[index].x,
+          meany: meanData.data[index].y,
+          maxx: maxData.data[index].x,
+          maxy: maxData.data[index].y
+        });
+      });
+      processedDataArrToShow.push(processedItem);
+    }
+
+    for (let i = 0; i < processedDataArrToShow.length; i++) {
+      let data = processedDataArrToShow[i];
       focus
         .append("path")
         .datum(data.data)
         .attr("class", "area")
         .attr("transform", "translate(0,0)")
+        .attr("d", focusAreaGenerator)
+        .attr("fill", "#69b3a2")
+        .attr("fill-opacity", .8)
+        .attr("stroke", "none");
+      focus
+        .append('path')
+        .datum(data.data)
+        .attr("class", "area medianLine")
         .attr("d", focusAreaLineGenerator)
         .attr("fill", "none")
-        .attr("stroke", data.color);
+        .attr("stroke", "blue")
     }
 
     focus
