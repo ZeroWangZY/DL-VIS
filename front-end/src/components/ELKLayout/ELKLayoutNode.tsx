@@ -3,6 +3,7 @@ import { TransitionMotion } from "react-motion";
 import { useVisGraph } from "../../store/visGraph";
 import { useStyledGraph } from "../../store/styledGraph";
 import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
+import { StackedOpNodeImp } from "../../common/graph-processing/stage3/vis-graph.type";
 import { notification } from 'antd';
 import {
   LayerNodeContainer
@@ -150,6 +151,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     rectHeight
   ) => {
     let focused = (node.id === selectedNodeId);
+    let visNodeMap;
+    if (visGraph) {
+      visNodeMap = visGraph.visNodeMap;
+    }
     if (node.type === NodeType.OPERATION) {
       // OPERATION
       return (
@@ -187,6 +192,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             rx={ellipseX}
             ry={ellipseY}
           />
+          <text x={-4} y={2} fill="#333" style={{fontSize: '8px'}}>
+            {visNodeMap[node.id] instanceof StackedOpNodeImp ? 
+              visNodeMap[node.id].nodesContained.size : ''}
+          </text>
           {node.parameters.length !== 0 && (
             <circle
               className={

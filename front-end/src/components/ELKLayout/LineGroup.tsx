@@ -22,6 +22,15 @@ interface Point {
   y: number;
 }
 
+interface ProcessedPoint {
+  minx: number;
+  miny: number;
+  meanx: number;
+  meany: number;
+  maxx: number;
+  maxy: number;
+}
+
 interface layerNodeScalar {
   "step": number,
   "activation_min": number,
@@ -145,13 +154,13 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .domain([minY, maxY]);
 
     const focusAreaLineGenerator = d3
-      .line<any>()
+      .line<ProcessedPoint>()
       .curve(d3.curveMonotoneX)
       .x((d) => XScale(d.meanx))
       .y((d) => focusAreaYScale(d.meany))
 
     const focusAreaGenerator = d3
-      .area<any>()
+      .area<ProcessedPoint>()
       .curve(d3.curveMonotoneX)
       .x((d) => XScale(d.minx))
       .y0((d) => focusAreaYScale(d.miny))
