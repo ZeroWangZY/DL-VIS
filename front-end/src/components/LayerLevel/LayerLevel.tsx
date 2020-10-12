@@ -364,7 +364,7 @@ const LayerLevel: React.FC = () => {
     let sampling = false;
     if ((stepDomain[1] - stepDomain[0]) * batchSize > 640) {
       sampling = true;
-      filteredScalarsData = getReservoirSamplingScalarData(layerScalarsData, Math.floor(640 * scalarData.length / batchSize / (stepDomain[1] - stepDomain[0])));
+      filteredScalarsData = getAverageSamplingScalarData(layerScalarsData, Math.floor(640 * scalarData.length / batchSize / (stepDomain[1] - stepDomain[0])));
     }
 
     svgPart.selectAll(".area").remove(); // 清除原折线图
@@ -633,17 +633,56 @@ const LayerLevel: React.FC = () => {
   }
 
   const getAverageSamplingScalarData = (stream: LayerScalar[], k: number): LayerScalar[] => { // 从 stream中等概率提取k个元素，时间复杂度为O(n)
-    if (k > stream.length) return stream;
-    let res = new Array(k);  // 长度为k
-    console.log(stream.length, k);
+    if (k > stream.length) return stream; // k至少为640
+    let res = [];  // 长度为k
 
-    let count = 0;
-    let groupNum = Math.floor(stream.length / k);
-    for (let i = 0; i < stream.length && count < k; i += groupNum) {
-      res[count++] = stream[i];
+    let indices = []; // 带采样的坐标
+    let gap = stream.length / k;
+    for (let i = 0; i < k; i++) {
+      let index = Math.round(gap * i);
+      indices.push(index);
     }
-    res[res.length - 1] = stream[stream.length - 1];
+    if (indices[indices.length - 1] != stream.length - 1) indices[indices.length - 1] = stream.length - 1;
 
+    // console.log(indices);
+
+    res.push(stream[0]); // 第一个元素
+    for (let i = 1; i < indices.length - 1; i++) { // 计算从index:[i, i+1) 之间所有数的中位数 上下界的平均值
+      let begin = indices[i], end = indices[i + 1]; // [begin, end)
+      let len = end - begin;
+      if (len === 0 || len === 1) {
+        res.push(stream[begin]);
+        continue
+      };
+
+      let temp: LayerScalar = {} as LayerScalar;
+      temp.step = stream[begin].step;
+      temp.batchSize = stream[begin].batchSize;
+      temp.batch = stream[begin].batch;
+      let sumMaximum = 0, sumUpperBoundary = 0, sumQ3 = 0, sumMedian = 0, sumMean = 0, sumQ1 = 0, sumLowerBoundary = 0, sumMinimumn = 0;
+      for (let j = begin; j < end; j++) {
+        sumMaximum += stream[j].maximum;
+        sumUpperBoundary += stream[j].upperBoundary;
+        sumQ3 += stream[j].Q3;
+        sumMedian += stream[j].median;
+        sumMean += stream[j].mean;
+        sumQ1 += stream[j].Q1;
+        sumLowerBoundary += stream[j].lowerBoundary;
+        sumMinimumn += stream[j].minimumn;
+      }
+
+      temp.maximum = sumMaximum / len;
+      temp.upperBoundary = sumUpperBoundary / len;
+      temp.Q3 = sumQ3 / len;
+      temp.median = sumMedian / len;
+      temp.mean = sumMean / len;
+      temp.Q1 = sumQ1 / len;
+      temp.lowerBoundary = sumLowerBoundary / len;
+      temp.minimumn = sumMinimumn / len;
+
+      res.push(temp);
+    }
+    res.push(stream[stream.length - 1]); // 最后一个元素
     return res;
   }
 
