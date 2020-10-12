@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import * as d3 from 'd3';
 import './MiniMap.css'
 import { useStyledGraph } from "../../store/styledGraph";
 import {
   useGlobalStates
 } from "../../store/global-states";
+import { UpdateRectInCanvasContext } from '../../store/redrawCanvas';
 
 let fitK = 1;
 let timer = null;
@@ -55,6 +56,7 @@ const MiniMap: React.FC<Props> = (props: Props) => {
 
   const rectRef = useRef();
   const canvasRef = useRef();
+  const canvasContext = useContext(UpdateRectInCanvasContext);
 
   useEffect(() => {
     let zoom = d3.zoom()
@@ -79,8 +81,14 @@ const MiniMap: React.FC<Props> = (props: Props) => {
   let viewpointCoord = { x: -transform.x * fitK / transform.k / scale, y: -transform.y * fitK / transform.k / scale };    // 矩形的初始坐标
 
   const updateRect = (x, y) => { // 更新矩形框的位置
+    // 改变要画的图的transform
+    d3.select(outputG as HTMLElement)
+      .attr("transform", `translate(0,0) scale(1)`)
+    setTransform({ x: 0, y: 0, k: 1 });
     d3.select(rectRef.current).attr("transform", `translate(${x},${y}) scale(${1 / transform.k})`)
   }
+
+  canvasContext.setInvokeUpdateRect(updateRect);
 
   const drawInCanvas = function (outputSVG_Copy, fitK) {
     if (outputSVG_Copy === null) return;

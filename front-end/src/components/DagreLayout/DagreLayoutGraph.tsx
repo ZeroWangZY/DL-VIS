@@ -36,6 +36,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
+  const miniRef = useRef();
 
   const [bgRectHeight, setBgRectHeight] = useState(0);
   const [selectMode, setSelectMode] = useState(false);// 单选模式

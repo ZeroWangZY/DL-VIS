@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   createStyles,
   makeStyles,
@@ -30,6 +30,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Typography from "@material-ui/core/Typography";
 import { useGlobalStates, modifyGlobalStates } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
+import { UpdateRectInCanvasContext } from '../../store/redrawCanvas';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -66,6 +67,7 @@ const GraphSelector = (props) => {
   const [showSelector, setShowSelector] = useState<boolean>(true);
   const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
+  const canvasContext = useContext(UpdateRectInCanvasContext);
   useGraphPipeline();
   fetchBackendData();
 
@@ -86,12 +88,13 @@ const GraphSelector = (props) => {
 
   const handleTfGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
-  ) => {
+) => {
     setCurrentTfGraphIndex(event.target.value);
   };
   const handleMsGraphIndexChange = (
     event: React.ChangeEvent<{ value: number }>
   ) => {
+    canvasContext.invokeUpdateRect();
     setCurrentMsGraphIndex(event.target.value);
   };
 

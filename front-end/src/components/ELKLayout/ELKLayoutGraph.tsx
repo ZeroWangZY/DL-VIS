@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import "./ELKLayoutGraph.less";
 import styles from "../../CSSVariables/CSSVariables.less";
 import * as d3 from "d3";
@@ -32,6 +32,7 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import ELKLayoutEdge from "./ELKLayoutEdge";
 import ELKLayoutNode from "./ELKLayoutNode";
 import ELKLayoutPort from "./ELKLayoutPort";
+import { UpdateRectInCanvasContext } from '../../store/redrawCanvas';
 window["d3"] = d3;
 window["ELK"] = ELK;
 
@@ -54,6 +55,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
   const svgRef = useRef();
   const outputRef = useRef();
   const outputSVGRef = useRef();
+  const canvasContext = useContext(UpdateRectInCanvasContext);
   const {
     diagnosisMode,
     isPathFindingMode
@@ -545,6 +547,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
     const outputG = d3.select(outputRef.current);
     outputG.attr("transform", "translate(0,0) scale(1)");
     updateZoomofD3(d3.zoomIdentity);
+    canvasContext.invokeUpdateRect();
   }
 
   useEffect(() => {
