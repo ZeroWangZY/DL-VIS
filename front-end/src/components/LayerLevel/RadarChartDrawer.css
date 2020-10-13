@@ -1,0 +1,14 @@
+.item {
+  border: 2px solid white;
+  background-color: skyblue;
+  opacity: 0.8;
+  overflow: visible;
+  padding: 6px 0;
+  white-space: nowrap;
+}
+
+.container {}
+
+/* .forceDirectedGraph .link{
+  stroke: aqua;
+} */
