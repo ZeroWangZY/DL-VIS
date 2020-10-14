@@ -33,8 +33,23 @@ interface fetchNodeTensorsParams {
 }
 
 export const fetchNodeTensors =
-  (params: fetchNodeScalarsParams): Promise<{ data }> =>
+  (params: fetchNodeTensorsParams): Promise<{ data }> =>
     fireAjax('GET', '/python/api/get_node_tensors', params);
+
+interface fetchNodeTensorParams {
+  "graph_name": string,
+  "node_id": string,
+  "step": number,
+  "data_index": number,
+  "type": string,
+  "mode": string,
+  "dim": number,
+  "scale": boolean
+}
+
+export const fetchNodeTensor =
+  (params: fetchNodeTensorParams): Promise<{ data }> =>
+    fireAjax('GET', '/python/api/get_node_tensor', params);
 
 
 interface fetchNodeLineDataBlueNoiceSamplingParams {

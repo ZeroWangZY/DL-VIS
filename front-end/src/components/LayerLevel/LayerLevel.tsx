@@ -18,6 +18,7 @@ import { FindChildNodeUnderLayerNode } from "./FindChildNodeUnderLayerNode";
 import * as _ from 'lodash';
 import { makeStyles } from "@material-ui/core/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { template } from "@babel/core";
 
 interface layerNodeScalar {
   step: number;
@@ -44,7 +45,7 @@ export interface LayerScalar {
   mean: number;
   Q1: number;
   lowerBoundary: number;
-  minimumn: number;
+  minimum: number;
 }
 
 
@@ -186,8 +187,8 @@ const LayerLevel: React.FC = () => {
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < layerScalarsData.length; i++) {
       let tmp = layerScalarsData[i];
-      minY = Math.min(minY, tmp.lowerBoundary);
-      maxY = Math.max(maxY, tmp.upperBoundary);
+      minY = Math.min(minY, tmp.minimum);
+      maxY = Math.max(maxY, tmp.maximum);
     }
 
     let x1Scale = d3.scaleLinear()
@@ -310,8 +311,8 @@ const LayerLevel: React.FC = () => {
         let tmpMinY = Infinity, tmpMaxY = -Infinity;
         for (let i = batchSize * (domain[0] - 1); i <= batchSize * (domain[1] - 1) - 1; i++) {
           let scalar = layerScalarsData[i];
-          tmpMinY = Math.min(tmpMinY, scalar.lowerBoundary);
-          tmpMaxY = Math.max(tmpMaxY, scalar.upperBoundary);
+          tmpMinY = Math.min(tmpMinY, scalar.minimum);
+          tmpMaxY = Math.max(tmpMaxY, scalar.maximum);
         }
 
         let tmpFocusAreaYScale = d3.scaleLinear()
@@ -388,13 +389,13 @@ const LayerLevel: React.FC = () => {
       .on("mousemove", MouseMoveHandler)
       .on("mouseleave", MouseLeaveHandler);
 
-    // lowerBoundary - upperBoundary区域
+    // minimum - maximum区域
     // 分成两部分画
     const focusAreaBoundaryLineGenerator1 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
       .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-      .y0((d) => yScale(d.lowerBoundary))
+      .y0((d) => yScale(d.minimum))
       .y1((d) => yScale(d.Q1));
 
     const focusAreaBoundaryLineGenerator2 = d3
@@ -402,12 +403,12 @@ const LayerLevel: React.FC = () => {
       .curve(d3.curveMonotoneX)
       .x((d) => xScale((d.step - 1) * batchSize + d.batch))
       .y0((d) => yScale(d.Q3))
-      .y1((d) => yScale(d.upperBoundary));
+      .y1((d) => yScale(d.maximum));
 
     svgPart
       .append("path")
       .datum(filteredScalarsData)
-      .attr("class", "area LowerUpperBoundaryPart")
+      .attr("class", "area LowerMaximumPart")
       .attr("fill", "#69b3a2")
       .attr("fill-opacity", .5)
       .attr("stroke", "none")
@@ -419,7 +420,7 @@ const LayerLevel: React.FC = () => {
     svgPart
       .append("path")
       .datum(filteredScalarsData)
-      .attr("class", "area LowerUpperBoundaryPart")
+      .attr("class", "area LowerMaximumPart")
       .attr("fill", "#69b3a2")
       .attr("fill-opacity", .5)
       .attr("stroke", "none")
@@ -453,13 +454,13 @@ const LayerLevel: React.FC = () => {
       .curve(d3.curveMonotoneX)
       .x((d) => xScale((d.step - 1) * batchSize + d.batch))
       .y0((d) => yScale(minY))
-      .y1((d) => yScale(d.lowerBoundary));
+      .y1((d) => yScale(d.minimum));
 
     const focusAreaOutsideLineGenerator2 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
       .x((d) => xScale((d.step - 1) * batchSize + d.batch))
-      .y0((d) => yScale(d.upperBoundary))
+      .y0((d) => yScale(d.maximum))
       .y1((d) => yScale(maxY));
 
     if (brushEnded && !sampling) {
@@ -659,7 +660,7 @@ const LayerLevel: React.FC = () => {
       temp.step = stream[begin].step;
       temp.batchSize = stream[begin].batchSize;
       temp.batch = stream[begin].batch;
-      let sumMaximum = 0, sumUpperBoundary = 0, sumQ3 = 0, sumMedian = 0, sumMean = 0, sumQ1 = 0, sumLowerBoundary = 0, sumMinimumn = 0;
+      let sumMaximum = 0, sumUpperBoundary = 0, sumQ3 = 0, sumMedian = 0, sumMean = 0, sumQ1 = 0, sumLowerBoundary = 0, summinimum = 0;
       for (let j = begin; j < end; j++) {
         sumMaximum += stream[j].maximum;
         sumUpperBoundary += stream[j].upperBoundary;
@@ -668,7 +669,7 @@ const LayerLevel: React.FC = () => {
         sumMean += stream[j].mean;
         sumQ1 += stream[j].Q1;
         sumLowerBoundary += stream[j].lowerBoundary;
-        sumMinimumn += stream[j].minimumn;
+        summinimum += stream[j].minimum;
       }
 
       temp.maximum = sumMaximum / len;
@@ -678,7 +679,7 @@ const LayerLevel: React.FC = () => {
       temp.mean = sumMean / len;
       temp.Q1 = sumQ1 / len;
       temp.lowerBoundary = sumLowerBoundary / len;
-      temp.minimumn = sumMinimumn / len;
+      temp.minimum = summinimum / len;
 
       res.push(temp);
     }
@@ -704,6 +705,7 @@ const LayerLevel: React.FC = () => {
       if (res.data.message === "success") {
         setLoadingData(false);
         let layerScalars = res.data.data[nodeIds[0]];
+        console.log(layerScalars);
         setLayerScalarsData(layerScalars);
       } else {
         console.log("获取layer数据失败：" + res.data.message);

@@ -22,7 +22,7 @@ body {
   fill: white;
 }
 
-.link {
+.layerLevelLink {
   stroke: silver;
   stroke-opacity: 0.05
 }

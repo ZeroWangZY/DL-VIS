@@ -14,32 +14,21 @@ interface Props {
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const { rawData } = props;
+
+
   useEffect(() => {
-    let margin = {
-      top: 50,
-      right: 50,
-      bottom: 50,
-      left: 50
-    },
-      width = Math.min(600, window.innerWidth - 10) - margin.left - margin.right,
-      height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+    // 雷达图
+    let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
+      radarChartWidth = Math.min(600, window.innerWidth - 10) - radarChartMargin.left - radarChartMargin.right,
+      radarChartHeight = Math.min(radarChartWidth, window.innerHeight - radarChartMargin.top - radarChartMargin.bottom - 20);
+    let ForceGraphSize = 240;
+    drawRadarChart(rawData, radarChartMargin, radarChartWidth, radarChartHeight);
+    // Radiz图 
+    drawForceDirectedGraph(rawData, ForceGraphSize, radarChartWidth, radarChartHeight, radarChartMargin);
+  }, [rawData]);
 
-    let color = d3.scaleOrdinal()
-      .range([
-        "#FFB6C1",
-        "#DC143C",
-        "#DA70D6",
-        "#FF00FF",
-        "#800080",
-        "#483D8B",
-        "#0000CD",
-        "#00FFFF",
-        "#008080",
-        "#7FFFAA",
-        "#00FF7F",
-        "#FFFF00"
-      ]);
-
+  const drawRadarChart = (rawData, margin, width, height) => {
+    // 雷达图参数
     let radarChartOptions = {
       w: width,
       h: height,
@@ -48,13 +37,13 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       minValue: -0.5, // 最小值
       levels: 5,
       roundStrokes: true, // 折线图是否需要平滑处理
-      color: color,
+      color: d3.scaleOrdinal(d3.schemeCategory10),
       opacityArea: 0, //The opacity of the area of the blob
       opacityCircles: 0, //The opacity of the circles of each blob
       strokeWidth: 2, //The width of the stroke around each blob
     };
 
-
+    // 数据处理，转换为适合画图的数据格式
     let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
     let data = []; // n1-n8数组
     for (let i = 0; i < numberOfLine; i++) data[i] = [];
@@ -71,11 +60,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
     }
 
-    console.log(data);
-    radarChart(".radarChart", data, radarChartOptions);
+    radarChart(".radarChart", data, radarChartOptions); // 画雷达图
+  }
 
-    console.log(rawData);
-
+  const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
+    // 数据转换
+    let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
     let data1 = new Array(numberOfLine);
     let dimensions = [];
     for (let i = 0; i < data1.length; i++) { // 12 
@@ -95,14 +85,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         data1[i - 1]["a" + (j + 1)] = d[key];
       }
     }
-    console.log(data1);
+    // console.log(data1);
 
-    drawForceDirectedGraph(dimensions, data1);
-  }, [rawData]);
-
-  const drawForceDirectedGraph = (dimensions, data) => {
-    // let dimensions = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10', 'n11', 'n12'];
-    let radviz = radvizComponent()
+    let radviz = radvizComponent(size, radarChartWidth, radarChartHeight, radarChartMargin)
       .config({
         dimensions: dimensions,
       })
@@ -118,13 +103,13 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .on('dotLeave', function (d) {
         console.log('dotLeave', d);
       });
-    radviz.render(data);
+    radviz.render(data1);
   }
 
-  var radvizComponent = function () {
+  let radvizComponent = function (size, radarChartWidth, radarChartHeight, radarChartMargin) {
     let config = {
       el: document.querySelector('.radarChart'),
-      size: 240,
+      size: size,
       margin: 30,
       colorScale: d3.scaleOrdinal().range(['skyblue', 'orange', 'lime']),
       colorAccessor: function (d) {
@@ -142,7 +127,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     let events = d3.dispatch('panelEnter', 'panelLeave', 'dotEnter', 'dotLeave');
 
-    let force = d3.forceSimulation()
+    let simulation = d3.forceSimulation()
       // .chargeDistance(0)
       .force("charge", d3.forceManyBody().strength(-60))
       .velocityDecay(0.5);
@@ -161,8 +146,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
-        let x = chartRadius + Math.cos(angle) * chartRadius * config.zoomFactor;
-        let y = chartRadius + Math.sin(angle) * chartRadius * config.zoomFactor;
+        let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
+        let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
         return {
           index: nodeCount + i,
           x: x,
@@ -183,7 +168,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         });
       });
 
-      force
+      simulation
         .force("x", d3.forceX(panelSize / 2).strength(0.01))
         .force("y", d3.forceY(panelSize / 2).strength(0.01))
         // .linkStrength(function (d) {
@@ -193,18 +178,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .force("link", d3.forceLink(linksData))
       // .start();
 
-
       // Basic structure
       let svg = d3.select(config.el)
         .append('svg')
-        // .attr("transform", "translate(-425, -175)")
         .attr("width", config.size)
-        .attr("height", config.size);
-
-      // svg.append('rect')
-      //   .classed('bg', true)
-      //   .attr("width", config.size)
-      //   .attr("height", config.size);
+        .attr("height", config.size)
+        .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
 
       let root = svg.append('g')
         .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
@@ -221,8 +200,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         links = root.selectAll('.link')
           .data(linksData)
           .enter().append('line')
-          .classed('link', true);
+          .classed('layerLevelLink', true);
       }
+      console.log(linksData);
 
       // Nodes
       let nodes = root.selectAll('circle.dot')
@@ -253,36 +233,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .attr("cy", function (d) {
           return d.y;
         })
-        .attr("r", 4);
-
-      let labels = root.selectAll('text.label')
-        .data(dimensionNodes)
-        .enter().append('text')
-        .classed('label', true)
-        .attr("x", function (d) { return d.x; })
-        .attr("y", function (d) { return d.y; })
-        .attr('text-anchor', function (d) {
-          if (d.x > (panelSize * 0.4) && d.x < (panelSize * 0.6)) {
-            return 'middle';
-          } else {
-            return (d.x > panelSize / 2) ? 'start' : 'end';
-          }
-        })
-        .attr('dominant-baseline', function (d) {
-          return (d.y > panelSize * 0.6) ? 'hanging' : 'auto';
-        })
-        .attr("dx", function (d) {
-          return (d.x > panelSize / 2) ? '6px' : '-6px';
-        })
-        .attr("dy", function (d) {
-          return (d.y > panelSize * 0.6) ? '6px' : '-6px';
-        })
-        .text(function (d) {
-          return d.name;
-        });
+        .attr("r", 2);
 
       // Update force
-      force.on('tick', function () {
+      simulation.on('tick', function () {
         if (config.drawLinks) {
           links.attr("x1", function (d) { return d.source.x; })
             .attr("y1", function (d) { return d.source.y; })
@@ -298,7 +252,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     let utils = {
       merge: function (obj1: any, obj2: any) {
-        for (var p in obj2) {
+        for (let p in obj2) {
           if (obj2[p] && obj2[p].constructor == Object) {
             if (obj1[p]) {
               this.merge(obj1[p], obj2[p]);
@@ -310,8 +264,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       },
 
       mergeAll: function (obj1: any, obj2: any): any {
-        var newObj = {};
-        var objs = arguments;
+        let newObj = {};
+        let objs = arguments;
         this.merge(newObj, obj1);
         this.merge(newObj, obj2);
         return newObj;

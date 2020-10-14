@@ -14,6 +14,7 @@ from threading import Timer
 from dao.data_helper import DataHelper
 from dao.node_mapping import alex_node_map
 import random
+import pandas as pd
 import math
 
 from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
@@ -238,6 +239,28 @@ def get_node_tensors(request):
         return HttpResponse(json.dumps({
             "message": "success",
             "data": res.tolist()
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
+
+def get_node_tensor(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_id = request.GET.get('node_id')
+        step = int(request.GET.get('step', default='1'))
+        data_index = int(request.GET.get('data_index', default='-1'))
+        type = request.GET.get('type', default='activation')
+        mode = request.GET.get('mode', default='normal')
+        dim = request.GET.get('dim', default='radial')
+        scale = request.GET.get('scale', default='false')
+
+        res = pd.read_csv("data/radar_data_969_all.csv")
+
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": res.T.reset_index().T.values.tolist()
         }), content_type="application/json")
     return HttpResponse(json.dumps({
         "message": "method undefined",
