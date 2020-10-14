@@ -9,6 +9,37 @@
 
 .container {}
 
-/* .forceDirectedGraph .link{
-  stroke: aqua;
-} */
+body {
+  font-family: sans-serif;
+}
+
+.panel {
+  stroke: black;
+  fill: white;
+}
+
+.bg {
+  fill: white;
+}
+
+.link {
+  stroke: silver;
+  stroke-opacity: 0.05
+}
+
+.dot {
+  fill-opacity: 0.5;
+}
+
+.label-node {
+  fill: silver;
+}
+
+.active {
+  stroke: black;
+}
+
+.label {
+  fill: gray;
+  pointer-events: none;
+}

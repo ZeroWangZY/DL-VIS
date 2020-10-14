@@ -55,7 +55,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     };
 
 
-    let numberOfLine = Object.keys(rawData[0]).length - 1;
+    let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
     let data = []; // n1-n8数组
     for (let i = 0; i < numberOfLine; i++) data[i] = [];
 
@@ -71,13 +71,37 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
     }
 
-    // console.log(data);
+    console.log(data);
     radarChart(".radarChart", data, radarChartOptions);
-    drawForceDirectedGraph(rawData);
+
+    console.log(rawData);
+
+    let data1 = new Array(numberOfLine);
+    let dimensions = [];
+    for (let i = 0; i < data1.length; i++) { // 12 
+      let obj = {}
+      for (let j = 0; j < rawData.length; j++) { // 32
+        obj["a" + (j + 1)] = -1; // a1 a2 .... a32
+        if (i == 0) dimensions.push("a" + (j + 1));
+      }
+      data1[i] = obj
+    } // 初始化对象数组
+
+    for (let j = 0; j < rawData.length; j++) { // 0 - 31
+      let d = rawData[j];
+      let keys = Object.keys(d); // index n1 n2 .... n12
+      for (let i = 1; i < keys.length; i++) { // 忽略第一维"index"
+        let key = keys[i]; // n1 n2 .... n12
+        data1[i - 1]["a" + (j + 1)] = d[key];
+      }
+    }
+    console.log(data1);
+
+    drawForceDirectedGraph(dimensions, data1);
   }, [rawData]);
 
-  const drawForceDirectedGraph = (data) => {
-    let dimensions = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10', 'n11', 'n12'];
+  const drawForceDirectedGraph = (dimensions, data) => {
+    // let dimensions = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10', 'n11', 'n12'];
     let radviz = radvizComponent()
       .config({
         dimensions: dimensions,
@@ -117,11 +141,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     };
 
     let events = d3.dispatch('panelEnter', 'panelLeave', 'dotEnter', 'dotLeave');
-
-    // let force = d3.layout.force()
-    //   .chargeDistance(0)
-    //   .charge(-60)
-    //   .friction(0.5);
 
     let force = d3.forceSimulation()
       // .chargeDistance(0)
@@ -164,16 +183,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         });
       });
 
-      console.log(dimensionNodes);
-
-      // force.size([panelSize, panelSize])
-      //   .linkStrength(function (d) {
-      //     return d.value;
-      //   })
-      //   .nodes(data.concat(dimensionNodes))
-      //   .links(linksData)
-      //   .start();
-
       force
         .force("x", d3.forceX(panelSize / 2).strength(0.01))
         .force("y", d3.forceY(panelSize / 2).strength(0.01))
@@ -188,7 +197,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       // Basic structure
       let svg = d3.select(config.el)
         .append('svg')
-        .attr("transform", "translate(-425, -175)")
+        // .attr("transform", "translate(-425, -175)")
         .attr("width", config.size)
         .attr("height", config.size);
 
@@ -205,7 +214,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .attr("r", chartRadius)
         .attr("cx", chartRadius)
         .attr("cy", chartRadius)
-        .attr("opacity", 0);
 
       // Links
       let links;
@@ -226,17 +234,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           return config.colorScale(config.colorAccessor(d));
         })
         .on('mouseenter', function (d) {
-          // if (config.useTooltip) {
-          //   let mouse = d3.mouse(config.el);
-          //   tooltip.setText(config.tooltipFormatter(d)).setPosition(mouse[0], mouse[1]).show();
-          // }
           events.call("dotEnter", d as any);
           this.classList.add('active');
         })
         .on('mouseout', function (d) {
-          // if (config.useTooltip) {
-          //   tooltip.hide();
-          // }
           events.call("dotLeave", d as any);
           this.classList.remove('active');
         });
@@ -292,12 +293,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         nodes.attr("cx", function (d: any) { return d.x; })
           .attr("cy", function (d: any) { return d.y; })
       });
-
-      // let tooltipContainer = d3.select(config.el)
-      //   .append('div')
-      //   .attr("id", 'radviz-tooltip');
-      // let tooltip = tooltipComponent(tooltipContainer.node());
-
       return this;
     };
 
