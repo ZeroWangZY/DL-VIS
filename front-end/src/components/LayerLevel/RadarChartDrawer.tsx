@@ -15,7 +15,6 @@ interface Props {
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const { rawData } = props;
 
-
   useEffect(() => {
     // 雷达图
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
@@ -85,24 +84,11 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         data1[i - 1]["a" + (j + 1)] = d[key];
       }
     }
-    // console.log(data1);
 
     let radviz = radvizComponent(size, radarChartWidth, radarChartHeight, radarChartMargin)
       .config({
         dimensions: dimensions,
       })
-      .on('panelEnter', function () {
-        console.log('panelEnter');
-      })
-      .on('panelLeave', function () {
-        console.log('panelLeave');
-      })
-      .on('dotEnter', function (d, i) {
-        console.log('dotEnter', d, i);
-      })
-      .on('dotLeave', function (d) {
-        console.log('dotLeave', d);
-      });
     radviz.render(data1);
   }
 
@@ -125,7 +111,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
     };
 
-    let events = d3.dispatch('panelEnter', 'panelLeave', 'dotEnter', 'dotLeave');
+    let events = d3.dispatch('dotEnter', 'dotLeave');
 
     let simulation = d3.forceSimulation()
       // .chargeDistance(0)
@@ -208,17 +194,28 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let nodes = root.selectAll('circle.dot')
         .data(data)
         .enter().append('circle')
-        .classed('dot', true)
+        .attr("class", function (d) { return "dot id_" + (d as any).index })
         .attr("r", config.dotRadius)
         .attr("fill", function (d): any {
           return config.colorScale(config.colorAccessor(d));
         })
         .on('mouseenter', function (d) {
-          events.call("dotEnter", d as any);
+          d3.selectAll(".radarStroke")
+            .style("stroke-opacity", 0.1);
+
+          d3.select(".radarStroke.id_" + (d as any).index)
+            .style("stroke-width", 7 + "px")
+            .style("stroke-opacity", 1); // 改变当前区域的透明度
+
           this.classList.add('active');
         })
         .on('mouseout', function (d) {
-          events.call("dotLeave", d as any);
+          d3.select(".radarStroke.id_" + (d as any).index)
+            .style("stroke-width", 2 + "px")
+
+          d3.selectAll(".radarStroke")
+            .style("stroke-opacity", 1);
+
           this.classList.remove('active');
         });
 
@@ -477,8 +474,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     //Create the outlines	
     blobWrapper.append("path")
-      .attr("class", "radarStroke")
       .attr("d", (d) => radarLine(d as [number, number][]))
+      .attr("class", function (d, i) { return "radarStroke id_" + i })
       .style("stroke-width", cfg.strokeWidth + "px")
       .style("stroke", function (d, i) {
         return cfg.color(i + "");
@@ -492,13 +489,19 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         d3.select(this)
           .style("stroke-width", cfg.strokeWidth + 5 + "px")
           .style("stroke-opacity", 1); // 改变当前区域的透明度
+
+        d3.select(".dot.id_" + i)
+          .classed("active", true);
       })
-      .on('mouseout', function () {
+      .on('mouseout', function (d, i) {
         d3.select(this)
           .style("stroke-width", cfg.strokeWidth + "px")
 
         d3.selectAll(".radarStroke")
           .style("stroke-opacity", 1);
+
+        d3.select(".dot.id_" + i)
+          .classed("active", false);
 
         tooltip.transition().duration(200)
           .style("opacity", 0);
@@ -555,7 +558,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   return (
     <div>
       <div className="radarChart"></div>
-      <div className="forceDirectedGraph"></div>
+      {/* <div className="forceDirectedGraph"></div> */}
     </div>
   );
 };
