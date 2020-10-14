@@ -3,6 +3,7 @@ import os
 from mindspore.train.callback import Callback, RunContext, ModelCheckpoint, SummaryCollector
 from mindspore.ops.primitive import Primitive
 import numpy as np
+import time
 
 monitored_operations = {'Conv2D',
                         'ReLU', 'MatMul',
@@ -26,7 +27,7 @@ class DataSaverCallback(Callback):
         def new_construct(grads):
             self.db_writer.cache['lr'] = opt.get_lr().asnumpy().tolist()
             percentiles = np.array([0, 25, 50, 75, 100])
-            for i in range(len(weight_names)):
+            for i in [i for i in range(len(weight_names)) if weight_names[i][-7:] == ".weight"]:
                 # 存weight和gradient
                 grad = grads[i].asnumpy()
                 weight = opt.parameters[i].asnumpy()
@@ -53,6 +54,7 @@ class DataSaverCallback(Callback):
                     parameter_name = arg.name
                     break
             if should_save:
+                time_start = time.time()
                 data = output.asnumpy()
                 self.db_writer.cache['activations'].append(
                     [parameter_name[0:parameter_name.rfind('.')], -1] + np.percentile(data, percentiles).tolist()
@@ -61,6 +63,8 @@ class DataSaverCallback(Callback):
                     self.db_writer.cache['activations'].append(
                         [parameter_name[0:parameter_name.rfind('.')], i] + np.percentile(data[i], percentiles).tolist()
                     )
+                time_end = time.time()
+                print('culculate', parameter_name, 'activation time cost', time_end - time_start, 's')
             return output
 
         setattr(Primitive, '__call__', new_call_method)
@@ -156,6 +160,7 @@ class DataWriter():
         }
 
     def save(self):
+        time_start = time.time()
         self.c.execute(
             '''INSERT OR REPLACE INTO MODEL_SCALARS(step, train_loss, learning_rate)  VALUES (%d, %s, %s);''' % (
             self.cache['step'], str(self.cache['train_loss']), str(self.cache['lr'])))
@@ -188,26 +193,6 @@ class DataWriter():
         self.c.executemany(sql, args)
         self.conn.commit()
 
+        time_end = time.time()
+        print('insert into sqlite time cost', time_end - time_start, 's')
         self.reset_cache()
-
-
-
-
-    def save_activation_scalars(self, step, name, minimum, mean, maxmum):
-        self.c.execute('''INSERT OR REPLACE INTO ACTIVATION_SCALARS(step, node, activation_min, activation_mean, activation_max)
-                                                VALUES(%d, '%s', %f, %f, %f);''' % (
-            step, name, minimum, mean, maxmum))
-        self.conn.commit()  # _thread.start_new_thread(save_activation_scalars_function,
-        #                          (self.db_file_name, step, name, minimum, mean, maxmum))
-
-    def save_gradient_scalars(self, step, name, minimum, mean, maxmum):
-        self.c.execute('''INSERT OR REPLACE INTO GRADIENT_SCALARS(step, node, gradient_min, gradient_mean, gradient_max)
-                                                    VALUES(%d, '%s', %f, %f, %f);''' % (
-            step, name, minimum, mean, maxmum))
-        self.conn.commit()  # _thread.start_new_thread(save_gradient_scalars_function, (self.db_file_name, step, name, minimum, mean, maxmum))
-
-    def save_weight_scalars(self, step, name, minimum, mean, maxmum):
-        self.c.execute('''INSERT OR REPLACE INTO WEIGHT_SCALARS(step, node, weight_min, weight_mean, weight_max)
-                                                VALUES(%d, '%s', %f, %f, %f);''' % (
-            step, name, minimum, mean, maxmum))
-        self.conn.commit()  # _thread.start_new_thread(save_weight_scalars_function, (self.db_file_name, step, name, minimum, mean, maxmum))
