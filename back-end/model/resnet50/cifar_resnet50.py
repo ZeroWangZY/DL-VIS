@@ -55,7 +55,7 @@ parser.add_argument('--checkpoint_path', type=str, default=None, help='CheckPoin
 args_opt = parser.parse_args()
 
 data_home = "./dataset/10-batches-bin"
-summary_dir = './summary_dir-20201014151702'
+summary_dir = './summary_dir-20201014152136'
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 context.set_context(save_graphs=True)

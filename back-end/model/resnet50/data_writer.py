@@ -4,7 +4,7 @@ from mindspore.train.callback import Callback, RunContext, ModelCheckpoint, Summ
 from mindspore.ops.primitive import Primitive
 import numpy as np
 
-monitored_operations = {'Conv2D', 'BiasAdd',
+monitored_operations = {'Conv2D',
                         'ReLU', 'MatMul',
                         'MaxPool', 'Reshape'}
 
@@ -31,9 +31,9 @@ class DataSaverCallback(Callback):
                 grad = grads[i].asnumpy()
                 weight = opt.parameters[i].asnumpy()
                 self.db_writer.cache['gradients'].append(
-                    [gradient_names[i]] + [np.percentile(grad, percentiles).tolist()])
+                    [gradient_names[i]] + np.percentile(grad, percentiles).tolist())
                 self.db_writer.cache['weights'].append(
-                    [weight_names[i]] + [np.percentile(weight, percentiles).tolist()])
+                    [weight_names[i]] + np.percentile(weight, percentiles).tolist())
             return old_construct(grads)
 
         opt.construct = new_construct
@@ -70,12 +70,9 @@ class DataSaverCallback(Callback):
         self.db_writer.cache['step'] = params.cur_step_num
         self.db_writer.cache['epoch'] = params.cur_epoch_num
 
-
-
     def step_end(self, run_context):
         self.db_writer.cache['train_loss'] = run_context.original_args()['net_outputs']
         self.db_writer.save()
-
 
 
 class DataWriter():
@@ -105,19 +102,19 @@ class DataWriter():
                        learning_rate    REAL);''')
 
         c.execute('''CREATE TABLE ACTIVATION_SCALARS
-                       (step        I   NT     NOT NULL,
+                       (step            INT     NOT NULL,
                        node             CHAR(50)  NOT NULL,
                        data_index       REAL,
                        activation_min   REAL,
                        activation_q1    REAL,
-                       activation_median REAL,
+                       activation_median REAL, 
                        activation_mean  REAL,
                        activation_q3    REAL,
                        activation_max   REAL,
-                       PRIMARY KEY (step, node));''')
+                       PRIMARY KEY (step, node, data_index));''')
 
         c.execute('''CREATE TABLE GRADIENT_SCALARS
-                       (step        I   NT     NOT NULL,
+                       (step            INT     NOT NULL,
                        node             CHAR(50)  NOT NULL,
                        gradient_min     REAL,
                        gradient_q1      REAL,
@@ -128,7 +125,7 @@ class DataWriter():
                        PRIMARY KEY (step, node));''')
 
         c.execute('''CREATE TABLE WEIGHT_SCALARS
-                       (step        I   NT     NOT NULL,
+                       (step            INT     NOT NULL,
                        node             CHAR(50)  NOT NULL,
                        weight_min       REAL,
                        weight_q1        REAL,
@@ -159,19 +156,42 @@ class DataWriter():
         }
 
     def save(self):
-        print(self.cache)
+        self.c.execute(
+            '''INSERT OR REPLACE INTO MODEL_SCALARS(step, train_loss, learning_rate)  VALUES (%d, %s, %s);''' % (
+            self.cache['step'], str(self.cache['train_loss']), str(self.cache['lr'])))
+        self.conn.commit()
+
+        # 插入activations
+        sql = "INSERT INTO ACTIVATION_SCALARS(step, node, data_index, activation_min, activation_q1, activation_median, activation_q3, activation_max) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+        args = []
+        activations = self.cache['activations']
+        for i in range(len(activations)):
+            args.append(tuple([str(self.cache['step'])] + activations[i]))
+        self.c.executemany(sql, args)
+        self.conn.commit()
+
+        # 插入weights
+        sql = "INSERT INTO WEIGHT_SCALARS(step, node, weight_min, weight_q1, weight_median, weight_q3, weight_max) VALUES(?, ?, ?, ?, ?, ?, ?)"
+        args = []
+        weights = self.cache['weights']
+        for i in range(len(weights)):
+            args.append(tuple([str(self.cache['step'])] + weights[i]))
+        self.c.executemany(sql, args)
+        self.conn.commit()
+
+        # 插入gradients
+        sql = "INSERT INTO GRADIENT_SCALARS(step, node, gradient_min, gradient_q1, gradient_median, gradient_q3, gradient_max) VALUES(?, ?, ?, ?, ?, ?, ?)"
+        args = []
+        gradients = self.cache['gradients']
+        for i in range(len(gradients)):
+            args.append(tuple([str(self.cache['step'])] + gradients[i]))
+        self.c.executemany(sql, args)
+        self.conn.commit()
+
         self.reset_cache()
 
-    def save_loss(self, step, loss):
-        self.c.execute('''INSERT OR REPLACE INTO MODEL_SCALARS(step, train_loss)
-                                VALUES(%d, %s);''' % (step, str(loss)))
-        self.conn.commit()
-        # _thread.start_new_thread(save_loss_function, (self.db_file_name, step, loss))
 
-    def save_lr(self, step, lr):
-        self.c.execute('''UPDATE MODEL_SCALARS set learning_rate = %s where step=%d;''' % (str(lr), step))
-        self.conn.commit()
-        # _thread.start_new_thread(save_loss_function, (self.db_file_name, step, lr))
+
 
     def save_activation_scalars(self, step, name, minimum, mean, maxmum):
         self.c.execute('''INSERT OR REPLACE INTO ACTIVATION_SCALARS(step, node, activation_min, activation_mean, activation_max)
