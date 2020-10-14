@@ -29,6 +29,7 @@ from mindspore.communication.management import init
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn.optim.momentum import Momentum
+from mindspore.train.callback import SummaryCollector
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore import context
@@ -36,23 +37,28 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from resnet import resnet50
+from data_writer import DataSaverCallback
+import os
+
+# os.environ['MINDSPORE_DUMP_CONFIG'] = "/tmp/pycharm_project_589/dump.json"
 
 random.seed(1)
 parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute.')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
-parser.add_argument('--device_target', type=str, default="GPU", help='Device choice Ascend or GPU')
 parser.add_argument('--do_train', type=bool, default=True, help='Do train or not.')
 parser.add_argument('--do_eval', type=bool, default=False, help='Do eval or not.')
-parser.add_argument('--epoch_size', type=int, default=1, help='Epoch size.')
+parser.add_argument('--epoch_size', type=int, default=100, help='Epoch size.')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
 parser.add_argument('--num_classes', type=int, default=10, help='Num classes.')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='CheckPoint file path.')
+
 args_opt = parser.parse_args()
 
 data_home = "./dataset/10-batches-bin"
+summary_dir = './summary_dir-20201014151702'
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+context.set_context(save_graphs=True)
 
 
 def create_dataset(repeat_num=1, training=True):
@@ -61,20 +67,15 @@ def create_dataset(repeat_num=1, training=True):
     """
     cifar_ds = ds.Cifar10Dataset(data_home)
 
-    if args_opt.run_distribute:
-        rank_id = int(os.getenv('RANK_ID'))
-        rank_size = int(os.getenv('RANK_SIZE'))
-        cifar_ds = ds.Cifar10Dataset(data_home, num_shards=rank_size, shard_id=rank_id)
-
     resize_height = 224
     resize_width = 224
     rescale = 1.0 / 255.0
     shift = 0.0
 
     # define map operations
-    random_crop_op = C.RandomCrop((32, 32), (4, 4, 4, 4)) # padding_mode default CONSTANT
+    random_crop_op = C.RandomCrop((32, 32), (4, 4, 4, 4))  # padding_mode default CONSTANT
     random_horizontal_op = C.RandomHorizontalFlip()
-    resize_op = C.Resize((resize_height, resize_width)) # interpolation default BILINEAR
+    resize_op = C.Resize((resize_height, resize_width))  # interpolation default BILINEAR
     rescale_op = C.Rescale(rescale, shift)
     normalize_op = C.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     changeswap_op = C.HWC2CHW()
@@ -101,8 +102,9 @@ def create_dataset(repeat_num=1, training=True):
 
     return cifar_ds
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
+    context.set_context(reserve_class_name_in_scope=False)
     epoch_size = args_opt.epoch_size
     net = resnet50(args_opt.batch_size, args_opt.num_classes)
     ls = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
@@ -114,10 +116,12 @@ if __name__ == '__main__':
     if args_opt.do_train:
         dataset = create_dataset()
         batch_num = dataset.get_dataset_size()
-        config_ck = CheckpointConfig(save_checkpoint_steps=batch_num, keep_checkpoint_max=35)
-        ckpoint_cb = ModelCheckpoint(prefix="train_resnet_cifar10", directory="./", config=config_ck)
-        loss_cb = LossMonitor()
-        model.train(epoch_size, dataset, callbacks=[ckpoint_cb, loss_cb])
+        config_ck = CheckpointConfig(save_checkpoint_steps=batch_num)
+        ckpoint_cb = ModelCheckpoint(prefix="", directory=os.path.join(summary_dir, "weights"), config=config_ck)
+        data_saver_callback = DataSaverCallback(summary_dir=summary_dir)
+        summary_cb = SummaryCollector(summary_dir=summary_dir, collect_freq=1000)
+        model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb],
+                    dataset_sink_mode=False)
 
     # as for evaluation, users could use model.eval
     if args_opt.do_eval:

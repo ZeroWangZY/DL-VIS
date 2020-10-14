@@ -21,6 +21,8 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common import dtype as mstype
+
+
 def weight_variable(shape):
     """weight_variable"""
     return initializer('XavierUniform', shape=shape, dtype=mstype.float32)
