@@ -55,7 +55,7 @@ parser.add_argument('--checkpoint_path', type=str, default=None, help='CheckPoin
 args_opt = parser.parse_args()
 
 data_home = "./dataset/10-batches-bin"
-summary_dir = './summary_dir-20201014152150'
+summary_dir = './summary_dir-202010151050'
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 context.set_context(save_graphs=True)
@@ -115,12 +115,11 @@ if __name__ == '__main__':
     # as for train, users could use model.train
     if args_opt.do_train:
         dataset = create_dataset()
-        batch_num = dataset.get_dataset_size()
-        config_ck = CheckpointConfig(save_checkpoint_steps=batch_num)
+        config_ck = CheckpointConfig(save_checkpoint_steps=10, keep_checkpoint_max=1000)
         ckpoint_cb = ModelCheckpoint(prefix="", directory=os.path.join(summary_dir, "weights"), config=config_ck)
         data_saver_callback = DataSaverCallback(summary_dir=summary_dir)
         summary_cb = SummaryCollector(summary_dir=summary_dir, collect_freq=1000)
-        model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb],
+        model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb, ckpoint_cb],
                     dataset_sink_mode=False)
 
     # as for evaluation, users could use model.eval

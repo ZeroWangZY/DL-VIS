@@ -4,16 +4,59 @@ from mindspore.train.callback import Callback, RunContext, ModelCheckpoint, Summ
 from mindspore.ops.primitive import Primitive
 import numpy as np
 import time
+from multiprocessing import Process, Queue, Pool
 
 monitored_operations = {'Conv2D',
                         'ReLU', 'MatMul',
                         'MaxPool', 'Reshape'}
 
 
+def cul_activation_percentile(step, activations, parameter_name):
+    percentiles = np.array([0, 25, 50, 75, 100])
+    res = []
+    data = activations.asnumpy()
+    res.append(
+        [step, parameter_name[0:parameter_name.rfind('.')], -1] + np.percentile(data, percentiles).tolist()
+    )
+    for i in range(data.shape[0]):
+        res.append(
+            [step, parameter_name[0:parameter_name.rfind('.')], i] + np.percentile(data[i], percentiles).tolist()
+        )
+    return res
+
+
+def cul_weight_percentile(step, weights, weight_names):
+    res = []
+    percentiles = np.array([0, 25, 50, 75, 100])
+    for i in [i for i in range(len(weight_names)) if weight_names[i][-7:] == ".weight"]:
+        # 存weight
+        weight = weights[i].asnumpy()
+        res.append(
+            [step, weight_names[i]] + np.percentile(weight, percentiles).tolist()
+        )
+    return res
+
+
+def cul_gradient_percentile(step, grads, weight_names):
+    res = []
+    percentiles = np.array([0, 25, 50, 75, 100])
+    for i in [i for i in range(len(weight_names)) if weight_names[i][-7:] == ".weight"]:
+        # gradient
+        grad = grads[i].asnumpy()
+        res.append(
+            [step, weight_names[i]] + np.percentile(grad, percentiles).tolist()
+        )
+    return res
+
+
 class DataSaverCallback(Callback):
     def __init__(self, summary_dir='summary_dir'):
         super(DataSaverCallback, self).__init__()
         self.db_writer = DataWriter(summary_dir)
+        self.p = Pool()
+        self.activation_res = []
+        self.weight_res = []
+        self.gradient_res = []
 
     def begin(self, run_context):
         params = run_context.original_args()
@@ -22,19 +65,13 @@ class DataSaverCallback(Callback):
         opt = params.optimizer
         old_construct = opt.construct
         weight_names = [param.name for param in opt.parameters]
-        gradient_names = [param.name + ".gradient" for param in opt.parameters]
 
         def new_construct(grads):
             self.db_writer.cache['lr'] = opt.get_lr().asnumpy().tolist()
-            percentiles = np.array([0, 25, 50, 75, 100])
-            for i in [i for i in range(len(weight_names)) if weight_names[i][-7:] == ".weight"]:
-                # 存weight和gradient
-                grad = grads[i].asnumpy()
-                weight = opt.parameters[i].asnumpy()
-                self.db_writer.cache['gradients'].append(
-                    [gradient_names[i]] + np.percentile(grad, percentiles).tolist())
-                self.db_writer.cache['weights'].append(
-                    [weight_names[i]] + np.percentile(weight, percentiles).tolist())
+            self.weight_res.append(self.p.apply_async(cul_weight_percentile, args=(
+                self.db_writer.cache['step'], opt.parameters, weight_names)))
+            self.gradient_res.append(self.p.apply_async(cul_gradient_percentile, args=(
+                self.db_writer.cache['step'], grads, weight_names)))
             return old_construct(grads)
 
         opt.construct = new_construct
@@ -46,7 +83,6 @@ class DataSaverCallback(Callback):
             output = call_method(self_, *args)
             should_save = False
             parameter_name = None
-            percentiles = np.array([0, 25, 50, 75, 100])
             for arg in args:
                 if hasattr(arg, 'requires_grad') and getattr(arg,
                                                              'requires_grad') and self_.name in monitored_operations:
@@ -54,17 +90,8 @@ class DataSaverCallback(Callback):
                     parameter_name = arg.name
                     break
             if should_save:
-                time_start = time.time()
-                data = output.asnumpy()
-                self.db_writer.cache['activations'].append(
-                    [parameter_name[0:parameter_name.rfind('.')], -1] + np.percentile(data, percentiles).tolist()
-                )
-                for i in range(data.shape[0]):
-                    self.db_writer.cache['activations'].append(
-                        [parameter_name[0:parameter_name.rfind('.')], i] + np.percentile(data[i], percentiles).tolist()
-                    )
-                time_end = time.time()
-                print('culculate', parameter_name, 'activation time cost', time_end - time_start, 's')
+                self.activation_res.append(self.p.apply_async(cul_activation_percentile, args=(
+                self.db_writer.cache['step'], output, parameter_name)))
             return output
 
         setattr(Primitive, '__call__', new_call_method)
@@ -75,6 +102,21 @@ class DataSaverCallback(Callback):
         self.db_writer.cache['epoch'] = params.cur_epoch_num
 
     def step_end(self, run_context):
+        if self.db_writer.cache['step'] % 5 == 0:
+            time_start = time.time()
+            for res in self.activation_res:
+                self.db_writer.cache['activations'] += res.get()
+            for res in self.weight_res:
+                self.db_writer.cache['weights'] += res.get()
+            for res in self.gradient_res:
+                self.db_writer.cache['gradients'] += res.get()
+            self.activation_res = []
+            self.weight_res = []
+            self.gradient_res = []
+            time_end = time.time()
+            print('res.get() time cost', time_end - time_start, 's')
+
+
         self.db_writer.cache['train_loss'] = run_context.original_args()['net_outputs']
         self.db_writer.save()
 
@@ -163,7 +205,7 @@ class DataWriter():
         time_start = time.time()
         self.c.execute(
             '''INSERT OR REPLACE INTO MODEL_SCALARS(step, train_loss, learning_rate)  VALUES (%d, %s, %s);''' % (
-            self.cache['step'], str(self.cache['train_loss']), str(self.cache['lr'])))
+                self.cache['step'], str(self.cache['train_loss']), str(self.cache['lr'])))
         self.conn.commit()
 
         # 插入activations
@@ -171,7 +213,7 @@ class DataWriter():
         args = []
         activations = self.cache['activations']
         for i in range(len(activations)):
-            args.append(tuple([str(self.cache['step'])] + activations[i]))
+            args.append(tuple(activations[i]))
         self.c.executemany(sql, args)
         self.conn.commit()
 
@@ -180,7 +222,7 @@ class DataWriter():
         args = []
         weights = self.cache['weights']
         for i in range(len(weights)):
-            args.append(tuple([str(self.cache['step'])] + weights[i]))
+            args.append(tuple(weights[i]))
         self.c.executemany(sql, args)
         self.conn.commit()
 
@@ -189,7 +231,7 @@ class DataWriter():
         args = []
         gradients = self.cache['gradients']
         for i in range(len(gradients)):
-            args.append(tuple([str(self.cache['step'])] + gradients[i]))
+            args.append(tuple(gradients[i]))
         self.c.executemany(sql, args)
         self.conn.commit()
 
