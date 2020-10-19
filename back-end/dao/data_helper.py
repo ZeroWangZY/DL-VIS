@@ -78,6 +78,11 @@ class DataHelper():
         cursor = self.c.execute("select VALUE from METADATA where KEY='%s'" % (key))
         for i in cursor:
             return i[0]
+    
+    def get_realtime_metadata(self, key):
+        cursor = self.c.execute("select max(step) from MODEL_SCALARS")
+        for i in cursor:
+            return i[0]
 
     def close(self):
         self.conn.close()

@@ -106,11 +106,15 @@ def get_local_ms_graph(request):
 
 def get_model_scalars(request):
     if request.method == 'GET':
-        data_helper = DataHelper(db_file)
+        # data_helper = DataHelper(db_file)
         graph_name = request.GET.get('graph_name', default='lenet')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
-
+        mode = request.GET.get('mode', default='realtime')
+        if mode == "mock":
+            data_helper = DataHelper(db_file)
+        elif mode == "realtime":
+            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
         return HttpResponse(json.dumps({
             "message": "success",
             "data": data_helper.get_model_scalars(start_step, end_step)
@@ -130,18 +134,36 @@ def get_model_scalars(request):
 
 def get_metadata(request):
     if request.method == 'GET':
-        data_helper = DataHelper(db_file)
+        # data_helper = DataHelper(db_file)
+        mode = request.GET.get('mode', default='realtime')
         graph_name = request.GET.get('graph_name', default='lenet')
-        db_max_step = int(data_helper.get_metadata('max_step'))
+
+        if mode == "mock":
+            data_helper = DataHelper(db_file)
+            db_max_step = int(data_helper.get_metadata('max_step'))
+        elif mode == "realtime":
+            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
+            db_max_step = int(data_helper.get_realtime_metadata('max_step'))
+            
         db_is_training = data_helper.get_metadata('is_training') == 'true'
+
         data_helper.close()
-        return HttpResponse(json.dumps({
-            "message": "success",
-            "data": {
-                "max_step": max_step,
-                "is_training": is_training
-            }
-        }), content_type="application/json")
+        if mode == "mock":
+            return HttpResponse(json.dumps({
+                "message": "success",
+                "data": {
+                    "max_step": max_step,
+                    "is_training": is_training
+                }
+            }), content_type="application/json")
+        elif mode == "realtime":
+            return HttpResponse(json.dumps({
+                "message": "success",
+                "data": {
+                    "max_step": db_max_step,
+                    "is_training": is_training
+                }
+            }), content_type="application/json")
     return HttpResponse(json.dumps({
         "message": "method undefined",
         "data": None
@@ -153,11 +175,16 @@ def get_layer_scalars(request):
         node_ids = request.GET.getlist('node_id')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
+        mode = request.GET.get('mode', default='realtime')
         type = request.GET.get('type', default='activation')
 
-        data_helper = DataHelper(DB_FILES['with_activation'])
+        if mode == "mock":
+            data_helper = DataHelper(DB_FILES['with_activation'])
+        elif mode == "realtime":
+            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
+        
         res = {}
-        node_id = node_ids[0];
+        node_id = node_ids[0]
         db_node_id = alex_node_map.get(node_id)
         if db_node_id != None:
             res[node_id] = data_helper.get_layer_scalars( start_step, end_step)
@@ -179,7 +206,13 @@ def get_node_scalars(request):
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
         type = request.GET.get('type', default='activation')
-        data_helper = DataHelper(db_file)
+        mode = request.GET.get('mode', default='realtime')
+
+        # data_helper = DataHelper(db_file)
+        if mode == "mock":
+            data_helper = DataHelper(db_file)
+        elif mode == "realtime":
+            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
         res = {}
         for node_id in node_ids:
             db_node_id = alex_node_map.get(node_id)
