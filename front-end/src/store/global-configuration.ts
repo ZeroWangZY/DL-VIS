@@ -22,6 +22,7 @@ layerLevelcolorMap.set("mean", "#4B0082");
 let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: false,
   conceptualGraphMode: false,
+  webGLMode: false,
   preprocessingPlugins: {
     pruneByOutput: false,
     replaceVariable: false,
@@ -67,7 +68,11 @@ export const modifyGlobalConfigurations = (
         diagnosisMode: !globalConfigurations.diagnosisMode,
       });
       break;
-
+    case GlobalConfigurationsModificationType.TOGGLE_WEBGLMODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        webGLMode: !globalConfigurations.webGLMode,
+      });
+      break;
     case GlobalConfigurationsModificationType.TOGGLE_CONCEPTUALGRAPH_MODE:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         conceptualGraphMode: !globalConfigurations.conceptualGraphMode,

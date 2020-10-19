@@ -93,7 +93,7 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export default function ConceptualGraphMode() {
+export default function GraphModeSelection() {
   const classes = useStyles();
   const theme = createMuiTheme({
     typography: {
@@ -108,18 +108,34 @@ export default function ConceptualGraphMode() {
       ].join(","),
     },
   });
-  const { conceptualGraphMode } = useGlobalConfigurations();
-  const handleChange = () => {
+  const { conceptualGraphMode, webGLMode } = useGlobalConfigurations();
+  const handleChangeConceptualGraphMode = () => {
     modifyGlobalConfigurations(
       GlobalConfigurationsModificationType.TOGGLE_CONCEPTUALGRAPH_MODE
     );
   };
 
+  const handleChangeWebGLMode = () => {
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.TOGGLE_WEBGLMODE
+    );
+  }
+
   return (
     <div className={classes.content}>
       <FormControlLabel
         control={
-          <IOSSwitch checked={conceptualGraphMode} onChange={handleChange} />
+          <IOSSwitch checked={webGLMode} onChange={handleChangeWebGLMode} />
+        }
+        label={
+          <ThemeProvider theme={theme}>
+            <Typography variant="body2">webGL</Typography>
+          </ThemeProvider>
+        }
+      />
+      <FormControlLabel
+        control={
+          <IOSSwitch checked={conceptualGraphMode} onChange={handleChangeConceptualGraphMode} />
         }
         label={
           <ThemeProvider theme={theme}>

@@ -9,9 +9,13 @@ import RenderGraph from "../../threejs-render/RenderGraph";
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
+import {
+  useGlobalConfigurations
+} from "../../../store/global-configuration";
 
 export default () => {
   const [fixedHeight, setFixedHeight] = useState("360px");
+  const { conceptualGraphMode, webGLMode } = useGlobalConfigurations();
 
   return (
     <Router>
@@ -21,7 +25,7 @@ export default () => {
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
             <div className="vertical-bottom-wrapper">
-              <DanymicInfo setFixedHeight={setFixedHeight}/>
+              <DanymicInfo setFixedHeight={setFixedHeight} />
               <div
                 className="expand-btn"
                 onClick={visibility ? onHide : onShow}
@@ -51,8 +55,8 @@ export default () => {
                   <LayerLevel />
                 </Route>
                 <Route path="/">
-                  {/* <ELKLayout /> */}
-                  <RenderGraph />
+                  {!webGLMode && <ELKLayout />}
+                  {webGLMode && <RenderGraph />}
                 </Route>
               </Switch>
             )}
