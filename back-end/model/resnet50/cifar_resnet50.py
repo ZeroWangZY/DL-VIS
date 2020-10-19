@@ -65,8 +65,8 @@ def create_dataset(repeat_num=1, training=True):
     type_cast_op = C2.TypeCast(mstype.int32)
 
     c_trans = []
-    if training:
-        c_trans = [random_crop_op, random_horizontal_op]
+    # if training:
+    #     c_trans = [random_crop_op, random_horizontal_op]
     c_trans += [resize_op, rescale_op, normalize_op,
                 changeswap_op]
 

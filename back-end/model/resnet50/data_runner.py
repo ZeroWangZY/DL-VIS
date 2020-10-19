@@ -11,6 +11,7 @@ from mindspore.train.serialization import load_checkpoint
 from mindspore.ops.primitive import Primitive
 from resnet import resnet50
 from mindspore.train.callback import Callback
+import mindspore
 import random
 import os
 
@@ -22,7 +23,7 @@ batch_size = 32
 num_classes = 10
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
+mindspore.set_seed(1)
 
 class FixedIndeciesSampler(ds.Sampler):
     def __init__(self, indices):
@@ -55,8 +56,8 @@ def create_dataset(indices, repeat_num=1, training=True):
     type_cast_op = C2.TypeCast(mstype.int32)
 
     c_trans = []
-    if training:
-        c_trans = [random_crop_op, random_horizontal_op]
+    # if training:
+    #     c_trans = [random_crop_op, random_horizontal_op]
     c_trans += [resize_op, rescale_op, normalize_op,
                 changeswap_op]
 
