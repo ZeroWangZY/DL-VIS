@@ -75,7 +75,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
       data1[i] = obj
     } // 初始化对象数组
-
+    
     for (let j = 0; j < rawData.length; j++) { // 0 - 31
       let d = rawData[j];
       let keys = Object.keys(d); // index n1 n2 .... n12
@@ -89,6 +89,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .config({
         dimensions: dimensions,
       })
+    
+    // console.log('data1: ', data1);
+
     radviz.render(data1);
   }
 
@@ -129,7 +132,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let chartRadius = config.size / 2 - config.margin;
       let nodeCount = data.length;
       let panelSize = config.size - config.margin * 2;
-
+      
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
         let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
@@ -154,12 +157,16 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         });
       });
 
+      // console.log('node concat: ', data.concat(dimensionNodes));
+      // console.log('panel: ', panelSize);
+
       simulation
-        .force("x", d3.forceX(panelSize / 2).strength(0.01))
-        .force("y", d3.forceY(panelSize / 2).strength(0.01))
+        // .force("x", d3.forceX(panelSize / 2).strength(0.01))
+        // .force("y", d3.forceY(panelSize / 2).strength(0.01))
         // .linkStrength(function (d) {
         //   return d.value;
         // })
+        .force("center", d3.forceCenter(panelSize / 2 ,  panelSize / 2))
         .nodes(data.concat(dimensionNodes))
         .force("link", d3.forceLink(linksData))
       // .start();
@@ -170,6 +177,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .attr("width", config.size)
         .attr("height", config.size)
         .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
+
+      // console.log('config: ', config);
 
       let root = svg.append('g')
         .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
@@ -188,7 +197,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           .enter().append('line')
           .classed('layerLevelLink', true);
       }
-      console.log(linksData);
+
+      // console.log('nodes: ', data);
+      // console.log('links: ', linksData);
 
       // Nodes
       let nodes = root.selectAll('circle.dot')
@@ -358,8 +369,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         minValue = Math.min(d.value, minValue);
       }
     }
-    console.log(minValue, maxValue);
-
 
     let allAxis = (data[0].map(function (i, j) {
       return i.axis
