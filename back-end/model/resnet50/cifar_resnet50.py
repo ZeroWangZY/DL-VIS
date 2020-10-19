@@ -1,20 +1,3 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ============================================================================
-'''cifar_resnet50
-The sample can be run on Ascend 910 AI processor.
-'''
 import os
 import random
 import argparse
@@ -37,8 +20,10 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from resnet import resnet50
-from data_writer import DataSaverCallback
+from data_writer import DataSaverCallback, SaveIndeciesSampler
+import random
 import os
+import json
 
 # os.environ['MINDSPORE_DUMP_CONFIG'] = "/tmp/pycharm_project_589/dump.json"
 
@@ -51,21 +36,19 @@ parser.add_argument('--epoch_size', type=int, default=100, help='Epoch size.')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
 parser.add_argument('--num_classes', type=int, default=10, help='Num classes.')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='CheckPoint file path.')
-
+os.environ['CUDA_VISIBLE_DEVICES']="2"
 args_opt = parser.parse_args()
 
 data_home = "./dataset/10-batches-bin"
-summary_dir = './summary_dir-202010151050'
+summary_dir = './summary_dir-202010191622'
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-context.set_context(save_graphs=True)
-
 
 def create_dataset(repeat_num=1, training=True):
     """
     create data for next use such as training or infering
     """
-    cifar_ds = ds.Cifar10Dataset(data_home)
+    cifar_ds = ds.Cifar10Dataset(data_home, sampler=SaveIndeciesSampler(summary_dir))
 
     resize_height = 224
     resize_width = 224
@@ -92,7 +75,7 @@ def create_dataset(repeat_num=1, training=True):
     cifar_ds = cifar_ds.map(operations=c_trans, input_columns="image")
 
     # apply shuffle operations
-    cifar_ds = cifar_ds.shuffle(buffer_size=10)
+    # cifar_ds = cifar_ds.shuffle(buffer_size=10)
 
     # apply batch operations
     cifar_ds = cifar_ds.batch(batch_size=args_opt.batch_size, drop_remainder=True)
@@ -119,8 +102,9 @@ if __name__ == '__main__':
         ckpoint_cb = ModelCheckpoint(prefix="", directory=os.path.join(summary_dir, "weights"), config=config_ck)
         data_saver_callback = DataSaverCallback(summary_dir=summary_dir)
         summary_cb = SummaryCollector(summary_dir=summary_dir, collect_freq=1000)
-        model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb, ckpoint_cb],
-                    dataset_sink_mode=False)
+        # model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb, ckpoint_cb],
+        #             dataset_sink_mode=False)
+        model.train(epoch_size, dataset, callbacks=[LossMonitor(), summary_cb, ckpoint_cb, data_saver_callback], dataset_sink_mode=False)
 
     # as for evaluation, users could use model.eval
     if args_opt.do_eval:

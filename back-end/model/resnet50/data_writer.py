@@ -2,8 +2,12 @@ import sqlite3
 import os
 from mindspore.train.callback import Callback, RunContext, ModelCheckpoint, SummaryCollector
 from mindspore.ops.primitive import Primitive
+import mindspore.dataset as ds
 import numpy as np
+import cupy as cp
 import time
+import random
+import json
 from multiprocessing import Process, Queue, Pool
 
 monitored_operations = {'Conv2D',
@@ -48,10 +52,47 @@ def cul_gradient_percentile(step, grads, weight_names):
         )
     return res
 
+def cul_activation_percentile_gpu(step, activations, parameter_name):
+    percentiles = cp.array([0, 25, 50, 75, 100])
+    res = []
+    data = cp.asarray(activations.asnumpy())
+    res.append(
+        [step, parameter_name[0:parameter_name.rfind('.')], -1] + cp.percentile(data, percentiles).tolist()
+    )
+    for i in range(data.shape[0]):
+        res.append(
+            [step, parameter_name[0:parameter_name.rfind('.')], i] + cp.percentile(data[i], percentiles).tolist()
+        )
+    return res
+
+
+def cul_weight_percentile_gpu(step, weights, weight_names):
+    res = []
+    percentiles = cp.array([0, 25, 50, 75, 100])
+    for i in [i for i in range(len(weight_names)) if weight_names[i][-7:] == ".weight"]:
+        # 存weight
+        weight = np.asarray(weights[i].asnumpy())
+        res.append(
+            [step, weight_names[i]] + cp.percentile(weight, percentiles).tolist()
+        )
+    return res
+
+
+def cul_gradient_percentile_gpu(step, grads, weight_names):
+    res = []
+    percentiles = cp.array([0, 25, 50, 75, 100])
+    for i in [i for i in range(len(weight_names)) if weight_names[i][-7:] == ".weight"]:
+        # gradient
+        grad = np.asarray(grads[i].asnumpy())
+        res.append(
+            [step, weight_names[i]] + np.percentile(grad, percentiles).tolist()
+        )
+    return res
 
 class DataSaverCallback(Callback):
-    def __init__(self, summary_dir='summary_dir'):
+    def __init__(self, summary_dir='summary_dir', save_interval=10):
         super(DataSaverCallback, self).__init__()
+        self.save_interval = save_interval
         self.db_writer = DataWriter(summary_dir)
         self.p = Pool()
         self.activation_res = []
@@ -102,7 +143,7 @@ class DataSaverCallback(Callback):
         self.db_writer.cache['epoch'] = params.cur_epoch_num
 
     def step_end(self, run_context):
-        if self.db_writer.cache['step'] % 5 == 0:
+        if self.db_writer.cache['step'] % self.save_interval == 0:
             time_start = time.time()
             for res in self.activation_res:
                 self.db_writer.cache['activations'] += res.get()
@@ -238,3 +279,22 @@ class DataWriter():
         time_end = time.time()
         print('insert into sqlite time cost', time_end - time_start, 's')
         self.reset_cache()
+
+class SaveIndeciesSampler(ds.Sampler):
+    def __init__(self, summary_dir):
+        super(SaveIndeciesSampler, self).__init__()
+        self.summary_dir = summary_dir
+        os.makedirs(os.path.join(self.summary_dir, "indices"))
+        self.epoch_num = 0
+
+    def __iter__(self):
+        self.epoch_num += 1
+        indices = random.sample(range(self.dataset_size), self.dataset_size)
+        self.save_data_index(indices)
+        for i in indices:
+            yield i
+
+    def save_data_index(self, indices):
+        file = open(os.path.join(self.summary_dir, "indices", str(self.epoch_num) + ".json"), 'w')
+        file.write(json.dumps(indices))
+        file.close()
