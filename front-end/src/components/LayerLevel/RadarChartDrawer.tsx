@@ -58,7 +58,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         });
       }
     }
-
+    
     radarChart(".radarChart", data, radarChartOptions); // 画雷达图
   }
 

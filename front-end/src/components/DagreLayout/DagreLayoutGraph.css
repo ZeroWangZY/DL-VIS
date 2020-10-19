@@ -86,7 +86,7 @@
 
 /* 展开的聚合节点 */
 .cluster .label-container {
-  fill: #b2b2b2;
+  fill: none;
   fill-opacity: 0.2;
   stroke-width: 1px;
   stroke:#c7c7c7;
@@ -96,7 +96,7 @@
 }
 
 .cluster.layertype-FC rect {
-  fill: #b2b2b2;
+  fill:none;
   fill-opacity: 0.2;
   stroke-width: 1px;
   stroke:#c7c7c7;
@@ -122,7 +122,7 @@
 }
 
 .cluster.layertype-RNN rect {
-  fill: #b2b2b2;
+  fill: none;
   fill-opacity: 0.2;
   stroke-width: 1px;
   stroke:#c7c7c7;
@@ -131,7 +131,7 @@
   fill: #333;
 }
 .cluster.layertype-OTHER rect {
-  fill: #b2b2b2;
+  fill: none;
   fill-opacity: 0.2;
   stroke-width: 1px;
   stroke:#c7c7c7;
