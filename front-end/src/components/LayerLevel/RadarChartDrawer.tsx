@@ -58,7 +58,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         });
       }
     }
-    
+
     radarChart(".radarChart", data, radarChartOptions); // 画雷达图
   }
 
@@ -75,7 +75,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
       data1[i] = obj
     } // 初始化对象数组
-    
+
     for (let j = 0; j < rawData.length; j++) { // 0 - 31
       let d = rawData[j];
       let keys = Object.keys(d); // index n1 n2 .... n12
@@ -89,7 +89,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .config({
         dimensions: dimensions,
       })
-    
+
     // console.log('data1: ', data1);
 
     radviz.render(data1);
@@ -129,10 +129,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       });
       let thetaScale = d3.scaleLinear().domain([0, dimensionNamesNormalized.length]).range([0, Math.PI * 2]);
 
+      // console.log('config: ', config);
+
       let chartRadius = config.size / 2 - config.margin;
       let nodeCount = data.length;
       let panelSize = config.size - config.margin * 2;
-      
+
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
         let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
@@ -142,9 +144,14 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           x: x,
           y: y,
           fixed: true,
-          name: d
+          name: d,
+          fx: x,
+          fy: y
         };
       });
+
+      // console.log('dimensionNodes: ', dimensionNodes);
+      // console.log('dimensionNamesNormalized: ', dimensionNamesNormalized);
 
       let linksData = [];
       data.forEach(function (d, i) {
@@ -166,7 +173,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         // .linkStrength(function (d) {
         //   return d.value;
         // })
-        .force("center", d3.forceCenter(panelSize / 2 ,  panelSize / 2))
+        .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
         .nodes(data.concat(dimensionNodes))
         .force("link", d3.forceLink(linksData))
       // .start();
@@ -253,6 +260,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         }
 
         nodes.attr("cx", function (d: any) { return d.x; })
+          .attr("cy", function (d: any) { return d.y; })
+
+        labelNodes.attr("cx", function (d: any) { return d.x; })
           .attr("cy", function (d: any) { return d.y; })
       });
       return this;
