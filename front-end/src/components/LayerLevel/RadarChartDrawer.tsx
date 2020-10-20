@@ -20,11 +20,212 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
       radarChartWidth = Math.min(600, window.innerWidth - 10) - radarChartMargin.left - radarChartMargin.right,
       radarChartHeight = Math.min(radarChartWidth, window.innerHeight - radarChartMargin.top - radarChartMargin.bottom - 20);
-    let ForceGraphSize = 240;
+    let ForceGraphSize = (Math.min(radarChartWidth, radarChartHeight) / 2) / 2 * Math.sqrt(2); // 内圈圆半径 * sqrt(2);
+
     drawRadarChart(rawData, radarChartMargin, radarChartWidth, radarChartHeight);
     // Radiz图 
     drawForceDirectedGraph(rawData, ForceGraphSize, radarChartWidth, radarChartHeight, radarChartMargin);
   }, [rawData]);
+
+  const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
+    // 数据转换
+    let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
+    let data1 = new Array(numberOfLine);
+    let dimensions = [];
+    for (let i = 0; i < data1.length; i++) { // 12 
+      let obj = {}
+      for (let j = 0; j < rawData.length; j++) { // 32
+        obj["a" + (j + 1)] = -1; // a1 a2 .... a32
+        if (i == 0) dimensions.push("a" + (j + 1));
+      }
+      data1[i] = obj
+    } // 初始化对象数组
+
+    for (let j = 0; j < rawData.length; j++) { // 0 - 31
+      let d = rawData[j];
+      let keys = Object.keys(d); // index n1 n2 .... n12
+      for (let i = 1; i < keys.length; i++) { // 忽略第一维"index"
+        let key = keys[i]; // n1 n2 .... n12
+        data1[i - 1]["a" + (j + 1)] = d[key];
+      }
+    }
+
+    const config = {
+      el: document.querySelector('.radarChart'),
+      size: size,
+      margin: 0,
+      color: d3.scaleOrdinal(d3.schemeCategory10),
+      dimensions: dimensions,
+      zoomFactor: 1,
+      dotRadius: 6,
+      tooltipFormatter: function (d) {
+        return d;
+      }
+    };
+
+    let radviz = radvizComponent(config, size, radarChartWidth, radarChartHeight, radarChartMargin);
+
+    radviz.render(data1);
+  }
+
+  let radvizComponent = function (config, size, radarChartWidth, radarChartHeight, radarChartMargin) {
+
+    const render = function (data) {
+      data = addNormalizedValues(data);
+      let normalizeSuffix = '_normalized';
+      let dimensionNamesNormalized = config.dimensions.map(function (d) {
+        return d + normalizeSuffix;
+      });
+      let thetaScale = d3.scaleLinear().domain([0, dimensionNamesNormalized.length]).range([0, Math.PI * 2]);
+
+      let chartRadius = config.size / 2 - config.margin;
+      let nodeCount = data.length;
+      let panelSize = config.size - config.margin * 2;
+
+      let dimensionNodes = config.dimensions.map(function (d, i) {
+        let angle = thetaScale(i);
+        let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
+        let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
+        return {
+          index: nodeCount + i,
+          x: x,
+          y: y,
+          fixed: true,
+          name: d,
+          fx: x,
+          fy: y
+        };
+      });
+
+      let linksData = [];
+      data.forEach(function (d, i) {
+        dimensionNamesNormalized.forEach(function (dB, iB) {
+          linksData.push({
+            source: i,
+            target: nodeCount + iB,
+            value: d[dB]
+          });
+        });
+      });
+
+      const simulation = d3.forceSimulation()
+        .force("charge", d3.forceManyBody().strength(-60))
+      // .velocityDecay(0.5);
+
+      simulation
+        .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
+        .nodes(data.concat(dimensionNodes))
+        .force("link", d3.forceLink(linksData))
+
+      // Basic structure
+      let svg = d3.select(config.el)
+        .append('svg')
+        .attr("width", config.size)
+        .attr("height", config.size)
+        .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
+      let root = svg.append('g')
+        .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
+
+      let panel = root.append('circle')
+        .classed('panel', true)
+        .attr("r", chartRadius)
+        .attr("cx", chartRadius)
+        .attr("cy", chartRadius)
+
+      // Links
+      let links = root.selectAll('.link')
+        .data(linksData)
+        .enter().append('line')
+        .classed('layerLevelLink', true);
+
+      // Nodes
+      let nodes = root.selectAll('circle.dot')
+        .data(data)
+        .enter().append('circle')
+        .attr("class", function (d) { return "dot id_" + (d as any).index })
+        .attr("r", config.dotRadius)
+        .attr("fill", function (d, i): any {
+          return config.color(i + "");
+        })
+        .on('mouseenter', function (d) {
+          d3.selectAll(".radarStroke")
+            .style("stroke-opacity", 0.1);
+
+          d3.select(".radarStroke.id_" + (d as any).index)
+            .style("stroke-width", 7 + "px")
+            .style("stroke-opacity", 1); // 改变当前区域的透明度
+
+          this.classList.add('active');
+        })
+        .on('mouseout', function (d) {
+          d3.select(".radarStroke.id_" + (d as any).index)
+            .style("stroke-width", 2 + "px")
+
+          d3.selectAll(".radarStroke")
+            .style("stroke-opacity", 1);
+
+          this.classList.remove('active');
+        });
+
+      // Labels n1 - n12
+      let labelNodes = root.selectAll('circle.label-node')
+        .data(dimensionNodes)
+        .enter().append('circle')
+        .classed('label-node', true)
+        .attr("cx", function (d) {
+          return (d as any).x;
+        })
+        .attr("cy", function (d) {
+          return (d as any).y;
+        })
+        .attr("r", 2);
+
+      // Update force
+      simulation.on('tick', function () {
+        links.attr("x1", function (d) { return d.source.x; })
+          .attr("y1", function (d) { return d.source.y; })
+          .attr("x2", function (d) { return d.target.x; })
+          .attr("y2", function (d) { return d.target.y; })
+
+        nodes.attr("cx", function (d: any) { return d.x; })
+          .attr("cy", function (d: any) { return d.y; })
+
+        labelNodes.attr("cx", function (d: any) { return d.x; })
+          .attr("cy", function (d: any) { return d.y; })
+      });
+      return this;
+    };
+
+    const addNormalizedValues = function (data) {
+      data.forEach(function (d) {
+        config.dimensions.forEach(function (dimension) {
+          d[dimension] = +d[dimension];
+        });
+      });
+
+      let normalizationScales = {};
+      config.dimensions.forEach(function (dimension) {
+        let dimension1 = dimension;
+        normalizationScales[dimension] = d3.scaleLinear()
+          .domain(
+            d3.extent(data.map(function (d, i) {
+              return d[dimension1];
+            })) as [number, number]).range([0, 1]);
+      });
+
+      data.forEach(function (d) {
+        config.dimensions.forEach(function (dimension) {
+          d[dimension + '_normalized'] = normalizationScales[dimension](d[dimension]);
+        });
+      });
+
+      return data;
+    };
+
+    let exports = { render: render };
+
+    return exports;
+  };
 
   const drawRadarChart = (rawData, margin, width, height) => {
     // 雷达图参数
@@ -61,282 +262,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     radarChart(".radarChart", data, radarChartOptions); // 画雷达图
   }
-
-  const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
-    // 数据转换
-    let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
-    let data1 = new Array(numberOfLine);
-    let dimensions = [];
-    for (let i = 0; i < data1.length; i++) { // 12 
-      let obj = {}
-      for (let j = 0; j < rawData.length; j++) { // 32
-        obj["a" + (j + 1)] = -1; // a1 a2 .... a32
-        if (i == 0) dimensions.push("a" + (j + 1));
-      }
-      data1[i] = obj
-    } // 初始化对象数组
-
-    for (let j = 0; j < rawData.length; j++) { // 0 - 31
-      let d = rawData[j];
-      let keys = Object.keys(d); // index n1 n2 .... n12
-      for (let i = 1; i < keys.length; i++) { // 忽略第一维"index"
-        let key = keys[i]; // n1 n2 .... n12
-        data1[i - 1]["a" + (j + 1)] = d[key];
-      }
-    }
-
-    let radviz = radvizComponent(size, radarChartWidth, radarChartHeight, radarChartMargin)
-      .config({
-        dimensions: dimensions,
-      })
-
-    // console.log('data1: ', data1);
-
-    radviz.render(data1);
-  }
-
-  let radvizComponent = function (size, radarChartWidth, radarChartHeight, radarChartMargin) {
-    let config = {
-      el: document.querySelector('.radarChart'),
-      size: size,
-      margin: 30,
-      colorScale: d3.scaleOrdinal().range(['skyblue', 'orange', 'lime']),
-      colorAccessor: function (d) {
-        return d['Region'];
-      },
-      dimensions: [],
-      drawLinks: true,
-      zoomFactor: 1,
-      dotRadius: 6,
-      useTooltip: false,
-      tooltipFormatter: function (d) {
-        return d;
-      }
-    };
-
-    let events = d3.dispatch('dotEnter', 'dotLeave');
-
-    let simulation = d3.forceSimulation()
-      // .chargeDistance(0)
-      .force("charge", d3.forceManyBody().strength(-60))
-      .velocityDecay(0.5);
-
-    let render = function (data) {
-      data = addNormalizedValues(data);
-      let normalizeSuffix = '_normalized';
-      let dimensionNamesNormalized = config.dimensions.map(function (d) {
-        return d + normalizeSuffix;
-      });
-      let thetaScale = d3.scaleLinear().domain([0, dimensionNamesNormalized.length]).range([0, Math.PI * 2]);
-
-      // console.log('config: ', config);
-
-      let chartRadius = config.size / 2 - config.margin;
-      let nodeCount = data.length;
-      let panelSize = config.size - config.margin * 2;
-
-      let dimensionNodes = config.dimensions.map(function (d, i) {
-        let angle = thetaScale(i);
-        let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
-        let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
-        return {
-          index: nodeCount + i,
-          x: x,
-          y: y,
-          fixed: true,
-          name: d,
-          fx: x,
-          fy: y
-        };
-      });
-
-      // console.log('dimensionNodes: ', dimensionNodes);
-      // console.log('dimensionNamesNormalized: ', dimensionNamesNormalized);
-
-      let linksData = [];
-      data.forEach(function (d, i) {
-        dimensionNamesNormalized.forEach(function (dB, iB) {
-          linksData.push({
-            source: i,
-            target: nodeCount + iB,
-            value: d[dB]
-          });
-        });
-      });
-
-      // console.log('node concat: ', data.concat(dimensionNodes));
-      // console.log('panel: ', panelSize);
-
-      simulation
-        // .force("x", d3.forceX(panelSize / 2).strength(0.01))
-        // .force("y", d3.forceY(panelSize / 2).strength(0.01))
-        // .linkStrength(function (d) {
-        //   return d.value;
-        // })
-        .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
-        .nodes(data.concat(dimensionNodes))
-        .force("link", d3.forceLink(linksData))
-      // .start();
-
-      // Basic structure
-      let svg = d3.select(config.el)
-        .append('svg')
-        .attr("width", config.size)
-        .attr("height", config.size)
-        .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
-
-      // console.log('config: ', config);
-
-      let root = svg.append('g')
-        .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
-
-      let panel = root.append('circle')
-        .classed('panel', true)
-        .attr("r", chartRadius)
-        .attr("cx", chartRadius)
-        .attr("cy", chartRadius)
-
-      // Links
-      let links;
-      if (config.drawLinks) {
-        links = root.selectAll('.link')
-          .data(linksData)
-          .enter().append('line')
-          .classed('layerLevelLink', true);
-      }
-
-      // console.log('nodes: ', data);
-      // console.log('links: ', linksData);
-
-      // Nodes
-      let nodes = root.selectAll('circle.dot')
-        .data(data)
-        .enter().append('circle')
-        .attr("class", function (d) { return "dot id_" + (d as any).index })
-        .attr("r", config.dotRadius)
-        .attr("fill", function (d): any {
-          return config.colorScale(config.colorAccessor(d));
-        })
-        .on('mouseenter', function (d) {
-          d3.selectAll(".radarStroke")
-            .style("stroke-opacity", 0.1);
-
-          d3.select(".radarStroke.id_" + (d as any).index)
-            .style("stroke-width", 7 + "px")
-            .style("stroke-opacity", 1); // 改变当前区域的透明度
-
-          this.classList.add('active');
-        })
-        .on('mouseout', function (d) {
-          d3.select(".radarStroke.id_" + (d as any).index)
-            .style("stroke-width", 2 + "px")
-
-          d3.selectAll(".radarStroke")
-            .style("stroke-opacity", 1);
-
-          this.classList.remove('active');
-        });
-
-      // Labels n1 - n12
-      let labelNodes = root.selectAll('circle.label-node')
-        .data(dimensionNodes)
-        .enter().append('circle')
-        .classed('label-node', true)
-        .attr("cx", function (d) {
-          return d.x;
-        })
-        .attr("cy", function (d) {
-          return d.y;
-        })
-        .attr("r", 2);
-
-      // Update force
-      simulation.on('tick', function () {
-        if (config.drawLinks) {
-          links.attr("x1", function (d) { return d.source.x; })
-            .attr("y1", function (d) { return d.source.y; })
-            .attr("x2", function (d) { return d.target.x; })
-            .attr("y2", function (d) { return d.target.y; })
-        }
-
-        nodes.attr("cx", function (d: any) { return d.x; })
-          .attr("cy", function (d: any) { return d.y; })
-
-        labelNodes.attr("cx", function (d: any) { return d.x; })
-          .attr("cy", function (d: any) { return d.y; })
-      });
-      return this;
-    };
-
-    let utils = {
-      merge: function (obj1: any, obj2: any) {
-        for (let p in obj2) {
-          if (obj2[p] && obj2[p].constructor == Object) {
-            if (obj1[p]) {
-              this.merge(obj1[p], obj2[p]);
-              continue;
-            }
-          }
-          obj1[p] = obj2[p];
-        }
-      },
-
-      mergeAll: function (obj1: any, obj2: any): any {
-        let newObj = {};
-        let objs = arguments;
-        this.merge(newObj, obj1);
-        this.merge(newObj, obj2);
-        return newObj;
-      }
-    };
-
-    let setConfig = function (_config) {
-      config = utils.mergeAll(config, _config);
-      return this;
-    };
-
-    let addNormalizedValues = function (data) {
-      data.forEach(function (d) {
-        config.dimensions.forEach(function (dimension) {
-          d[dimension] = +d[dimension];
-        });
-      });
-
-      let normalizationScales = {};
-      config.dimensions.forEach(function (dimension) {
-        let dimension1 = dimension;
-        normalizationScales[dimension] = d3.scaleLinear()
-          .domain(
-            d3.extent(data.map(function (d, i) {
-              return d[dimension1];
-            })) as [number, number]).range([0, 1]);
-      });
-
-      data.forEach(function (d) {
-        config.dimensions.forEach(function (dimension) {
-          d[dimension + '_normalized'] = normalizationScales[dimension](d[dimension]);
-        });
-      });
-
-      return data;
-    };
-
-    let exports = {
-      config: setConfig,
-      render: render
-    };
-
-    exports["on"] = d3_rebind(exports, events, events["on"]);
-
-    return exports;
-
-    function d3_rebind(target, source, method) {
-      return function () {
-        let value = method.apply(source, arguments);
-        return value === source ? target : value;
-      };
-    }
-  };
 
   const radarChart = (id, data, options) => {
     let cfg = {
