@@ -37,7 +37,7 @@ const fetchBackendData = () => {
       return fetch;
     }(), 10000);
 
-  }, [currentMSGraphName]);
+  }, [currentMSGraphName, dataMode]);
 }
 
 export default fetchBackendData;
