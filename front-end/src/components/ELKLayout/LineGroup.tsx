@@ -6,6 +6,7 @@ import {
   useGlobalStates,
   modifyGlobalStates,
 } from "../../store/global-states";
+import { useGlobalConfigurations } from "../../store/global-configuration"
 import { GlobalStatesModificationType, NodeScalarType } from "../../store/global-states.type";
 import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
 import { isWidthDown } from "@material-ui/core";
@@ -45,6 +46,7 @@ interface layerNodeScalar {
 }
 
 const LineGroup: React.FC<Props> = (props: Props) => {
+  const { dataMode } = useGlobalConfigurations();
   const { svgWidth, svgHeight, layerNodeId } = props;
   const { currentStep, maxStep, currentMSGraphName, nodeScalarType } = useGlobalStates();
   const svgRef = useRef();
@@ -89,7 +91,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
     const typeArray = ['activation', 'gradient', 'weight'];
-    let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: typeArray[type] });
+    let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: typeArray[type], mode: dataMode });
     let nodeScalars = data.data.data;
     let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
     let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];

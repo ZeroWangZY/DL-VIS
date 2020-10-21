@@ -35,6 +35,7 @@ let globalConfigurations: GlobalConfigurations = {
   modelLevelcolorMap: modelLevelcolorMap,
   layerLevelcolorMap: layerLevelcolorMap,
   isPathFindingMode: false,
+  dataMode: "mock",
 };
 
 const broadcast = () => {
@@ -56,6 +57,11 @@ export const modifyGlobalConfigurations = (
     case GlobalConfigurationsModificationType.SET_DIAGNOSIS_MODE:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         diagnosisMode: true,
+      });
+      break;
+    case GlobalConfigurationsModificationType.SET_DATA_MODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        dataMode: payload,
       });
       break;
     case GlobalConfigurationsModificationType.UNSET_DIAGNOSIS_MODE:

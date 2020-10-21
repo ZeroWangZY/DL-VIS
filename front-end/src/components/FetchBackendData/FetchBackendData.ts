@@ -11,6 +11,7 @@ let timer = null;
 
 const fetchBackendData = () => {
   const { currentMSGraphName } = useGlobalStates();
+  const { dataMode } = useGlobalConfigurations();
 
   useEffect(() => {
     if (!currentMSGraphName) return;
@@ -19,7 +20,7 @@ const fetchBackendData = () => {
       clearInterval(timer);
 
     timer = setInterval(function fetch() {
-      fetchMetadata({ graph_name: currentMSGraphName }).then((data) => {
+      fetchMetadata({ graph_name: currentMSGraphName, mode: dataMode }).then((data) => {
         const maxStep = data.data.data.max_step;
         const isTraining = data.data.data.is_training;
 

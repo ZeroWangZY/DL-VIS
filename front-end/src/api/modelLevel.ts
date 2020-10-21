@@ -13,6 +13,7 @@ interface fetchModelScalarsParams {
     "graph_name": string,
     "start_step": number,
     "end_step": number,
+    mode: string,
 }
 export const fetchModelScalars =
     (params: fetchModelScalarsParams): Promise<{ data }> =>
@@ -24,6 +25,7 @@ interface metadata {
 }
 interface fetchMetadataParams {
     "graph_name": string,
+    mode: string,
 }
 export const fetchMetadata =
     (params: fetchMetadataParams): Promise<{ data }> =>

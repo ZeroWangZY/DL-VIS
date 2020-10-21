@@ -18,7 +18,8 @@ interface fetchNodeScalarsParams {
   "node_id": string[],
   "start_step": number,
   "end_step": number,
-  "type": string
+  "type": string,
+  mode: string,
 }
 export const fetchNodeScalars =
   (params: fetchNodeScalarsParams): Promise<{ data }> =>

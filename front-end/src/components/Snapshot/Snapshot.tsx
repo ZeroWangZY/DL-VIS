@@ -71,7 +71,7 @@ const Snapshot: React.FC = () => {
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const [showDomain, setShowDomain] = useState(null);
   const { currentStep, currentMSGraphName, isTraining, maxStep } = useGlobalStates();
-  const { modelLevelcolorMap } = useGlobalConfigurations();
+  const { modelLevelcolorMap, dataMode } = useGlobalConfigurations();
 
   const measuredRef = useCallback((node) => {
     if (node !== null) {
@@ -114,7 +114,7 @@ const Snapshot: React.FC = () => {
   }, [isTraining, maxStep, currentMSGraphName, checkBoxState, svgWidth, currentStep]);
 
   const computeAndDrawLine = async () => {
-    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, maxStep, modelLevelcolorMap);
+    const dataArr = await fetchAndComputeModelScalars(currentMSGraphName, 1, maxStep, modelLevelcolorMap, dataMode);
 
     // 将要显示的数据拿出来
     let dataArrToShow = [];

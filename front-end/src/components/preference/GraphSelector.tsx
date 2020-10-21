@@ -16,7 +16,7 @@ import Select from "@material-ui/core/Select";
 import { fetchAndParseGraphData } from "../../common/graph-processing/stage1/parser.tf";
 import { RawGraphOptimizer } from "../../common/graph-processing/stage1/raw-graph-optimizer.tf";
 import MsRawGraphOptimizer from "../../common/graph-processing/stage1/raw-graph-optimizer.ms";
-import { useGlobalConfigurations } from "../../store/global-configuration";
+import { useGlobalConfigurations, modifyGlobalConfigurations } from "../../store/global-configuration";
 import {
   LayoutType,
   GlobalConfigurationsModificationType,
@@ -131,6 +131,10 @@ const GraphSelector = (props) => {
           GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
           graphName
         );
+        modifyGlobalConfigurations(
+          GlobalConfigurationsModificationType.SET_DATA_MODE,
+          "realtime"
+        )
         setLoadingGraphData(false);
         setMsRawGraph(parsedGraph);
       });

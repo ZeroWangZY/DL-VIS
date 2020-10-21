@@ -11,6 +11,7 @@ import {
   fetchLayerScalars
 } from "../../api/layerlevel";
 import { ShowActivationOrGradient } from "../../store/global-states.type";
+import { useGlobalConfigurations } from "../../store/global-configuration"
 import { useGlobalStates } from "../../store/global-states";
 import { useProcessedGraph } from "../../store/processedGraph";
 import { LayerNodeImp, LayerType } from "../../common/graph-processing/stage2/processed-graph";
@@ -131,7 +132,8 @@ const LayerLevel: React.FC = () => {
     nodeId: null
   });
   const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
-
+  const { dataMode } = useGlobalConfigurations();
+  
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setSvgHeight(node.getBoundingClientRect().height);
@@ -163,7 +165,7 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getLayerScalars(currentMSGraphName, childNodeId, 1, testMaxStep, fetchDataType); // 取[1, 11) step
+    getLayerScalars(currentMSGraphName, childNodeId, 1, testMaxStep, fetchDataType, dataMode); // 取[1, 11) step
   }, [
     childNodeId,
     currentMSGraphName,
@@ -692,7 +694,8 @@ const LayerLevel: React.FC = () => {
     nodeIds,
     startStep,
     endStep,
-    type
+    type,
+    dataMode
   ) => {
     setLoadingData(true);
     await fetchLayerScalars({
@@ -701,6 +704,7 @@ const LayerLevel: React.FC = () => {
       start_step: startStep,
       end_step: endStep,
       type: type,
+      mode: dataMode,
     }).then((res) => {
       if (res.data.message === "success") {
         setLoadingData(false);
