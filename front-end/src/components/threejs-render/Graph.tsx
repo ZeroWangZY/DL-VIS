@@ -443,7 +443,7 @@ const Graph: React.FC = () => {
       });
       console.log(oldStyledGraphNodesMap.size);
       console.log(styledGraphNodesMap.size);
-      if (oldStyledGraphNodesMap.size !== styledGraphNodesMap.size) {
+      if (false && oldStyledGraphNodesMap.size !== styledGraphNodesMap.size) { // 将动画部分禁止
         console.log("动画触发");
         //动画过渡
         iter = 0;
