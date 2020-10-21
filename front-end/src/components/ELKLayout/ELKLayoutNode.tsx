@@ -192,7 +192,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             rx={ellipseX}
             ry={ellipseY}
           />
-          <text x={-4} y={2} fill="#333" style={{fontSize: '8px'}}>
+          <text x={-4} y={3} fill="#333" style={{fontSize: '8px'}}>
             {visNodeMap[node.id] instanceof StackedOpNodeImp ? 
               visNodeMap[node.id].nodesContained.size : ''}
           </text>
