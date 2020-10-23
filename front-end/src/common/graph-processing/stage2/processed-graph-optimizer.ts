@@ -130,6 +130,90 @@ function deAggre(processedGraph: ProcessedGraph): void {
   }
 }
 
+function disassembleFc(processedGraph: ProcessedGraph): void {
+  const { nodeMap } = processedGraph
+  for (const node of Object.values(nodeMap)) {
+    if (node.type === NodeType.OPERATION && (node as OperationNode).operationType === 'MatMul') {
+      if (node.inputNode.size === 1 && node.outputNode.size === 1) {
+        const biasAddNode = nodeMap[Array.from(node.outputNode)[0]] as OperationNode
+        if(biasAddNode.operationType !== "BiasAdd") continue
+        const inputNode = nodeMap[Array.from(node.inputNode)[0]] as OperationNode
+        const parent = nodeMap[node.parent] as GroupNode
+        let parentOfInputNodeId = inputNode.parent
+        let parentOfInputNode = nodeMap[parentOfInputNodeId] as GroupNode
+        // if (parentOfInputNodeId !== ROOT_SCOPE) {
+        //   parentOfInputNodeId = parentOfInputNode.parent
+        //   parentOfInputNode = nodeMap[parentOfInputNodeId] as GroupNode
+        // }
+
+        const newScopeChildren = new Set<string>()
+        newScopeChildren.add(node.id)
+        newScopeChildren.add(biasAddNode.id)
+        parent.children.delete(node.id)
+        parent.children.delete(biasAddNode.id)
+        const newScope = new GroupNodeImp({
+          id: parent.id + "_copy_" + Math.random().toString(36).slice(-8),
+          children: newScopeChildren,
+          opts: { displayedName: parent.displayedName },
+          isModule: false,
+          parentModule: parentOfInputNode.parentModule
+        })
+        node.parent = newScope.id
+        biasAddNode.parent = newScope.id
+        nodeMap[newScope.id] = newScope
+        parentOfInputNode.children.add(newScope.id)
+        newScope.parent = parentOfInputNodeId
+        if (parent.children.size === 0) {
+          (nodeMap[parent.parent] as GroupNode).children.delete(parent.id)
+        }
+      }
+    }
+  }
+}
+
+const ACTIVATION_TYPE = new Set(['Gelu'])
+function disassembleActivations(processedGraph: ProcessedGraph): void {
+  const { nodeMap } = processedGraph
+  for (const node of Object.values(nodeMap)) {
+    if (node.type === NodeType.OPERATION && ACTIVATION_TYPE.has((node as OperationNode).operationType)) {
+      if (node.inputNode.size === 1 && node.outputNode.size === 1) {
+        const inputNode = nodeMap[Array.from(node.inputNode)[0]] as OperationNode
+        const parent = nodeMap[node.parent] as GroupNode
+        let parentOfInputNodeId = inputNode.parent
+        let parentOfInputNode = nodeMap[parentOfInputNodeId] as GroupNode
+
+        const newScopeChildren = new Set<string>()
+        newScopeChildren.add(node.id)
+        parent.children.delete(node.id)
+        const newScope = new GroupNodeImp({
+          id: parent.id + "_copy_" + Math.random().toString(36).slice(-8),
+          children: newScopeChildren,
+          opts: { displayedName: parent.displayedName },
+          isModule: false,
+          parentModule: parentOfInputNode.parentModule
+        })
+        node.parent = newScope.id
+        nodeMap[newScope.id] = newScope
+        parentOfInputNode.children.add(newScope.id)
+        newScope.parent = parentOfInputNodeId
+        if (parent.children.size === 0) {
+          (nodeMap[parent.parent] as GroupNode).children.delete(parent.id)
+        }
+      }
+    }
+  }
+}
+
+function removeEmptyGroupNode(processedGraph: ProcessedGraph): void {
+  const { nodeMap } = processedGraph
+  for (const node of Object.values(nodeMap)) {
+    if (node.type === NodeType.GROUP && (node as GroupNode).children.size === 0) {
+      (nodeMap[(node as GroupNode).parent] as GroupNode).children.delete(node.id)
+      // TODO: 完善去除无意义的GroupNode，还应包含内部无op node的GroupNode
+    }
+  }
+}
+
 function deloop(processedGraph: ProcessedGraph): void {
   const traverseStack = _findFirstInputNodes(processedGraph)
   const { nodeMap } = processedGraph
@@ -202,7 +286,7 @@ function _findFirstInputNodes(processedGraph: ProcessedGraph): OperationNode[] {
 
   // 对于节点过多的复杂图，不去环
   if (Object.keys(nodeMap).length > 200) return []
-  
+
   const results: OperationNode[] = []
   for (const node of Object.values(nodeMap)) {
     if (node.type === NodeType.OPERATION) {
@@ -226,6 +310,10 @@ export default class ProcessedGraphOptimizer {
     this.processedGraphOptimizers = [
       aggreOptimization,
       deAggre,
+      disassembleFc,
+      disassembleActivations,
+      disassembleFc,
+      removeEmptyGroupNode,
       deloop,
       layerRecognition,
     ];
