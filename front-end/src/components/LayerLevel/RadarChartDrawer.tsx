@@ -8,8 +8,14 @@ export interface RadarData {
   "value": number;
 }
 
+interface RawData {
+  value: number[];
+  label: number;
+  index: number;
+}
+
 interface Props {
-  rawData: any;
+  rawData: RawData[];
 }
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
@@ -29,25 +35,18 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
     // 数据转换
-    let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
-    let data1 = new Array(numberOfLine);
-    let dimensions = [];
-    for (let i = 0; i < data1.length; i++) { // 12 
-      let obj = {}
-      for (let j = 0; j < rawData.length; j++) { // 32
-        obj["a" + (j + 1)] = -1; // a1 a2 .... a32
-        if (i == 0) dimensions.push("a" + (j + 1));
-      }
-      data1[i] = obj
-    } // 初始化对象数组
 
-    for (let j = 0; j < rawData.length; j++) { // 0 - 31
-      let d = rawData[j];
-      let keys = Object.keys(d); // index n1 n2 .... n12
-      for (let i = 1; i < keys.length; i++) { // 忽略第一维"index"
-        let key = keys[i]; // n1 n2 .... n12
-        data1[i - 1]["a" + (j + 1)] = d[key];
-      }
+    let dimensions = [];
+    let data1 = [];
+    for (let i = 0; i < rawData[0]["value"].length; i++) {
+      dimensions.push("a" + (i + 1))
+    }
+
+    for (let i = 0; i < rawData.length; i++) {
+      let temp = {};
+      for (let j = 0; j < rawData[i]["value"].length; j++)
+        temp["a" + (j + 1)] = rawData[i]["value"][j];
+      data1.push(temp);
     }
 
     const config = {
@@ -244,20 +243,22 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     };
 
     // 数据处理，转换为适合画图的数据格式
-    let numberOfLine = Object.keys(rawData[0]).length - 1; // 数据中必须包含index
-    let data = []; // n1-n8数组
-    for (let i = 0; i < numberOfLine; i++) data[i] = [];
+    let data = [];
 
-    for (let d of rawData) {
-      let keys = Object.keys(d); // index n1 n2 .... n12
-      for (let i = 1; i < keys.length; i++) { // 忽略第一维"index"
-        let key = keys[i];
-
-        data[i - 1].push({
-          axis: d["index"],
-          value: d[key]
-        });
+    // axis范围是 rawData1[0].value.length
+    // rawData1 的长度表示有多少个样本
+    for (let i = 0; i < rawData.length; i++) {
+      let value = rawData[i]["value"];
+      let colorIndex = rawData[i]["label"];
+      let obj = [];
+      for (let j = 0; j < value.length; j++) {
+        let temp = {};
+        temp["axis"] = j + 1;
+        temp["value"] = value[j];
+        temp["colorIndex"] = colorIndex;
+        obj.push(temp);
       }
+      data.push(obj);
     }
 
     radarChart(".radarChart", data, radarChartOptions); // 画雷达图
