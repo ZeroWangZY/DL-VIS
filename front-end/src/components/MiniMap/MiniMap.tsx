@@ -94,6 +94,7 @@ const MiniMap: React.FC<Props> = (props: Props) => {
     if (outputSVG_Copy === null) return;
 
     const canvas: HTMLCanvasElement = canvasRef.current;
+    if(!canvas || !canvas.getContext('2d')) return; // 防止webGL与svg模式转换太快
     let context = canvas.getContext('2d');
     context.clearRect(0, 0, minimapSize.width, minimapSize.height); // 清空canvas画布
 

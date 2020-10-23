@@ -15,6 +15,7 @@ import {
   addText,
   addRoundRect,
   addElippseCurve,
+  addStackElippseCurve
 } from "./draw";
 import { useVisGraph } from "../../store/visGraph";
 import { useLayoutGraph, setLayoutGraph } from "../../store/layoutGraph";
@@ -99,59 +100,23 @@ const Graph: React.FC = () => {
     const height = container.current.clientHeight;
     const maxLabelLength = 10;
     let texts;
-    if (iter !== iterMax) {
-      texts = styledGraph.nodeStyles.map((node) => {
-        const isRect =
-          node.data.type === NodeType.GROUP || node.data.type === NodeType.DATA;
-        let basic_x = node.style._gNodeTransX;
-        let basic_y = height - node.style._gNodeTransY;
-        if (oldStyledGraphNodesMap.has(node.key)) {
-          const oldNodeStyle = oldStyledGraphNodesMap.get(node.key);
-          basic_x =
-            oldNodeStyle._gNodeTransX +
-            ((node.style._gNodeTransX - oldNodeStyle._gNodeTransX) * iter) /
-            iterMax;
-          basic_y =
-            height -
-            oldNodeStyle._gNodeTransY +
-            ((height -
-              node.style._gNodeTransY -
-              (height - oldNodeStyle._gNodeTransY)) *
-              iter) /
-            iterMax;
-        }
-        return {
-          label:
-            node.data.label.slice(0, maxLabelLength) +
-            (node.data.label.length > maxLabelLength ? "..." : ""),
-          point: {
-            x: basic_x,
-            y: isRect
-              ? basic_y + node.style._rectHeight / 2 - 10
-              : basic_y + node.style._rectHeight / 2 + 5,
-          },
-          size: isRect ? 75 : 50,
-        };
-      });
-    } else {
-      texts = styledGraph.nodeStyles.map((node) => {
-        const isRect =
-          node.data.type === NodeType.GROUP || node.data.type === NodeType.DATA;
-        const basic_y = height - node.style._gNodeTransY;
-        return {
-          label:
-            node.data.label.slice(0, maxLabelLength) +
-            (node.data.label.length > maxLabelLength ? "..." : ""),
-          point: {
-            x: node.style._gNodeTransX,
-            y: isRect
-              ? basic_y + node.style._rectHeight / 2 - 10
-              : basic_y + node.style._rectHeight / 2 + 5,
-          },
-          size: isRect ? 75 : 50,
-        };
-      });
-    }
+    texts = styledGraph.nodeStyles.map((node) => {
+      const isRect =
+        node.data.type === NodeType.GROUP || node.data.type === NodeType.DATA;
+      const basic_y = height - node.style._gNodeTransY;
+      return {
+        label:
+          node.data.label.slice(0, maxLabelLength) +
+          (node.data.label.length > maxLabelLength ? "..." : ""),
+        point: {
+          x: node.style._gNodeTransX,
+          y: isRect
+            ? basic_y + node.style._rectHeight / 2 - 10
+            : basic_y + node.style._rectHeight / 2 + 5,
+        },
+        size: isRect ? 75 : 50,
+      };
+    });
     let label = addText(
       texts,
       container.current.clientWidth,
@@ -159,202 +124,73 @@ const Graph: React.FC = () => {
     );
     scene.current.add(label);
     objects.current.push(label);
-  };
-
-  const addSceneRect = (iter = iterMax) => {
-    const height = container.current.clientHeight;
-    if (iter !== iterMax) {
-      //过渡动画
-      styledGraph.nodeStyles.forEach((node) => {
-        let rect = null;
-        if (oldStyledGraphNodesMap.has(node.key)) {
-          const oldNodeStyle = oldStyledGraphNodesMap.get(node.key);
-          rect = addRoundRect(
-            oldNodeStyle._rectWidth +
-            ((node.style._rectWidth - oldNodeStyle._rectWidth) * iter) /
-            iterMax,
-            oldNodeStyle._rectHeight +
-            ((node.style._rectHeight - oldNodeStyle._rectHeight) * iter) /
-            iterMax,
-            oldNodeStyle._gNodeTransX +
-            ((node.style._gNodeTransX - oldNodeStyle._gNodeTransX) * iter) /
-            iterMax,
-            height -
-            oldNodeStyle._gNodeTransY +
-            ((height -
-              node.style._gNodeTransY -
-              (height - oldNodeStyle._gNodeTransY)) *
-              iter) /
-            iterMax,
-            node.key
-          );
-        } else {
-          rect = addRoundRect(
-            node.style._rectWidth,
-            node.style._rectHeight,
-            node.style._gNodeTransX,
-            height - node.style._gNodeTransY,
-            node.key
-          );
-        }
-        scene.current.add(rect);
-        objects.current.push(rect);
-      });
-    } else {
-      //直接绘制
-      styledGraph.nodeStyles.forEach((node) => {
-        let rect = addRoundRect(
-          node.style._rectWidth,
-          node.style._rectHeight,
-          node.style._gNodeTransX,
-          height - node.style._gNodeTransY,
-          node.key
-        );
-        scene.current.add(rect);
-        objects.current.push(rect);
-      });
-    }
+    // let text = d3.select(container.current)
+    //   .append("div")
+    //   .text("asdf")
+    //   .attr("position", "absolute")
+    //   .attr("top", "10px")
+    //   .attr("width", "100%")
+    //   .attr("text-align", "center")
+    //   .attr("z-index", 100)
+    //   .attr("display", "block");
   };
 
   const addSceneLabelContainer = (iter = iterMax) => {
     const height = container.current.clientHeight;
-    if (iter !== iterMax) {
-      //过渡动画
-      styledGraph.nodeStyles.forEach((d) => {
-        const node = d.data;
-        if (node.type === NodeType.OPERATION) {
-          let ellipse = addElippseCurve(
-            d.style._ellipseX,
-            d.style._ellipseY,
-            d.style._gNodeTransX,
-            height - d.style._gNodeTransY,
+
+    //直接绘制
+    styledGraph.nodeStyles.forEach((d) => {
+      const node = d.data;
+
+      if (node.type === NodeType.OPERATION) {
+        let ellipse = addElippseCurve(
+          d.style._ellipseX,
+          d.style._ellipseY,
+          d.style._gNodeTransX,
+          height - d.style._gNodeTransY,
+          false
+        );
+        scene.current.add(ellipse);
+        objects.current.push(ellipse);
+
+        if (node.parameters.length !== 0) {
+          let circle = addElippseCurve(
+            d.style._ellipseY / 2,
+            d.style._ellipseY / 2,
+            d.style._gNodeTransX + d.style._ellipseY,
+            height - d.style._gNodeTransY - d.style._ellipseY,
+            true
+          );
+          scene.current.add(circle);
+          objects.current.push(circle);
+        }
+
+        if (node.constVals.length !== 0) {
+          let circle = addElippseCurve(
+            d.style._ellipseY / 2,
+            d.style._ellipseY / 2,
+            d.style._gNodeTransX - d.style._ellipseY,
+            height - d.style._gNodeTransY - d.style._ellipseY,
             false
           );
-          scene.current.add(ellipse);
-          objects.current.push(ellipse);
-
-          if (node.parameters.length !== 0) {
-            console.log("增加圆圈")
-            let circle = addElippseCurve(
-              d.style._ellipseY / 2,
-              d.style._ellipseY / 2,
-              d.style._gNodeTransX + d.style._ellipseY,
-              height - d.style._gNodeTransY - d.style._ellipseY,
-              false
-            );
-            scene.current.add(circle);
-            objects.current.push(circle);
-          }
-
-          if (node.constVals.length !== 0) {
-            let circle = addElippseCurve(
-              d.style._ellipseY / 2,
-              d.style._ellipseY / 2,
-              d.style._gNodeTransX - d.style._ellipseY,
-              height - d.style._gNodeTransY - d.style._ellipseY,
-              true
-            );
-            scene.current.add(circle);
-            objects.current.push(circle);
-          }
-
-        } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
-          let rect = null;
-          if (oldStyledGraphNodesMap.has(d.key)) {
-            const oldNodeStyle = oldStyledGraphNodesMap.get(d.key);
-            rect = addRoundRect(
-              oldNodeStyle._rectWidth +
-              ((d.style._rectWidth - oldNodeStyle._rectWidth) * iter) /
-              iterMax,
-              oldNodeStyle._rectHeight +
-              ((d.style._rectHeight - oldNodeStyle._rectHeight) * iter) /
-              iterMax,
-              oldNodeStyle._gNodeTransX +
-              ((d.style._gNodeTransX - oldNodeStyle._gNodeTransX) * iter) /
-              iterMax,
-              height -
-              oldNodeStyle._gNodeTransY +
-              ((height -
-                d.style._gNodeTransY -
-                (height - oldNodeStyle._gNodeTransY)) *
-                iter) /
-              iterMax,
-              d.key
-            );
-          } else {
-            rect = addRoundRect(
-              d.style._rectWidth,
-              d.style._rectHeight,
-              d.style._gNodeTransX,
-              height - d.style._gNodeTransY,
-              d.key
-            );
-          }
-          scene.current.add(rect);
-          objects.current.push(rect);
-        } else if (node.type === NodeType.LAYER) {
-
+          scene.current.add(circle);
+          objects.current.push(circle);
         }
+      } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
+        let rect = addRoundRect(
+          d.style._rectWidth,
+          d.style._rectHeight,
+          d.style._gNodeTransX,
+          height - d.style._gNodeTransY,
+          d.key
+        );
+        scene.current.add(rect);
+        objects.current.push(rect);
+      } else if (node.type === NodeType.LAYER) {
 
-      });
-    } else {
-      //直接绘制
-      styledGraph.nodeStyles.forEach((d) => {
-        const node = d.data;
-        if (node.type === NodeType.OPERATION) {
-          const node = d.data;
-          if (node.type === NodeType.OPERATION) {
-            let ellipse = addElippseCurve(
-              d.style._ellipseX,
-              d.style._ellipseY,
-              d.style._gNodeTransX,
-              height - d.style._gNodeTransY,
-              false
-            );
-            scene.current.add(ellipse);
-            objects.current.push(ellipse);
+      }
 
-            if (node.parameters.length !== 0) {
-              console.log("增加圆圈")
-              let circle = addElippseCurve(
-                d.style._ellipseY / 2,
-                d.style._ellipseY / 2,
-                d.style._gNodeTransX + d.style._ellipseY,
-                height - d.style._gNodeTransY - d.style._ellipseY,
-                false
-              );
-              scene.current.add(circle);
-              objects.current.push(circle);
-            }
-
-            if (node.constVals.length !== 0) {
-              let circle = addElippseCurve(
-                d.style._ellipseY / 2,
-                d.style._ellipseY / 2,
-                d.style._gNodeTransX - d.style._ellipseY,
-                height - d.style._gNodeTransY - d.style._ellipseY,
-                true
-              );
-              scene.current.add(circle);
-              objects.current.push(circle);
-            }
-          }
-        } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
-          let rect = addRoundRect(
-            d.style._rectWidth,
-            d.style._rectHeight,
-            d.style._gNodeTransX,
-            height - d.style._gNodeTransY,
-            d.key
-          );
-          scene.current.add(rect);
-          objects.current.push(rect);
-        } else if (node.type === NodeType.LAYER) {
-
-        }
-
-      });
-    }
+    });
   };
 
   const addSceneEvent = () => {
@@ -443,19 +279,14 @@ const Graph: React.FC = () => {
       });
       console.log(oldStyledGraphNodesMap.size);
       console.log(styledGraphNodesMap.size);
-      if (false && oldStyledGraphNodesMap.size !== styledGraphNodesMap.size) { // 将动画部分禁止
-        console.log("动画触发");
-        //动画过渡
-        iter = 0;
-        animate();
-      } else {
-        sceneUpdate();
-        addSceneLines();
-        addSceneLabel();
-        // addSceneRect();
-        addSceneLabelContainer();
-        renderer.current.render(scene.current, camera.current);
-      }
+
+      sceneUpdate();
+      addSceneLines();
+      addSceneLabel();
+      // addSceneRect();
+      addSceneLabelContainer();
+      renderer.current.render(scene.current, camera.current);
+
       addSceneEvent();
       d3.select(renderer.current.domElement).call(event.current.d3Zoom); //画布平移
       container.current.addEventListener(

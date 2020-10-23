@@ -22,7 +22,7 @@ layerLevelcolorMap.set("mean", "#4B0082");
 let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: false,
   conceptualGraphMode: false,
-  webGLMode: false,
+  webGLMode: true,
   preprocessingPlugins: {
     pruneByOutput: false,
     replaceVariable: false,

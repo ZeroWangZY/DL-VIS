@@ -197,8 +197,9 @@ let addElippseCurve = function (width, height, x, y, dash) {
     return ellipsex;
   } else {
     let dashedMaterial = new THREE.LineDashedMaterial({
-      color: 0x000000,
-      opacity: 1
+      color: 0xffffff,
+      // dashSize: 3,
+      gapSize: 0.1
     });
     let ellipsex = new THREE.Line(ellipseGeometry, dashedMaterial);
     ellipsex.position.set(x, y, 0);
@@ -207,11 +208,31 @@ let addElippseCurve = function (width, height, x, y, dash) {
   }
 }
 
+let addStackElippseCurve = function (width, height, x, y, dash) {
+  let ellipse = new THREE.EllipseCurve(0, 0, width, height, 0, 2.0 * Math.PI, false);
+  let ellipsePath = new THREE.CurvePath();
+  ellipsePath.add(ellipse);
+
+  let ellipseGeometry = ellipsePath.createPointsGeometry(100);
+  ellipseGeometry.computeTangents();
+
+  let material = new THREE.LineBasicMaterial({
+    color: 0x000000,
+    opacity: 1
+  });
+  let ellipsex = new THREE.Line(ellipseGeometry, material);
+  ellipsex.position.set(x, y, 0);
+  ellipsex.name = "aaa";
+  return ellipsex;
+
+}
+
 
 export {
   addArrow,
   addRoundLine,
   addText,
   addRoundRect,
-  addElippseCurve
+  addElippseCurve,
+  addStackElippseCurve
 };
