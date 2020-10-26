@@ -1,14 +1,19 @@
 import sys
+
 from django.shortcuts import render
 import json
 import numpy as np
 import time
+import importlib
 from django.http import HttpResponse
 import sqlite3
 import os
 from graph.data_access.loaders.data_loader import DataLoader
+# from mindinsight.datavisual.data_transform.data_loader import DataLoader
+# from mindinsight.datavisual.common.enums import PluginNameEnum
 from graph.data_access.common.enums import PluginNameEnum
-from graph.data_access.proto_files import anf_ir_pb2
+# from graph.data_access.proto_files import anf_ir_pb2
+from mindspore.train import anf_ir_pb2
 from google.protobuf import json_format
 from threading import Timer
 from dao.data_helper import DataHelper
@@ -16,6 +21,10 @@ from dao.node_mapping import alex_node_map
 import random
 import pandas as pd
 import math
+from logs.resnet.data_runner import DataRunner
+from logs.resnet.get_neuron_order import get_neuron_order
+
+data_runner = DataRunner()
 
 from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
     get_tensor_heatmap_service
@@ -39,6 +48,12 @@ del dp
 max_step = DB_MAX_STEP
 is_training = False
 
+
+
+def normalize(series):
+    a = min(series)
+    b = max(series)
+    return (series - a) / (b - a)
 
 def start_training():
     global max_step
@@ -110,7 +125,7 @@ def get_model_scalars(request):
         graph_name = request.GET.get('graph_name', default='lenet')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
-        mode = request.GET.get('mode', default='realtime')
+        mode = request.GET.get('mode', default='mock')
         if mode == "mock":
             data_helper = DataHelper(db_file)
         elif mode == "realtime":
@@ -135,7 +150,7 @@ def get_model_scalars(request):
 def get_metadata(request):
     if request.method == 'GET':
         # data_helper = DataHelper(db_file)
-        mode = request.GET.get('mode', default='realtime')
+        mode = request.GET.get('mode', default='mock')
         graph_name = request.GET.get('graph_name', default='lenet')
 
         if mode == "mock":
@@ -175,7 +190,7 @@ def get_layer_scalars(request):
         node_ids = request.GET.getlist('node_id')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
-        mode = request.GET.get('mode', default='realtime')
+        mode = request.GET.get('mode', default='mock')
         type = request.GET.get('type', default='activation')
 
         if mode == "mock":
@@ -206,7 +221,7 @@ def get_node_scalars(request):
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
         type = request.GET.get('type', default='activation')
-        mode = request.GET.get('mode', default='realtime')
+        mode = request.GET.get('mode', default='mock')
 
         # data_helper = DataHelper(db_file)
         if mode == "mock":
@@ -249,13 +264,12 @@ def get_node_scalars(request):
     }), content_type="application/json")
 
 
-def get_node_tensors(request):
+def get_node_tensors(request):  # 鼠标点击step时，返回雷达图数据
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
         node_id = request.GET.get('node_id')
         start_step = int(request.GET.get('start_step', default='1'))
         end_step = int(request.GET.get('end_step', default='10'))
-        type = request.GET.get('type', default='activation')
         if end_step - start_step > 20:
             return HttpResponse(json.dumps({
                 "message": "do not support such large steps",
@@ -278,22 +292,75 @@ def get_node_tensors(request):
         "data": None
     }), content_type="application/json")
 
-def get_node_tensor(request):
+def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达图数据
     if request.method == 'GET':
-        graph_name = request.GET.get('graph_name', default='lenet')
-        node_id = request.GET.get('node_id')
+        graph_name = request.GET.get('graph_name', default='resnet')
+        node_id = request.GET.get('node_id', default='layer3.f.conv1')
         step = int(request.GET.get('step', default='1'))
-        data_index = int(request.GET.get('data_index', default='-1'))
+        data_index = int(request.GET.get('data_index', default='-1'))    # 默认是整个step
         type = request.GET.get('type', default='activation')
-        mode = request.GET.get('mode', default='normal')
-        dim = request.GET.get('dim', default='radial')
+        # mode = request.GET.get('mode', default='normal')
+        mode = request.GET.get('mode', default='radial')
+        dim = request.GET.get('dim', default='radial')                   # 维度，做扇区采样就没有维度了呀，radviz的维度就是这个
         scale = request.GET.get('scale', default='false')
 
-        res = pd.read_csv("data/radar_data_969_all.csv")
+        # batch_size = 32
 
+
+        # 需要根据step和node_id去找排序
+        # 排序文件命名 checkpointstep-node_id.npy
+        checkpointstep = int(step / 10) * 10
+        if checkpointstep < 10:
+            # 要判断一下maxstep，决定是否可以计算
+            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
+            db_max_step = data_helper.get_realtime_metadata('max_step')
+            if db_max_step < 10:
+                return HttpResponse(json.dumps({
+                    "message": "Too few training steps",
+                }), content_type="application/json")
+            else:
+                checkpointstep = 10
+        if not os.path.exists(SUMMARY_DIR + os.sep + "order" + os.sep + str(checkpointstep) + "-" + node_id + ".npy"):
+            get_neuron_order(checkpointstep, node_id, data_runner)
+
+        resultData = []
+        if mode == "radial":
+            jsonPath = SUMMARY_DIR + os.sep + graph_name + os.sep + "indices" + os.sep + "1.json"
+            with open(jsonPath, 'r', encoding='utf-8') as fp:  # 拿到数据编号
+                indices = json.load(fp)
+                indices = indices[(step - 1) * 32 : step * 32]   # 找到对应的数据编号，需要调用data_runner.py中的函数
+
+                [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id)
+                resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
+                df = pd.DataFrame(resdata)
+                df['angle'] = np.load("./logs/resnet/order/" + str(checkpointstep) + "-" + node_id + ".npy")
+
+                sectorData = []
+                for i in range(8):
+                    leftMargin = -7 / 8 * math.pi + i * math.pi / 4
+                    rightMargin = -5 / 8 * math.pi + i * math.pi / 4
+                    currentSectorData = list(
+                        filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                               df.iloc))
+                    currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                    currentSectorData = normalize(currentSectorData)
+                    sectorData.append(currentSectorData)
+                if data_index == -1:
+                    for i in range(32):   # 这里数据要改成活的
+                        resultData.append({
+                            "value": np.array(sectorData).swapaxes(0, 1)[i].tolist(), # (8,)
+                            "label": labels.asnumpy().tolist()[i],
+                            "index": indices[i]
+                        })
+                else:
+                    resultData.append({
+                        "value": np.array(sectorData).swapaxes(0, 1)[data_index].tolist(),
+                        "label": labels.asnumpy().tolist()[data_index],
+                        "index": indices[data_index]
+                    })
         return HttpResponse(json.dumps({
             "message": "success",
-            "data": res.T.reset_index().T.values.tolist()
+            "data": resultData
         }), content_type="application/json")
     return HttpResponse(json.dumps({
         "message": "method undefined",

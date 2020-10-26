@@ -37,8 +37,8 @@ from ..common.enums import PluginNameEnum
 from ..events_data import EventsData
 from ..events_data import TensorEvent
 from ..graph import MSGraph
-from ..proto_files import summary_pb2
-from ..proto_files import anf_ir_pb2
+from mindspore.train import summary_pb2
+from mindspore.train import anf_ir_pb2
 
 # from mindinsight.datavisual.utils import crc32
 # from mindinsight.utils.exceptions import UnknownError
