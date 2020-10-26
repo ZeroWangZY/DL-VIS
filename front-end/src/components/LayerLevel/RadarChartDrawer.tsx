@@ -22,6 +22,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const { rawData } = props;
 
   useEffect(() => {
+    if (!rawData) return;
     // 雷达图
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
       radarChartWidth = Math.min(600, window.innerWidth - 10) - radarChartMargin.left - radarChartMargin.right,

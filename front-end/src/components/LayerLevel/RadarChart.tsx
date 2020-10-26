@@ -39,7 +39,7 @@ const RadarChart: React.FC<RadarChartProps> = (
   const { type, step, dataIndex, nodeId } = tensorMetadata;
   const isValid = type !== null && step != null && dataIndex !== null;
   const show = isValid && isShowing;
-  // const [showLoading, setShowLoading] = useState<boolean>(false);
+  const [showLoading, setShowLoading] = useState<boolean>(false);
   const [radarChartData, setRadarChartData] = useState(null);
   const handleClose = () => {
     setIsShowing(false);
@@ -47,7 +47,6 @@ const RadarChart: React.FC<RadarChartProps> = (
 
   useEffect(() => {
     if (!isValid) return;
-    // setShowLoading(true);
     let typeParam;
     if (type === ShowActivationOrGradient.ACTIVATION) {
       typeParam = "activation";
@@ -56,27 +55,27 @@ const RadarChart: React.FC<RadarChartProps> = (
       typeParam = "gradient";
     }
 
-    // setShowLoading(false);
-
     // TODO : 从后端获取数据
-    // fetchNodeTensor({
-    //   graph_name: "",
-    //   node_id: "",
-    //   step: 1,
-    //   data_index: 1,
-    //   type: "",
-    //   mode: "",
-    //   dim: 1,
-    //   scale: false
-    // }).then((res) => {
-    //   if (res.data.message === "success") {
-    //     let rawData = res.data.data;
-    //     console.log(rawData);
-    //     // setRadarChartData(rawData);
-    //   } else {
-    //     console.log("获取layer数据失败：" + res.data.message);
-    //   }
-    // })
+    setShowLoading(true);
+    fetchNodeTensor({
+      graph_name: "resnet",
+      node_id: nodeId,
+      step: step,
+      data_index: dataIndex,
+      type: typeParam,
+      mode: "radial",
+      dim: 1,
+      scale: false
+    }).then((res) => {
+      if (res.data.message === "success") {
+        let rawData = res.data.data;
+        console.log(rawData);
+        setShowLoading(false);
+        setRadarChartData(rawData);
+      } else {
+        console.log("获取layer数据失败：" + res.data.message);
+      }
+    })
 
     // TODO : 从后端获取数据
     let rawData = {
@@ -276,7 +275,7 @@ const RadarChart: React.FC<RadarChartProps> = (
       }]
     };
 
-    setRadarChartData(rawData.data);
+    // setRadarChartData(rawData.data);
 
   }, [type, step, dataIndex]);
 
@@ -303,9 +302,10 @@ const RadarChart: React.FC<RadarChartProps> = (
             {type === ShowActivationOrGradient.GRADIENT && "gradient"}; step:{" "}
             {step} ; data index: {dataIndex}
           </h2>
-          {/* {showLoading && <CircularProgress />} */}
-          {/* <div className="radarChart"></div> */}
-          <RadarChartDrawer rawData={radarChartData} />
+          {showLoading ?
+            <CircularProgress /> :
+            <RadarChartDrawer rawData={radarChartData} />
+          }
         </div>
       </Popover>
     </div>

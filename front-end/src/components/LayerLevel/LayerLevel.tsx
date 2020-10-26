@@ -37,18 +37,14 @@ export interface Point {
 
 export interface LayerScalar {
   step: number;
-  batch: number;
-  batchSize: number;
+  dataIndex: number;
   maximum: number;
-  upperBoundary: number;
   Q3: number;
   median: number;
   mean: number;
   Q1: number;
-  lowerBoundary: number;
   minimum: number;
 }
-
 
 export interface DataToShow {
   id: string;
@@ -133,7 +129,7 @@ const LayerLevel: React.FC = () => {
   });
   const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
   const { dataMode } = useGlobalConfigurations();
-  
+
   const measuredRef = useCallback((node) => {
     if (node !== null) {
       setSvgHeight(node.getBoundingClientRect().height);
@@ -152,7 +148,7 @@ const LayerLevel: React.FC = () => {
     showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
       ? "activation"
       : "gradient";
-  const testMaxStep = 721; // TODO : 将来会把它变为maxStep
+  const testMaxStep = maxStep; // TODO : 将来会把它变为maxStep
 
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
@@ -185,7 +181,15 @@ const LayerLevel: React.FC = () => {
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
 
-    let batchSize = layerScalarsData[0].batchSize; // batch大小
+    let batchSize = 0; // dataIndex大小
+    for (let i = 1; i < layerScalarsData.length; i++) {
+      if (layerScalarsData[i].dataIndex < layerScalarsData[i - 1].dataIndex) {
+        batchSize = layerScalarsData[i - 1].dataIndex + 1;
+        break;
+      }
+    }
+    console.log("batchSize", batchSize);
+
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < layerScalarsData.length; i++) {
       let tmp = layerScalarsData[i];
@@ -362,7 +366,7 @@ const LayerLevel: React.FC = () => {
     brushSelection.raise();
   };
 
-  const drawChartArea = (svgPart: any, scalarData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, stepDomain: number[], batchDomain: number[], brushEnded: boolean): void => {
+  const drawChartArea = (svgPart: any, scalarData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, stepDomain: number[], dataIndexDomain: number[], brushEnded: boolean): void => {
     let filteredScalarsData = scalarData;
     let sampling = false;
     if ((stepDomain[1] - stepDomain[0]) * batchSize > 640) {
@@ -375,7 +379,7 @@ const LayerLevel: React.FC = () => {
     const focusAreaQ1Q3LineGenerator = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
       .y0((d) => yScale(d.Q1))
       .y1((d) => yScale(d.Q3));
 
@@ -396,14 +400,14 @@ const LayerLevel: React.FC = () => {
     const focusAreaBoundaryLineGenerator1 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
       .y0((d) => yScale(d.minimum))
       .y1((d) => yScale(d.Q1));
 
     const focusAreaBoundaryLineGenerator2 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
       .y0((d) => yScale(d.Q3))
       .y1((d) => yScale(d.maximum));
 
@@ -435,7 +439,7 @@ const LayerLevel: React.FC = () => {
     const focusAreaMedianLineGenerator = d3
       .line<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
       .y((d) => yScale(d.median))
 
     svgPart
@@ -454,21 +458,21 @@ const LayerLevel: React.FC = () => {
     const focusAreaOutsideLineGenerator1 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
       .y0((d) => yScale(minY))
       .y1((d) => yScale(d.minimum));
 
     const focusAreaOutsideLineGenerator2 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.batch))
+      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
       .y0((d) => yScale(d.maximum))
       .y1((d) => yScale(maxY));
 
     if (brushEnded && !sampling) {
-      // xScale range是[0, width] domain是选中的batch范围
+      // xScale range是[0, width] domain是选中的dataIndex范围
       let s1 = [...stepDomain];
-      let s2 = [...batchDomain];
+      let s2 = [...dataIndexDomain];
       // console.log(s1);
       // console.log(s2);
 
@@ -531,16 +535,19 @@ const LayerLevel: React.FC = () => {
       let x = xScale.invert(mouseX); // x 范围是x1的domain
       x = Math.floor(x);
 
+      let newNodeId = selectedNodeId.split("/").splice(3).join(".");
+
       setSelectedTensor({
         type: showActivationOrGradient,
         step: Math.floor((x - 1) / 32) + 1,
         dataIndex: (x - 1) % 32, // index从0开始
-        nodeId: childNodeId
+        nodeId: newNodeId
       });
 
       setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
 
-      if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.FC)
+      if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.FC ||
+        (nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.CONV)
         setIsShowingRadarChart(true);
       else
         setIsShowingTensorHeatmap(true);
@@ -628,7 +635,7 @@ const LayerLevel: React.FC = () => {
     }
 
     reservoir.sort((a: LayerScalar, b: LayerScalar) => { // 排序
-      if (a.step === b.step) return a.batch - b.batch;
+      if (a.step === b.step) return a.dataIndex - b.dataIndex;
       else return a.step - b.step;
     })
 
@@ -660,27 +667,20 @@ const LayerLevel: React.FC = () => {
 
       let temp: LayerScalar = {} as LayerScalar;
       temp.step = stream[begin].step;
-      temp.batchSize = stream[begin].batchSize;
-      temp.batch = stream[begin].batch;
-      let sumMaximum = 0, sumUpperBoundary = 0, sumQ3 = 0, sumMedian = 0, sumMean = 0, sumQ1 = 0, sumLowerBoundary = 0, summinimum = 0;
+      temp.dataIndex = stream[begin].dataIndex;
+      let sumMaximum = 0, sumQ3 = 0, sumMedian = 0, sumQ1 = 0, summinimum = 0;
       for (let j = begin; j < end; j++) {
         sumMaximum += stream[j].maximum;
-        sumUpperBoundary += stream[j].upperBoundary;
         sumQ3 += stream[j].Q3;
         sumMedian += stream[j].median;
-        sumMean += stream[j].mean;
         sumQ1 += stream[j].Q1;
-        sumLowerBoundary += stream[j].lowerBoundary;
         summinimum += stream[j].minimum;
       }
 
       temp.maximum = sumMaximum / len;
-      temp.upperBoundary = sumUpperBoundary / len;
       temp.Q3 = sumQ3 / len;
       temp.median = sumMedian / len;
-      temp.mean = sumMean / len;
       temp.Q1 = sumQ1 / len;
-      temp.lowerBoundary = sumLowerBoundary / len;
       temp.minimum = summinimum / len;
 
       res.push(temp);
@@ -773,12 +773,12 @@ const LayerLevel: React.FC = () => {
           {mouseXPos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(mouseXPos, height)
           }
-          <TensorHeatmap
+          {/* <TensorHeatmap
             tensorMetadata={selectedTensor}
             isShowing={isShowingTensorHeatmap}
             setIsShowing={setIsShowingTensorHeatmap}
             anchorPosition={anchorPosition}
-          />
+          /> */}
           <RadarChart
             tensorMetadata={selectedTensor}
             isShowing={isShowingRadarChart}
