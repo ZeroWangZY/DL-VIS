@@ -375,7 +375,7 @@ const LayerLevel: React.FC = () => {
     const focusAreaQ1Q3LineGenerator = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
+      .x((d) => xScale((d.step - 1) * batchSize + ((d.dataIndex == undefined || d.dataIndex === null) ? 0 : d.dataIndex)))
       .y0((d) => yScale(d.Q1))
       .y1((d) => yScale(d.Q3));
 
@@ -396,14 +396,14 @@ const LayerLevel: React.FC = () => {
     const focusAreaBoundaryLineGenerator1 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
+      .x((d) => xScale((d.step - 1) * batchSize + ((d.dataIndex == undefined || d.dataIndex === null) ? 0 : d.dataIndex)))
       .y0((d) => yScale(d.minimum))
       .y1((d) => yScale(d.Q1));
 
     const focusAreaBoundaryLineGenerator2 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
+      .x((d) => xScale((d.step - 1) * batchSize + ((d.dataIndex == undefined || d.dataIndex === null) ? 0 : d.dataIndex)))
       .y0((d) => yScale(d.Q3))
       .y1((d) => yScale(d.maximum));
 
@@ -435,7 +435,7 @@ const LayerLevel: React.FC = () => {
     const focusAreaMedianLineGenerator = d3
       .line<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
+      .x((d) => xScale((d.step - 1) * batchSize + ((d.dataIndex == undefined || d.dataIndex === null) ? 0 : d.dataIndex)))
       .y((d) => yScale(d.median))
 
     svgPart
@@ -454,14 +454,14 @@ const LayerLevel: React.FC = () => {
     const focusAreaOutsideLineGenerator1 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
+      .x((d) => xScale((d.step - 1) * batchSize + ((d.dataIndex == undefined || d.dataIndex === null) ? 0 : d.dataIndex)))
       .y0((d) => yScale(minY))
       .y1((d) => yScale(d.minimum));
 
     const focusAreaOutsideLineGenerator2 = d3
       .area<LayerScalar>()
       .curve(d3.curveMonotoneX)
-      .x((d) => xScale((d.step - 1) * batchSize + d.dataIndex))
+      .x((d) => xScale((d.step - 1) * batchSize + ((d.dataIndex == undefined || d.dataIndex === null) ? 0 : d.dataIndex)))
       .y0((d) => yScale(d.maximum))
       .y1((d) => yScale(maxY));
 
@@ -629,7 +629,7 @@ const LayerLevel: React.FC = () => {
         <div style={{ marginLeft: '8px', marginTop: '2px' }}>
           {"step: " + DetailInfoOfCurrentStep[0].step}
         </div>
-        { DetailInfoOfCurrentStep[0].dataIndex >= 0 &&
+        { DetailInfoOfCurrentStep[0].dataIndex >= 0 && DetailInfoOfCurrentStep[0].dataIndex !== undefined && DetailInfoOfCurrentStep[0].dataIndex !== null &&
           (<div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ marginLeft: '8px', marginTop: '2px' }}>
               {"data index: " + DetailInfoOfCurrentStep[0].dataIndex}
