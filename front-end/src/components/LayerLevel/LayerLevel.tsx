@@ -111,7 +111,7 @@ const LayerLevel: React.FC = () => {
   const [mouseXPos, setMouseXPos] = useState(null);
 
   const [showDomain, setShowDomain] = useState(null);
-  const [childNodeId, setChildNodeId] = useState(null);
+  const [newSelectedNodeId, setNewSelectedNodeId] = useState(null);
   const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [drawing, setDrawing] = useState(false);
@@ -128,6 +128,8 @@ const LayerLevel: React.FC = () => {
     nodeId: null
   });
   const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
+  const [batchSize, setBatchSize] = useState<number>(1);
+
   const { dataMode } = useGlobalConfigurations();
 
   const measuredRef = useCallback((node) => {
@@ -153,18 +155,20 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
 
-    let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
-    if (_childNodeId.length === 0) return;
-    _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
-    setChildNodeId(_childNodeId);
+    // let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
+    // if (_childNodeId.length === 0) return;
+    // _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
+    // setChildNodeId(_childNodeId);
+    let newNodeId = selectedNodeId.split("/").splice(3).join(".");
+    setNewSelectedNodeId(newNodeId);
   }, [selectedNodeId]);
 
   useEffect(() => {
-    if (!childNodeId) return;
-    let newNodeId = selectedNodeId.split("/").splice(3).join(".");
-    getLayerScalars(currentMSGraphName, [newNodeId], 1, testMaxStep, fetchDataType, dataMode); // 取[1, 11) step
+    if (!newSelectedNodeId) return;
+
+    getLayerScalars(currentMSGraphName, [newSelectedNodeId], 1, testMaxStep, fetchDataType, dataMode); // 取[1, 11) step
   }, [
-    childNodeId,
+    newSelectedNodeId,
     currentMSGraphName,
     isTraining,
     maxStep,
@@ -177,19 +181,10 @@ const LayerLevel: React.FC = () => {
     setDrawing(true);
     computeAndDraw();
     setDrawing(false);
-  }, [layerScalarsData, svgWidth])
+  }, [layerScalarsData, svgWidth, batchSize])
 
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
-
-    let batchSize = 0; // dataIndex大小
-    for (let i = 1; i < layerScalarsData.length; i++) {
-      if (layerScalarsData[i].dataIndex < layerScalarsData[i - 1].dataIndex) {
-        batchSize = layerScalarsData[i - 1].dataIndex + 1;
-        break;
-      }
-    }
-    console.log("batchSize", batchSize);
 
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
     for (let i = 0; i < layerScalarsData.length; i++) {
@@ -494,6 +489,7 @@ const LayerLevel: React.FC = () => {
             d3.select(this).classed("hovered", false);
             svgPart.select(".area.outsidePart.bottomPart" + i).classed("hovered", false);
           })
+          .on("click", ClickHandler1)
           .on("mousemove", OutsidePartPartMouseMoveHandler)
 
         // 下半部分
@@ -511,8 +507,31 @@ const LayerLevel: React.FC = () => {
             d3.select(this).classed("hovered", false);
             svgPart.select(".area.outsidePart.upperPart" + i).classed("hovered", false);
           })
+          .on("click", ClickHandler1)
           .on("mousemove", OutsidePartPartMouseMoveHandler)
       }
+    }
+
+    function ClickHandler1() {
+      let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
+
+      let x = xScale.invert(mouseX); // x 范围是x1的domain
+      x = Math.floor(x);
+
+      setSelectedTensor({
+        type: showActivationOrGradient,
+        step: Math.floor((x - 1) / batchSize) + 1,
+        dataIndex: -1, // index从0开始
+        nodeId: newSelectedNodeId
+      });
+
+      setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
+
+      if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.FC ||
+        (nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.CONV)
+        setIsShowingRadarChart(true);
+      else
+        setIsShowingTensorHeatmap(true);
     }
 
     function OutsidePartPartMouseMoveHandler() {
@@ -524,7 +543,7 @@ const LayerLevel: React.FC = () => {
       let newDetailInfoOfCurrentStep = [];
 
       newDetailInfoOfCurrentStep.push({
-        "step": Math.floor((x - 1) / 32) + 1,
+        "step": Math.floor((x - 1) / batchSize) + 1,
         "dataIndex": -1,
       })
       setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
@@ -536,13 +555,11 @@ const LayerLevel: React.FC = () => {
       let x = xScale.invert(mouseX); // x 范围是x1的domain
       x = Math.floor(x);
 
-      let newNodeId = selectedNodeId.split("/").splice(3).join(".");
-
       setSelectedTensor({
         type: showActivationOrGradient,
-        step: Math.floor((x - 1) / 32) + 1,
-        dataIndex: (x - 1) % 32, // index从0开始
-        nodeId: newNodeId
+        step: Math.floor((x - 1) / batchSize) + 1,
+        dataIndex: (x - 1) % batchSize, // index从0开始
+        nodeId: newSelectedNodeId
       });
 
       setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
@@ -566,8 +583,8 @@ const LayerLevel: React.FC = () => {
       let newDetailInfoOfCurrentStep = [];
 
       newDetailInfoOfCurrentStep.push({
-        "step": Math.floor((x - 1) / 32) + 1,
-        "dataIndex": (x - 1) % 32 + 1,
+        "step": Math.floor((x - 1) / batchSize) + 1,
+        "dataIndex": (x - 1) % batchSize + 1,
       })
       setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
     }
@@ -710,8 +727,17 @@ const LayerLevel: React.FC = () => {
       if (res.data.message === "success") {
         setLoadingData(false);
         let layerScalars = res.data.data[nodeIds[0]];
-        // console.log(layerScalars);
+        console.log("layerScalars", layerScalars);
         setLayerScalarsData(layerScalars);
+
+        let _batchSize = 1;
+        for (let i = 1; i < layerScalars.length; i++) {
+          if (layerScalars[i].dataIndex < layerScalars[i - 1].dataIndex) {
+            _batchSize = layerScalars[i - 1].dataIndex + 1;
+            break;
+          }
+        }
+        setBatchSize(_batchSize);
       } else {
         console.log("获取layer数据失败：" + res.data.message);
       }
@@ -774,12 +800,12 @@ const LayerLevel: React.FC = () => {
           {mouseXPos !== null && DetailInfoOfCurrentStep.length &&
             getDetailInfoRect(mouseXPos, height)
           }
-          {/* <TensorHeatmap
+          <TensorHeatmap
             tensorMetadata={selectedTensor}
             isShowing={isShowingTensorHeatmap}
             setIsShowing={setIsShowingTensorHeatmap}
             anchorPosition={anchorPosition}
-          /> */}
+          />
           <RadarChart
             tensorMetadata={selectedTensor}
             isShowing={isShowingRadarChart}

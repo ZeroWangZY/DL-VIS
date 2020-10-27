@@ -51,7 +51,7 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
   };
 
   useEffect(() => {
-    if (!isValid) return;
+    if (!show) return;
     setShowLoading(true);
     let typeParam;
     if (type === ShowActivationOrGradient.ACTIVATION) {
@@ -72,7 +72,7 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
         setShowLoading(false);
       } else console.warn("获取张量热力图失败: " + res.data.message);
     });
-  }, [type, step, dataIndex]);
+  }, [type, step, dataIndex, show]);
 
   return (
     <div>
