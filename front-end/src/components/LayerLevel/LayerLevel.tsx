@@ -161,7 +161,8 @@ const LayerLevel: React.FC = () => {
 
   useEffect(() => {
     if (!childNodeId) return;
-    getLayerScalars(currentMSGraphName, childNodeId, 1, testMaxStep, fetchDataType, dataMode); // 取[1, 11) step
+    let newNodeId = selectedNodeId.split("/").splice(3).join(".");
+    getLayerScalars(currentMSGraphName, [newNodeId], 1, testMaxStep, fetchDataType, dataMode); // 取[1, 11) step
   }, [
     childNodeId,
     currentMSGraphName,
@@ -171,7 +172,7 @@ const LayerLevel: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (layerScalarsData === null || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
+    if (!layerScalarsData || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
 
     setDrawing(true);
     computeAndDraw();
@@ -709,7 +710,7 @@ const LayerLevel: React.FC = () => {
       if (res.data.message === "success") {
         setLoadingData(false);
         let layerScalars = res.data.data[nodeIds[0]];
-        console.log(layerScalars);
+        // console.log(layerScalars);
         setLayerScalarsData(layerScalars);
       } else {
         console.log("获取layer数据失败：" + res.data.message);
