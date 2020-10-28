@@ -127,6 +127,7 @@ const LayerLevel: React.FC = () => {
     dataIndex: null,
     nodeId: null
   });
+  const [fetchDataType, setFetchDataType] = useState<string>(null);
   const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number }>(null); // popover的位置
   const [batchSize, setBatchSize] = useState<number>(1);
 
@@ -146,12 +147,6 @@ const LayerLevel: React.FC = () => {
   const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
   const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下折线图比例是 5: 1
 
-  const fetchDataType =
-    showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
-      ? "activation"
-      : "gradient";
-  const testMaxStep = maxStep; // TODO : 将来会把它变为maxStep
-
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
 
@@ -161,23 +156,75 @@ const LayerLevel: React.FC = () => {
     // setChildNodeId(_childNodeId);
     let newNodeId = selectedNodeId.split("/").splice(3).join(".");
     setNewSelectedNodeId(newNodeId);
-  }, [selectedNodeId]);
+    const _fetchDataType =
+      showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
+        ? "activation"
+        : "gradient";
+    setFetchDataType(_fetchDataType);
+  }, [selectedNodeId, showActivationOrGradient]);
 
   useEffect(() => {
     if (!newSelectedNodeId) return;
+    setLoadingData(true);
+    fetchLayerScalars({
+      graph_name: currentMSGraphName,
+      node_id: [newSelectedNodeId],
+      start_step: 1,
+      end_step: maxStep,
+      type: fetchDataType,
+      mode: dataMode,
+    }).then((res) => {
+      if (res.data.message === "success") {
+        setLoadingData(false);
+        let layerScalars = res.data.data[newSelectedNodeId];
+        setLayerScalarsData(layerScalars);
 
-    getLayerScalars(currentMSGraphName, [newSelectedNodeId], 1, testMaxStep, fetchDataType, dataMode); // 取[1, 11) step
+        let _batchSize = 1;
+        for (let i = 1; i < layerScalars.length; i++) {
+          if (layerScalars[i].dataIndex < layerScalars[i - 1].dataIndex) {
+            _batchSize = layerScalars[i - 1].dataIndex + 1;
+            break;
+          }
+        }
+        setBatchSize(_batchSize);
+      } else {
+        console.log("获取layer数据失败：" + res.data.message);
+      }
+    })
+
   }, [
     newSelectedNodeId,
     currentMSGraphName,
     isTraining,
-    maxStep,
-    showActivationOrGradient,
+    fetchDataType
   ]);
 
   useEffect(() => {
-    if (!layerScalarsData || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
+    if (!newSelectedNodeId || !layerScalarsData) return;
+    setLoadingData(true);
+    let _startStep = layerScalarsData[layerScalarsData.length - 1].step + 1;
+    fetchLayerScalars({
+      graph_name: currentMSGraphName,
+      node_id: [newSelectedNodeId],
+      start_step: _startStep,
+      end_step: maxStep,
+      type: fetchDataType,
+      mode: dataMode,
+    }).then((res) => {
+      if (res.data.message === "success") {
+        setLoadingData(false);
+        let layerScalars = res.data.data[newSelectedNodeId];
 
+        setLayerScalarsData(layerScalarsData.concat(layerScalars));
+      } else {
+        console.log("获取layer数据失败：" + res.data.message);
+      }
+    })
+
+  }, [maxStep])
+
+  useEffect(() => {
+    if (!layerScalarsData || !(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return;
     setDrawing(true);
     computeAndDraw();
     setDrawing(false);
@@ -199,7 +246,7 @@ const LayerLevel: React.FC = () => {
 
     let x1OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([1, testMaxStep]);
+      .domain([1, maxStep]);
 
     let x2Scale = d3.scaleLinear()
       .rangeRound([0, width])
@@ -207,16 +254,16 @@ const LayerLevel: React.FC = () => {
 
     let x2OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([1, testMaxStep]);
+      .domain([1, maxStep]);
 
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
       .domain([minY, maxY]);
 
-    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, testMaxStep], [1, layerScalarsData.length], true);
+    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], true);
 
     const xTicksValues = []; // 坐标
-    produceXTicks(xTicksValues, 1, testMaxStep);
+    produceXTicks(xTicksValues, 1, maxStep);
 
     const focusAxisX =
       d3.axisBottom(x1OtherScale)
@@ -350,7 +397,7 @@ const LayerLevel: React.FC = () => {
       .call(brush)
       .call(brush.move, showRange);
 
-    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, minY, maxY, [1, testMaxStep], [1, layerScalarsData.length], false);
+    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], false);
 
     context.selectAll(".axis--x").remove();
     context
@@ -469,8 +516,6 @@ const LayerLevel: React.FC = () => {
       // xScale range是[0, width] domain是选中的dataIndex范围
       let s1 = [...stepDomain];
       let s2 = [...dataIndexDomain];
-      // console.log(s1);
-      // console.log(s2);
 
       let start = s2[0], end = Math.min(filteredScalarsData.length, s2[1]);
       for (let i = Math.max(0, start - 1); i < end; i += batchSize) {
@@ -602,7 +647,7 @@ const LayerLevel: React.FC = () => {
         xTicksValues.push(i);
       }
     else {
-      let len = numberOfStep / 10; // 将所有的testMaxStep分为十份
+      let len = numberOfStep / 10; // 将所有的maxStep分为十份
       for (let i = 0; i < 10; i++) {
         xTicksValues.push(Math.floor(len * i + startStep));
       }
@@ -629,7 +674,10 @@ const LayerLevel: React.FC = () => {
         <div style={{ marginLeft: '8px', marginTop: '2px' }}>
           {"step: " + DetailInfoOfCurrentStep[0].step}
         </div>
-        { DetailInfoOfCurrentStep[0].dataIndex >= 0 && DetailInfoOfCurrentStep[0].dataIndex !== undefined && DetailInfoOfCurrentStep[0].dataIndex !== null &&
+        { DetailInfoOfCurrentStep[0].dataIndex >= 0 &&
+          DetailInfoOfCurrentStep[0].dataIndex !== undefined &&
+          DetailInfoOfCurrentStep[0].dataIndex !== null &&
+          showActivationOrGradient === ShowActivationOrGradient.ACTIVATION &&
           (<div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ marginLeft: '8px', marginTop: '2px' }}>
               {"data index: " + DetailInfoOfCurrentStep[0].dataIndex}
@@ -706,44 +754,6 @@ const LayerLevel: React.FC = () => {
     res.push(stream[stream.length - 1]); // 最后一个元素
     return res;
   }
-
-  const getLayerScalars = async (
-    graphName,
-    nodeIds,
-    startStep,
-    endStep,
-    type,
-    dataMode
-  ) => {
-    setLoadingData(true);
-    await fetchLayerScalars({
-      graph_name: graphName,
-      node_id: nodeIds,
-      start_step: startStep,
-      end_step: endStep,
-      type: type,
-      mode: dataMode,
-    }).then((res) => {
-      if (res.data.message === "success") {
-        setLoadingData(false);
-        let layerScalars = res.data.data[nodeIds[0]];
-        console.log("layerScalars", layerScalars);
-        setLayerScalarsData(layerScalars);
-
-        let _batchSize = 1;
-        for (let i = 1; i < layerScalars.length; i++) {
-          if (layerScalars[i].dataIndex < layerScalars[i - 1].dataIndex) {
-            _batchSize = layerScalars[i - 1].dataIndex + 1;
-            break;
-          }
-        }
-        setBatchSize(_batchSize);
-      } else {
-        console.log("获取layer数据失败：" + res.data.message);
-      }
-    })
-
-  };
 
   return (
     <div className="layerLevel" ref={measuredRef}>

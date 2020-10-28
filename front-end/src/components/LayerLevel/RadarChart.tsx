@@ -9,6 +9,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import { TensorMetadata } from "./TensorHeatmap";
 import RadarChartDrawer, { RadarData } from "./RadarChartDrawer"
 import { fetchNodeTensor } from "../../api/layerlevel";
+import { useGlobalStates } from "../../store/global-states";
 
 export interface RadarChartProps {
   tensorMetadata: TensorMetadata;
@@ -44,6 +45,9 @@ const RadarChart: React.FC<RadarChartProps> = (
   const handleClose = () => {
     setIsShowing(false);
   };
+  const {
+    currentMSGraphName
+  } = useGlobalStates();
 
   useEffect(() => {
     if (!show) return;
@@ -57,7 +61,7 @@ const RadarChart: React.FC<RadarChartProps> = (
 
     setShowLoading(true);
     fetchNodeTensor({
-      graph_name: "resnet",
+      graph_name: currentMSGraphName,
       node_id: nodeId,
       step: step,
       data_index: dataIndex,
@@ -97,8 +101,9 @@ const RadarChart: React.FC<RadarChartProps> = (
           <h2 id="transition-modal-title">
             data type:{" "}
             {type === ShowActivationOrGradient.ACTIVATION && "activation"}{" "}
-            {type === ShowActivationOrGradient.GRADIENT && "gradient"}; step:{" "}
-            {step} ; data index: {dataIndex}
+            {type === ShowActivationOrGradient.GRADIENT && "gradient"};
+            step:{" "}{step} ;
+            {dataIndex >= 0 && type === ShowActivationOrGradient.ACTIVATION && (" data index: " + dataIndex)}
           </h2>
           {showLoading ?
             <CircularProgress /> :
