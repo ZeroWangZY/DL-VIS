@@ -21,6 +21,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from resnet import resnet50
 from data_writer import DataSaverCallback, SaveIndeciesSampler
+from data_writer_gpu import DataSaverCallbackGPU
 import random
 import os
 import json
@@ -36,15 +37,15 @@ parser.add_argument('--epoch_size', type=int, default=100, help='Epoch size.')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
 parser.add_argument('--num_classes', type=int, default=10, help='Num classes.')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='CheckPoint file path.')
-os.environ['CUDA_VISIBLE_DEVICES']="2"
+os.environ['CUDA_VISIBLE_DEVICES']="3"
 args_opt = parser.parse_args()
 
 data_home = "./dataset/10-batches-bin"
-summary_dir = './summary_dir-202010191622'
+summary_dir = './summary_dir-202010281114'
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
-def create_dataset(repeat_num=1, training=True):
+def create_dataset(repeat_num=1):
     """
     create data for next use such as training or infering
     """
@@ -100,11 +101,12 @@ if __name__ == '__main__':
         dataset = create_dataset()
         config_ck = CheckpointConfig(save_checkpoint_steps=10, keep_checkpoint_max=1000)
         ckpoint_cb = ModelCheckpoint(prefix="", directory=os.path.join(summary_dir, "weights"), config=config_ck)
-        data_saver_callback = DataSaverCallback(summary_dir=summary_dir)
+        # data_saver_callback = DataSaverCallback(summary_dir=summary_dir, save_interval=1)
+        data_saver_callback = DataSaverCallbackGPU(summary_dir=summary_dir)
         summary_cb = SummaryCollector(summary_dir=summary_dir, collect_freq=1000)
-        # model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb, ckpoint_cb],
-        #             dataset_sink_mode=False)
-        model.train(epoch_size, dataset, callbacks=[LossMonitor(), summary_cb, ckpoint_cb, data_saver_callback], dataset_sink_mode=False)
+        model.train(epoch_size, dataset, callbacks=[LossMonitor(), data_saver_callback, summary_cb, ckpoint_cb],
+                    dataset_sink_mode=False)
+        # model.train(epoch_size, dataset, callbacks=[LossMonitor(), summary_cb], dataset_sink_mode=False)
 
     # as for evaluation, users could use model.eval
     if args_opt.do_eval:
