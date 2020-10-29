@@ -518,7 +518,7 @@ const LayerLevel: React.FC = () => {
       let s2 = [...dataIndexDomain];
 
       let start = s2[0], end = Math.min(filteredScalarsData.length, s2[1]);
-      for (let i = Math.max(0, start - 1); i < end; i += batchSize) {
+      for (let i = Math.max(0, start - 1) + 1; i < end; i += batchSize) {
         // 上半部分
         svgPart
           .append("path")
