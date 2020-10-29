@@ -103,7 +103,7 @@ const RadarChart: React.FC<RadarChartProps> = (
             {type === ShowActivationOrGradient.ACTIVATION && "activation"}{" "}
             {type === ShowActivationOrGradient.GRADIENT && "gradient"};
             step:{" "}{step} ;
-            {dataIndex >= 0 && type === ShowActivationOrGradient.ACTIVATION && (" data index: " + dataIndex)}
+            {dataIndex >= 0 && type === ShowActivationOrGradient.ACTIVATION && (" data index: " + (dataIndex + 1))}
           </h2>
           {showLoading ?
             <CircularProgress /> :

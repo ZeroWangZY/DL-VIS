@@ -110,7 +110,7 @@ const LayerLevel: React.FC = () => {
   const [cursorLinePos, setCursorLinePos] = useState(null);
   const [mouseXPos, setMouseXPos] = useState(null);
 
-  const [showDomain, setShowDomain] = useState(null);
+  const [stepBrushed, setStepBrushed] = useState(null);
   const [newSelectedNodeId, setNewSelectedNodeId] = useState(null);
   const [layerScalarsData, setLayerScalarsData] = useState<LayerScalar[]>(null);
   const [loadingData, setLoadingData] = useState(false);
@@ -306,7 +306,7 @@ const LayerLevel: React.FC = () => {
 
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
-      setShowDomain(domain); // 设定brush选定显示区域的domain;
+      setStepBrushed(domain); // 设定brush选定显示区域的domain;
       drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, domain, tempDomain, false);
 
       drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
@@ -344,7 +344,7 @@ const LayerLevel: React.FC = () => {
         const tempDomain = [(domain[0] - 1) * batchSize + 1, (domain[1] - 1) * batchSize + 1] // domain.map(x1OtherScale).map(x1Scale.invert).map(Math.round);
         x1OtherScale.domain(domain);
         x1Scale.domain(tempDomain);
-        setShowDomain(domain); // 设定brush选定显示区域的domain;
+        setStepBrushed(domain); // 设定brush选定显示区域的domain;
         const xTicksValues = [];
         produceXTicks(xTicksValues, domain[0], domain[1]);
         context.select('g.brush').call(brush.move, domain.map(x2OtherScale));
@@ -385,11 +385,11 @@ const LayerLevel: React.FC = () => {
       .on("brush", brushHandler)
       .on('end', brushEnd);
 
-    let showRange = []; // 根据 x2Scale 和 showDomain，推算出 showRange;
-    if (showDomain === null)
+    let showRange = []; // 根据 x2Scale 和 stepBrushed，推算出 showRange;
+    if (stepBrushed === null)
       showRange = x2Scale.range();
     else
-      showRange = [x2Scale(showDomain[0]), x2Scale(showDomain[1])];
+      showRange = [x2Scale(stepBrushed[0] * batchSize), x2Scale(stepBrushed[1] * batchSize)];
 
     const brushSelection = context
       .append('g')
