@@ -260,10 +260,17 @@ const LayerLevel: React.FC = () => {
       .rangeRound([height, 0])
       .domain([minY, maxY]);
 
-    drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], true);
-
     const xTicksValues = []; // 坐标
-    produceXTicks(xTicksValues, 1, maxStep);
+    console.log("重新绘制");
+    if (stepBrushed === null) {
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], true);
+      produceXTicks(xTicksValues, 1, maxStep);
+    }
+    else {
+      const tempDomain = [(stepBrushed[0] - 1) * batchSize + 1, (stepBrushed[1] - 1) * batchSize + 1];
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, stepBrushed, tempDomain, true);
+      produceXTicks(xTicksValues, stepBrushed[0], stepBrushed[1]);
+    }
 
     const focusAxisX =
       d3.axisBottom(x1OtherScale)
