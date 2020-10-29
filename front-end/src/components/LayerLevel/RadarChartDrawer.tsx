@@ -108,13 +108,17 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       });
 
       const simulation = d3.forceSimulation()
-        .force("charge", d3.forceManyBody().strength(-60))
+        .force("charge", d3.forceManyBody().strength(0));
       // .velocityDecay(0.5);
 
       simulation
         .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
         .nodes(data.concat(dimensionNodes))
-        .force("link", d3.forceLink(linksData))
+        .force("link", d3.forceLink(linksData).distance((link) => {
+          const {source,target} = link;
+          const name = target.name;
+          return source[name] * 60;
+        }));
 
       // Basic structure
       let svg = d3.select(config.el)
