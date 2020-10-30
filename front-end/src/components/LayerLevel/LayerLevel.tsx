@@ -233,8 +233,20 @@ const LayerLevel: React.FC = () => {
   const computeAndDraw = () => {
     let focus = d3.select(svgRef.current).select("g.focus");
 
+    let layerScalarsDataDomain = [1, layerScalarsData.length];
+
+    // 
+    let _stepBrushed = stepBrushed;
+    if (stepBrushed !== null) {
+      _stepBrushed = [Math.round(stepBrushed[0]), Math.round(stepBrushed[1])];
+      layerScalarsDataDomain = [(_stepBrushed[0] - 1) * batchSize + 1, (_stepBrushed[1] - 1) * batchSize + 1];
+      console.log(_stepBrushed);
+      console.log(layerScalarsDataDomain);
+      console.log(layerScalarsData.length);
+    }
+
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
-    for (let i = 0; i < layerScalarsData.length; i++) {
+    for (let i = layerScalarsDataDomain[0]; i < Math.min(layerScalarsDataDomain[1], layerScalarsData.length); i++) {
       let tmp = layerScalarsData[i];
       minY = Math.min(minY, tmp.minimum);
       maxY = Math.max(maxY, tmp.maximum);
@@ -242,11 +254,11 @@ const LayerLevel: React.FC = () => {
 
     let x1Scale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([1, layerScalarsData.length]);
+      .domain(layerScalarsDataDomain);
 
     let x1OtherScale = d3.scaleLinear()
       .rangeRound([0, width])
-      .domain([1, maxStep]);
+      .domain(_stepBrushed === null ? [1, maxStep] : _stepBrushed);
 
     let x2Scale = d3.scaleLinear()
       .rangeRound([0, width])
@@ -262,14 +274,14 @@ const LayerLevel: React.FC = () => {
 
     const xTicksValues = []; // 坐标
     console.log("重新绘制");
-    if (stepBrushed === null) {
+    if (_stepBrushed === null) {
       drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], true);
       produceXTicks(xTicksValues, 1, maxStep);
     }
     else {
-      const tempDomain = [(stepBrushed[0] - 1) * batchSize + 1, (stepBrushed[1] - 1) * batchSize + 1];
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, stepBrushed, tempDomain, true);
-      produceXTicks(xTicksValues, stepBrushed[0], stepBrushed[1]);
+      // const tempDomain = [(stepBrushed[0] - 1) * batchSize + 1, (stepBrushed[1] - 1) * batchSize + 1];
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, _stepBrushed, layerScalarsDataDomain, true);
+      produceXTicks(xTicksValues, _stepBrushed[0], _stepBrushed[1]);
     }
 
     const focusAxisX =
@@ -278,10 +290,12 @@ const LayerLevel: React.FC = () => {
         .tickValues(xTicksValues)
         .tickFormat(d3.format(".0f"));
 
+    const xTicksValues1 = [];
+    produceXTicks(xTicksValues1, 1, maxStep);
     const contextAxisX =
       d3.axisBottom(x2OtherScale)
-        .ticks(xTicksValues.length)
-        .tickValues(xTicksValues)
+        .ticks(xTicksValues1.length)
+        .tickValues(xTicksValues1)
         .tickFormat(d3.format(".0f"));
 
     // 增加坐标和横线
