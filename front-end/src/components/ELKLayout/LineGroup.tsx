@@ -8,9 +8,10 @@ import {
 } from "../../store/global-states";
 import { useGlobalConfigurations } from "../../store/global-configuration"
 import { GlobalStatesModificationType, NodeScalarType } from "../../store/global-states.type";
-import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
+import { fetchActivations, fetchNodeScalars, fetchLayerScalars } from '../../api/layerlevel';
 import { isWidthDown } from "@material-ui/core";
 import { LineChart } from "../LineCharts";
+import { LayerScalar } from "../LayerLevel/LayerLevel"
 
 interface Props {
   svgWidth: number,
@@ -26,23 +27,14 @@ interface Point {
 interface ProcessedPoint {
   minx: number;
   miny: number;
-  meanx: number;
-  meany: number;
+  medianx: number;
+  mediany: number;
   maxx: number;
   maxy: number;
-}
-
-interface layerNodeScalar {
-  "step": number,
-  "activation_min": number,
-  "activation_max": number,
-  "activation_mean": number,
-  "gradient_min": number,
-  "gradient_max": number,
-  "gradient_mean": number,
-  "weight_min": number,
-  "weight_max": number,
-  "weight_mean": number
+  Q1x: number;
+  Q1y: number;
+  Q3x: number;
+  Q3y: number;
 }
 
 const LineGroup: React.FC<Props> = (props: Props) => {
@@ -51,6 +43,9 @@ const LineGroup: React.FC<Props> = (props: Props) => {
   const { currentStep, maxStep, currentMSGraphName, nodeScalarType } = useGlobalStates();
   const svgRef = useRef();
   const [cursorLinePos, setCursorLinePos] = useState(null);
+  const [nodeScalar, setNodeScalar] = useState<LayerScalar[]>(null);
+  const [stepDomain, setStepDomain] = useState<[number, number]>(null);
+  const [batchSize, setBatchSize] = useState<number>(1);
 
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
@@ -61,8 +56,10 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     width: svgWidth - margin.left - margin.right
   };
 
-  const stepNumberInLayernode = 21;
-  const getStartStepAndEndStep = () => {
+  useEffect(() => {
+    if (maxStep < 0 || currentStep < 0 || currentStep > maxStep) return;
+
+    const stepNumberInLayernode = 21;
     let endStep = 0;
     let startStep = 0;
     let halfOfStepNumberInLayernode = Math.floor(stepNumberInLayernode / 2);
@@ -74,49 +71,105 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       endStep = (currentStep + halfOfStepNumberInLayernode > maxStep ? maxStep : currentStep + halfOfStepNumberInLayernode);
     }
 
-    return [startStep, endStep];
-  }
+    setStepDomain([startStep, endStep]); // 起始step
+  }, [maxStep, currentStep]);
 
   useEffect(() => {
-    if (layerNodeId === "" || !layerNodeId) return;
-    const [startStep, endStep] = getStartStepAndEndStep();
+    if (layerNodeId === "" || !layerNodeId || !stepDomain) return;
 
-    let childNodeId = FindChildNodeUnderLayerNode(nodeMap, layerNodeId); // findChildNodeId(selectedNodeId);
-    if (childNodeId.length === 0) return;
+    let newNodeId = layerNodeId.split("/").splice(3).join(".");
 
-    childNodeId = childNodeId.slice(0, 1);	// 目前截取找出的第一个元素
+    getNodeScalars(currentMSGraphName, [newNodeId], stepDomain[0], stepDomain[1], nodeScalarType);
+  }, [layerNodeId, stepDomain, nodeScalarType]);
 
-    getNodeScalars(currentMSGraphName, childNodeId, startStep, endStep, nodeScalarType);
-  }, [layerNodeId, currentStep, maxStep, nodeScalarType])
+  useEffect(() => {
+    if (!nodeScalar) return;
 
-  const getNodeScalars = async (graphName, nodeIds, startStep, endStep, type) => {
+    drawLineChart();
+
+  }, [nodeScalar]);
+
+  const getNodeScalars = async (graphName, nodeIds, startStep, endStep, fetchDataType) => {
     const typeArray = ['activation', 'gradient', 'weight'];
-    let data = await fetchNodeScalars({ graph_name: graphName, node_id: nodeIds, start_step: startStep, end_step: endStep, type: typeArray[type], mode: dataMode });
-    let nodeScalars = data.data.data;
-    let max: Point[] = [], min: Point[] = [], mean: Point[] = []; // 每一维数据格式是 {x: step, y: value}
-    let nodeScalar = nodeScalars[nodeIds[0]] as layerNodeScalar[];
-    if (type === NodeScalarType.ACTIVATION)
-      for (let scalar of nodeScalar) {
-        max.push({ x: scalar.step, y: scalar.activation_max });
-        min.push({ x: scalar.step, y: scalar.activation_min });
-        mean.push({ x: scalar.step, y: scalar.activation_mean });
+    let data = await fetchLayerScalars({
+      graph_name: graphName,
+      node_id: nodeIds,
+      start_step: startStep,
+      end_step: endStep,
+      type: typeArray[fetchDataType],
+      mode: dataMode,
+    });
+
+    if (data.data.message === "success") { // 获取数据成功
+      let _nodeScalar = data.data.data[nodeIds[0]];
+
+      let _batchSize = 1;
+      for (let i = 1; i < _nodeScalar.length; i++) {
+        if (_nodeScalar[i].dataIndex < _nodeScalar[i - 1].dataIndex) {
+          _batchSize = _nodeScalar[i - 1].dataIndex + 1;
+          break;
+        }
       }
-    else if (type === NodeScalarType.GRADIENT)
+      setBatchSize(_batchSize);
+      setNodeScalar(_nodeScalar);
+    }
+  }
+
+  const drawLineChart = () => {
+    let max: Point[] = [], min: Point[] = [], median: Point[] = [], Q1: Point[] = [], Q3: Point[] = []; // 每一维数据格式是 {x: step, y: value}
+
+    if (nodeScalarType === NodeScalarType.ACTIVATION) {
+      let _scalar = {} as LayerScalar;
+      _scalar.maximum = 0;
+      _scalar.minimum = 0;
+      _scalar.median = 0;
+      _scalar.Q1 = 0;
+      _scalar.Q3 = 0;
       for (let scalar of nodeScalar) {
-        max.push({ x: scalar.step, y: scalar.gradient_max });
-        min.push({ x: scalar.step, y: scalar.gradient_min });
-        mean.push({ x: scalar.step, y: scalar.gradient_mean });
+        _scalar.maximum += scalar.maximum;
+        _scalar.minimum += scalar.minimum;
+        _scalar.median += scalar.median;
+        _scalar.Q1 += scalar.Q1;
+        _scalar.Q3 += scalar.Q3;
+
+        if (scalar.dataIndex === (batchSize - 1)) {
+          max.push({ x: scalar.step, y: _scalar.maximum / batchSize });
+          min.push({ x: scalar.step, y: _scalar.minimum / batchSize });
+          median.push({ x: scalar.step, y: _scalar.median / batchSize });
+          Q1.push({ x: scalar.step, y: _scalar.Q1 / batchSize });
+          Q3.push({ x: scalar.step, y: _scalar.Q3 / batchSize });
+
+          _scalar.maximum = 0;// 重置
+          _scalar.minimum = 0;
+          _scalar.median = 0;
+          _scalar.Q1 = 0;
+          _scalar.Q3 = 0;
+        }
       }
-    else if (type === NodeScalarType.WEIGHT)
+    }
+    else if (nodeScalarType === NodeScalarType.GRADIENT)
       for (let scalar of nodeScalar) {
-        max.push({ x: scalar.step, y: scalar.weight_max });
-        min.push({ x: scalar.step, y: scalar.weight_min });
-        mean.push({ x: scalar.step, y: scalar.weight_mean });
+        max.push({ x: scalar.step, y: scalar.maximum });
+        min.push({ x: scalar.step, y: scalar.minimum });
+        median.push({ x: scalar.step, y: scalar.median });
+        Q1.push({ x: scalar.step, y: scalar.Q1 / batchSize });
+        Q3.push({ x: scalar.step, y: scalar.Q3 / batchSize });
       }
+    else if (nodeScalarType === NodeScalarType.WEIGHT)
+      for (let scalar of nodeScalar) {
+        max.push({ x: scalar.step, y: scalar.maximum });
+        min.push({ x: scalar.step, y: scalar.minimum });
+        median.push({ x: scalar.step, y: scalar.median });
+        Q1.push({ x: scalar.step, y: scalar.Q1 / batchSize });
+        Q3.push({ x: scalar.step, y: scalar.Q3 / batchSize });
+      }
+
     let dataArrToShow = [];
     dataArrToShow.push({ id: "Max", data: max, color: "#C71585" })
     dataArrToShow.push({ id: "Min", data: min, color: "#DC143C" })
-    dataArrToShow.push({ id: "Mean", data: mean, color: "#4B0082" })
+    dataArrToShow.push({ id: "median", data: median, color: "#4B0082" })
+    dataArrToShow.push({ id: "Q1", data: Q1, color: "#C71585" })
+    dataArrToShow.push({ id: "Q3", data: Q3, color: "#C71585" })
 
     if (dataArrToShow.length === 0) return;
 
@@ -146,7 +199,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
 
     let XScale = d3.scaleLinear()
       .rangeRound([0, lineChartSize.width])
-      .domain([startStep, endStep]);
+      .domain([stepDomain[0], stepDomain[1]]);
 
     if (currentStep !== null)
       setCursorLinePos(XScale(currentStep));
@@ -158,8 +211,8 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     const focusAreaLineGenerator = d3
       .line<ProcessedPoint>()
       .curve(d3.curveMonotoneX)
-      .x((d) => XScale(d.meanx))
-      .y((d) => focusAreaYScale(d.meany))
+      .x((d) => XScale(d.medianx))
+      .y((d) => focusAreaYScale(d.mediany))
 
     const focusAreaGenerator = d3
       .area<ProcessedPoint>()
@@ -168,13 +221,22 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .y0((d) => focusAreaYScale(d.miny))
       .y1((d) => focusAreaYScale(d.maxy));
 
+    const focusQ1Q3AreaGenerator = d3
+      .area<ProcessedPoint>()
+      .curve(d3.curveMonotoneX)
+      .x((d) => XScale(d.Q1x))
+      .y0((d) => focusAreaYScale(d.Q1y))
+      .y1((d) => focusAreaYScale(d.Q3y));
+
     // 处理dataArrToshow数据，每三个元素为一组，其中第一个元素为max，第二个元素为min，
-    // 第三个元素为mean
+    // 第三个元素为median
     const processedDataArrToShow = [];
-    for (let i = 0; i < dataArrToShow.length; i += 3) {
+    for (let i = 0; i < dataArrToShow.length; i += 5) {
       const maxData = dataArrToShow[i];
       const minData = dataArrToShow[i + 1];
-      const meanData = dataArrToShow[i + 2];
+      const medianData = dataArrToShow[i + 2];
+      const Q1Data = dataArrToShow[i + 3];
+      const Q3Data = dataArrToShow[i + 4];
       const processedItem = {
         data: []
       };
@@ -182,10 +244,14 @@ const LineGroup: React.FC<Props> = (props: Props) => {
         processedItem.data.push({
           minx: minData.data[index].x,
           miny: minData.data[index].y,
-          meanx: meanData.data[index].x,
-          meany: meanData.data[index].y,
+          medianx: medianData.data[index].x,
+          mediany: medianData.data[index].y,
           maxx: maxData.data[index].x,
-          maxy: maxData.data[index].y
+          maxy: maxData.data[index].y,
+          Q1x: Q1Data.data[index].x,
+          Q1y: Q1Data.data[index].y,
+          Q3x: Q3Data.data[index].x,
+          Q3y: Q3Data.data[index].y
         });
       });
       processedDataArrToShow.push(processedItem);
@@ -198,9 +264,18 @@ const LineGroup: React.FC<Props> = (props: Props) => {
         .datum(data.data)
         .attr("class", "area")
         .attr("transform", "translate(0,0)")
-        .attr("d", focusAreaGenerator)
+        .attr("d", focusQ1Q3AreaGenerator)
         .attr("fill", "#69b3a2")
         .attr("fill-opacity", .8)
+        .attr("stroke", "none");
+      focus
+        .append("path")
+        .datum(data.data)
+        .attr("class", "area")
+        .attr("transform", "translate(0,0)")
+        .attr("d", focusAreaGenerator)
+        .attr("fill", "#69b3a2")
+        .attr("fill-opacity", .5)
         .attr("stroke", "none");
       focus
         .append('path')
@@ -228,53 +303,6 @@ const LineGroup: React.FC<Props> = (props: Props) => {
       .call(d3.axisLeft(focusAreaYScale).tickFormat(d3.format(".2")).ticks(5).tickSize(3).tickPadding(10))
       .selectAll("text")
       .style("font-size", 7)
-
-    // svg.append("rect")
-    //   .attr("class", "layerNodeInnerLineChart-zoom")
-    //   .attr("width", lineChartSize.width)
-    //   .attr("height", lineChartSize.height)
-    //   .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    //   .attr("opacity", 0);
-
-    // d3.select(svgRef.current)
-    //   .select("rect.layerNodeInnerLineChart-zoom")
-    //   .on("mousemove", function () {
-    //     let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-    //     let x = XScale.invert(mouseX);
-    //     let _index = bisect(dataExample.data, x, 1);
-    //     _index = _index === 0 ? 1 : _index;
-
-    //     if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
-    //     let index =
-    //       Math.abs(x - dataExample.data[_index - 1].x) < Math.abs(dataExample.data[_index].x - x)
-    //         ? _index - 1
-    //         : _index;
-    //     let clickNumber = dataExample.data[index].x;
-
-    //     setCursorLinePos(XScale(clickNumber));
-    //   })
-    //   .on("mouseleave", function () {
-    //     setCursorLinePos(null);
-    //   })
-    //   .on("click", function () {
-    //     let mouseX = d3.mouse((this as any) as SVGSVGElement)[0];
-    //     let x = XScale.invert(mouseX);
-    //     let _index = bisect(dataExample.data, x, 1);
-    //     _index = _index === 0 ? 1 : _index;
-
-    //     if (_index === stepNumberInLayernode - 1) _index = stepNumberInLayernode - 2;
-    //     let index =
-    //       Math.abs(x - dataExample.data[_index - 1].x) < Math.abs(dataExample.data[_index].x - x)
-    //         ? _index - 1
-    //         : _index;
-    //     let clickNumber = dataExample.data[index].x;
-
-    //     modifyGlobalStates(
-    //       GlobalStatesModificationType.SET_CURRENT_STEP,
-    //       clickNumber
-    //     );
-    //     setCursorLinePos(XScale(clickNumber));
-    //   });
   }
 
   return (
@@ -284,26 +312,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
           className="layerNodeInnerLineChart"
           transform={`translate(${margin.left},${margin.top})`}
         >
-          {/* {cursorLinePos !== null && (
-            <line
-              x1={cursorLinePos}
-              x2={cursorLinePos}
-              y1={lineChartSize.height}
-              y2={0}
-              style={{
-                stroke: "grey",
-                strokeWidth: 1,
-              }}
-            />
-          )} */}
         </g>
-        {/* <rect
-          className="layerNodeInnerLineChart-zoom"
-          width={lineChartSize.width}
-          height={lineChartSize.height}
-          transform={`translate(${margin.left},${margin.top})`}
-          style={{ opacity: 0 }}
-        /> */}
       </svg>
     </div>
   );
