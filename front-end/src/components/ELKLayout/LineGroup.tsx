@@ -78,6 +78,9 @@ const LineGroup: React.FC<Props> = (props: Props) => {
     if (layerNodeId === "" || !layerNodeId || !stepDomain) return;
 
     let newNodeId = layerNodeId.split("/").splice(3).join(".");
+    let idx = newNodeId.indexOf("_copy");
+    if (idx !== -1)
+      newNodeId = newNodeId.slice(0, idx);
 
     getNodeScalars(currentMSGraphName, [newNodeId], stepDomain[0], stepDomain[1], nodeScalarType);
   }, [layerNodeId, stepDomain, nodeScalarType]);

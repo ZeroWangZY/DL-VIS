@@ -155,6 +155,9 @@ const LayerLevel: React.FC = () => {
     // _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
     // setChildNodeId(_childNodeId);
     let newNodeId = selectedNodeId.split("/").splice(3).join(".");
+    let idx = newNodeId.indexOf("_copy");
+    if (idx !== -1)
+      newNodeId = newNodeId.slice(0, idx);
     setNewSelectedNodeId(newNodeId);
     const _fetchDataType =
       showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
@@ -240,9 +243,6 @@ const LayerLevel: React.FC = () => {
     if (stepBrushed !== null) {
       _stepBrushed = [Math.round(stepBrushed[0]), Math.round(stepBrushed[1])];
       layerScalarsDataDomain = [(_stepBrushed[0] - 1) * batchSize + 1, (_stepBrushed[1] - 1) * batchSize + 1];
-      console.log(_stepBrushed);
-      console.log(layerScalarsDataDomain);
-      console.log(layerScalarsData.length);
     }
 
     let minY = Infinity, maxY = -Infinity; // 二维数组中的最大最小值
@@ -268,19 +268,21 @@ const LayerLevel: React.FC = () => {
       .rangeRound([0, width])
       .domain([1, maxStep]);
 
+    const YDoamin = { minY: minY, maxY: minY };
+
     let focusAreaYScale = d3.scaleLinear()
       .rangeRound([height, 0])
-      .domain([minY, maxY]);
+      .domain([YDoamin.minY, YDoamin.maxY]);
 
     const xTicksValues = []; // 坐标
     console.log("重新绘制");
     if (_stepBrushed === null) {
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], true);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, YDoamin, [1, maxStep], [1, layerScalarsData.length], true);
       produceXTicks(xTicksValues, 1, maxStep);
     }
     else {
       // const tempDomain = [(stepBrushed[0] - 1) * batchSize + 1, (stepBrushed[1] - 1) * batchSize + 1];
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, _stepBrushed, layerScalarsDataDomain, true);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, YDoamin, _stepBrushed, layerScalarsDataDomain, true);
       produceXTicks(xTicksValues, _stepBrushed[0], _stepBrushed[1]);
     }
 
@@ -328,7 +330,7 @@ const LayerLevel: React.FC = () => {
       x1OtherScale.domain(domain);
       x1Scale.domain(tempDomain);
       setStepBrushed(domain); // 设定brush选定显示区域的domain;
-      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, minY, maxY, domain, tempDomain, false);
+      drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, focusAreaYScale, batchSize, YDoamin, domain, tempDomain, false);
 
       drawFocusAreaYAxisAndGrid(focus, focusAreaYScale, width);
       const xTicksValues = [];
@@ -389,7 +391,7 @@ const LayerLevel: React.FC = () => {
           .rangeRound([height, 0])
           .domain([tmpMinY, tmpMaxY]);
 
-        drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, minY, maxY, domain, tempDomain, true);
+        drawChartArea(focus.select(".focus-axis"), layerScalarsData, x1Scale, tmpFocusAreaYScale, batchSize, YDoamin, domain, tempDomain, true);
         drawFocusAreaYAxisAndGrid(focus, tmpFocusAreaYScale, width);
       }
     };
@@ -418,7 +420,7 @@ const LayerLevel: React.FC = () => {
       .call(brush)
       .call(brush.move, showRange);
 
-    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, minY, maxY, [1, maxStep], [1, layerScalarsData.length], false);
+    drawChartArea(context, layerScalarsData, x2Scale, contextAreaYScale, batchSize, YDoamin, [1, maxStep], [1, layerScalarsData.length], false);
 
     context.selectAll(".axis--x").remove();
     context
@@ -430,13 +432,27 @@ const LayerLevel: React.FC = () => {
     brushSelection.raise();
   };
 
-  const drawChartArea = (svgPart: any, scalarData: LayerScalar[], xScale: any, yScale: any, batchSize: number, minY: number, maxY: number, stepDomain: number[], dataIndexDomain: number[], brushEnded: boolean): void => {
+  const drawChartArea = (svgPart: any, scalarData: LayerScalar[], xScale: any, yScale: any, batchSize: number, YDoamin: { minY: number, maxY: number }, stepDomain: number[], dataIndexDomain: number[], brushEnded: boolean): void => {
     let filteredScalarsData = scalarData;
     let sampling = false;
     if ((stepDomain[1] - stepDomain[0]) * batchSize > 640) {
       sampling = true;
       filteredScalarsData = getAverageSamplingScalarData(layerScalarsData, Math.floor(640 * scalarData.length / batchSize / (stepDomain[1] - stepDomain[0])));
     }
+
+    // 遍历data, 找出step在 stepDomain中的最大最小值
+    if (brushEnded) {
+      let _minY = Infinity, _maxY = -Infinity;
+      for (let d of filteredScalarsData) {
+        if (stepDomain[0] <= d.step && d.step <= stepDomain[1]) {
+          _minY = Math.min(_minY, d.minimum);
+          _maxY = Math.max(_maxY, d.maximum);
+        }
+      }
+      [YDoamin.minY, YDoamin.maxY] = [_minY, _maxY];
+      yScale.domain([YDoamin.minY, YDoamin.maxY]);
+    }
+    const minY = YDoamin.minY, maxY = YDoamin.maxY;
 
     svgPart.selectAll(".area").remove(); // 清除原折线图
     // Q1 - Q3部分
@@ -741,6 +757,7 @@ const LayerLevel: React.FC = () => {
     }
     if (indices[indices.length - 1] != stream.length - 1) indices[indices.length - 1] = stream.length - 1;
 
+    let minY = Infinity, maxY = -Infinity;
     // console.log(indices);
 
     res.push(stream[0]); // 第一个元素
