@@ -329,6 +329,22 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         dim = request.GET.get('dim', default='radial')                   # 维度，做扇区采样就没有维度了呀，radviz的维度就是这个
         scale = request.GET.get('scale', default='false')
 
+        ckptList = os.listdir(SUMMARY_DIR + os.sep + graph_name + os.sep + "weights")
+        if len(ckptList) == 0:
+            return HttpResponse(json.dumps({
+                "message": "No ckpt usable",
+            }), content_type="application/json")
+
+        stepNumList = []
+        for i in range(len(ckptList)):
+            epochAndStep = ckptList[i].split(".")[0].split("_")
+            epochNum = abs((int)(epochAndStep[0]))
+            stepNum = (int)(epochAndStep[1])
+            stepNumList.append((epochNum - 1) * 1875 + stepNum)
+        difList = [abs(item - step) for item in stepNumList]
+        ckpt_file_name = ckptList[difList.index(min(difList))]
+        ckpt_file_path = SUMMARY_DIR + os.sep + graph_name + os.sep + "weights" + os.sep + ckpt_file_name
+
         checkpointstep = int(step / 10) * 10
         if checkpointstep < 10:
             # 要判断一下maxstep，决定是否可以计算
