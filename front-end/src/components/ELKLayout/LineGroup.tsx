@@ -8,7 +8,7 @@ import {
 } from "../../store/global-states";
 import { useGlobalConfigurations } from "../../store/global-configuration"
 import { GlobalStatesModificationType, NodeScalarType } from "../../store/global-states.type";
-import { fetchActivations, fetchNodeScalars, fetchLayerScalars } from '../../api/layerlevel';
+import { fetchActivations, fetchNodeScalars } from '../../api/layerlevel';
 import { isWidthDown } from "@material-ui/core";
 import { LineChart } from "../LineCharts";
 import { LayerScalar } from "../LayerLevel/LayerLevel"
@@ -94,7 +94,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
 
   const getNodeScalars = async (graphName, nodeIds, startStep, endStep, fetchDataType) => {
     const typeArray = ['activation', 'gradient', 'weight'];
-    let data = await fetchLayerScalars({
+    let data = await fetchNodeScalars({
       graph_name: graphName,
       node_id: nodeIds,
       start_step: startStep,

@@ -8,7 +8,7 @@ import TensorHeatmap, {
 } from "./TensorHeatmap";
 import RadarChart from "./RadarChart";
 import {
-  fetchLayerScalars
+  fetchNodeScalars
 } from "../../api/layerlevel";
 import { ShowActivationOrGradient } from "../../store/global-states.type";
 import { useGlobalConfigurations } from "../../store/global-configuration"
@@ -169,7 +169,7 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!newSelectedNodeId) return;
     setLoadingData(true);
-    fetchLayerScalars({
+    fetchNodeScalars({
       graph_name: currentMSGraphName,
       node_id: [newSelectedNodeId],
       start_step: 1,
@@ -206,7 +206,7 @@ const LayerLevel: React.FC = () => {
     if (!newSelectedNodeId || !layerScalarsData) return;
     setLoadingData(true);
     let _startStep = layerScalarsData[layerScalarsData.length - 1].step + 1;
-    fetchLayerScalars({
+    fetchNodeScalars({
       graph_name: currentMSGraphName,
       node_id: [newSelectedNodeId],
       start_step: _startStep,
