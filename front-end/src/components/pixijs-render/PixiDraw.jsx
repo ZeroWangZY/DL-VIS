@@ -22,7 +22,36 @@ const PixiDraw = () => {
   useEffect(() => {
     if (!styledGraph || styledGraph.nodeStyles.length === 0) return;
 
-    addNodes(styledGraph);
+    const app = new PIXI.Application({
+      width: 300,
+      height: 300,
+      antialias: true,
+      transparent: false,
+      resolution: 1,
+      backgroundColor: 0x1d9ce0
+    })
+    container.current.appendChild(app.view);
+
+    const circle = new PIXI.Graphics();
+    circle.beginFill(0xfb6a8f);
+    circle.drawCircle(0, 0, 32);
+    circle.endFill();
+    circle.x = 130;
+    circle.y = 130;
+
+    circle.scale.set(1.5, 1);
+    circle.interactive = true;
+    circle.on("click", () => {
+      circle.alpha = 0.5;
+    })
+
+    app.stage.addChild(circle);
+
+    app.ticker.add(() => {
+      // 每秒调用该方法60次(60帧动画)
+      circle.rotation += 0.01;
+    })
+    // addNodes(styledGraph);
 
   }, [styledGraph]);
 
@@ -33,7 +62,7 @@ const PixiDraw = () => {
   return (
     <div className="pixi-container"
       ref={container}
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: "100%", height: "100%", textAlign: "left" }}
     >
 
     </div>
