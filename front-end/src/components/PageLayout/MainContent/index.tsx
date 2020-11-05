@@ -6,6 +6,7 @@ import "./index.less";
 import LayerLevel from "../../LayerLevel/LayerLevel";
 import ELKLayout from "../../ELKLayout/ELKLayout";
 import RenderGraph from "../../threejs-render/RenderGraph";
+import PixiDraw from "../../pixijs-render/PixiDraw";
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
 import DanymicInfo from "../../DynamicInfo";
@@ -57,6 +58,7 @@ export default () => {
                 <Route path="/">
                   {!webGLMode && <ELKLayout />}
                   {webGLMode && <RenderGraph />}
+                  {/* <PixiDraw /> */}
                 </Route>
               </Switch>
             )}

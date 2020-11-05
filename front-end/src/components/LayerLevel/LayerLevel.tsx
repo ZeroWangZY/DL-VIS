@@ -180,6 +180,7 @@ const LayerLevel: React.FC = () => {
       if (res.data.message === "success") {
         setLoadingData(false);
         let layerScalars = res.data.data[newSelectedNodeId];
+        console.log(layerScalars);
         setLayerScalarsData(layerScalars);
 
         let _batchSize = 1;
