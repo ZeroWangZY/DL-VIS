@@ -226,34 +226,59 @@ def get_node_scalars(request):
         # data_helper = DataHelper(db_file)
         if mode == "mock":
             data_helper = DataHelper(db_file)
+            res = {}
+            for node_id in node_ids:
+                db_node_id = alex_node_map.get(node_id)
+                if db_node_id != None:
+                    if type == 'activation':
+                        res[node_id] = data_helper.get_activation_scalars(db_node_id, start_step, end_step)
+                    elif type == 'gradient':
+                        res[node_id] = data_helper.get_gradient_scalars(db_node_id, start_step, end_step)
+                    elif type == 'weight':
+                        res[node_id] = data_helper.get_weight_scalars(db_node_id, start_step, end_step)
+                    continue
+                data = []
+                last_value = [random.random(), random.random(), random.random()]
+                for i in range(start_step, end_step):
+                    for j in range(len(last_value)):
+                        last_value[j] = last_value[j] + random.random() / 20 - 0.5 / 20
+                        if last_value[j] < 0:
+                            last_value[j] = 0.01
+                    data.append({
+                        "step": i,
+                        type + "_min": last_value[0],
+                        type + "_max": last_value[1],
+                        type + "_mean": last_value[2],
+                    })
+                res[node_id] = data
+            data_helper.close()
         elif mode == "realtime":
             data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
-        res = {}
-        for node_id in node_ids:
-            db_node_id = alex_node_map.get(node_id)
-            if db_node_id != None:
+            res = {}
+            for node_id in node_ids:
                 if type == 'activation':
-                    res[node_id] = data_helper.get_activation_scalars(db_node_id, start_step, end_step)
+                    res[node_id] = data_helper.get_activation_scalars(node_id, start_step, end_step)
                 elif type == 'gradient':
-                    res[node_id] = data_helper.get_gradient_scalars(db_node_id, start_step, end_step)
+                    res[node_id] = data_helper.get_gradient_scalars(node_id, start_step, end_step)
                 elif type == 'weight':
-                    res[node_id] = data_helper.get_weight_scalars(db_node_id, start_step, end_step)
+                    res[node_id] = data_helper.get_weight_scalars(node_id, start_step, end_step)
                 continue
-            data = []
-            last_value = [random.random(), random.random(), random.random()]
-            for i in range(start_step, end_step):
-                for j in range(len(last_value)):
-                    last_value[j] = last_value[j] + random.random() / 20 - 0.5 / 20
-                    if last_value[j] < 0:
-                        last_value[j] = 0.01
-                data.append({
-                    "step": i,
-                    type + "_min": last_value[0],
-                    type + "_max": last_value[1],
-                    type + "_mean": last_value[2],
-                })
-            res[node_id] = data
-        data_helper.close()
+                data = []
+                last_value = [random.random(), random.random(), random.random()]
+                for i in range(start_step, end_step):
+                    for j in range(len(last_value)):
+                        last_value[j] = last_value[j] + random.random() / 20 - 0.5 / 20
+                        if last_value[j] < 0:
+                            last_value[j] = 0.01
+                    data.append({
+                        "step": i,
+                        type + "_min": last_value[0],
+                        type + "_max": last_value[1],
+                        type + "_mean": last_value[2],
+                    })
+                res[node_id] = data
+            data_helper.close()
+
         return HttpResponse(json.dumps({
             "message": "success",
             "data": res
@@ -304,11 +329,6 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         dim = request.GET.get('dim', default='radial')                   # 维度，做扇区采样就没有维度了呀，radviz的维度就是这个
         scale = request.GET.get('scale', default='false')
 
-        # batch_size = 32
-
-
-        # 需要根据step和node_id去找排序
-        # 排序文件命名 checkpointstep-node_id.npy
         checkpointstep = int(step / 10) * 10
         if checkpointstep < 10:
             # 要判断一下maxstep，决定是否可以计算
@@ -321,7 +341,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
             else:
                 checkpointstep = 10
         if not os.path.exists(SUMMARY_DIR + os.sep + "order" + os.sep + str(checkpointstep) + "-" + node_id + ".npy"):
-            get_neuron_order(checkpointstep, node_id, data_runner)
+            get_neuron_order(checkpointstep, node_id, data_runner, type, graph_name)
 
         resultData = []
         if mode == "radial":

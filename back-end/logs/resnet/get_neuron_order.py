@@ -9,6 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
+SUMMARY_DIR = os.getenv("SUMMARY_DIR")
+
 def softmax(x):
     x_row_max = x.max(axis=-1)
     x_row_max = x_row_max.reshape(list(x.shape)[:-1]+[1])
@@ -18,14 +20,19 @@ def softmax(x):
     softmax = x_exp / x_exp_row_sum
     return softmax
 
-indicesFilePath = "./logs/resnet/indices" + os.sep + "1.json"
 
-def get_neuron_order(checkpoint_step, node_id, data_runner):
+def get_neuron_order(checkpoint_step, node_id, data_runner, type, graph_name):
+    epochNum = int(checkpoint_step / 1875) + 1
+    indicesFilePath = SUMMARY_DIR + graph_name + "/indices" + os.sep + str(epochNum) + ".json"
     with open(indicesFilePath, 'r', encoding='utf-8') as fp:
         indices = json.load(fp)
-        [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file="logs/resnet/weights/-1_" + str(checkpoint_step) + ".ckpt", node_name="layer3.f.conv1")
+        if type != "activation":
+            node_id = node_id + ".weight"
+        segmentedCkptId = int(checkpoint_step / 100) * 100 % 1875
+        ckpt_file = SUMMARY_DIR + graph_name + "/weights/-" + str(epochNum) + "_" + str(segmentedCkptId) + ".ckpt"
+        print(ckpt_file)
+        [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
         resdata = np.mean(np.array(resdata), axis=(2, 3))
-
         # 测试使用
         # resdata = np.load("resdata.npy")
         # labels = np.load("labels.npy")
@@ -78,8 +85,9 @@ def get_neuron_order(checkpoint_step, node_id, data_runner):
             if theta < -7 / 8 * math.pi:
                 theta = theta + 2 * math.pi
             angleList.append(theta)
-
-        np.save("./logs/resnet/order" + os.sep + str(checkpoint_step) + "-" + node_id + ".npy", angleList)
+        if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
+            os.mkdir(SUMMARY_DIR + graph_name + "/order")
+        np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + str(checkpoint_step) + "-" + node_id + "-" + type + ".npy", angleList)
         plt.figure()
         plt.scatter(to_plot[0], to_plot[1])
         plt.show()

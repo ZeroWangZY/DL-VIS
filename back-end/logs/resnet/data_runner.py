@@ -333,7 +333,8 @@ monitored_operations = {'Conv2D',
                         'ReLU', 'MatMul',
                         'MaxPool', 'Reshape'}
 
-os.environ['CUDA_VISIBLE_DEVICES']="2"
+SUMMARY_DIR = os.getenv("SUMMARY_DIR")
+os.environ['CUDA_VISIBLE_DEVICES']="3"
 random.seed(1)
 data_home = "./logs/resnet/dataset/10-batches-bin"
 batch_size = 32

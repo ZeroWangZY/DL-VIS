@@ -44,21 +44,28 @@ class DataHelper():
         for row in cursor:
             res.append({
                 "step": row[0],
-                "activation_min": row[2],
-                "activation_mean": row[3],
-                "activation_max": row[4]
+                "dataIndex": row[2],
+                "minimum": row[3],
+                "Q1": row[4],
+                "median": row[5],
+                "mean": row[6],
+                "Q3": row[7],
+                "maximum": row[8],
             })
         return res
 
     def get_gradient_scalars(self, node, start_step, end_step):
-        cursor = self.c.execute("select * from GRADIENT_SCALARS where step >= %d and step < %d and node = '%s'" % (start_step, end_step, node + ".weight.gradient"))
+        cursor = self.c.execute("select * from GRADIENT_SCALARS where step >= %d and step < %d and node = '%s'" % (start_step, end_step, node + ".weight"))
         res = []
         for row in cursor:
             res.append({
                 "step": row[0],
-                "gradient_min": row[2],
-                "gradient_mean": row[3],
-                "gradient_max": row[4]
+                "minimum": row[2],
+                "Q1": row[3],
+                "median": row[4],
+                "mean": row[5],
+                "Q3": row[6],
+                "maximum": row[7],
             })
         return res
 
@@ -68,9 +75,12 @@ class DataHelper():
         for row in cursor:
             res.append({
                 "step": row[0],
-                "weight_min": row[2],
-                "weight_mean": row[3],
-                "weight_max": row[4]
+                "minimum": row[2],
+                "Q1": row[3],
+                "median": row[4],
+                "mean": row[5],
+                "Q3": row[6],
+                "maximum": row[7],
             })
         return res
 
