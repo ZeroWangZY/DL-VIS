@@ -23,6 +23,7 @@ let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: false,
   conceptualGraphMode: false,
   webGLMode: false,
+  pixiJSMode: true,
   preprocessingPlugins: {
     pruneByOutput: false,
     replaceVariable: false,
@@ -79,6 +80,12 @@ export const modifyGlobalConfigurations = (
         webGLMode: !globalConfigurations.webGLMode,
       });
       break;
+    case GlobalConfigurationsModificationType.TOGGLE_PIXIJSMODE:
+      globalConfigurations = Object.assign({}, globalConfigurations, {
+        pixiJSMode: !globalConfigurations.pixiJSMode,
+      });
+      break;
+
     case GlobalConfigurationsModificationType.TOGGLE_CONCEPTUALGRAPH_MODE:
       globalConfigurations = Object.assign({}, globalConfigurations, {
         conceptualGraphMode: !globalConfigurations.conceptualGraphMode,

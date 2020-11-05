@@ -16,7 +16,7 @@ import {
 
 export default () => {
   const [fixedHeight, setFixedHeight] = useState("360px");
-  const { conceptualGraphMode, webGLMode } = useGlobalConfigurations();
+  const { conceptualGraphMode, webGLMode, pixiJSMode } = useGlobalConfigurations();
 
   return (
     <Router>
@@ -56,9 +56,10 @@ export default () => {
                   <LayerLevel />
                 </Route>
                 <Route path="/">
-                  {!webGLMode && <ELKLayout />}
-                  {webGLMode && <RenderGraph />}
-                  {/* <PixiDraw /> */}
+                  {/* {!webGLMode && <ELKLayout />}
+                  {webGLMode && <RenderGraph />} */}
+                  {!pixiJSMode && <ELKLayout />}
+                  {pixiJSMode && <PixiDraw />}
                 </Route>
               </Switch>
             )}

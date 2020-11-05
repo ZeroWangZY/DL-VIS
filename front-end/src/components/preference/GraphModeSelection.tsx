@@ -108,7 +108,7 @@ export default function GraphModeSelection() {
       ].join(","),
     },
   });
-  const { conceptualGraphMode, webGLMode } = useGlobalConfigurations();
+  const { conceptualGraphMode, webGLMode, pixiJSMode } = useGlobalConfigurations();
   const handleChangeConceptualGraphMode = () => {
     modifyGlobalConfigurations(
       GlobalConfigurationsModificationType.TOGGLE_CONCEPTUALGRAPH_MODE
@@ -121,9 +121,15 @@ export default function GraphModeSelection() {
     );
   }
 
+  const handleChangePixiJSMode = () => {
+    modifyGlobalConfigurations(
+      GlobalConfigurationsModificationType.TOGGLE_PIXIJSMODE
+    );
+  }
+
   return (
     <div className={classes.content}>
-      <FormControlLabel
+      {/* <FormControlLabel
         control={
           <IOSSwitch checked={webGLMode} onChange={handleChangeWebGLMode} />
         }
@@ -132,7 +138,18 @@ export default function GraphModeSelection() {
             <Typography variant="body2">webGL</Typography>
           </ThemeProvider>
         }
+      /> */}
+      <FormControlLabel
+        control={
+          <IOSSwitch checked={pixiJSMode} onChange={handleChangePixiJSMode} />
+        }
+        label={
+          <ThemeProvider theme={theme}>
+            <Typography variant="body2">PixiJS</Typography>
+          </ThemeProvider>
+        }
       />
+
       <FormControlLabel
         control={
           <IOSSwitch checked={conceptualGraphMode} onChange={handleChangeConceptualGraphMode} />

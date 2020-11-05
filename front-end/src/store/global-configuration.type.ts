@@ -2,6 +2,7 @@ export interface GlobalConfigurations {
   diagnosisMode: boolean;
   conceptualGraphMode: boolean;
   webGLMode: boolean;
+  pixiJSMode: boolean;
   preprocessingPlugins: {
     // 图处理里时应用哪些处理方式
     pruneByOutput: boolean;
@@ -32,6 +33,7 @@ export enum GlobalConfigurationsModificationType {
   SET_DATA_MODE,
   UNSET_DIAGNOSIS_MODE,
   TOGGLE_WEBGLMODE,
+  TOGGLE_PIXIJSMODE,
   TOGGLE_DIAGNOSIS_MODE,
   TOGGLE_CONCEPTUALGRAPH_MODE,
   TOGGLE_PREPROCESSING_PLUGIN,
