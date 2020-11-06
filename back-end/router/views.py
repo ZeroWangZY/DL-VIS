@@ -342,19 +342,14 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
             stepNum = (int)(epochAndStep[1])
             stepNumList.append((epochNum - 1) * 1875 + stepNum)
         difList = [abs(item - step) for item in stepNumList]
-        ckpt_file_name = ckptList[difList.index(min(difList))]
+        minIndex = difList.index(min(difList))
+        ckpt_file_name = ckptList[minIndex]
         ckpt_file_path = SUMMARY_DIR + os.sep + graph_name + os.sep + "weights" + os.sep + ckpt_file_name
-        
-        # if checkpointstep < 10:
-        #     # 要判断一下maxstep，决定是否可以计算
-        #     data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
-        #     db_max_step = data_helper.get_realtime_metadata('max_step')
-        #     if db_max_step < 10:
-        #         return HttpResponse(json.dumps({
-        #             "message": "Too few training steps",
-        #         }), content_type="application/json")
-        #     else:
-        #         checkpointstep = 10
+
+        epochAndStep = ckptList[minIndex].split(".")[0].split("_")
+        epochNum = abs((int)(epochAndStep[0]))
+        stepNum = (int)(epochAndStep[1])
+
         if not os.path.exists(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
             get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name)
 

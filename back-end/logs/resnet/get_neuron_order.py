@@ -27,12 +27,9 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
         indices = json.load(fp)
         if type != "activation":
             node_id = node_id + ".weight"
-        ckpt_file = SUMMARY_DIR + graph_name + "/weights/-" + str(epochNum) + "_" + str(stepNum) + ".ckpt"
+        ckpt_file = SUMMARY_DIR + graph_name + os.sep + "weights" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + ".ckpt"
         [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
         resdata = np.mean(np.array(resdata), axis=(2, 3))
-        # 测试使用
-        # resdata = np.load("resdata.npy")
-        # labels = np.load("labels.npy")
 
         dataNum = resdata.shape[1]
 
