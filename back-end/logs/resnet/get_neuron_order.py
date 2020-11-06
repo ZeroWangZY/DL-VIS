@@ -6,7 +6,7 @@ import json
 import numpy as np
 import math
 import pandas as pd
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
@@ -82,6 +82,6 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
         if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
             os.mkdir(SUMMARY_DIR + graph_name + "/order")
         np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy", angleList)
-        plt.figure()
-        plt.scatter(to_plot[0], to_plot[1])
-        plt.show()
+        # plt.figure()
+        # plt.scatter(to_plot[0], to_plot[1])
+        # plt.show()

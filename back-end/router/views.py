@@ -373,9 +373,10 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                     currentSectorData = list(
                         filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
                                df.iloc))
-                    currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                    currentSectorData = normalize(currentSectorData)
-                    sectorData.append(currentSectorData)
+                    if len(currentSectorData) != 0:
+                        currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                        currentSectorData = normalize(currentSectorData)
+                        sectorData.append(currentSectorData)
                 if data_index == -1:
                     for i in range(32):   # 这里数据要改成活的
                         resultData.append({
