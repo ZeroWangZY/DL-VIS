@@ -344,7 +344,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         difList = [abs(item - step) for item in stepNumList]
         ckpt_file_name = ckptList[difList.index(min(difList))]
         ckpt_file_path = SUMMARY_DIR + os.sep + graph_name + os.sep + "weights" + os.sep + ckpt_file_name
-
+        
         # if checkpointstep < 10:
         #     # 要判断一下maxstep，决定是否可以计算
         #     data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
@@ -355,7 +355,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         #         }), content_type="application/json")
         #     else:
         #         checkpointstep = 10
-        if not os.path.exists(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
+        if not os.path.exists(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
             get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name)
 
 
@@ -366,10 +366,10 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                 indices = json.load(fp)
                 indices = indices[(step - 1) * 32 : step * 32]   # 找到对应的数据编号，需要调用data_runner.py中的函数
 
-                [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id)
+                [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id, data_type=type, ckpt_file=ckpt_file_path)
                 resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
                 df = pd.DataFrame(resdata)
-                df['angle'] = np.load(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
+                df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
 
                 sectorData = []
                 for i in range(8):
