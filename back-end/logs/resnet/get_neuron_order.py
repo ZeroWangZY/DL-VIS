@@ -21,16 +21,13 @@ def softmax(x):
     return softmax
 
 
-def get_neuron_order(checkpoint_step, node_id, data_runner, type, graph_name):
-    epochNum = int(checkpoint_step / 1875) + 1
-    indicesFilePath = SUMMARY_DIR + graph_name + "/indices" + os.sep + str(epochNum) + ".json"
+def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
+    indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
     with open(indicesFilePath, 'r', encoding='utf-8') as fp:
         indices = json.load(fp)
         if type != "activation":
             node_id = node_id + ".weight"
-        segmentedCkptId = int(checkpoint_step / 100) * 100 % 1875
-        ckpt_file = SUMMARY_DIR + graph_name + "/weights/-" + str(epochNum) + "_" + str(segmentedCkptId) + ".ckpt"
-        print(ckpt_file)
+        ckpt_file = SUMMARY_DIR + graph_name + "/weights/-" + str(epochNum) + "_" + str(stepNum) + ".ckpt"
         [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
         resdata = np.mean(np.array(resdata), axis=(2, 3))
         # 测试使用
@@ -87,7 +84,7 @@ def get_neuron_order(checkpoint_step, node_id, data_runner, type, graph_name):
             angleList.append(theta)
         if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
             os.mkdir(SUMMARY_DIR + graph_name + "/order")
-        np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + str(checkpoint_step) + "-" + node_id + "-" + type + ".npy", angleList)
+        np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy", angleList)
         plt.figure()
         plt.scatter(to_plot[0], to_plot[1])
         plt.show()

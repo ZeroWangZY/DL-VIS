@@ -345,19 +345,19 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         ckpt_file_name = ckptList[difList.index(min(difList))]
         ckpt_file_path = SUMMARY_DIR + os.sep + graph_name + os.sep + "weights" + os.sep + ckpt_file_name
 
-        checkpointstep = int(step / 10) * 10
-        if checkpointstep < 10:
-            # 要判断一下maxstep，决定是否可以计算
-            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
-            db_max_step = data_helper.get_realtime_metadata('max_step')
-            if db_max_step < 10:
-                return HttpResponse(json.dumps({
-                    "message": "Too few training steps",
-                }), content_type="application/json")
-            else:
-                checkpointstep = 10
-        if not os.path.exists(SUMMARY_DIR + os.sep + "order" + os.sep + str(checkpointstep) + "-" + node_id + ".npy"):
-            get_neuron_order(checkpointstep, node_id, data_runner, type, graph_name)
+        # if checkpointstep < 10:
+        #     # 要判断一下maxstep，决定是否可以计算
+        #     data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
+        #     db_max_step = data_helper.get_realtime_metadata('max_step')
+        #     if db_max_step < 10:
+        #         return HttpResponse(json.dumps({
+        #             "message": "Too few training steps",
+        #         }), content_type="application/json")
+        #     else:
+        #         checkpointstep = 10
+        if not os.path.exists(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
+            get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name)
+
 
         resultData = []
         if mode == "radial":
@@ -369,7 +369,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                 [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id)
                 resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
                 df = pd.DataFrame(resdata)
-                df['angle'] = np.load("./logs/resnet/order/" + str(checkpointstep) + "-" + node_id + ".npy")
+                df['angle'] = np.load(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
 
                 sectorData = []
                 for i in range(8):
