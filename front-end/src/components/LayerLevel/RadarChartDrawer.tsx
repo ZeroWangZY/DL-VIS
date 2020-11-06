@@ -31,7 +31,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     drawRadarChart(rawData, radarChartMargin, radarChartWidth, radarChartHeight);
     // Radiz图 
-    drawForceDirectedGraph(rawData, ForceGraphSize, radarChartWidth, radarChartHeight, radarChartMargin);
+    drawForceDirectedGraph(rawData, 200, radarChartWidth, radarChartHeight, radarChartMargin);
   }, [rawData]);
 
   const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
@@ -71,7 +71,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   let radvizComponent = function (config, size, radarChartWidth, radarChartHeight, radarChartMargin) {
 
     const render = function (data) {
-      data = addNormalizedValues(data);
+      // data = addNormalizedValues(data);
       let normalizeSuffix = '_normalized';
       let dimensionNamesNormalized = config.dimensions.map(function (d) {
         return d + normalizeSuffix;
@@ -81,11 +81,13 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let chartRadius = config.size / 2 - config.margin;
       let nodeCount = data.length;
       let panelSize = config.size - config.margin * 2;
+      console.log(chartRadius);
 
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
         let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
         let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
+        console.log(x, y);
         return {
           index: nodeCount + i,
           x: x,
@@ -107,7 +109,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           });
         });
       });
-      
+
       const simulation = d3.forceSimulation()
         .force("charge", d3.forceManyBody().strength(0));
       // .velocityDecay(0.5);
@@ -122,19 +124,22 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         }));
 
       // Basic structure
-      let svg = d3.select(config.el)
-        .append('svg')
-        .attr("width", config.size)
-        .attr("height", config.size)
-        .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
-      let root = svg.append('g')
-        .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
+      // let svg = d3.select(config.el)
+      //   .append('svg')
+      //   .attr("width", config.size)
+      //   .attr("height", config.size)
+      //   .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
 
-      let panel = root.append('circle')
-        .classed('panel', true)
-        .attr("r", chartRadius)
-        .attr("cx", chartRadius)
-        .attr("cy", chartRadius)
+      // let root = svg.append('g')
+      //   .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
+
+      let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer")
+      let panel = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer").select("circle.forceDirectedGraphContainerCircle")
+      // let panel = root.append('circle')
+      //   .classed('panel', true)
+      //   .attr("r", chartRadius)
+      //   .attr("cx", chartRadius)
+      //   .attr("cy", chartRadius)
 
       // Links
       let links = root.selectAll('.link')
@@ -364,6 +369,15 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .style("stroke", "#CDCDCD")
       .style("fill-opacity", cfg.opacityCircles) // 每个圆的透明度，这样的话，中间的圆就会因为透明度叠加而变深
       .style("filter", "url(#glow)");
+
+    axisGrid.append("g")
+      .attr("class", "forceDirectedGraphContainer")
+      .append("circle")
+      .attr("class", "forceDirectedGraphContainerCircle")
+      .attr("r", (outRadius - innerRadius) / cfg.levels * (-1) + innerRadius)
+      .style("fill", "#CDCDCD")
+      .style("stroke", "#CDCDCD")
+      .style("fill-opacity", cfg.opacityCircles);
 
     //Text indicating at what % each level is
     axisGrid.selectAll(".axisLabel")
