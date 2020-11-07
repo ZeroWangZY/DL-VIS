@@ -83,6 +83,11 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let panelSize = config.size - config.margin * 2;
       console.log(chartRadius);
 
+      data.forEach(function (d) {
+        d.x = panelSize / 2;
+        d.y = panelSize / 2;
+      });
+
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
         let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
@@ -111,17 +116,20 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       });
 
       const simulation = d3.forceSimulation()
-        .force("charge", d3.forceManyBody().strength(0));
-      // .velocityDecay(0.5);
+        .force("charge", d3.forceManyBody().strength(0))
+        .alphaDecay(0.000000005);
+        // .velocityDecay(0.9);
 
       simulation
-        .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
+        //  .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
         .nodes(data.concat(dimensionNodes))
         .force("link", d3.forceLink(linksData).strength((link) => {
           const { source, target } = link;
           const name = target.name;
           return source[name];
         }));
+
+      simulation.tick(10);
 
       // Basic structure
       // let svg = d3.select(config.el)
@@ -152,6 +160,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .data(data)
         .enter().append('circle')
         .attr("class", function (d) { return "dot id_" + (d as any).index })
+        .attr('cx', d => (d as any).x)
+        .attr('cy', d => (d as any).y)
         .attr("r", config.dotRadius)
         .attr("fill", function (d, i): any {
           return config.color(i + "");
@@ -191,6 +201,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
       // Update force
       simulation.on('tick', function () {
+
         links.attr("x1", function (d) { return d.source.x; })
           .attr("y1", function (d) { return d.source.y; })
           .attr("x2", function (d) { return d.target.x; })
@@ -202,6 +213,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         labelNodes.attr("cx", function (d: any) { return d.x; })
           .attr("cy", function (d: any) { return d.y; })
       });
+
       return this;
     };
 
