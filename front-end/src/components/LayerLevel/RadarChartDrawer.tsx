@@ -81,7 +81,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let chartRadius = config.size / 2 - config.margin;
       let nodeCount = data.length;
       let panelSize = config.size - config.margin * 2;
-      console.log(chartRadius);
 
       data.forEach(function (d) {
         d.x = panelSize / 2;
@@ -90,9 +89,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
-        let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
-        let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor;
-        console.log(x, y);
+        let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor - 100;
+        let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor - 100;
         return {
           index: nodeCount + i,
           x: x,
@@ -118,7 +116,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       const simulation = d3.forceSimulation()
         .force("charge", d3.forceManyBody().strength(0))
         .alphaDecay(0.000000005);
-        // .velocityDecay(0.9);
+      // .velocityDecay(0.9);
 
       simulation
         //  .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
