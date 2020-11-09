@@ -26,10 +26,11 @@ interface RawData {
 
 interface Props {
   rawData: any[];
+  step?: number,
 }
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
-  const { rawData } = props;
+  const { rawData, step } = props;
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
 
   const [isShowPopover, setIsShowPopover] = useState(false);
@@ -37,6 +38,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const [top, setTop] = useState(null);
   const [currentData, setCurrentData] = useState(null);
   const globalStates = useGlobalStates();
+  const [mousePos, setMousePos] = useState(null);
 
   useEffect(() => {
     if (!rawData) return;
@@ -176,15 +178,15 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
           this.classList.add('active');
 
-          let newX = d3.mouse(this)[0] + 10;
-          let newY = d3.mouse(this)[1] - 10;
-          tooltip
-            .attr('x', newX)
-            .attr('y', newY)
-            .text(d.dataIndex)
-            .transition().duration(200)
-            .style('opacity', 1);
+          let newDetailInfoOfCurrentStep = [];
+          newDetailInfoOfCurrentStep.push({
+            "step": step,
+            "label": d.colorIndex,
+            "index": d.dataIndex,
+          })
+          setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
 
+          setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
         })
         .on('mouseout', function (d) {
           d3.select(".radarStroke.id_" + (d as any).index)
@@ -195,13 +197,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
           this.classList.remove('active');
 
-          tooltip.transition().duration(200)
-            .style("opacity", 0);
+          setMousePos(null);
+          setDetailInfoOfCurrentStep([]);
         });
-
-      let tooltip = root.append("text")
-        .attr("class", "tooltip")
-        .style("opacity", 0);
 
       // Labels n1 - n12
       let labelNodes = root.selectAll('circle.label-node')
@@ -302,10 +300,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       data.push(obj);
     }
 
-    radarChart(".radarChart", data, radarChartOptions); // 画雷达图
+    radarChart(".radarChart", data, radarChartOptions, width); // 画雷达图
   }
 
-  const radarChart = (id, data, options) => {
+  const radarChart = (id, data, options, radarChartWidth) => {
     let cfg = {
       w: 400, //Width of the circle
       h: 400, //Height of the circle
@@ -483,8 +481,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .attr("class", function (d, i) { return "radarStroke id_" + i })
       .style("stroke-width", cfg.strokeWidth + "px")
       .style("stroke", function (d: any, i) {
-        console.log(d);
-        console.log(d[0].colorIndex + "");
         return cfg.color(d[0].colorIndex + "");
       })
       .style("fill", "none")
@@ -510,28 +506,21 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         d3.select(".dot.id_" + i)
           .classed("active", false);
 
-        tooltip.transition().duration(200)
-          .style("opacity", 0);
+        setDetailInfoOfCurrentStep([]);
+        setMousePos(null);
       })
       .on('mousemove', function (d, i) {
-        // 增加tooltips
-        let newX = d3.mouse(this)[0] + 10;
-        let newY = d3.mouse(this)[1] - 10;
+        let newDetailInfoOfCurrentStep = [];
+        newDetailInfoOfCurrentStep.push({
+          "step": step,
+          "label": d[0].colorIndex,
+          "index": d[0].dataIndex,
+        })
+        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
 
-        tooltip
-          .attr('x', newX)
-          .attr('y', newY)
-          .text(d[0]["dataIndex"])
-          .transition().duration(200)
-          .style('opacity', 1);
+        setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
       })
       .on('contextmenu', ContextMenuHandler);
-
-    //Set up the small tooltip for when you hover over a circle
-    let tooltip = g.append("text")
-      .attr("class", "tooltip")
-      .style("opacity", 0);
-
     // Helper Function
     //Wraps SVG text	
     function wrap(text, width) {
@@ -562,38 +551,30 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   } //RadarChart
 
-  // const getDetailInfoRect = (xPos, height) => {
-  //   let fontSize = 14;
-  //   let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
-  //   let containerWidth = 160;
-  //   xPos += margin.left;
-  //   if (xPos + containerWidth > width) xPos = xPos - containerWidth - 10; // 靠近右边界，将这一部分放到竖线前面显示
-  //   else xPos += 10;// gap
-
-  //   return (
-  //     <div
-  //       className="DetailInfoContainer"
-  //       style={{
-  //         left: xPos,
-  //         top: height / 2 - contextHeight / 2,
-  //         width: containerWidth,
-  //       }}>
-  //       <div style={{ marginLeft: '8px', marginTop: '2px' }}>
-  //         {"step: " + DetailInfoOfCurrentStep[0].step}
-  //       </div>
-  //       { DetailInfoOfCurrentStep[0].dataIndex >= 0 &&
-  //         DetailInfoOfCurrentStep[0].dataIndex !== undefined &&
-  //         DetailInfoOfCurrentStep[0].dataIndex !== null &&
-  //         showActivationOrGradient === ShowActivationOrGradient.ACTIVATION &&
-  //         (<div style={{ display: 'flex', alignItems: 'center' }}>
-  //           <div style={{ marginLeft: '8px', marginTop: '2px' }}>
-  //             {"data index: " + DetailInfoOfCurrentStep[0].dataIndex}
-  //           </div>
-  //           <div style={{ clear: 'both' }}></div>
-  //         </div>)}
-  //     </div>
-  //   )
-  // };
+  const getDetailInfoRect = (mousePosition) => {
+    let [xPos, yPos] = mousePosition;
+    let fontSize = 14;
+    let containerWidth = 160;
+    return (
+      <div
+        className="DetailInfoContainer"
+        style={{
+          left: xPos,
+          top: yPos,
+          width: containerWidth,
+        }}>
+        <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+          {"step: " + DetailInfoOfCurrentStep[0].step}
+        </div>
+        <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+          {"index: " + DetailInfoOfCurrentStep[0].index}
+        </div>
+        <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+          {"label: " + DetailInfoOfCurrentStep[0].label}
+        </div>
+      </div>
+    )
+  };
 
   const handleClosePopover = () => {
     setIsShowPopover(false);
@@ -613,8 +594,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       collectionDataSet.push(currentData);
     }
 
-    console.log('collectionDataSet: ', collectionDataSet);
-
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
     setIsShowPopover(false);
   };
@@ -622,7 +601,11 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   return (
     <div>
       <div className="radarChart"></div>
-      {/* <div className="forceDirectedGraph"></div> */}
+
+      {mousePos !== null && DetailInfoOfCurrentStep.length &&
+        getDetailInfoRect(mousePos)
+      }
+
       <Popover open={isShowPopover}
         anchorOrigin={{
           vertical: 'top',

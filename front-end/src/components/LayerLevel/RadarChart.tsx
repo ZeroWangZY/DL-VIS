@@ -106,7 +106,7 @@ const RadarChart: React.FC<RadarChartProps> = (
           </h2>
           {showLoading ?
             <CircularProgress /> :
-            <RadarChartDrawer rawData={radarChartData} />
+            <RadarChartDrawer rawData={radarChartData} step={step} />
           }
         </div>
       </Popover>
