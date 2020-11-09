@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
+import Popover from '@material-ui/core/Popover';
 import {
   useTheme,
   createStyles,
@@ -9,6 +10,7 @@ import {
   createMuiTheme,
   ThemeProvider,
 } from "@material-ui/core/styles";
+import Button from '@material-ui/core/Button';
 import Box from "@material-ui/core/Box";
 import Snapshot from "../Snapshot/Snapshot";
 import "./index.less";
@@ -21,6 +23,7 @@ import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { ShowActivationOrGradient } from "../../store/global-states.type"
 import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
 import { useProcessedGraph } from "../../store/processedGraph";
+import RadarChartDrawer from "../LayerLevel/RadarChartDrawer";
 
 type Position = "outerBottom" | "innerBottom";
 
@@ -76,6 +79,24 @@ const useStyles = makeStyles((theme: Theme) =>
     indicator: {
       backgroundColor: "#00a5a7",
     },
+    collectionLabelStyle: {
+      height: 20,
+      fontSize: "8px",
+      lineHeight: 8
+    },
+    collectionRootStyle: {
+      width: 100,
+      padding: 0,
+      position: 'absolute',
+      right: 100,
+      top: 1
+    },
+    paper: {
+      backgroundColor: theme.palette.background.paper,
+      border: "2px solid #000",
+      boxShadow: theme.shadows[5],
+      padding: theme.spacing(2, 4, 3),
+    },
   })
 );
 
@@ -104,9 +125,12 @@ export default (props: Props) => {
   const classes = useStyles();
   const theme = useTheme();
   const [value, setValue] = useState({ right: 0, outerBottom: 0, innerBottom: 0 });
-  const { selectedNodeId, showActivationOrGradient } = useGlobalStates();
+  const { selectedNodeId, showActivationOrGradient, collectionDataSet } = useGlobalStates();
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
+  const [showCollection, setShowCollection] = useState(false);
+  const [left, setLeft] = useState(null);
+  const [top, setTop] = useState(null);
 
   useEffect(() => {
     if (selectedNodeId === "" && value.outerBottom !== 0) {
@@ -133,6 +157,12 @@ export default (props: Props) => {
       GlobalStatesModificationType.SET_SHOWACTIVATIONORGRADIENT,
       parseInt(event.target.value)
     );
+  };
+
+  const handleCollectionClose = (e) => {
+    setShowCollection(false);
+    setLeft(e.pageX);
+    setTop(e.pageY);
   };
 
   return (
@@ -187,11 +217,36 @@ export default (props: Props) => {
               />
               <label >gradient</label>
             </div>
+            <Button variant="contained" color="primary"
+              classes={{
+                label: classes.collectionLabelStyle,
+                root: classes.collectionRootStyle
+              }}
+              onClick={() => {
+                setShowCollection(true);
+              }}>Collection</Button>
           </div>
           {/* layer level */}
           <LayerLevel />
         </TabPanel>
-
+        <Popover
+          open={showCollection}
+          onClose={handleCollectionClose}
+          anchorReference="anchorPosition"
+          anchorPosition={{top, left}}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+        >
+          <div className={classes.paper}>
+            <RadarChartDrawer rawData={collectionDataSet} />
+          </div>
+        </Popover>
       </ThemeProvider>
     </div >
   );

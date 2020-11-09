@@ -72,7 +72,6 @@ const RadarChart: React.FC<RadarChartProps> = (
     }).then((res) => {
       if (res.data.message === "success") {
         let rawData = res.data.data;
-        console.log(rawData);
         setShowLoading(false);
         setRadarChartData(rawData);
       } else {

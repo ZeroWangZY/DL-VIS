@@ -13,7 +13,8 @@ export interface GlobalStates {
   layerLevel_checkBoxState: LayerLevelCheckBoxState,
   showActivationOrGradient: ShowActivationOrGradient,
   nodeScalarType: NodeScalarType,
-}
+  collectionDataSet: object[]
+};
 
 export enum GlobalStatesModificationType {
   SET_CURRENT_MS_GRAPH_NAME,
@@ -24,6 +25,7 @@ export enum GlobalStatesModificationType {
   SET_LAYERLEVEL_CHECKBOXSTATE,
   SET_SHOWACTIVATIONORGRADIENT,
   SET_NODESCALARTYPE,
+  ADD_COLLECTION
 }
 
 export enum ShowActivationOrGradient {

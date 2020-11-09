@@ -12,7 +12,7 @@ let checkBoxInitial: LayerLevelCheckBoxState = {
   showMax: true,
   showMin: true,
   showMean: true,
-}
+};
 
 let globalStates: GlobalStates = {
   currentMSGraphName: null,
@@ -23,6 +23,7 @@ let globalStates: GlobalStates = {
   layerLevel_checkBoxState: checkBoxInitial,
   showActivationOrGradient: ShowActivationOrGradient.ACTIVATION,
   nodeScalarType: NodeScalarType.ACTIVATION,
+  collectionDataSet: []
 };
 
 const broadcast = () => {
@@ -74,6 +75,11 @@ export const modifyGlobalStates = (
     case GlobalStatesModificationType.SET_NODESCALARTYPE:
       globalStates = Object.assign({}, globalStates, {
         nodeScalarType: payload,
+      });
+      break;
+    case GlobalStatesModificationType.ADD_COLLECTION:
+      globalStates = Object.assign({}, globalStates, {
+        collectionDataSet: payload,
       });
       break;
     default:

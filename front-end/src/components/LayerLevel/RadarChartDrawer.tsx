@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+import Popover from '@material-ui/core/Popover';
+import CardContent from '@material-ui/core/CardContent';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
 import * as d3 from "d3";
-import "./RadarChartDrawer.css"
+import "./RadarChartDrawer.css";
+import {
+  useGlobalStates,
+  modifyGlobalStates,
+} from "../../store/global-states";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
+import * as _ from 'lodash';
 
 export interface RadarData {
   "axis": number;
@@ -15,12 +25,18 @@ interface RawData {
 }
 
 interface Props {
-  rawData: RawData[];
+  rawData: any[];
 }
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const { rawData } = props;
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
+
+  const [isShowPopover, setIsShowPopover] = useState(false);
+  const [left, setLeft] = useState(null);
+  const [top, setTop] = useState(null);
+  const [currentData, setCurrentData] = useState(null);
+  const globalStates = useGlobalStates();
 
   useEffect(() => {
     if (!rawData) return;
@@ -282,6 +298,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         temp["dataIndex"] = dataIndex;
         obj.push(temp);
       }
+      obj['data_index'] = i;
       data.push(obj);
     }
 
@@ -451,6 +468,15 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .enter().append("g")
       .attr("class", "radarWrapper");
 
+    const ContextMenuHandler = (d) => {
+      setIsShowPopover(true);
+      const e = d3.event;
+      e.preventDefault();
+      setCurrentData(rawData[d["data_index"]]);
+      setLeft(e.pageX);
+      setTop(e.pageY);
+    };
+
     //Create the outlines	
     blobWrapper.append("path")
       .attr("d", (d) => radarLine(d as [number, number][]))
@@ -498,7 +524,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           .text(d[0]["dataIndex"])
           .transition().duration(200)
           .style('opacity', 1);
-      });
+      })
+      .on('contextmenu', ContextMenuHandler);
 
     //Set up the small tooltip for when you hover over a circle
     let tooltip = g.append("text")
@@ -568,11 +595,71 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   //   )
   // };
 
+  const handleClosePopover = () => {
+    setIsShowPopover(false);
+  };
+
+  const handleClick = () => {
+    const collectionDataSet = globalStates.collectionDataSet.slice();
+
+    let isNeededPush = true;
+    for (let d of collectionDataSet) {
+      if (_.isEqual(d, currentData)) {
+        isNeededPush = false;
+      }
+    }
+
+    if (isNeededPush) {
+      collectionDataSet.push(currentData);
+    }
+
+    console.log('collectionDataSet: ', collectionDataSet);
+
+    modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
+    setIsShowPopover(false);
+  };
 
   return (
     <div>
-      <div className="radarChart">
-      </div>
+      <div className="radarChart"></div>
+      {/* <div className="forceDirectedGraph"></div> */}
+      <Popover open={isShowPopover}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        anchorReference='anchorPosition'
+        anchorPosition={{ left, top }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        onClose={handleClosePopover}>
+        <CardContent style={{ width: 190 }}>
+          <Typography
+            style={{
+              fontSize: 16,
+              fontWeight: "bold",
+              marginBottom: 10,
+              textAlign: 'center'
+            }}
+          >COLLECTION OPTIONS
+          </Typography>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            style={{
+              width: '100%',
+              fontSize: 14,
+              marginBottom: 5
+            }}
+            onClick={handleClick}
+          >
+            ADD COLLECTION
+          </Button>
+        </CardContent>
+      </Popover>
     </div>
   );
 };
