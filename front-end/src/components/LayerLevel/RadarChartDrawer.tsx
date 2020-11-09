@@ -20,6 +20,7 @@ interface Props {
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const { rawData } = props;
+  const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
 
   useEffect(() => {
     if (!rawData) return;
@@ -47,6 +48,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let temp = {};
       for (let j = 0; j < rawData[i]["value"].length; j++)
         temp["a" + (j + 1)] = rawData[i]["value"][j];
+      temp["dataIndex"] = rawData[i]["index"];
+      temp["colorIndex"] = rawData[i]["label"];
       data1.push(temp);
     }
 
@@ -54,7 +57,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       el: document.querySelector('.radarChart'),
       size: size,
       margin: 0,
-      color: d3.scaleOrdinal(d3.schemeCategory10),
+      color: d3.scaleOrdinal(d3.schemeCategory10).domain(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]),
       dimensions: dimensions,
       zoomFactor: 1,
       dotRadius: 6,
@@ -82,10 +85,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let nodeCount = data.length;
       let panelSize = config.size - config.margin * 2;
 
-      data.forEach(function (d) {
-        d.x = panelSize / 2;
-        d.y = panelSize / 2;
-      });
+      // data.forEach(function (d) {
+      //   d.x = panelSize / 2;
+      //   d.y = panelSize / 2;
+      // });
 
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
@@ -116,10 +119,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       const simulation = d3.forceSimulation()
         .force("charge", d3.forceManyBody().strength(0))
         .alphaDecay(0.000000005);
-      // .velocityDecay(0.9);
 
       simulation
-        //  .force("center", d3.forceCenter(panelSize / 2, panelSize / 2))
         .nodes(data.concat(dimensionNodes))
         .force("link", d3.forceLink(linksData).strength((link) => {
           const { source, target } = link;
@@ -129,23 +130,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
       simulation.tick(10);
 
-      // Basic structure
-      // let svg = d3.select(config.el)
-      //   .append('svg')
-      //   .attr("width", config.size)
-      //   .attr("height", config.size)
-      //   .attr("transform", "translate(" + (-1 * (radarChartWidth + radarChartMargin.left + radarChartMargin.right) / 2 - size / 2) + "," + (-1 * (radarChartHeight + radarChartMargin.top + radarChartMargin.bottom) / 2 + size / 2) + ")")
-
-      // let root = svg.append('g')
-      //   .attr("transform", 'translate(' + [config.margin, config.margin] + ')');
-
       let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer")
       let panel = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer").select("circle.forceDirectedGraphContainerCircle")
-      // let panel = root.append('circle')
-      //   .classed('panel', true)
-      //   .attr("r", chartRadius)
-      //   .attr("cx", chartRadius)
-      //   .attr("cy", chartRadius)
 
       // Links
       let links = root.selectAll('.link')
@@ -161,10 +147,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .attr('cx', d => (d as any).x)
         .attr('cy', d => (d as any).y)
         .attr("r", config.dotRadius)
-        .attr("fill", function (d, i): any {
-          return config.color(i + "");
+        .attr("fill", function (d: any, i): any {
+          return config.color(d.colorIndex + "");
         })
-        .on('mouseenter', function (d) {
+        .on('mouseenter', function (d: any) {
           d3.selectAll(".radarStroke")
             .style("stroke-opacity", 0.1);
 
@@ -173,6 +159,16 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
             .style("stroke-opacity", 1); // 改变当前区域的透明度
 
           this.classList.add('active');
+
+          let newX = d3.mouse(this)[0] + 10;
+          let newY = d3.mouse(this)[1] - 10;
+          tooltip
+            .attr('x', newX)
+            .attr('y', newY)
+            .text(d.dataIndex)
+            .transition().duration(200)
+            .style('opacity', 1);
+
         })
         .on('mouseout', function (d) {
           d3.select(".radarStroke.id_" + (d as any).index)
@@ -182,7 +178,14 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
             .style("stroke-opacity", 1);
 
           this.classList.remove('active');
+
+          tooltip.transition().duration(200)
+            .style("opacity", 0);
         });
+
+      let tooltip = root.append("text")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
 
       // Labels n1 - n12
       let labelNodes = root.selectAll('circle.label-node')
@@ -256,7 +259,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       minValue: -0.5, // 最小值
       levels: 5,
       roundStrokes: true, // 折线图是否需要平滑处理
-      color: d3.scaleOrdinal(d3.schemeCategory10),
       opacityArea: 0, //The opacity of the area of the blob
       opacityCircles: 0, //The opacity of the circles of each blob
       strokeWidth: 2, //The width of the stroke around each blob
@@ -270,12 +272,14 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     for (let i = 0; i < rawData.length; i++) {
       let value = rawData[i]["value"];
       let colorIndex = rawData[i]["label"];
+      let dataIndex = rawData[i]["index"];
       let obj = [];
       for (let j = 0; j < value.length; j++) {
         let temp = {};
         temp["axis"] = j + 1;
         temp["value"] = value[j];
         temp["colorIndex"] = colorIndex;
+        temp["dataIndex"] = dataIndex;
         obj.push(temp);
       }
       data.push(obj);
@@ -304,7 +308,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       opacityCircles: 0.1, //The opacity of the circles of each blob
       strokeWidth: 2, //The width of the stroke around each blob
       roundStrokes: false, //If true the area and stroke will follow a round path (cardinal-closed)
-      color: d3.scaleOrdinal(d3.schemeCategory10) //Color function
+      color: d3.scaleOrdinal(d3.schemeCategory10)
+        .domain(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]) //Color function
     };
 
     // 将所有options中的内容全部放到cfg(configuration中);
@@ -451,8 +456,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .attr("d", (d) => radarLine(d as [number, number][]))
       .attr("class", function (d, i) { return "radarStroke id_" + i })
       .style("stroke-width", cfg.strokeWidth + "px")
-      .style("stroke", function (d, i) {
-        return cfg.color(i + "");
+      .style("stroke", function (d: any, i) {
+        console.log(d);
+        console.log(d[0].colorIndex + "");
+        return cfg.color(d[0].colorIndex + "");
       })
       .style("fill", "none")
       .style("filter", "url(#glow)")
@@ -488,7 +495,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         tooltip
           .attr('x', newX)
           .attr('y', newY)
-          .text(i)
+          .text(d[0]["dataIndex"])
           .transition().duration(200)
           .style('opacity', 1);
       });
@@ -528,11 +535,44 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   } //RadarChart
 
+  // const getDetailInfoRect = (xPos, height) => {
+  //   let fontSize = 14;
+  //   let contextHeight = (fontSize + 2) * (DetailInfoOfCurrentStep.length + 1);// 16 为字体大小
+  //   let containerWidth = 160;
+  //   xPos += margin.left;
+  //   if (xPos + containerWidth > width) xPos = xPos - containerWidth - 10; // 靠近右边界，将这一部分放到竖线前面显示
+  //   else xPos += 10;// gap
+
+  //   return (
+  //     <div
+  //       className="DetailInfoContainer"
+  //       style={{
+  //         left: xPos,
+  //         top: height / 2 - contextHeight / 2,
+  //         width: containerWidth,
+  //       }}>
+  //       <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+  //         {"step: " + DetailInfoOfCurrentStep[0].step}
+  //       </div>
+  //       { DetailInfoOfCurrentStep[0].dataIndex >= 0 &&
+  //         DetailInfoOfCurrentStep[0].dataIndex !== undefined &&
+  //         DetailInfoOfCurrentStep[0].dataIndex !== null &&
+  //         showActivationOrGradient === ShowActivationOrGradient.ACTIVATION &&
+  //         (<div style={{ display: 'flex', alignItems: 'center' }}>
+  //           <div style={{ marginLeft: '8px', marginTop: '2px' }}>
+  //             {"data index: " + DetailInfoOfCurrentStep[0].dataIndex}
+  //           </div>
+  //           <div style={{ clear: 'both' }}></div>
+  //         </div>)}
+  //     </div>
+  //   )
+  // };
+
 
   return (
     <div>
-      <div className="radarChart"></div>
-      {/* <div className="forceDirectedGraph"></div> */}
+      <div className="radarChart">
+      </div>
     </div>
   );
 };
