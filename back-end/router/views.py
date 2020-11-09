@@ -21,6 +21,7 @@ from dao.node_mapping import alex_node_map
 import random
 import pandas as pd
 import math
+from sklearn import preprocessing
 from logs.resnet.data_runner import DataRunner
 from logs.resnet.get_neuron_order import get_neuron_order
 
@@ -54,6 +55,15 @@ def normalize(series):
     a = min(series)
     b = max(series)
     return (series - a) / (b - a)
+
+def softmax(x):
+    x_row_max = x.max(axis=-1)
+    x_row_max = x_row_max.reshape(list(x.shape)[:-1]+[1])
+    x = x - x_row_max
+    x_exp = np.exp(x)
+    x_exp_row_sum = x_exp.sum(axis=-1).reshape(list(x.shape)[:-1]+[1])
+    softmax = x_exp / x_exp_row_sum
+    return softmax
 
 def start_training():
     global max_step
@@ -362,7 +372,11 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                 indices = indices[(step - 1) * 32 : step * 32]   # 找到对应的数据编号，需要调用data_runner.py中的函数
 
                 [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id, data_type=type, ckpt_file=ckpt_file_path)
-                resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
+                if not "fc" in node_id:
+                    resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
+                else:
+                    resdata = resdata.swapaxes(0, 1)
+                resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
                 df = pd.DataFrame(resdata)
                 df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
 
@@ -375,6 +389,11 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                                df.iloc))
                     if len(currentSectorData) != 0:
                         currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                        # currentSectorData = normalize(currentSectorData)
+                        # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
+                        # currentSectorData = softmax(currentSectorData)
+                        # print(currentSectorData)
+                        currentSectorData = preprocessing.scale(currentSectorData)
                         currentSectorData = normalize(currentSectorData)
                         sectorData.append(currentSectorData)
                 if data_index == -1:

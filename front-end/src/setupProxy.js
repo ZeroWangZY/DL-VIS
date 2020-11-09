@@ -2,7 +2,7 @@ const { createProxyMiddleware: proxy } = require('http-proxy-middleware');
 
 module.exports = function(app) {
     app.use(proxy('/python', {
-        target: 'http://10.76.2.232:7998',
+        target: 'http://10.76.2.232:7999',
         secure: false,
         changeOrigin: true,
         pathRewrite: {
