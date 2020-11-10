@@ -56,6 +56,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
     // 数据转换
 
+    if (rawData.length === 0) {
+      return;
+    }
+
     let dimensions = [];
     let data1 = [];
     for (let i = 0; i < rawData[0]["value"].length; i++) {
@@ -264,6 +268,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   };
 
   const drawRadarChart = (rawData, margin, width, height) => {
+
     // 雷达图参数
     let radarChartOptions = {
       w: width,
@@ -345,7 +350,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         minValue = Math.min(d.value, minValue);
       }
     }
-
+    
     let allAxis = (data[0].map(function (i, j) {
       return i.axis
     })), //每个axis的名字

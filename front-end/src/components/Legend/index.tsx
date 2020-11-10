@@ -37,13 +37,13 @@ export default () => {
         </tr>
         <tr>
           <td className="icon">
-            <img src={process.env.PUBLIC_URL + "/assets/const.svg"} />
+            <img src={process.env.PUBLIC_URL + "/assets/const_1.svg"} />
           </td>
           <td className="caption">常量节点</td>
         </tr>
         <tr>
           <td className="icon">
-            <img src={process.env.PUBLIC_URL + "/assets/param.svg"} />
+            <img src={process.env.PUBLIC_URL + "/assets/param_1.svg"} />
           </td>
           <td className="caption">变量节点</td>
         </tr>
