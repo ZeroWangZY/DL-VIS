@@ -62,9 +62,9 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
             to_plot[1].append(y[1])
 
         # 这部分代码用于删除中心
-        disList = np.array(to_plot[0]) ** 2 + np.array(to_plot[1]) ** 2
-        disList = np.sort(disList)
-        print(disList[int(dataNum / 2)])
+        # disList = np.array(to_plot[0]) ** 2 + np.array(to_plot[1]) ** 2
+        # disList = np.sort(disList)
+        # print(disList[int(dataNum / 2)])
 
         # 计算角度值
         angleList = []
@@ -72,9 +72,9 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
             x = to_plot[0][i]
             y = to_plot[1][i]
             # 删除中心点坐标，相当于剔除死神经元
-            if x ** 2 + y ** 2 < disList[int(dataNum / 2)]:
-                angleList.append(-100)
-                continue
+            # if x ** 2 + y ** 2 < disList[int(dataNum / 2)]:
+            #     angleList.append(-100)
+            #     continue
             theta = math.atan2(y, x)
             # print(theta)
             if theta < -7 / 8 * math.pi:

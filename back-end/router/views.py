@@ -21,7 +21,8 @@ from dao.node_mapping import alex_node_map
 import random
 import pandas as pd
 import math
-from sklearn import preprocessing
+from sklearn.manifold import TSNE
+from sklearn.cluster import KMeans
 from logs.resnet.data_runner import DataRunner
 from logs.resnet.get_neuron_order import get_neuron_order
 
@@ -376,26 +377,45 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                     resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
                 else:
                     resdata = resdata.swapaxes(0, 1)
-                resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
+                # resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
+                print(resdata.shape) # 64 * 32 一个batch有32个数据，64个神经元
+
+                # 使用tsne降维后使用K-Means聚类
+                tsne = TSNE(n_components=2, n_iter=250)
+                tsne_resdata = tsne.fit_transform(resdata)
+                kmeans = KMeans(n_clusters=8).fit(tsne_resdata)
                 df = pd.DataFrame(resdata)
-                df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
+                df['angle'] = kmeans.labels_
+                
 
                 sectorData = []
                 for i in range(8):
-                    leftMargin = -7 / 8 * math.pi + i * math.pi / 4
-                    rightMargin = -5 / 8 * math.pi + i * math.pi / 4
-                    currentSectorData = list(
-                        filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
-                               df.iloc))
-                    if len(currentSectorData) != 0:
-                        currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                        # currentSectorData = normalize(currentSectorData)
-                        # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
-                        # currentSectorData = softmax(currentSectorData)
-                        # print(currentSectorData)
-                        currentSectorData = preprocessing.scale(currentSectorData)
-                        currentSectorData = normalize(currentSectorData)
-                        sectorData.append(currentSectorData)
+                    currentSectorData = list(filter(lambda item: item['angle'] == i,
+                                                    df.iloc))
+                    currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                    # currentSectorData = normalize(currentSectorData)
+                    sectorData.append(currentSectorData)
+
+                # # 使用radviz得到的angle进行聚类
+                # df = pd.DataFrame(resdata)
+                # df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
+                #
+                # sectorData = []
+                # for i in range(8):
+                #     leftMargin = -7 / 8 * math.pi + i * math.pi / 4
+                #     rightMargin = -5 / 8 * math.pi + i * math.pi / 4
+                #     currentSectorData = list(
+                #         filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                #                df.iloc))
+                #     if len(currentSectorData) != 0:
+                #         currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                #         # currentSectorData = normalize(currentSectorData)
+                #         # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
+                #         # currentSectorData = softmax(currentSectorData)
+                #         # print(currentSectorData)
+                #         # currentSectorData = preprocessing.scale(currentSectorData)
+                #         # currentSectorData = normalize(currentSectorData)
+                #         sectorData.append(currentSectorData)
                 if data_index == -1:
                     for i in range(32):   # 这里数据要改成活的
                         resultData.append({
