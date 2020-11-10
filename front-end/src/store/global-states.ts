@@ -82,6 +82,11 @@ export const modifyGlobalStates = (
         collectionDataSet: payload,
       });
       break;
+    case GlobalStatesModificationType.DEL_COLLECTION:
+      globalStates = Object.assign({}, globalStates, {
+        collectionDataSet: payload,
+      });
+      break;
     default:
       break;
   }

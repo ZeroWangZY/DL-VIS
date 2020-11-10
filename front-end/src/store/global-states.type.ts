@@ -25,7 +25,8 @@ export enum GlobalStatesModificationType {
   SET_LAYERLEVEL_CHECKBOXSTATE,
   SET_SHOWACTIVATIONORGRADIENT,
   SET_NODESCALARTYPE,
-  ADD_COLLECTION
+  ADD_COLLECTION,
+  DEL_COLLECTION
 }
 
 export enum ShowActivationOrGradient {

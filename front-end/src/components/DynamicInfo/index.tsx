@@ -139,7 +139,7 @@ export default (props: Props) => {
       setFixedHeight("360px");
     } else
       return;
-  }, [selectedNodeId])
+  }, [selectedNodeId, showCollection])
 
   const toggleTab = (pos: Position) => (
     event: React.ChangeEvent<{}>,
@@ -250,7 +250,7 @@ export default (props: Props) => {
           }}
         >
           <div className={classes.paper}>
-            <RadarChartDrawer rawData={collectionDataSet} />
+            <RadarChartDrawer rawData={collectionDataSet} setShowCollection={setShowCollection}/>
           </div>
         </Popover>
       </ThemeProvider>

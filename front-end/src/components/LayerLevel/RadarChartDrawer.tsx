@@ -12,6 +12,7 @@ import {
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import * as _ from 'lodash';
+import { message } from 'antd';
 
 export interface RadarData {
   "axis": number;
@@ -24,13 +25,18 @@ interface RawData {
   index: number;
 }
 
+interface setShowCollectionFunc {
+  (isShow: boolean): void;
+}
+
 interface Props {
   rawData: any[];
   step?: number,
+  setShowCollection?: setShowCollectionFunc
 }
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
-  const { rawData, step } = props;
+  const { rawData, step, setShowCollection } = props;
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
 
   const [isShowPopover, setIsShowPopover] = useState(false);
@@ -41,7 +47,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const [mousePos, setMousePos] = useState(null);
 
   useEffect(() => {
-    if (!rawData) return;
+    if (!rawData || rawData.length === 0) return;
     // 雷达图
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
       radarChartWidth = Math.min(600, window.innerWidth - 10) - radarChartMargin.left - radarChartMargin.right,
@@ -269,6 +275,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   const drawRadarChart = (rawData, margin, width, height) => {
 
+    if(rawData.length === 0) {
+      return ;
+    }
+
     // 雷达图参数
     let radarChartOptions = {
       w: width,
@@ -350,7 +360,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         minValue = Math.min(d.value, minValue);
       }
     }
-    
+
     let allAxis = (data[0].map(function (i, j) {
       return i.axis
     })), //每个axis的名字
@@ -585,7 +595,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     setIsShowPopover(false);
   };
 
-  const handleClick = () => {
+  const handleAddClick = () => {
     const collectionDataSet = globalStates.collectionDataSet.slice();
 
     let isNeededPush = true;
@@ -597,9 +607,44 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     if (isNeededPush) {
       collectionDataSet.push(currentData);
+      message.info('已成功添加至Collection.');
+    }
+    else {
+      message.info('在Collection中已存在.');
     }
 
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
+
+    setIsShowPopover(false);
+  };
+
+  const handleDelClick = () => {
+    const collectionDataSet = globalStates.collectionDataSet.slice();
+
+    let index = -1;
+    let isNeededDel = false;
+    for (let d of collectionDataSet) {
+      index++;
+      if (_.isEqual(d, currentData)) {
+        isNeededDel = true;
+        break;
+      }
+    }
+
+    if (isNeededDel) {
+      collectionDataSet.splice(index, 1);
+      message.info('已成功从Collection中删除.');
+    }
+    else {
+      message.info('在Collection中不存在，无法删除.');
+    }
+
+    if(collectionDataSet.length === 0) {
+      setShowCollection(false);
+    }
+
+    modifyGlobalStates(GlobalStatesModificationType.DEL_COLLECTION, collectionDataSet);
+
     setIsShowPopover(false);
   };
 
@@ -642,9 +687,22 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
               fontSize: 14,
               marginBottom: 5
             }}
-            onClick={handleClick}
+            onClick={handleAddClick}
           >
             ADD COLLECTION
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            style={{
+              width: '100%',
+              fontSize: 14,
+              marginBottom: 5
+            }}
+            onClick={handleDelClick}
+          >
+            DEL COLLECTION
           </Button>
         </CardContent>
       </Popover>
