@@ -24,6 +24,7 @@ import { ShowActivationOrGradient } from "../../store/global-states.type"
 import { LayerNodeImp } from "../../common/graph-processing/stage2/processed-graph";
 import { useProcessedGraph } from "../../store/processedGraph";
 import RadarChartDrawer from "../LayerLevel/RadarChartDrawer";
+import { message } from 'antd';
 
 type Position = "outerBottom" | "innerBottom";
 
@@ -223,7 +224,12 @@ export default (props: Props) => {
                 root: classes.collectionRootStyle
               }}
               onClick={() => {
-                setShowCollection(true);
+                if(collectionDataSet.length > 0) {
+                  setShowCollection(true);
+                }
+                else {
+                  message.info('Collection DataSet is null.');
+                }
               }}>Collection</Button>
           </div>
           {/* layer level */}
