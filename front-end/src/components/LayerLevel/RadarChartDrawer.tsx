@@ -14,6 +14,10 @@ import {
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import * as _ from 'lodash';
 import { message } from 'antd';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
 
 export interface RadarData {
   "axis": number;
@@ -30,16 +34,24 @@ interface setShowCollectionFunc {
   (isShow: boolean): void;
 }
 
+interface setLayerTypeFunc {
+  (layerType: string): void;
+}
+
 interface Props {
   rawData: any[];
   step?: number,
-  setShowCollection?: setShowCollectionFunc
+  setShowCollection?: setShowCollectionFunc,
+  showCollection?: boolean,
+  setLayerType?: setLayerTypeFunc,
+  layerType?: string
 }
 
 const useStyles = makeStyles((theme) => ({
   root: {
     width: 200 + theme.spacing(3) * 2,
-    float: "left"
+    float: "left",
+    padding: 10
   },
   margin: {
     height: theme.spacing(3),
@@ -48,7 +60,7 @@ const useStyles = makeStyles((theme) => ({
 const currentValue = { opacity: 0.2, dotRadius: 3, strokeWidth: 2 };
 
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
-  const { rawData, step, setShowCollection } = props;
+  const { step, setShowCollection, showCollection, setLayerType, layerType } = props;
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
   const classes = useStyles();
 
@@ -59,7 +71,19 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const globalStates = useGlobalStates();
   const [mousePos, setMousePos] = useState(null);
 
+  let rawData = props.rawData;
+  const filterLayerType = globalStates.filterLayerType;
+  if (showCollection && filterLayerType !== 'ALL') {
+    rawData = rawData.filter((item) => item.layerType === filterLayerType);
+  }
+
   useEffect(() => {
+    let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
+    root.selectAll('line.layerLevelLink').remove();
+    root.selectAll('circle.dot').remove();
+    root.selectAll('circle.label-node').remove();
+    let radar = d3.selectAll('g.radarWrapper');
+    radar.remove();
     if (!rawData || rawData.length === 0) return;
     // 雷达图
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
@@ -116,6 +140,11 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   let radvizComponent = function (config, size, radarChartWidth, radarChartHeight, radarChartMargin) {
 
     const render = function (data) {
+
+      if (data.length === 0) {
+        return;
+      }
+
       // data = addNormalizedValues(data);
       let normalizeSuffix = '_normalized';
       let dimensionNamesNormalized = config.dimensions.map(function (d) {
@@ -158,6 +187,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         });
       });
 
+      let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
+
       const simulation = d3.forceSimulation()
         .force("charge", null)
         .alphaDecay(0.1);
@@ -172,7 +203,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
       simulation.tick(10);
 
-      let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer")
       let panel = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer").select("circle.forceDirectedGraphContainerCircle")
 
       // Links
@@ -592,8 +622,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       <div
         className="DetailInfoContainer"
         style={{
-          left: xPos,
-          top: yPos,
+          left: xPos + (showCollection ? 20 : 0),
+          top: yPos + (showCollection ? -60 : 0),
           width: containerWidth,
         }}>
         <div style={{ marginLeft: '8px', marginTop: '2px' }}>
@@ -625,12 +655,15 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     if (isNeededPush) {
       currentData.step = step;
+      currentData.layerType = globalStates.currentLayerType;
       collectionDataSet.push(currentData);
       message.info('已成功添加至Collection.');
     }
     else {
       message.info('在Collection中已存在.');
     }
+
+    console.log('collectionDataSet: ', collectionDataSet);
 
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
 
@@ -682,8 +715,18 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     currentValue.strokeWidth = value;
   }
 
+  const handleSelectLayerTypeChange = (e) => {
+    const currentLayerType = e.target.value;
+    console.log('filter layer type: ', currentLayerType);
+    setLayerType(currentLayerType);
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_FILTER_LAYER_TYPE,
+      currentLayerType
+    );
+  };
+
   return (
-    <div>
+    <>
       <div className="radarChart" style={{ "float": "left" }}></div>
 
       {mousePos !== null && DetailInfoOfCurrentStep.length &&
@@ -734,6 +777,26 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           onChange={onStrokeWidthChange}
           valueLabelDisplay="auto"
         />
+
+        {
+          showCollection && (
+            <>
+              <Typography id="layer-type-opacity-slider" gutterBottom>
+                Layer Type
+              </Typography>
+              <Select
+                value={layerType}
+                onChange={handleSelectLayerTypeChange}
+              >
+                <MenuItem value={'ALL'}>ALL</MenuItem>
+                <MenuItem value={'FC'}>FC</MenuItem>
+                <MenuItem value={'CONV'}>CONV</MenuItem>
+                <MenuItem value={'RNN'}>RNN</MenuItem>
+                <MenuItem value={'OTHER'}>OTHER</MenuItem>
+              </Select>
+            </>
+          )
+        }
       </div>
 
       <Popover open={isShowPopover}
@@ -786,7 +849,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           </Button>
         </CardContent>
       </Popover>
-    </div>
+    </>
   );
 };
 

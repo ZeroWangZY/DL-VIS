@@ -23,7 +23,9 @@ let globalStates: GlobalStates = {
   layerLevel_checkBoxState: checkBoxInitial,
   showActivationOrGradient: ShowActivationOrGradient.ACTIVATION,
   nodeScalarType: NodeScalarType.ACTIVATION,
-  collectionDataSet: []
+  collectionDataSet: [],
+  currentLayerType: null,
+  filterLayerType: 'ALL'
 };
 
 const broadcast = () => {
@@ -86,6 +88,16 @@ export const modifyGlobalStates = (
       globalStates = Object.assign({}, globalStates, {
         collectionDataSet: payload,
       });
+      break;
+    case GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE:
+      globalStates = Object.assign({}, globalStates, {
+        currentLayerType: payload,
+      });
+      break;
+    case GlobalStatesModificationType.SET_FILTER_LAYER_TYPE:
+      globalStates = Object.assign( Object.assign({}, globalStates, {
+        filterLayerType: payload,
+      }));
       break;
     default:
       break;

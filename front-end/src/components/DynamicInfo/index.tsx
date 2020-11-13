@@ -132,6 +132,7 @@ export default (props: Props) => {
   const [showCollection, setShowCollection] = useState(false);
   const [left, setLeft] = useState(null);
   const [top, setTop] = useState(null);
+  const [layerType, setLayerType] = useState('ALL');
 
   useEffect(() => {
     if (selectedNodeId === "" && value.outerBottom !== 0) {
@@ -161,9 +162,16 @@ export default (props: Props) => {
   };
 
   const handleCollectionClose = (e) => {
+    console.log('collection close.');
     setShowCollection(false);
     setLeft(e.pageX);
     setTop(e.pageY);
+    const layerType = 'ALL';
+    setLayerType(layerType);
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_FILTER_LAYER_TYPE,
+      layerType
+    );
   };
 
   return (
@@ -224,7 +232,7 @@ export default (props: Props) => {
                 root: classes.collectionRootStyle
               }}
               onClick={() => {
-                if(collectionDataSet.length > 0) {
+                if (collectionDataSet.length > 0) {
                   setShowCollection(true);
                 }
                 else {
@@ -239,7 +247,7 @@ export default (props: Props) => {
           open={showCollection}
           onClose={handleCollectionClose}
           anchorReference="anchorPosition"
-          anchorPosition={{top, left}}
+          anchorPosition={{ top, left }}
           anchorOrigin={{
             vertical: 'top',
             horizontal: 'right',
@@ -249,9 +257,7 @@ export default (props: Props) => {
             horizontal: 'right',
           }}
         >
-          <div className={classes.paper}>
-            <RadarChartDrawer rawData={collectionDataSet} setShowCollection={setShowCollection}/>
-          </div>
+          <RadarChartDrawer layerType={layerType} setLayerType={setLayerType} showCollection={showCollection} rawData={collectionDataSet} setShowCollection={setShowCollection} />
         </Popover>
       </ThemeProvider>
     </div >

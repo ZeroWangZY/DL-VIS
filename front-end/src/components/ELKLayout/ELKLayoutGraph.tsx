@@ -417,7 +417,8 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
 
   // 修改layer type
   const handleLayertypeChange = (e) => {
-    setCurrentLayertype(e.target.value);
+    const currentLayerType = e.target.value;
+    setCurrentLayertype(currentLayerType);
   };
 
   const handleLineChartToggle = (e) => {

@@ -52,12 +52,34 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const visGraph = useVisGraph();
   const layoutGraph = useLayoutGraph();
   const styledGraph = useStyledGraph();
-  const handleClick = (id) => {
-    if (selectedNodeId !== id)
+
+  const getLayerType = (node) => {
+    if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
+      return 'FC';
+    } else if (node.class.indexOf(`layertype-${LayerType.CONV}`) > -1) {
+      return 'CONV';
+    } else if (node.class.indexOf(`layertype-${LayerType.RNN}`) > -1) {
+      return 'RNN';
+    } else if (node.class.indexOf(`layertype-${LayerType.OTHER}`) > -1) {
+      return 'OTHER';
+    }
+  };
+
+  const handleClick = (id, node) => {
+    if (selectedNodeId !== id) {
       modifyGlobalStates(
         GlobalStatesModificationType.SET_SELECTEDNODE,
         id
       );
+
+      if(node.type === NodeType.LAYER) {
+        console.log('layer type: ', getLayerType(node));
+        modifyGlobalStates(
+          GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE,
+          getLayerType(node)
+        );
+      }
+    }
   };
 
   let elkNodeMap = {};
@@ -192,8 +214,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             rx={ellipseX}
             ry={ellipseY}
           />
-          <text x={-4} y={3} fill="#333" style={{fontSize: '8px'}}>
-            {visNodeMap[node.id] instanceof StackedOpNodeImp ? 
+          <text x={-4} y={3} fill="#333" style={{ fontSize: '8px' }}>
+            {visNodeMap[node.id] instanceof StackedOpNodeImp ?
               visNodeMap[node.id].nodesContained.size : ''}
           </text>
           {node.parameters.length !== 0 && (
@@ -324,7 +346,10 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 data-id={d.data.id}
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
-                onClick={() => handleClick(d.data.id)}
+                onClick={() => {
+                  console.log(d);
+                  handleClick(d.data.id, d.data);
+                }}
                 onDoubleClick={() => toggleExpanded(d.data.id, linkedEdges)}
                 onMouseEnter={() => {
                   showHighlightedLine(linkedEdges)

@@ -13,7 +13,9 @@ export interface GlobalStates {
   layerLevel_checkBoxState: LayerLevelCheckBoxState,
   showActivationOrGradient: ShowActivationOrGradient,
   nodeScalarType: NodeScalarType,
-  collectionDataSet: object[]
+  collectionDataSet: object[],
+  currentLayerType: string,
+  filterLayerType: string
 };
 
 export enum GlobalStatesModificationType {
@@ -26,7 +28,9 @@ export enum GlobalStatesModificationType {
   SET_SHOWACTIVATIONORGRADIENT,
   SET_NODESCALARTYPE,
   ADD_COLLECTION,
-  DEL_COLLECTION
+  DEL_COLLECTION,
+  SET_CURRENT_LAYER_TYPE,
+  SET_FILTER_LAYER_TYPE
 }
 
 export enum ShowActivationOrGradient {
@@ -44,5 +48,3 @@ export enum BottomInfoType {
   MODELINFO,
   LAYERINFO
 }
-
-
