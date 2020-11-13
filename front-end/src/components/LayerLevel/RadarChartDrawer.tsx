@@ -113,10 +113,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let nodeCount = data.length;
       let panelSize = config.size - config.margin * 2;
 
-      // data.forEach(function (d) {
-      //   d.x = panelSize / 2;
-      //   d.y = panelSize / 2;
-      // });
+      data.forEach(function (d) {
+        d.x = panelSize / 2 - 100;
+        d.y = panelSize / 2 - 100;
+      });
 
       let dimensionNodes = config.dimensions.map(function (d, i) {
         let angle = thetaScale(i);
@@ -145,8 +145,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       });
 
       const simulation = d3.forceSimulation()
-        .force("charge", d3.forceManyBody().strength(0))
-        .alphaDecay(0.000000005);
+        .force("charge", null)
+        .alphaDecay(0.1);
 
       simulation
         .nodes(data.concat(dimensionNodes))
@@ -275,8 +275,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   const drawRadarChart = (rawData, margin, width, height) => {
 
-    if(rawData.length === 0) {
-      return ;
+    if (rawData.length === 0) {
+      return;
     }
 
     // 雷达图参数
@@ -352,14 +352,15 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     }
 
     // 如果数据中的最大值比maxValue还要大，更新maxValue;
-    let maxValue = -Infinity,
-      minValue = Infinity;
-    for (let elem of data) {
-      for (let d of elem) {
-        maxValue = Math.max(d.value, maxValue);
-        minValue = Math.min(d.value, minValue);
-      }
-    }
+    let radarChartMaxValue = -Infinity,
+      radarChartMinValue = Infinity;
+    // for (let elem of data) {
+    //   for (let d of elem) {
+    //     radarChartMaxValue = Math.max(d.value, radarChartMaxValue);
+    //     radarChartMinValue = Math.min(d.value, radarChartMinValue);
+    //   }
+    // }
+    radarChartMaxValue = 1, radarChartMinValue = 0;
 
     let allAxis = (data[0].map(function (i, j) {
       return i.axis
@@ -374,7 +375,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     //Scale for the radius
     let rScale = d3.scaleLinear()
       .range([innerRadius, outRadius])
-      .domain([minValue, maxValue]);
+      .domain([radarChartMinValue, radarChartMaxValue]);
 
     // Create the container SVG and g
     //Remove whatever chart with the same id/class was present before
@@ -437,7 +438,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .style("font-size", "10px")
       .attr("fill", "#737373")
       .text(function (d, i) {
-        return Format((maxValue - minValue) * d / cfg.levels + minValue);
+        return Format((radarChartMaxValue - radarChartMinValue) * d / cfg.levels + radarChartMinValue);
       });
 
     // Draw the axes
@@ -455,10 +456,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
       .attr("x", function (d, i) {
-        return rScale(Math.abs(maxValue) * cfg.labelFactor) * Math.cos(angleSlice * i - Math.PI / 2);
+        return rScale(Math.abs(radarChartMaxValue) * cfg.labelFactor) * Math.cos(angleSlice * i - Math.PI / 2);
       })
       .attr("y", function (d, i) {
-        return rScale(Math.abs(maxValue) * cfg.labelFactor) * Math.sin(angleSlice * i - Math.PI / 2);
+        return rScale(Math.abs(radarChartMaxValue) * cfg.labelFactor) * Math.sin(angleSlice * i - Math.PI / 2);
       })
       .text(function (d) {
         return d + "";
@@ -639,7 +640,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       message.info('在Collection中不存在，无法删除.');
     }
 
-    if(collectionDataSet.length === 0) {
+    if (collectionDataSet.length === 0) {
       setShowCollection(false);
     }
 
