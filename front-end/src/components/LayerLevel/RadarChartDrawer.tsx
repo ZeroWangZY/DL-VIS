@@ -91,6 +91,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         temp["a" + (j + 1)] = rawData[i]["value"][j];
       temp["dataIndex"] = rawData[i]["index"];
       temp["colorIndex"] = rawData[i]["label"];
+      temp['step'] = rawData[i]["step"];
       data1.push(temp);
     }
 
@@ -192,6 +193,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           return config.color(d.colorIndex + "");
         })
         .on('mouseenter', function (d: any) {
+
           d3.selectAll(".radarStroke")
             .style("stroke-opacity", 0.1);
 
@@ -203,7 +205,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
           let newDetailInfoOfCurrentStep = [];
           newDetailInfoOfCurrentStep.push({
-            "step": step,
+            "step": step ? step : d.step,
             "label": d.colorIndex,
             "index": d.dataIndex,
           })
@@ -325,9 +327,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         obj.push(temp);
       }
       obj['data_index'] = i;
+      obj['step'] = rawData[i]["step"];
       data.push(obj);
     }
-
     radarChart(".radarChart", data, radarChartOptions, width); // 画雷达图
   }
 
@@ -539,10 +541,11 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         setDetailInfoOfCurrentStep([]);
         setMousePos(null);
       })
-      .on('mousemove', function (d, i) {
+      .on('mousemove', function (d: any, i) {
         let newDetailInfoOfCurrentStep = [];
+
         newDetailInfoOfCurrentStep.push({
-          "step": step,
+          "step": step ? step : d.step,
           "label": d[0].colorIndex,
           "index": d[0].dataIndex,
         })
@@ -621,6 +624,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     }
 
     if (isNeededPush) {
+      currentData.step = step;
       collectionDataSet.push(currentData);
       message.info('已成功添加至Collection.');
     }
