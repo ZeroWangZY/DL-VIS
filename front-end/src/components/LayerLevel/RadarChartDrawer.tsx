@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Popover from '@material-ui/core/Popover';
+import Slider from '@material-ui/core/Slider';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
@@ -35,9 +36,21 @@ interface Props {
   setShowCollection?: setShowCollectionFunc
 }
 
+const useStyles = makeStyles((theme) => ({
+  root: {
+    width: 200 + theme.spacing(3) * 2,
+    float: "left"
+  },
+  margin: {
+    height: theme.spacing(3),
+  },
+}));
+const currentValue = { opacity: 0.2, dotRadius: 3, strokeWidth: 2 };
+
 const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const { rawData, step, setShowCollection } = props;
   const [DetailInfoOfCurrentStep, setDetailInfoOfCurrentStep] = useState([]);
+  const classes = useStyles();
 
   const [isShowPopover, setIsShowPopover] = useState(false);
   const [left, setLeft] = useState(null);
@@ -88,7 +101,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       color: d3.scaleOrdinal(d3.schemeCategory10).domain(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]),
       dimensions: dimensions,
       zoomFactor: 1,
-      dotRadius: 3,
+      dotRadius: currentValue.dotRadius,
       tooltipFormatter: function (d) {
         return d;
       }
@@ -200,10 +213,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         })
         .on('mouseout', function (d) {
           d3.select(".radarStroke.id_" + (d as any).index)
-            .style("stroke-width", 2 + "px")
+            .style("stroke-width", currentValue.strokeWidth + "px")
 
           d3.selectAll(".radarStroke")
-            .style("stroke-opacity", 1);
+            .style("stroke-opacity", currentValue.opacity);
 
           this.classList.remove('active');
 
@@ -290,7 +303,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       roundStrokes: true, // 折线图是否需要平滑处理
       opacityArea: 0, //The opacity of the area of the blob
       opacityCircles: 0, //The opacity of the circles of each blob
-      strokeWidth: 2, //The width of the stroke around each blob
+      strokeWidth: currentValue.strokeWidth, //The width of the stroke around each blob
     };
 
     // 数据处理，转换为适合画图的数据格式
@@ -336,7 +349,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       opacityArea: 0.35, //The opacity of the area of the blob
       dotRadius: 4, //The size of the colored circles of each blog
       opacityCircles: 0.1, //The opacity of the circles of each blob
-      strokeWidth: 2, //The width of the stroke around each blob
+      strokeWidth: currentValue.strokeWidth, //The width of the stroke around each blob
       roundStrokes: false, //If true the area and stroke will follow a round path (cardinal-closed)
       color: d3.scaleOrdinal(d3.schemeCategory10)
         .domain(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]) //Color function
@@ -499,6 +512,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .style("stroke", function (d: any, i) {
         return cfg.color(d[0].colorIndex + "");
       })
+      .style("stroke-opacity", currentValue.opacity)
       .style("fill", "none")
       .style("filter", "url(#glow)")
       .on('mouseover', function (d, i) {
@@ -514,10 +528,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       })
       .on('mouseout', function (d, i) {
         d3.select(this)
-          .style("stroke-width", cfg.strokeWidth + "px")
+          .style("stroke-width", currentValue.strokeWidth + "px")
 
         d3.selectAll(".radarStroke")
-          .style("stroke-opacity", 1);
+          .style("stroke-opacity", currentValue.opacity);
 
         d3.select(".dot.id_" + i)
           .classed("active", false);
@@ -649,13 +663,74 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     setIsShowPopover(false);
   };
 
+  function ondotRadiusChange(e, value) {
+    d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer").selectAll('circle.dot').attr("r", value);
+    currentValue.dotRadius = value;
+  }
+
+  function onLineOpacityChange(e, value) {
+    d3.selectAll(".radarStroke").style("stroke-opacity", value);
+    currentValue.opacity = value;
+  }
+
+  function onStrokeWidthChange(e, value) {
+    d3.selectAll(".radarStroke").style("stroke-width", value);
+    currentValue.strokeWidth = value;
+  }
+
   return (
     <div>
-      <div className="radarChart"></div>
+      <div className="radarChart" style={{ "float": "left" }}></div>
 
       {mousePos !== null && DetailInfoOfCurrentStep.length &&
         getDetailInfoRect(mousePos)
       }
+
+      <div className={classes.root}>
+        <Typography id="dotRadius-slider" gutterBottom>
+          dotRadius
+      </Typography>
+        <Slider
+          getAriaValueText={(value) => { return (value + "") }}
+          defaultValue={3}
+          min={0}
+          step={0.1}
+          max={10}
+          aria-labelledby="dotRadius"
+          onChange={ondotRadiusChange}
+          valueLabelDisplay="auto"
+        />
+        <div className={classes.margin} />
+
+        <Typography id="line-opacity-slider" gutterBottom>
+          line-opacity
+      </Typography>
+        <Slider
+          getAriaValueText={(value) => { return (value + "") }}
+          defaultValue={0.2}
+          min={0}
+          step={0.01}
+          max={1}
+          aria-labelledby="line-opacity"
+          onChange={onLineOpacityChange}
+          valueLabelDisplay="auto"
+        />
+        <div className={classes.margin} />
+
+        <Typography id="stroke-width-slider" gutterBottom>
+          stroke-width
+      </Typography>
+        <Slider
+          getAriaValueText={(value) => { return (value + "") }}
+          defaultValue={2}
+          min={0}
+          step={0.1}
+          max={5}
+          aria-labelledby="stroke-width"
+          onChange={onStrokeWidthChange}
+          valueLabelDisplay="auto"
+        />
+      </div>
 
       <Popover open={isShowPopover}
         anchorOrigin={{
