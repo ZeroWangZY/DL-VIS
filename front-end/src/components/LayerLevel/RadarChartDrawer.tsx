@@ -18,6 +18,8 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
+import Input from '@material-ui/core/Input';
+import Chip from '@material-ui/core/Chip';
 
 export interface RadarData {
   "axis": number;
@@ -56,6 +58,13 @@ const useStyles = makeStyles((theme) => ({
   margin: {
     height: theme.spacing(3),
   },
+  chips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    margin: 2,
+  },
 }));
 const currentValue = { opacity: 0.2, dotRadius: 3, strokeWidth: 2 };
 
@@ -70,12 +79,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const [currentData, setCurrentData] = useState(null);
   const globalStates = useGlobalStates();
   const [mousePos, setMousePos] = useState(null);
+  const [labelsData, setLabelsData] = useState([]);
 
   let rawData = props.rawData;
+
   const filterLayerType = globalStates.filterLayerType;
-  if (showCollection && filterLayerType !== 'ALL') {
-    rawData = rawData.filter((item) => item.layerType === filterLayerType);
-  }
+  const filterLabelType = globalStates.filterLabelType;
 
   useEffect(() => {
     let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
@@ -84,7 +93,14 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     root.selectAll('circle.label-node').remove();
     let radar = d3.selectAll('g.radarWrapper');
     radar.remove();
+    if (showCollection && filterLayerType !== 'ALL') {
+      rawData = rawData.filter((item) => item.layerType === filterLayerType);
+    }
+    if (filterLabelType.length !== 0) {
+      rawData = rawData.filter((item) => filterLabelType.includes(item.label));
+    }
     if (!rawData || rawData.length === 0) return;
+    
     // 雷达图
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
       radarChartWidth = Math.min(600, window.innerWidth - 10) - radarChartMargin.left - radarChartMargin.right,
@@ -94,7 +110,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     drawRadarChart(rawData, radarChartMargin, radarChartWidth, radarChartHeight);
     // Radiz图 
     drawForceDirectedGraph(rawData, 200, radarChartWidth, radarChartHeight, radarChartMargin);
-  }, [rawData]);
+  }, [rawData, filterLayerType, filterLabelType]);
 
   const drawForceDirectedGraph = (rawData, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
     // 数据转换
@@ -536,6 +552,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       setTop(e.pageY);
     };
 
+    // console.log('blobWrapper: ', blobWrapper);
+
     //Create the outlines	
     blobWrapper.append("path")
       .attr("d", (d) => radarLine(d as [number, number][]))
@@ -569,6 +587,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           .classed("active", false);
 
         setDetailInfoOfCurrentStep([]);
+
+        // console.log('mouseout.');
+        // console.log('mousePos: ', null);
         setMousePos(null);
       })
       .on('mousemove', function (d: any, i) {
@@ -581,6 +602,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         })
         setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
 
+        // console.log('mousePos: ', [d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
         setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
       })
       .on('contextmenu', ContextMenuHandler);
@@ -653,18 +675,26 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
     }
 
+    const labels = globalStates.currentLabelType.slice();
+
     if (isNeededPush) {
       currentData.step = step;
       currentData.layerType = globalStates.currentLayerType;
       collectionDataSet.push(currentData);
+      const label = currentData.label;
+      if (!labels.includes(label)) {
+        labels.push(label);
+      }
       message.info('已成功添加至Collection.');
     }
     else {
       message.info('在Collection中已存在.');
     }
 
-    console.log('collectionDataSet: ', collectionDataSet);
+    // console.log('collectionDataSet: ', collectionDataSet);
+    // console.log('labels: ', labels);
 
+    modifyGlobalStates(GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE, labels);
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
 
     setIsShowPopover(false);
@@ -672,9 +702,11 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   const handleDelClick = () => {
     const collectionDataSet = globalStates.collectionDataSet.slice();
+    const labels = globalStates.currentLabelType.slice();
 
     let index = -1;
     let isNeededDel = false;
+    let label = currentData.label;
     for (let d of collectionDataSet) {
       index++;
       if (_.isEqual(d, currentData)) {
@@ -683,8 +715,19 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
     }
 
+    let count = 0;
+    for (let d of collectionDataSet) {
+      if ((d as any).label === label) {
+        count++;
+      }
+    }
+
     if (isNeededDel) {
       collectionDataSet.splice(index, 1);
+      if (count === 1) {
+        const labelIndex = labels.indexOf(label);
+        labels.splice(labelIndex, 1);
+      }
       message.info('已成功从Collection中删除.');
     }
     else {
@@ -695,8 +738,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       setShowCollection(false);
     }
 
-    modifyGlobalStates(GlobalStatesModificationType.DEL_COLLECTION, collectionDataSet);
+    // console.log('删除：collectionDataSet', collectionDataSet);
+    // console.log('删除：labels', labels);
 
+    modifyGlobalStates(GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE, labels);
+    modifyGlobalStates(GlobalStatesModificationType.DEL_COLLECTION, collectionDataSet);
+    setLabelsData([]);
     setIsShowPopover(false);
   };
 
@@ -717,12 +764,35 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
   const handleSelectLayerTypeChange = (e) => {
     const currentLayerType = e.target.value;
-    console.log('filter layer type: ', currentLayerType);
+    // console.log('filter layer type: ', currentLayerType);
     setLayerType(currentLayerType);
     modifyGlobalStates(
       GlobalStatesModificationType.SET_FILTER_LAYER_TYPE,
       currentLayerType
     );
+  };
+
+  const ITEM_HEIGHT = 48;
+  const ITEM_PADDING_TOP = 8;
+  const MenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250,
+      },
+    },
+  };
+
+  const handleLabelChange = (e) => {
+    const filterLabelType = e.target.value;
+
+    // console.log('filter label type: ', filterLabelType);
+
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_FILTER_LABEL_TYPE,
+      filterLabelType
+    );
+    setLabelsData(filterLabelType);
   };
 
   return (
@@ -793,6 +863,31 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
                 <MenuItem value={'CONV'}>CONV</MenuItem>
                 <MenuItem value={'RNN'}>RNN</MenuItem>
                 <MenuItem value={'OTHER'}>OTHER</MenuItem>
+              </Select>
+              <Typography id="label-type-opacity-slider" gutterBottom>
+                Label Type
+              </Typography>
+              <Select
+                labelId="label-type-opacity-slider"
+                id="label-type-mutiple-chip"
+                multiple
+                value={labelsData}
+                onChange={handleLabelChange}
+                input={<Input id="select-multiple-chip" />}
+                renderValue={(selected: any) => (
+                  <div className={classes.chips}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={value} className={classes.chip} />
+                    ))}
+                  </div>
+                )}
+                MenuProps={MenuProps}
+              >
+                {(globalStates.currentLabelType).map((name) => (
+                  <MenuItem key={name} value={name}>
+                    {name}
+                  </MenuItem>
+                ))}
               </Select>
             </>
           )

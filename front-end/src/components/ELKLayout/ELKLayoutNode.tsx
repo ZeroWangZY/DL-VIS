@@ -73,7 +73,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       );
 
       if(node.type === NodeType.LAYER) {
-        console.log('layer type: ', getLayerType(node));
+        // console.log('layer type: ', getLayerType(node));
         modifyGlobalStates(
           GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE,
           getLayerType(node)
@@ -347,7 +347,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onClick={() => {
-                  console.log(d);
+                  // console.log(d);
                   handleClick(d.data.id, d.data);
                 }}
                 onDoubleClick={() => toggleExpanded(d.data.id, linkedEdges)}

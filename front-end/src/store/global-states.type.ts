@@ -15,7 +15,9 @@ export interface GlobalStates {
   nodeScalarType: NodeScalarType,
   collectionDataSet: object[],
   currentLayerType: string,
-  filterLayerType: string
+  filterLayerType: string,
+  currentLabelType: number[],
+  filterLabelType: number[],
 };
 
 export enum GlobalStatesModificationType {
@@ -30,7 +32,9 @@ export enum GlobalStatesModificationType {
   ADD_COLLECTION,
   DEL_COLLECTION,
   SET_CURRENT_LAYER_TYPE,
-  SET_FILTER_LAYER_TYPE
+  SET_FILTER_LAYER_TYPE,
+  SET_CURRENT_LABEL_TYPE,
+  SET_FILTER_LABEL_TYPE
 }
 
 export enum ShowActivationOrGradient {

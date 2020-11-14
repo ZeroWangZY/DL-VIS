@@ -162,7 +162,7 @@ export default (props: Props) => {
   };
 
   const handleCollectionClose = (e) => {
-    console.log('collection close.');
+    // console.log('collection close.');
     setShowCollection(false);
     setLeft(e.pageX);
     setTop(e.pageY);
@@ -171,6 +171,10 @@ export default (props: Props) => {
     modifyGlobalStates(
       GlobalStatesModificationType.SET_FILTER_LAYER_TYPE,
       layerType
+    );
+    modifyGlobalStates(
+      GlobalStatesModificationType.SET_FILTER_LABEL_TYPE,
+      []
     );
   };
 
