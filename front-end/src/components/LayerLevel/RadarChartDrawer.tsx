@@ -100,7 +100,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       rawData = rawData.filter((item) => filterLabelType.includes(item.label));
     }
     if (!rawData || rawData.length === 0) return;
-    
+
     // 雷达图
     let radarChartMargin = { top: 50, right: 50, bottom: 50, left: 50 },
       radarChartWidth = Math.min(600, window.innerWidth - 10) - radarChartMargin.left - radarChartMargin.right,
@@ -243,7 +243,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           d3.selectAll(".radarStroke")
             .style("stroke-opacity", 0.1);
 
-          d3.select(".radarStroke.id_" + (d as any).index)
+          console.log(d.index);
+          d3.select(".radarWrapper").selectAll("#line" + d.index)
             .style("stroke-width", 7 + "px")
             .style("stroke-opacity", 1); // 改变当前区域的透明度
 
@@ -259,8 +260,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
           setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
         })
-        .on('mouseout', function (d) {
-          d3.select(".radarStroke.id_" + (d as any).index)
+        .on('mouseout', function (d: any) {
+          d3.select(".radarWrapper").selectAll("#line" + d.index)
             .style("stroke-width", currentValue.strokeWidth + "px")
 
           d3.selectAll(".radarStroke")
@@ -538,74 +539,211 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     }
 
     //Create a wrapper for the blobs	
-    let blobWrapper = g.selectAll(".radarWrapper")
-      .data(data)
-      .enter().append("g")
+    let blobWrapper = g.append("g")
       .attr("class", "radarWrapper");
 
-    const ContextMenuHandler = (d) => {
-      setIsShowPopover(true);
-      const e = d3.event;
-      e.preventDefault();
-      setCurrentData(rawData[d["data_index"]]);
-      setLeft(e.pageX);
-      setTop(e.pageY);
-    };
+    const parsePointsFromPath = (path: string) => {
+      let res = new Array(2);
+      let pointsNumber = [];
+      let pointsString = [];
 
-    // console.log('blobWrapper: ', blobWrapper);
+      let pos = "";
+      let point = [];
+      for (let i = 1; i < path.length; i++) {
+        if (path[i] === ',' || path[i] === 'C' || path[i] === ' ') {
+          if (point.length === 0) { // x位置
+            point.push(pos);
+            pos = ""; // 清空
+            continue;
+          } else if (point.length === 1) { // y位置
+            point.push(pos);
+            pointsString.push(point);
+            pointsNumber.push([parseFloat(point[0]), parseFloat(point[1])]);
+            pos = ""; // 清空
+          }
+          point = []; // 清空
+        } else {
+          pos += path[i];
+        }
+      }
 
-    //Create the outlines	
-    blobWrapper.append("path")
-      .attr("d", (d) => radarLine(d as [number, number][]))
-      .attr("class", function (d, i) { return "radarStroke id_" + i })
-      .style("stroke-width", cfg.strokeWidth + "px")
-      .style("stroke", function (d: any, i) {
-        return cfg.color(d[0].colorIndex + "");
-      })
-      .style("stroke-opacity", currentValue.opacity)
-      .style("fill", "none")
-      .style("filter", "url(#glow)")
-      .on('mouseover', function (d, i) {
-        d3.selectAll(".radarStroke")
-          .style("stroke-opacity", 0.1);
+      if (point.length === 1) {
+        point.push(pos);
+        pointsString.push(point);
+        pointsNumber.push([parseFloat(point[0]), parseFloat(point[1])]);
+      }
 
-        d3.select(this)
-          .style("stroke-width", cfg.strokeWidth + 5 + "px")
-          .style("stroke-opacity", 1); // 改变当前区域的透明度
+      // 此时，pointsNumber 0 3 6 。。。为起点，中间的两个为控制点
+      // 调整点的位置，使得 pointsNumber[0][0] 为0 
 
-        d3.select(".dot.id_" + i)
-          .classed("active", true);
-      })
-      .on('mouseout', function (d, i) {
-        d3.select(this)
-          .style("stroke-width", currentValue.strokeWidth + "px")
+      let delta = 1; //因为差别很大，所以delta设为1
 
-        d3.selectAll(".radarStroke")
-          .style("stroke-opacity", currentValue.opacity);
+      if (Math.abs(pointsNumber[0][0] - 1) > delta) { // 打破原来的闭环
+        pointsNumber.pop();
+        pointsString.pop();
+      }
 
-        d3.select(".dot.id_" + i)
-          .classed("active", false);
+      while (Math.abs(pointsNumber[0][0] - 1) > delta) {
+        let n = 3;
+        while (n--) {
+          pointsNumber.unshift(pointsNumber.pop());
+          pointsString.unshift(pointsString.pop());
+        }
+      }
+      pointsNumber.push(pointsNumber[0]); // 形成闭环
+      pointsString.push(pointsString[0]);
 
-        setDetailInfoOfCurrentStep([]);
+      res[0] = pointsNumber;
+      res[1] = pointsString;
+      return res;
+    }
 
-        // console.log('mouseout.');
-        // console.log('mousePos: ', null);
-        setMousePos(null);
-      })
-      .on('mousemove', function (d: any, i) {
-        let newDetailInfoOfCurrentStep = [];
+    function disintegrate(pointsNumber, pointsString) {
+      let res = [];
+      let segment = "";
+      for (let i = 0; i < pointsString.length - 3; i += 3) {
+        segment = "M" + pointsString[i][0] + "," + pointsString[i][1] + "C";
+        segment += (pointsString[i + 1][0] + "," + pointsString[i + 1][1] + ","); // 第一个控制点
+        segment += (pointsString[i + 2][0] + "," + pointsString[i + 2][1] + ","); // 第二个控制点
+        segment += (pointsString[i + 3][0] + "," + pointsString[i + 3][1]); // 第一个控制点
 
-        newDetailInfoOfCurrentStep.push({
-          "step": step ? step : d.step,
-          "label": d[0].colorIndex,
-          "index": d[0].dataIndex,
-        })
-        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+        res.push(segment);
+        segment = "";
+      }
+      return res;
+    }
 
-        // console.log('mousePos: ', [d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
-        setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
-      })
-      .on('contextmenu', ContextMenuHandler);
+    function direction(pointsNumber, pointsString, segmentIdx): string[] { // segmentIdx为第几段，[3*segmentIdx, 3*segmentIdx+3]
+      let startPoint: [number, number] = pointsNumber[3 * segmentIdx];
+      let endPoint: [number, number] = pointsNumber[3 * segmentIdx + 3];
+
+      let delta = 1; // 因为此处距离会足够大，所以delta也取得较大
+      let x1, x2, y1, y2;
+      if (Math.abs(startPoint[0] - endPoint[0]) < delta) { // 相等 -->  竖直方向
+        x1 = "0%";
+        x2 = "0%";
+      } else if (startPoint[0] > endPoint[0]) { // x 方向从右向左
+        x1 = "100%";
+        x2 = "0%";
+      } else if (startPoint[0] < endPoint[0]) { // x方向从左往右
+        x1 = "0%";
+        x2 = "100%";
+      }
+
+      if (Math.abs(startPoint[1] - endPoint[1]) < delta) { // 相等 -->  水平方向
+        y1 = "0%";
+        y2 = "0%";
+      } else if (startPoint[1] > endPoint[1]) { // x 方向从下往上
+        y1 = "100%";
+        y2 = "0%";
+      } else if (startPoint[1] < endPoint[1]) { // x方向从上往下
+        y1 = "0%";
+        y2 = "100%";
+      }
+      return [x1, y1, x2, y2];
+    }
+
+    for (let j = 0; j < data.length; j++) {
+      let testD = data[j];
+
+      let minValue = Infinity,
+        maxValue = -Infinity;
+      for (let d of testD) {
+        minValue = Math.min(minValue, d["value"]);
+        maxValue = Math.max(maxValue, d["value"]);
+      }
+
+      let opacityScale = d3.scaleLinear().domain([minValue, maxValue]).range([0.2, 1]); // 对于一个数据实例来说
+      let stokeColor = cfg.color(testD[0].colorIndex);
+      let testPathD = radarLine(testD);
+
+      const [pointsNumber, pointsString] = parsePointsFromPath(testPathD); // 返回二维数组，第一维是一个浮点数数组，表示每个点的位置，第二维是第一维的字符串形式
+
+      let segments = disintegrate(pointsNumber, pointsString); // 形成segments.length条路径 每条路径是一个三次贝塞尔曲线 M C  
+
+      for (let i = 0; i < segments.length; i++) {
+        let segment = segments[i];
+        let defsId = "myTest" + Math.random().toString(36).slice(-8);
+
+        // 对于第i段，它的起始透明度
+        let startOpacity = opacityScale(testD[i]["value"]);
+        let endOpacity = (i === segments.length - 1) ? opacityScale(testD[0]["value"]) : opacityScale(testD[i + 1]["value"]);
+        const [x1, y1, x2, y2] = direction(pointsNumber, pointsString, i);
+
+        if (j === 18) {
+          console.log(pointsNumber);
+          console.log([x1, y1, x2, y2]);
+        }
+
+
+        let linearGradientOpacity = g.append('defs')
+          .append('linearGradient')
+          .attr('id', defsId)
+          .attr("x1", x1)
+          .attr("y1", y1)
+          .attr("x2", x2)
+          .attr("y2", y2)
+
+        linearGradientOpacity.append("stop").attr("offset", "0%").attr("stop-color", stokeColor).attr("stop-opacity", startOpacity)
+        linearGradientOpacity.append("stop").attr("offset", "50%").attr("stop-color", stokeColor).attr("stop-opacity", (endOpacity + startOpacity) / 2)
+        linearGradientOpacity.append("stop").attr("offset", "100%").attr("stop-color", stokeColor).attr("stop-opacity", endOpacity)
+
+        blobWrapper
+          .append("path")
+          .attr("id", "line" + j)
+          .attr("class", "radarStroke")
+          .attr("d", segment)
+          .style("shape-rendering", "auto")
+          .style("stroke-width", cfg.strokeWidth + "px")
+          .style("fill", "none")
+          .style("stroke", "url(#" + defsId + ")")
+          .style("stroke-opacity", currentValue.opacity)
+          .on('mouseover', function (d) {
+            d3.selectAll(".radarStroke")
+              .style("stroke-opacity", 0.1);
+
+            d3.selectAll("#line" + j)
+              .style("stroke-width", cfg.strokeWidth + 5 + "px")
+              .style("stroke-opacity", 1); // 改变当前区域的透明度
+
+            d3.select(".dot.id_" + j)
+              .classed("active", true);
+          })
+          .on('mouseout', function (d) {
+            d3.selectAll("#line" + j)
+              .style("stroke-width", currentValue.strokeWidth + "px")
+
+            d3.selectAll(".radarStroke")
+              .style("stroke-opacity", currentValue.opacity);
+
+            d3.select(".dot.id_" + j)
+              .classed("active", false);
+
+            setDetailInfoOfCurrentStep([]);
+            setMousePos(null);
+          })
+          .on('mousemove', function (d) {
+            let newDetailInfoOfCurrentStep = [];
+            newDetailInfoOfCurrentStep.push({
+              "step": step ? step : step,
+              "label": testD[0].colorIndex,
+              "index": testD[0].dataIndex,
+            })
+            setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
+
+            setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
+          })
+          .on('contextmenu', () => {
+            setIsShowPopover(true);
+            const e = d3.event;
+            e.preventDefault();
+            setCurrentData(rawData[testD["data_index"]]);
+            setLeft(e.pageX);
+            setTop(e.pageY);
+          });
+      }
+    }
+
     // Helper Function
     //Wraps SVG text	
     function wrap(text, width) {
