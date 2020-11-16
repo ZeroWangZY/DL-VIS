@@ -28,6 +28,7 @@ from logs.resnet.get_neuron_order import get_neuron_order
 from logs.resnet.get_scale_std import get_scale_std
 
 data_runner = DataRunner()
+useLabelsAsSrcs = True
 
 from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
     get_tensor_heatmap_service
@@ -50,7 +51,7 @@ del dp
 
 max_step = DB_MAX_STEP
 is_training = False
-
+usePCAMatrix = False
 
 
 def normalize(series):
@@ -366,6 +367,11 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         epochNum = abs((int)(epochAndStep[0]))
         stepNum = (int)(epochAndStep[1])
 
+        if usePCAMatrix == True:
+            if not os.path.exists(
+                    SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(
+                            stepNum) + "-" + node_id + "-" + type + "-matrix" + ".npy"):
+                get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name)
         if not os.path.exists(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
             get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name)
         if not os.path.exists(SUMMARY_DIR + graph_name + os.sep + "scale" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
@@ -373,7 +379,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
 
         resultData = []
         if mode == "radial":
-            jsonPath = SUMMARY_DIR + os.sep + graph_name + os.sep + "indices" + os.sep + "1.json"
+            jsonPath = SUMMARY_DIR + os.sep + graph_name + os.sep + "indices" + os.sep + str(epochNum) +".json"
             with open(jsonPath, 'r', encoding='utf-8') as fp:  # 拿到数据编号
                 indices = json.load(fp)
                 indices = indices[(step - 1) * 32 : step * 32]   # 找到对应的数据编号，需要调用data_runner.py中的函数
@@ -385,11 +391,55 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                     resdata = resdata.swapaxes(0, 1)
                 # resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
                 print(resdata.shape) # 64 * 32 一个batch有32个数据，64个神经元
+                if usePCAMatrix == True:
+                    pcaMatrix = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + "-matrix" + ".npy")
+                    resdata = np.dot(resdata.swapaxes(0, 1), pcaMatrix)
+                    for i in range(32):   # 这里数据要改成活的
+                        resultData.append({
+                            "value": normalize(resdata[i]).tolist(),
+                            "label": labels.asnumpy().tolist()[i],
+                            "index": indices[i]
+                        })
+                    return HttpResponse(json.dumps({
+                        "message": "success",
+                        "data": resultData
+                    }), content_type="application/json")
+                if resdata.shape[0] <= 16:
+                    for i in range(32):   # 这里数据要改成活的
+                        resultData.append({
+                            "value": normalize(resdata.swapaxes(0, 1)[i]).tolist(),
+                            "label": labels.asnumpy().tolist()[i],
+                            "index": indices[i]
+                        })
+                    return HttpResponse(json.dumps({
+                        "message": "success",
+                        "data": resultData
+                    }), content_type="application/json")
+
+                # # 使用tsne降维后使用K-Means聚类
+                # tsne = TSNE(n_components=2, n_iter=250)
+                # tsne_resdata = tsne.fit_transform(resdata)
+                # kmeans = KMeans(n_clusters=8).fit(tsne_resdata)
+                # df = pd.DataFrame(resdata)
+                # df['angle'] = kmeans.labels_
+                #
+                #
+                # sectorData = []
+                # for i in range(8):
+                #     currentSectorData = list(filter(lambda item: item['angle'] == i,
+                #                                     df.iloc))
+                #     currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                #     # currentSectorData = normalize(currentSectorData)
+                #     sectorData.append(currentSectorData)
 
                 # 使用radviz得到的angle进行聚类
                 df = pd.DataFrame(resdata)
                 df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
+<<<<<<< HEAD
                 scaleStd = np.load(SUMMARY_DIR + graph_name + os.sep + "scale" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
+=======
+
+>>>>>>> 585f8b7 (feat: useLabelAsSource and usePCAMatrix)
                 sectorData = []
                 for i in range(8):
                     leftMargin = -7 / 8 * math.pi + i * math.pi / 4
@@ -398,6 +448,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                         filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
                                df.iloc))
                     if len(currentSectorData) != 0:
+<<<<<<< HEAD
                         curScaleData = scaleStd[i]
                         curmin = curScaleData[0]
                         curmax = curScaleData[1]
@@ -412,13 +463,23 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                                 dataList[i] = curmax
                                 dataedited = dataedited + 1
                         # currentSectorData = normalize(currentSectorData)
+=======
+                        currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                        currentSectorData = normalize(currentSectorData)
+>>>>>>> 585f8b7 (feat: useLabelAsSource and usePCAMatrix)
                         # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
                         # currentSectorData = softmax(currentSectorData)
                         # print(currentSectorData)
                         # currentSectorData = preprocessing.scale(currentSectorData)
+<<<<<<< HEAD
                         print("data reserved: ", dataedited, " ", len(dataList))
                         currentSectorData = normalize_1(dataList, curmin, curmax)
                         sectorData.append(currentSectorData)
+=======
+                        # currentSectorData = normalize(currentSectorData)
+                        sectorData.append(currentSectorData)
+
+>>>>>>> 585f8b7 (feat: useLabelAsSource and usePCAMatrix)
                 if data_index == -1:
                     for i in range(32):   # 这里数据要改成活的
                         resultData.append({
@@ -441,6 +502,14 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         "data": None
     }), content_type="application/json")
 
+
+def get_tensor_evolution(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='resnet')
+        node_id = request.GET.get('node_id', default='layer3.f.conv1')
+        step = int(request.GET.get('step', default='1'))
+        data_index = int(request.GET.get('data_index', default='-1'))  # 默认是整个step
+        type = request.GET.get('type', default='activation')
 
 def get_cluster_data(request):
     if request.method == 'GET':

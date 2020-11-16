@@ -334,7 +334,7 @@ monitored_operations = {'Conv2D',
                         'MaxPool', 'Reshape'}
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
-os.environ['CUDA_VISIBLE_DEVICES']="3"
+os.environ['CUDA_VISIBLE_DEVICES']="1"
 random.seed(1)
 data_home = "./logs/resnet/dataset/10-batches-bin"
 batch_size = 32
@@ -442,6 +442,56 @@ class DataInterceptionCallback(Callback):
         params = run_context.original_args()
         self.labels = params.train_dataset_element[1]
 
+class DataEvolutionCallback(Callback):
+    def __init__(self, data_type):
+        super(DataEvolutionCallback, self).__init__()
+        self.result = None
+        self.labels = None
+        self.data_type = data_type
+
+    def begin(self, run_context):
+        params = run_context.original_args()
+
+        # overwrite optimizer
+        opt = params.optimizer
+        old_construct = opt.construct
+        weight_names = [param.name for param in opt.parameters]
+
+        def new_construct(grads):
+            for i in range(len(weight_names)):
+                if weight_names[i] == self.node_name:
+                    if self.data_type == "gradient":
+                        self.result = grads[i].asnumpy()
+                    if self.data_type == "weight":
+                        self.result = opt.parameters[i].asnumpy()
+            return old_construct(grads)
+
+        opt.construct = new_construct
+
+        # overwrite Primitive.__call__
+        call_method = getattr(Primitive, '__call__')
+
+        def new_call_method(self_, *args):
+            output = call_method(self_, *args)
+            should_save = False
+            parameter_name = None
+            for arg in args:
+                if hasattr(arg, 'requires_grad') and getattr(arg,
+                                                             'requires_grad') and self_.name in monitored_operations:
+                    should_save = True
+                    parameter_name = arg.name
+                    break
+            print(parameter_name[0:parameter_name.rfind('.')])
+            if should_save and parameter_name[
+                               0:parameter_name.rfind('.')] == self.node_name and self.data_type == "activation":
+                self.result = output.asnumpy()
+            return output
+
+        setattr(Primitive, '__call__', new_call_method)
+    def step_begin(self, run_context):
+        params = run_context.original_args()
+        self.labels = params.train_dataset_element[1]
+
 
 class DataRunner:
     def __init__(self):
@@ -464,6 +514,17 @@ class DataRunner:
                     callbacks=[LossMonitor(), data_inception_callback],
                     dataset_sink_mode=False)
         return data_inception_callback.result, data_inception_callback.labels
+
+    def get_tensor_evolution_data(self, indices, ckpt_file, data_type="activation"):
+        indices = [1]
+        dataset = create_dataset(indices)
+        load_checkpoint(ckpt_file, net=self.model._network)
+        data_evolution_callback = DataEvolutionCallback(data_type=data_type)
+
+        self.model.train(1, dataset,
+                     callbacks=[LossMonitor(), data_evolution_callback],
+                     dataset_sink_mode=False)
+        return data_evolution_callback.result
 
 if __name__ == "__main__":
     input_indices = list(range(32))

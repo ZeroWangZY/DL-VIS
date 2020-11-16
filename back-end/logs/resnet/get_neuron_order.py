@@ -6,10 +6,14 @@ import json
 import numpy as np
 import math
 import pandas as pd
+from logs.resnet.get_pca_matrix import PCAMatrix
 # import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
+
+usePCAMatrix = False
+useLabelsAsSrcs = True
 
 def softmax(x):
     x_row_max = x.max(axis=-1)
@@ -32,18 +36,38 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
         if not "fc" in node_id:
             resdata = np.mean(np.array(resdata), axis=(2, 3))
 
-        dataNum = resdata.shape[1]
+        dataNum = resdata.shape[1] # batch_size * neroun nums
 
-        data = resdata.swapaxes(0, 1)
-        pca = PCA(n_components=8)
-        data = pca.fit_transform(data)
+        if usePCAMatrix == True:
+            pcaMatrix = PCAMatrix()
+            resMatrix = pcaMatrix.fit_transform(resdata, 10).swapaxes(0, 1)
+            if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
+                os.mkdir(SUMMARY_DIR + graph_name + "/order")
+            np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(
+                stepNum) + "-" + node_id + "-" + type + "-matrix" + ".npy", resMatrix)
+            return
+
+        if useLabelsAsSrcs == True:  # 使用标签作为力源
+            df = pd.DataFrame(resdata)
+            df['labels'] = labels.asnumpy()
+            data = []
+            for i in range(10):
+                currentList = list(filter(lambda item: item['labels'] == i, df.iloc))
+                data.append(np.mean(np.array(currentList), axis=0)[:-1])
+            data = np.array(data).swapaxes(0, 1)
+            df = pd.DataFrame(data, columns=['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10'])
+            m = 10
+        else:
+            data = resdata.swapaxes(0, 1)
+            pca = PCA(n_components=8)
+            data = pca.fit_transform(data)
+            df = pd.DataFrame(data, columns=['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8'])
+            m = 8
 
         for i in range(resdata.shape[1]):
             data[i] = softmax(np.sign(data[i]) * (2 ** abs(data[i])))
 
-        df = pd.DataFrame(data, columns=['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8'])
 
-        m = 8
         to_plot = [[], []]
 
         s = np.array(
