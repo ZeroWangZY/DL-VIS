@@ -10,7 +10,7 @@ const toggleExpanded = (id) => {
   });
 };
 
-export const drawElippseCurve = (x, y, width, height, dash) => {
+export const drawElippseCurve = (id, x, y, width, height, dash, handleClick) => {
   let ellipse = new PIXI.Graphics();
   ellipse.lineStyle(1, 0x808080, 1); // width color alpha
   ellipse.beginFill(0xFFFFFF, 1); // 填充白色，透明度为0
@@ -21,11 +21,17 @@ export const drawElippseCurve = (x, y, width, height, dash) => {
   ellipse.buttonMode = true;
   ellipse.hitArea = new PIXI.Ellipse(x, y, width, height);
 
+  ellipse.click = function (e) {
+    console.log("adsfasdf")
+    handleClick(id);
+  }
+
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius) => {
+export const drawRoundRect = (id, x, y, width, height, cornerRadius, handleClick) => {
   let roundBox = new PIXI.Graphics();
+  window.roundBox = roundBox;
   roundBox.lineStyle(1, 0x808080, 1); // width color alpha
   roundBox.beginFill(0xffffff, 0); // 填充白色
   //drawRoundedRect(x, y, width, height, cornerRadius)
@@ -40,9 +46,21 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius) => {
   let clickTimes = 0;
   let timer = null;
   roundBox.click = function (e) {
+    if (e && e.preventDefault) {
+      //非IE浏览器
+      e.preventDefault();
+    } else {
+      //IE浏览器(IE11以下)
+      window.event.returnValue = false;
+    }
+
     clearTimeout(timer);
     timer = setTimeout(() => { // 单击事件
       clickTimes = 0;
+
+      // 单击事件
+      handleClick(id);
+
     }, 200);
     clickTimes++;
 
@@ -78,7 +96,7 @@ export const drawArrow = (begin, end, color) => {
       points = [ // 顺时针方向，第一个点为箭头的 尖
         end.x, end.y,
         end.x - 5, end.y + 5,
-        end.x - 2.5, end.y,
+        end.x - 3.5, end.y,
         end.x - 5, end.y - 5,
       ];
     }
@@ -86,7 +104,7 @@ export const drawArrow = (begin, end, color) => {
       points = [
         end.x, end.y,
         end.x + 5, end.y - 5,
-        end.x + 2.5, end.y,
+        end.x + 3.5, end.y,
         end.x + 5, end.y + 5,
       ];
     }
@@ -95,7 +113,7 @@ export const drawArrow = (begin, end, color) => {
       points = [
         end.x, end.y,
         end.x + 5, end.y + 5,
-        end.x, end.y + 2.5,
+        end.x, end.y + 3.5,
         end.x - 5, end.y + 5,
       ];
     }
@@ -103,7 +121,7 @@ export const drawArrow = (begin, end, color) => {
       points = [
         end.x, end.y,
         end.x - 5, end.y - 5,
-        end.x, end.y - 2.5,
+        end.x, end.y - 3.5,
         end.x + 5, end.y - 5
       ];
     }

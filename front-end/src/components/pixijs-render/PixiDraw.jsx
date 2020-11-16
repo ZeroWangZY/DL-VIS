@@ -11,6 +11,7 @@ import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
+import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage5/styled-graph.type"
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
 import * as PIXI from "pixi.js";
@@ -19,8 +20,18 @@ const PixiDraw = () => {
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
   const maxLabelLength = 10;
-  const [graphContainerSize, setGraphContainerSize] = useState(null);
   const [graphContainerInitialPos, setGraphContainerInitialPos] = useState(null);
+  const [textResolution, setTextResolution] = useState(null);
+  const { selectedNodeId } = useGlobalStates();
+
+
+  const handleClick = (id) => {
+    if (selectedNodeId !== id)
+      modifyGlobalStates(
+        GlobalStatesModificationType.SET_SELECTEDNODE,
+        id
+      );
+  };
 
   useEffect(() => {
     if (!styledGraph || styledGraph.nodeStyles.length === 0) return;
@@ -36,6 +47,7 @@ const PixiDraw = () => {
       resolution: 1       // default: 1
     })
     const graphContainer = new PIXI.Container(); // 将所有的图形 线段 label 文字全部放入整个container中 方便拖拽
+    window.graphContainer = graphContainer
 
     app.stage.addChild(graphContainer);
     divContainer.current.appendChild(app.view);
@@ -47,10 +59,6 @@ const PixiDraw = () => {
     if (graphContainerInitialPos) {
       graphContainer.x = graphContainerInitialPos.x;
       graphContainer.y = graphContainerInitialPos.y;
-    }
-    if (graphContainerSize) {
-      graphContainer.width = graphContainerSize.width;
-      graphContainer.height = graphContainerSize.height;
     }
 
     window.addEventListener('resize', resize);
@@ -95,11 +103,31 @@ const PixiDraw = () => {
       if (event.wheelDelta > 0) {
         graphContainer.width *= 1.1;
         graphContainer.height *= 1.1;
-        setGraphContainerSize({ width: graphContainer.width, height: graphContainer.height })
+
+        // 以鼠标位置为中心放大
+        graphContainer.x = 1.1 * (graphContainer.x - event.offsetX) + event.offsetX;
+        graphContainer.y = 1.1 * (graphContainer.y - event.offsetY) + event.offsetY;
+
+        for (let obj of graphContainer.children) { // 文字分辨率
+          if (obj instanceof PIXI.Text) {
+            obj.resolution *= 1.1;
+            setTextResolution(obj.resolution);
+          }
+        }
       } else {
         graphContainer.width /= 1.1;
         graphContainer.height /= 1.1;
-        setGraphContainerSize({ width: graphContainer.width, height: graphContainer.height })
+
+        // 以鼠标位置为中心放大
+        graphContainer.x = (graphContainer.x - event.offsetX) / 1.1 + event.offsetX;
+        graphContainer.y = (graphContainer.y - event.offsetY) / 1.1 + event.offsetY;
+
+        for (let obj of graphContainer.children) {
+          if (obj instanceof PIXI.Text) {
+            obj.resolution /= 1.1;
+            setTextResolution(obj.resolution);
+          }
+        }
       }
     })
 
@@ -112,25 +140,31 @@ const PixiDraw = () => {
 
         if (node.isStacked) { // 堆叠节点 
           let ellipse2 = drawElippseCurve(
+            node.id,
             d.style._gNodeTransX,
             d.style._gNodeTransY + 6,
             d.style._ellipseX,
-            d.style._ellipseY); // drawEllipse(x, y, width, height);
+            d.style._ellipseY,
+            handleClick); // drawEllipse(x, y, width, height);
           container.addChild(ellipse2);
 
           let ellipse1 = drawElippseCurve(
+            node.id,
             d.style._gNodeTransX,
             d.style._gNodeTransY + 3,
             d.style._ellipseX,
-            d.style._ellipseY); // drawEllipse(x, y, width, height);
+            d.style._ellipseY,
+            handleClick); // drawEllipse(x, y, width, height);
           container.addChild(ellipse1);
         }
 
         let ellipse = drawElippseCurve(
+          node.id,
           d.style._gNodeTransX,
           d.style._gNodeTransY,
           d.style._ellipseX,
-          d.style._ellipseY); // drawEllipse(x, y, width, height);
+          d.style._ellipseY,
+          handleClick); // drawEllipse(x, y, width, height);
         container.addChild(ellipse);
 
         if (node.parameters.length !== 0) {
@@ -156,7 +190,8 @@ const PixiDraw = () => {
           d.style._gNodeTransY - d.style._rectHeight / 2,
           d.style._rectWidth,
           d.style._rectHeight,
-          5);
+          5,
+          handleClick);
 
         container.addChild(roundBox);
 
@@ -167,7 +202,8 @@ const PixiDraw = () => {
           d.style._gNodeTransY - d.style._rectHeight / 2,
           d.style._rectWidth,
           d.style._rectHeight,
-          5);
+          5,
+          handleClick);
 
         container.addChild(roundBox);
       }
@@ -188,9 +224,11 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
+        message.resolution = textResolution === null ? 1 : textResolution;
         message.anchor.x = 0;
 
-        message.position.set(d.style._gNodeTransX, d.style._gNodeTransY - d.style._rectHeight / 2 - fontSize);
+        let textCanvasWidth = message.width;
+        message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2 - fontSize);
         container.addChild(message);
       } else {
         const fontSize = 16;
@@ -201,7 +239,10 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.position.set(d.style._gNodeTransX, d.style._gNodeTransY - d.style._rectHeight / 2);
+        message.resolution = textResolution === null ? 1 : textResolution;
+
+        let textCanvasWidth = message.width;
+        message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
         container.addChild(message);
       }
 
@@ -219,14 +260,21 @@ const PixiDraw = () => {
         line.lineStyle(3, 0x999999, 1); // 0x999999
 
       for (let i = 1; i < linkData.length; i++) {
-        const begin = linkData[i - 1], end = linkData[i];
+        let begin = linkData[i - 1], end = linkData[i];
+        if (i === linkData.length - 1) { // 最后一根直线
+          let lineData = d.data.lineData;
+          let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
+          if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
+          end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
+        }
         line.moveTo(begin.x, begin.y);
         line.lineTo(end.x, end.y);
         container.addChild(line);
 
         if (i === linkData.length - 1) {
           // 增加一个箭头
-          const arrow = drawArrow(begin, end, "0x333333"); //0x999999
+          end = linkData[i];
+          const arrow = drawArrow(begin, end, "0x999999"); //0x999999
           container.addChild(arrow);
         }
       }
