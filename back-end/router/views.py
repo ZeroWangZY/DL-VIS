@@ -25,6 +25,7 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from logs.resnet.data_runner import DataRunner
 from logs.resnet.get_neuron_order import get_neuron_order
+from logs.resnet.get_scale_std import get_scale_std
 
 data_runner = DataRunner()
 
@@ -55,6 +56,10 @@ is_training = False
 def normalize(series):
     a = min(series)
     b = max(series)
+    return (series - a) / (b - a)
+
+
+def normalize_1(series, a, b):
     return (series - a) / (b - a)
 
 def softmax(x):
@@ -363,7 +368,8 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
 
         if not os.path.exists(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
             get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name)
-
+        if not os.path.exists(SUMMARY_DIR + graph_name + os.sep + "scale" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy"):
+            get_scale_std(epochNum, stepNum, node_id, data_runner, type, graph_name)
 
         resultData = []
         if mode == "radial":
@@ -380,42 +386,39 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                 # resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
                 print(resdata.shape) # 64 * 32 一个batch有32个数据，64个神经元
 
-                # 使用tsne降维后使用K-Means聚类
-                tsne = TSNE(n_components=2, n_iter=250)
-                tsne_resdata = tsne.fit_transform(resdata)
-                kmeans = KMeans(n_clusters=8).fit(tsne_resdata)
+                # 使用radviz得到的angle进行聚类
                 df = pd.DataFrame(resdata)
-                df['angle'] = kmeans.labels_
-                
-
+                df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
+                scaleStd = np.load(SUMMARY_DIR + graph_name + os.sep + "scale" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
                 sectorData = []
                 for i in range(8):
-                    currentSectorData = list(filter(lambda item: item['angle'] == i,
-                                                    df.iloc))
-                    currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                    # currentSectorData = normalize(currentSectorData)
-                    sectorData.append(currentSectorData)
-
-                # # 使用radviz得到的angle进行聚类
-                # df = pd.DataFrame(resdata)
-                # df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
-                #
-                # sectorData = []
-                # for i in range(8):
-                #     leftMargin = -7 / 8 * math.pi + i * math.pi / 4
-                #     rightMargin = -5 / 8 * math.pi + i * math.pi / 4
-                #     currentSectorData = list(
-                #         filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
-                #                df.iloc))
-                #     if len(currentSectorData) != 0:
-                #         currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                #         # currentSectorData = normalize(currentSectorData)
-                #         # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
-                #         # currentSectorData = softmax(currentSectorData)
-                #         # print(currentSectorData)
-                #         # currentSectorData = preprocessing.scale(currentSectorData)
-                #         # currentSectorData = normalize(currentSectorData)
-                #         sectorData.append(currentSectorData)
+                    leftMargin = -7 / 8 * math.pi + i * math.pi / 4
+                    rightMargin = -5 / 8 * math.pi + i * math.pi / 4
+                    currentSectorData = list(
+                        filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                               df.iloc))
+                    if len(currentSectorData) != 0:
+                        curScaleData = scaleStd[i]
+                        curmin = curScaleData[0]
+                        curmax = curScaleData[1]
+                        currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                        dataList = [item for item in currentSectorData]
+                        dataedited = 0
+                        for i in range(len(dataList)):
+                            if dataList[i] < curmin:
+                                dataList[i] = curmin
+                                dataedited = dataedited + 1
+                            if dataList[i] > curmax:
+                                dataList[i] = curmax
+                                dataedited = dataedited + 1
+                        # currentSectorData = normalize(currentSectorData)
+                        # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
+                        # currentSectorData = softmax(currentSectorData)
+                        # print(currentSectorData)
+                        # currentSectorData = preprocessing.scale(currentSectorData)
+                        print("data reserved: ", dataedited, " ", len(dataList))
+                        currentSectorData = normalize_1(dataList, curmin, curmax)
+                        sectorData.append(currentSectorData)
                 if data_index == -1:
                     for i in range(32):   # 这里数据要改成活的
                         resultData.append({
