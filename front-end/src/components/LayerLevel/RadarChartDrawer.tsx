@@ -243,7 +243,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           d3.selectAll(".radarStroke")
             .style("stroke-opacity", 0.1);
 
-          console.log(d.index);
           d3.select(".radarWrapper").selectAll("#line" + d.index)
             .style("stroke-width", 7 + "px")
             .style("stroke-opacity", 1); // 改变当前区域的透明度
@@ -947,7 +946,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       </Typography>
         <Slider
           getAriaValueText={(value) => { return (value + "") }}
-          defaultValue={3}
+          defaultValue={currentValue.dotRadius}
           min={0}
           step={0.1}
           max={10}
@@ -962,7 +961,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       </Typography>
         <Slider
           getAriaValueText={(value) => { return (value + "") }}
-          defaultValue={0.2}
+          defaultValue={currentValue.opacity}
           min={0}
           step={0.01}
           max={1}
@@ -977,7 +976,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       </Typography>
         <Slider
           getAriaValueText={(value) => { return (value + "") }}
-          defaultValue={2}
+          defaultValue={currentValue.strokeWidth}
           min={0}
           step={0.1}
           max={5}
