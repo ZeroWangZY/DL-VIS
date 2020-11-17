@@ -3,13 +3,37 @@ import { TransitionMotion } from "react-motion";
 import { useStyledGraph } from "../../store/styledGraph";
 import * as d3 from "d3";
 
-const circle_level_1_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="7.5" r="1.4"/></g>)
+const circle_level_1_big = (
+  <g id="图层_1-2" data-name="图层 1">
+    <circle style={{ fill: "#fff", stroke: "#333", strokeMiterlimit: 10 }} cx="7.5" cy="7.5" r="7" />
+    <circle style={{ fill: "#333" }} cx="7.5" cy="7.5" r="1.4" />
+  </g>
+)
 
-const circle_level_2_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="5.4" cy="7.5" r="1.4"/><circle style={{fill:"#333"}} cx="9.95" cy="7.5" r="1.4"/></g>)
+const circle_level_2_big = (
+  <g id="图层_1-2" data-name="图层 1">
+    <circle style={{ fill: "#fff", stroke: "#333", strokeMiterlimit: 10 }} cx="7.5" cy="7.5" r="7" />
+    <circle style={{ fill: "#333" }} cx="5.4" cy="7.5" r="1.4" />
+    <circle style={{ fill: "#333" }} cx="9.95" cy="7.5" r="1.4" />
+  </g>
+)
 
-const circle_level_1_2_big = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="7.5" cy="7.5" r="7"/><circle style={{fill:"#333"}} cx="7.5" cy="4.5" r="1.4"/><line style={{stroke:"#333",strokeMiterlimit:10, fill:"none"}} x1="0.5" y1="7.5" x2="14.5" y2="7.5"/><circle style={{fill:"#333"}} cx="5.4" cy="10.5" r="1.4"/><circle style={{fill:"#333"}} cx="9.95" cy="10.5" r="1.4"/></g>)
+const circle_level_1_2_big = (
+  <g id="图层_1-2" data-name="图层 1">
+    <circle style={{ fill: "#fff", stroke: "#333", strokeMiterlimit: 10 }} cx="7.5" cy="7.5" r="7" />
+    <circle style={{ fill: "#333" }} cx="7.5" cy="4.5" r="1.4" />
+    <line style={{ stroke: "#333", strokeMiterlimit: 10, fill: "none" }} x1="0.5" y1="7.5" x2="14.5" y2="7.5" />
+    <circle style={{ fill: "#333" }} cx="5.4" cy="10.5" r="1.4" />
+    <circle style={{ fill: "#333" }} cx="9.95" cy="10.5" r="1.4" />
+  </g>
+)
 
-const circle_level_1_small = (<g id="图层_1-2" data-name="图层 1"><circle style={{fill:"#fff",stroke:"#333",strokeMiterlimit:10}} cx="5.5" cy="5.5" r="5"/><circle style={{fill:"#333"}} cx="5.5" cy="5.5" r="1"/></g>)
+const circle_level_1_small = (
+  <g id="图层_1-2" data-name="图层 1">
+    <circle style={{ fill: "#fff", stroke: "#333", strokeMiterlimit: 10 }} cx="5.5" cy="5.5" r="5" />
+    <circle style={{ fill: "#333" }} cx="5.5" cy="5.5" r="1" />
+  </g>
+)
 
 const ELKLayoutPort: React.FC = () => {
   const styledGraph = useStyledGraph();
@@ -21,20 +45,20 @@ const ELKLayoutPort: React.FC = () => {
     .line()
     .x((d) => d[0])
     .y((d) => d[1]);
-  const corCal = (x1,y1,x2,y2,r)=>{
-    const a = Math.abs(x1-x2)
-    const b = Math.abs(y1-y2)
-    const c = Math.sqrt(Math.pow(a,2)+Math.pow(b,2))
-    const x0 = r * a/c;
-    const y0 = r * b/c;
+  const corCal = (x1, y1, x2, y2, r) => {
+    const a = Math.abs(x1 - x2)
+    const b = Math.abs(y1 - y2)
+    const c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2))
+    const x0 = r * a / c;
+    const y0 = r * b / c;
 
-    if(x1<x2){x1+=x0;x2-=x0;}
-    else{x1-=x0;x2+=x0;}
+    if (x1 < x2) { x1 += x0; x2 -= x0; }
+    else { x1 -= x0; x2 += x0; }
 
-    if(y1<y2){y1+=y0;y2-=y0;}
-    else{y1-=y0; y2+=y0;}
+    if (y1 < y2) { y1 += y0; y2 -= y0; }
+    else { y1 -= y0; y2 += y0; }
 
-    return {x1,y1,x2,y2}
+    return { x1, y1, x2, y2 }
   }
   return (
     <TransitionMotion
@@ -45,10 +69,10 @@ const ELKLayoutPort: React.FC = () => {
           {interpolatedStyles.map((d, n) => {
             const ofs_x = -7.5;
             const ofs_y = -7.4;
-            const xt = 9, yt = -1/2*d.style.nodeRectHeight+10;
-            let ofs = [xt, ofs_y] 
-            if(!d.data.isRealLink){
-              ofs = [0, ofs_y+yt];
+            const xt = 9, yt = -1 / 2 * d.style.nodeRectHeight + 10;
+            let ofs = [xt, ofs_y]
+            if (!d.data.isRealLink) {
+              ofs = [0, ofs_y + yt];
             }
             return (
               <g
@@ -90,30 +114,30 @@ const ELKLayoutPort: React.FC = () => {
                       .slice(10, -1)
                       .split(",")
                       .map((v) => parseInt(v));
-                    const sourceBox = { x:x+xc, y:y+yc };
+                    const sourceBox = { x: x + xc, y: y + yc };
 
                     const targetPortParent = d3.select(`.${pos}-${target}`).node() as any;
                     const targetPort = d3.select(`.${pos}-${target}`).select("g").node() as any;
 
                     [x, y] = targetPortParent
-                    .getAttribute("transform")
-                    .slice(10, -1)
-                    .split(",")
-                    .map((v) => parseInt(v));
+                      .getAttribute("transform")
+                      .slice(10, -1)
+                      .split(",")
+                      .map((v) => parseInt(v));
                     [xc, yc] = targetPort
                       .getAttribute("transform")
                       .slice(10, -1)
                       .split(",")
                       .map((v) => parseInt(v));
-                    const targetBox = { x:x+xc, y:y+yc };
+                    const targetBox = { x: x + xc, y: y + yc };
 
                     const r = 7
-                    let x1 = sourceBox.x+r,
-                      y1 = sourceBox.y+r,
-                      x2 = targetBox.x+r,
-                      y2 = targetBox.y+r;
+                    let x1 = sourceBox.x + r,
+                      y1 = sourceBox.y + r,
+                      x2 = targetBox.x + r,
+                      y2 = targetBox.y + r;
 
-                    ({x1,y1,x2,y2} = corCal(x1,y1,x2,y2,r))
+                    ({ x1, y1, x2, y2 } = corCal(x1, y1, x2, y2, r))
                     hoverEdges
                       .append("g")
                       .attr("class", `edgePath hoverEdge ${edgeName}`)
@@ -151,16 +175,16 @@ const ELKLayoutPort: React.FC = () => {
                   }
                 }}
               >
-                <g 
-                  transform={`translate(${d.data.direction==="in"?ofs_x+ofs[0]:ofs_x-ofs[0]}, ${ofs[1]})`}
+                <g
+                  transform={`translate(${d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]}, ${ofs[1]})`}
                 >
                   {d.data.isOperation
-                  ?circle_level_1_small
-                  :(d.data.type["level_1"]&&d.data.type["level_2"])
-                  ?circle_level_1_2_big
-                  :d.data.type["level_1"]
-                  ?circle_level_1_big
-                  :circle_level_2_big}
+                    ? circle_level_1_small
+                    : (d.data.type["level_1"] && d.data.type["level_2"])
+                      ? circle_level_1_2_big
+                      : d.data.type["level_1"]
+                        ? circle_level_1_big
+                        : circle_level_2_big}
                 </g>
               </g>
             );

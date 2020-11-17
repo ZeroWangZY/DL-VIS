@@ -356,28 +356,121 @@ const PixiDraw = () => {
     styledGraph.portStyles.forEach((d) => {
       const ofs_x = -7.5;
       const ofs_y = -7.4;
-      const xt = 9, yt = -1 / 2 * d.style.nodeRectHeight + 10;
+      const xt = 9, yt = -1 / 2 * d.style.nodeRectHeight.val + 10;
       let ofs = [xt, ofs_y]
       if (!d.data.isRealLink) {
         ofs = [0, ofs_y + yt];
       }
 
-      let circle = drawCircleCurve(
-        d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
-        d.style.gNodeTransY.val + ofs[1] + 7.5,
-        7,
-        0xFFFFFF,
-        0);
+      if (d.data.isOperation) {
+        // circle_level_1_small
+        let circle = drawCircleCurve(
+          d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 5.5,
+          d.style.gNodeTransY.val + ofs[1] + 5.5,
+          5,
+          0xFFFFFF,
+          0);
 
-      let smallCircle = drawCircleCurve(
-        d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
-        d.style.gNodeTransY.val + ofs[1] + 7.5,
-        1.4,
-        0x333333,
-        1);
+        let circle1 = drawCircleCurve(
+          d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 5.5,
+          d.style.gNodeTransY.val + ofs[1] + 5.5,
+          1,
+          0x333333,
+          1);
+        container.addChild(circle);
+        container.addChild(circle1);
+      } else {
+        if (d.data.type["level_1"] && d.data.type["level_2"]) {
+          // circle_level_1_2_big
+          let circle = drawCircleCurve(
+            d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+            d.style.gNodeTransY.val + ofs[1] + 7.5,
+            7,
+            0xFFFFFF,
+            0);
 
-      container.addChild(circle);
-      container.addChild(smallCircle);
+          let circle1 = drawCircleCurve(
+            d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+            d.style.gNodeTransY.val + ofs[1] + 4.5,
+            1.4,
+            0x333333,
+            1);
+
+          let circle2 = drawCircleCurve(
+            d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 5.4,
+            d.style.gNodeTransY.val + ofs[1] + 10.5,
+            1.4,
+            0x333333,
+            1);
+
+          let circle3 = drawCircleCurve(
+            d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 9.95,
+            d.style.gNodeTransY.val + ofs[1] + 10.5,
+            1.4,
+            0x333333,
+            1);
+
+          let line = new PIXI.Graphics();
+
+          line.lineStyle(3, 0x333333, 1)
+          line.moveTo(0.5, 7.5);
+          line.lineTo(14.5, 7.5);
+
+          container.addChild(circle);
+          container.addChild(circle1);
+          container.addChild(circle2);
+          container.addChild(circle3);
+          container.addChild(line);
+        } else {
+          if (d.data.type["level_1"]) {
+            // circle_level_1_big
+            let circle = drawCircleCurve(
+              d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+              d.style.gNodeTransY.val + ofs[1] + 7.5,
+              7,
+              0xFFFFFF,
+              0);
+
+            let circle1 = drawCircleCurve(
+              d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+              d.style.gNodeTransY.val + ofs[1] + 7.5,
+              1.4,
+              0x333333,
+              1);
+            container.addChild(circle);
+            container.addChild(circle1);
+          } else {
+            // circle_level_2_big
+            let circle = drawCircleCurve(
+              d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+              d.style.gNodeTransY.val + ofs[1] + 7.5,
+              7,
+              0xFFFFFF,
+              0);
+
+            let circle1 = drawCircleCurve(
+              d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 5.4,
+              d.style.gNodeTransY.val + ofs[1] + 7.5,
+              1.4,
+              0x333333,
+              1);
+            let circle2 = drawCircleCurve(
+              d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 9.55,
+              d.style.gNodeTransY.val + ofs[1] + 7.5,
+              1.4,
+              0x333333,
+              1);
+            container.addChild(circle);
+            container.addChild(circle1);
+            container.addChild(circle2);
+          }
+        }
+      }
+
+
+
+
+
 
     })
   }
