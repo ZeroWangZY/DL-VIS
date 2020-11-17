@@ -4,16 +4,10 @@ import {
 } from "../../store/processedGraph";
 import * as PIXI from "pixi.js";
 
-const toggleExpanded = (id) => {
-  modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
-    nodeId: id,
-  });
-};
-
-export const drawElippseCurve = (id, x, y, width, height, dash, handleClick) => {
+export const drawElippseCurve = (id, x, y, width, height, dash) => {
   let ellipse = new PIXI.Graphics();
   ellipse.lineStyle(1, 0x808080, 1); // width color alpha
-  ellipse.beginFill(0xFFFFFF, 1); // 填充白色，透明度为0
+  ellipse.beginFill(0xFFFFFF, 0); // 填充白色，透明度为0
   ellipse.drawEllipse(x, y, width, height); // drawEllipse(x, y, width, height);
   ellipse.endFill(); // 填充白色
 
@@ -21,15 +15,10 @@ export const drawElippseCurve = (id, x, y, width, height, dash, handleClick) => 
   ellipse.buttonMode = true;
   ellipse.hitArea = new PIXI.Ellipse(x, y, width, height);
 
-  ellipse.click = function (e) {
-    console.log("adsfasdf")
-    handleClick(id);
-  }
-
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius, handleClick) => {
+export const drawRoundRect = (id, x, y, width, height, cornerRadius) => {
   let roundBox = new PIXI.Graphics();
   window.roundBox = roundBox;
   roundBox.lineStyle(1, 0x808080, 1); // width color alpha
@@ -40,45 +29,15 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, handleClick
 
   roundBox.interactive = true;
   roundBox.buttonMode = true;
-
   roundBox.hitArea = new PIXI.Rectangle(x, y, width, height, cornerRadius);
-  // 双击展开
-  let clickTimes = 0;
-  let timer = null;
-  roundBox.click = function (e) {
-    if (e && e.preventDefault) {
-      //非IE浏览器
-      e.preventDefault();
-    } else {
-      //IE浏览器(IE11以下)
-      window.event.returnValue = false;
-    }
-
-    clearTimeout(timer);
-    timer = setTimeout(() => { // 单击事件
-      clickTimes = 0;
-
-      // 单击事件
-      handleClick(id);
-
-    }, 200);
-    clickTimes++;
-
-    if (clickTimes == 2) { // 双击
-      clearTimeout(timer);
-      clickTimes = 0;
-      toggleExpanded(id);
-    }
-  }
-
 
   return roundBox;
 }
 
-export const drawCircleCurve = (x, y, r) => {
+export const drawCircleCurve = (x, y, r, fillColor, alpha) => {
   let circle = new PIXI.Graphics();
-  circle.lineStyle(1, 0x808080, 1); // width color alpha
-  circle.beginFill(0xFFFFFF, 1); // 填充白色，透明度为0
+  circle.lineStyle(1, 0x333333, 1); // width color alpha
+  circle.beginFill(fillColor, alpha); // 填充白色，透明度为0
   circle.drawCircle(x, y, r);
   circle.endFill();
 

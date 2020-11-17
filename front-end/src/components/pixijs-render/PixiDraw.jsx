@@ -16,6 +16,12 @@ import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
 import * as PIXI from "pixi.js";
 
+const toggleExpanded = (id) => {
+  modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
+    nodeId: id,
+  });
+};
+
 const PixiDraw = () => {
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
@@ -23,7 +29,7 @@ const PixiDraw = () => {
   const [graphContainerInitialPos, setGraphContainerInitialPos] = useState(null);
   const [textResolution, setTextResolution] = useState(null);
   const { selectedNodeId } = useGlobalStates();
-
+  const selectedGraph = [];
 
   const handleClick = (id) => {
     if (selectedNodeId !== id)
@@ -55,6 +61,7 @@ const PixiDraw = () => {
     addNodes(graphContainer, styledGraph);
     addLabels(graphContainer, styledGraph);
     addLines(graphContainer, styledGraph);
+    addPorts(graphContainer, styledGraph);
 
     if (graphContainerInitialPos) {
       graphContainer.x = graphContainerInitialPos.x;
@@ -69,6 +76,12 @@ const PixiDraw = () => {
     }
     resize();
 
+    addDragGraphEvent(divContainer);
+
+  }, [styledGraph]);
+
+
+  const addDragGraphEvent = (divContainer) => {
     // 拖动
     let mousedown = false;
     let offsetX, offsetY;
@@ -130,8 +143,43 @@ const PixiDraw = () => {
         }
       }
     })
+  }
 
-  }, [styledGraph]);
+  function addRoundRectClickEvent(roundBox, id) {
+    // 双击展开
+    let clickTimes = 0;
+    let timer = null;
+    roundBox.click = function (e) {
+      //pixi中断事件冒泡
+      e.stopPropagation()
+
+      console.log("click Rect");
+      clearTimeout(timer);
+      timer = setTimeout(() => { // 单击事件
+        clickTimes = 0;
+        // 单击事件 
+        handleClick(id);
+
+        // 先将之前选择的图形的tint还原
+        if (selectedGraph.length === 1) {
+          selectedGraph[0].tint = 0xFFFFFF;
+          selectedGraph.pop();
+        }
+        roundBox.blendMode = PIXI.BLEND_MODES.COLOR;
+        roundBox.tint = 0xc7000b;
+        roundBox.geometry.invalidate();
+
+        selectedGraph.push(roundBox); // 被选中
+      }, 200);
+      clickTimes++;
+
+      if (clickTimes == 2) { // 双击
+        clearTimeout(timer);
+        clickTimes = 0;
+        toggleExpanded(id);
+      }
+    }
+  }
 
   const addNodes = (container, styledGraph) => {
     styledGraph.nodeStyles.forEach((d) => {
@@ -145,7 +193,7 @@ const PixiDraw = () => {
             d.style._gNodeTransY + 6,
             d.style._ellipseX,
             d.style._ellipseY,
-            handleClick); // drawEllipse(x, y, width, height);
+          ); // drawEllipse(x, y, width, height);
           container.addChild(ellipse2);
 
           let ellipse1 = drawElippseCurve(
@@ -154,7 +202,7 @@ const PixiDraw = () => {
             d.style._gNodeTransY + 3,
             d.style._ellipseX,
             d.style._ellipseY,
-            handleClick); // drawEllipse(x, y, width, height);
+          ); // drawEllipse(x, y, width, height);
           container.addChild(ellipse1);
         }
 
@@ -164,7 +212,25 @@ const PixiDraw = () => {
           d.style._gNodeTransY,
           d.style._ellipseX,
           d.style._ellipseY,
-          handleClick); // drawEllipse(x, y, width, height);
+        ); // drawEllipse(x, y, width, height);
+
+        ellipse.click = function (e) {
+          //pixi中断事件冒泡
+          e.stopPropagation()
+          handleClick(node.id);
+          // 先将之前选择的图形的tint还原
+          if (selectedGraph.length === 1) {
+            selectedGraph[0].tint = 0xFFFFFF;
+            selectedGraph.pop();
+          }
+
+          ellipse.blendMode = PIXI.BLEND_MODES.COLOR_BURN;
+          ellipse.tint = 0xc7000b;// 2, 0xc7000b, 1
+          ellipse.geometry.invalidate();
+
+          selectedGraph.push(ellipse); // 被选中
+        }
+
         container.addChild(ellipse);
 
         if (node.parameters.length !== 0) {
@@ -172,7 +238,9 @@ const PixiDraw = () => {
           let circle = drawCircleCurve(
             d.style._gNodeTransX + d.style._ellipseY,
             d.style._gNodeTransY + d.style._ellipseY,
-            d.style._ellipseY / 2);
+            d.style._ellipseY / 2,
+            0xFFFFFF,
+            0);
           container.addChild(circle);
         }
 
@@ -180,7 +248,9 @@ const PixiDraw = () => {
           let circle = drawCircleCurve(
             d.style._gNodeTransX - d.style._ellipseY,
             d.style._gNodeTransY + d.style._ellipseY,
-            d.style._ellipseY / 2);
+            d.style._ellipseY / 2,
+            0xFFFFFF,
+            0);
           container.addChild(circle);
         }
       } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
@@ -190,10 +260,12 @@ const PixiDraw = () => {
           d.style._gNodeTransY - d.style._rectHeight / 2,
           d.style._rectWidth,
           d.style._rectHeight,
-          5,
-          handleClick);
+          5);
 
         container.addChild(roundBox);
+
+        addRoundRectClickEvent(roundBox, node.id);
+
 
       } else if (node.type === NodeType.LAYER) {
         let roundBox = drawRoundRect(
@@ -202,14 +274,12 @@ const PixiDraw = () => {
           d.style._gNodeTransY - d.style._rectHeight / 2,
           d.style._rectWidth,
           d.style._rectHeight,
-          5,
-          handleClick);
-
+          5);
         container.addChild(roundBox);
+
+        addRoundRectClickEvent(roundBox, node.id);
       }
     })
-
-
   }
 
   const addLabels = (container, styledGraph) => {
@@ -269,6 +339,7 @@ const PixiDraw = () => {
         }
         line.moveTo(begin.x, begin.y);
         line.lineTo(end.x, end.y);
+
         container.addChild(line);
 
         if (i === linkData.length - 1) {
@@ -278,6 +349,36 @@ const PixiDraw = () => {
           container.addChild(arrow);
         }
       }
+    })
+  }
+
+  const addPorts = (container, styledGraph) => {
+    styledGraph.portStyles.forEach((d) => {
+      const ofs_x = -7.5;
+      const ofs_y = -7.4;
+      const xt = 9, yt = -1 / 2 * d.style.nodeRectHeight + 10;
+      let ofs = [xt, ofs_y]
+      if (!d.data.isRealLink) {
+        ofs = [0, ofs_y + yt];
+      }
+
+      let circle = drawCircleCurve(
+        d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+        d.style.gNodeTransY.val + ofs[1] + 7.5,
+        7,
+        0xFFFFFF,
+        0);
+
+      let smallCircle = drawCircleCurve(
+        d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
+        d.style.gNodeTransY.val + ofs[1] + 7.5,
+        1.4,
+        0x333333,
+        1);
+
+      container.addChild(circle);
+      container.addChild(smallCircle);
+
     })
   }
 
