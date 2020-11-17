@@ -80,11 +80,62 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const globalStates = useGlobalStates();
   const [mousePos, setMousePos] = useState(null);
   const [labelsData, setLabelsData] = useState([]);
+  const [multipleData, setMultipleData] = useState(null);
 
+  let multipleList = null;
   let rawData = props.rawData;
 
   const filterLayerType = globalStates.filterLayerType;
   const filterLabelType = globalStates.filterLabelType;
+
+  const brushedStart = () => {
+    d3.select('g.forceDirectedGraphContainer')
+      .select('.forceBrush').select('rect.overlay').attr('cursor', 'crosshair');
+  }
+
+  const brushed = () => {
+    // console.log('brushed');
+  };
+
+  const brushedend = () => {
+    // console.log('brushedend');
+    d3.select('g.forceDirectedGraphContainer')
+      .select('.forceBrush').select('rect.overlay').attr('cursor', 'default');
+    const event = d3.event;
+    if (!event.selection) {
+      return;
+    }
+    const selection = event.selection;
+    // console.log('selection: ', selection);
+    const [[x1, y1], [x2, y2]] = selection;
+    multipleList = [];
+    d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer")
+      .selectAll('circle.dot').each(function (d: any, i, nodes) {
+        // console.log('this: ', this);
+        const [[x1, y1], [x2, y2]] = d3.event.selection;
+        const x = Number.parseFloat(d3.select(this).attr('cx')) + 100;
+        const y = Number.parseFloat(d3.select(this).attr('cy')) + 100;
+        // console.log('x: ', x);
+        // console.log('y: ', y);
+        if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+          multipleList.push(rawData[d.index])
+        }
+      });
+    // console.log('multipleList: ', multipleList);
+    setMultipleData(multipleList);
+  };
+
+  const brush = d3.brush()
+    .filter(() => {
+      const event = d3.event;
+      return (
+        event && event.ctrlKey
+      );
+    })
+    .extent([[0, 0], [200, 200]])
+    .on("start", brushedStart)
+    .on("brush", brushed)
+    .on("end", brushedend);
 
   useEffect(() => {
     let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
@@ -292,6 +343,23 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       labelNodes.attr("cx", function (d: any) { return d.x; })
         .attr("cy", function (d: any) { return d.y; })
     });
+
+    const forceBrush = d3.select('g.forceDirectedGraphContainer')
+        .append('g')
+        .attr('class', 'forceBrush')
+        .attr('transform', 'translate(-100, -100)')
+        .call(brush)
+        .call((g) => {
+          g.select('.selection').on('contextmenu', () => {
+            setIsShowPopover(true);
+            const e = d3.event;
+            e.preventDefault();
+            setLeft(e.pageX);
+            setTop(e.pageY);
+          })
+        });
+
+      forceBrush.select('rect.overlay').attr('cursor', 'default');
   };
 
   const drawRadarChart = (rawData, margin, width, height) => {
@@ -348,10 +416,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       obj['step'] = rawData[i]["step"];
       data.push(obj);
     }
-    radarChart(".radarChart", data, radarChartOptions, width); // 画雷达图
+    radarChart(".radarChart", data, rawData, radarChartOptions, width); // 画雷达图
   }
 
-  const radarChart = (id, data, options, radarChartWidth) => {
+  const radarChart = (id, data, rawData, options, radarChartWidth) => {
     let cfg = {
       w: 400, //Width of the circle
       h: 400, //Height of the circle
@@ -443,8 +511,10 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       .style("fill-opacity", cfg.opacityCircles) // 每个圆的透明度，这样的话，中间的圆就会因为透明度叠加而变深
       .style("filter", "url(#glow)");
 
-    axisGrid.append("g")
-      .attr("class", "forceDirectedGraphContainer")
+    const forceContainer = axisGrid.append("g")
+      .attr("class", "forceDirectedGraphContainer");
+
+    forceContainer
       .append("circle")
       .attr("class", "forceDirectedGraphContainerCircle")
       .attr("r", (outRadius - innerRadius) / cfg.levels * (-1) + innerRadius)
@@ -677,11 +747,13 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           })
           .on('mousemove', function (d) {
             let newDetailInfoOfCurrentStep = [];
+            
             newDetailInfoOfCurrentStep.push({
-              "step": step ? step : step,
+              "step": step ? step : data[j].step,
               "label": testD[0].colorIndex,
               "index": testD[0].dataIndex,
             })
+
             setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
 
             setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
@@ -759,9 +831,32 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const handleAddClick = () => {
     const collectionDataSet = globalStates.collectionDataSet.slice();
 
+    // console.log('multipleData: ', multipleData);
+
     let isNeededPush = true;
-    for (let d of collectionDataSet) {
-      if (_.isEqual(d, currentData)) {
+    const res = [];
+    if (currentData) {
+      for (let d of collectionDataSet) {
+        if (_.isEqual(d, currentData)) {
+          isNeededPush = false;
+        }
+      }
+    }
+    else {
+      for (let d of multipleData) {
+        let flag = true;
+        for (let d1 of collectionDataSet) {
+          if (_.isEqual(d, d1)) {
+            flag = false;
+            break;
+          }
+        }
+        if (flag) {
+          res.push(d);
+        }
+      }
+
+      if (res.length === 0) {
         isNeededPush = false;
       }
     }
@@ -769,21 +864,39 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     const labels = globalStates.currentLabelType.slice();
 
     if (isNeededPush) {
-      currentData.step = step;
-      currentData.layerType = globalStates.currentLayerType;
-      collectionDataSet.push(currentData);
-      const label = currentData.label;
-      if (!labels.includes(label)) {
-        labels.push(label);
+      if (currentData) {
+        currentData.step = step;
+        currentData.layerType = globalStates.currentLayerType;
+        collectionDataSet.push(currentData);
+        const label = currentData.label;
+        if (!labels.includes(label)) {
+          labels.push(label);
+        }
+      }
+      else {
+        for (let d of res) {
+          d.step = step;
+          d.layerType = globalStates.currentLayerType;
+          collectionDataSet.push(d);
+          const label = d.label;
+          if (!labels.includes(label)) {
+            labels.push(label);
+          }
+        }
       }
       message.info('已成功添加至Collection.');
+      setCurrentData(null);
+      setMultipleData(null);
     }
     else {
       message.info('在Collection中已存在.');
     }
 
-    // console.log('collectionDataSet: ', collectionDataSet);
+    console.log('collectionDataSet: ', collectionDataSet);
     // console.log('labels: ', labels);
+
+    d3.select('g.forceDirectedGraphContainer')
+      .select('g.forceBrush').call(brush.move, null);
 
     modifyGlobalStates(GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE, labels);
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
@@ -792,17 +905,22 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   };
 
   const handleDelClick = () => {
+
+    // TODO：一次性从张量集中删除多个张量
     const collectionDataSet = globalStates.collectionDataSet.slice();
     const labels = globalStates.currentLabelType.slice();
 
     let index = -1;
     let isNeededDel = false;
     let label = currentData.label;
-    for (let d of collectionDataSet) {
-      index++;
-      if (_.isEqual(d, currentData)) {
-        isNeededDel = true;
-        break;
+
+    if (currentData) {
+      for (let d of collectionDataSet) {
+        index++;
+        if (_.isEqual(d, currentData)) {
+          isNeededDel = true;
+          break;
+        }
       }
     }
 
@@ -814,10 +932,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     }
 
     if (isNeededDel) {
-      collectionDataSet.splice(index, 1);
-      if (count === 1) {
-        const labelIndex = labels.indexOf(label);
-        labels.splice(labelIndex, 1);
+      if (currentData) {
+        collectionDataSet.splice(index, 1);
+        if (count === 1) {
+          const labelIndex = labels.indexOf(label);
+          labels.splice(labelIndex, 1);
+        }
       }
       message.info('已成功从Collection中删除.');
     }
