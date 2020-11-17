@@ -101,8 +101,12 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
             #     continue
             theta = math.atan2(y, x)
             # print(theta)
-            if theta < -7 / 8 * math.pi:
-                theta = theta + 2 * math.pi
+            if useLabelsAsSrcs == True:
+                if theta < -9 / 10 * math.pi:
+                    theta = theta + 2 * math.pi
+            else:
+                if theta < -7 / 8 * math.pi:
+                    theta = theta + 2 * math.pi
             angleList.append(theta)
         if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
             os.mkdir(SUMMARY_DIR + graph_name + "/order")

@@ -416,70 +416,60 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                         "data": resultData
                     }), content_type="application/json")
 
-                # # 使用tsne降维后使用K-Means聚类
-                # tsne = TSNE(n_components=2, n_iter=250)
-                # tsne_resdata = tsne.fit_transform(resdata)
-                # kmeans = KMeans(n_clusters=8).fit(tsne_resdata)
-                # df = pd.DataFrame(resdata)
-                # df['angle'] = kmeans.labels_
-                #
-                #
-                # sectorData = []
-                # for i in range(8):
-                #     currentSectorData = list(filter(lambda item: item['angle'] == i,
-                #                                     df.iloc))
-                #     currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                #     # currentSectorData = normalize(currentSectorData)
-                #     sectorData.append(currentSectorData)
-
                 # 使用radviz得到的angle进行聚类
                 df = pd.DataFrame(resdata)
                 df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
-<<<<<<< HEAD
                 scaleStd = np.load(SUMMARY_DIR + graph_name + os.sep + "scale" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
-=======
-
->>>>>>> 585f8b7 (feat: useLabelAsSource and usePCAMatrix)
                 sectorData = []
-                for i in range(8):
-                    leftMargin = -7 / 8 * math.pi + i * math.pi / 4
-                    rightMargin = -5 / 8 * math.pi + i * math.pi / 4
-                    currentSectorData = list(
-                        filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
-                               df.iloc))
-                    if len(currentSectorData) != 0:
-<<<<<<< HEAD
-                        curScaleData = scaleStd[i]
-                        curmin = curScaleData[0]
-                        curmax = curScaleData[1]
-                        currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                        dataList = [item for item in currentSectorData]
-                        dataedited = 0
-                        for i in range(len(dataList)):
-                            if dataList[i] < curmin:
-                                dataList[i] = curmin
-                                dataedited = dataedited + 1
-                            if dataList[i] > curmax:
-                                dataList[i] = curmax
-                                dataedited = dataedited + 1
-                        # currentSectorData = normalize(currentSectorData)
-=======
-                        currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                        currentSectorData = normalize(currentSectorData)
->>>>>>> 585f8b7 (feat: useLabelAsSource and usePCAMatrix)
-                        # currentSectorData = currentSectorData / np.linalg.norm(currentSectorData)
-                        # currentSectorData = softmax(currentSectorData)
-                        # print(currentSectorData)
-                        # currentSectorData = preprocessing.scale(currentSectorData)
-<<<<<<< HEAD
-                        print("data reserved: ", dataedited, " ", len(dataList))
-                        currentSectorData = normalize_1(dataList, curmin, curmax)
-                        sectorData.append(currentSectorData)
-=======
-                        # currentSectorData = normalize(currentSectorData)
-                        sectorData.append(currentSectorData)
-
->>>>>>> 585f8b7 (feat: useLabelAsSource and usePCAMatrix)
+                if useLabelsAsSrcs == True:
+                    for i in range(10):
+                        leftMargin = -9 / 10 * math.pi + i * math.pi / 5
+                        rightMargin = -7 / 10 * math.pi + i * math.pi / 5
+                        currentSectorData = list(
+                            filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                                   df.iloc))
+                        if len(currentSectorData) != 0:
+                            curScaleData = scaleStd[i]
+                            curmin = curScaleData[0]
+                            curmax = curScaleData[1]
+                            currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                            dataList = [item for item in currentSectorData]
+                            dataedited = 0
+                            for i in range(len(dataList)):
+                                if dataList[i] < curmin:
+                                    dataList[i] = curmin
+                                    dataedited = dataedited + 1
+                                if dataList[i] > curmax:
+                                    dataList[i] = curmax
+                                    dataedited = dataedited + 1
+                            print("data edited: ", dataedited, " ", len(dataList))
+                            currentSectorData = normalize_1(dataList, curmin, curmax)
+                            # currentSectorData = currentSectorData ** 3
+                            sectorData.append(currentSectorData)
+                else:
+                    for i in range(8):
+                        leftMargin = -7 / 8 * math.pi + i * math.pi / 4
+                        rightMargin = -5 / 8 * math.pi + i * math.pi / 4
+                        currentSectorData = list(
+                            filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                                   df.iloc))
+                        if len(currentSectorData) != 0:
+                            curScaleData = scaleStd[i]
+                            curmin = curScaleData[0]
+                            curmax = curScaleData[1]
+                            currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                            dataList = [item for item in currentSectorData]
+                            dataedited = 0
+                            for i in range(len(dataList)):
+                                if dataList[i] < curmin:
+                                    dataList[i] = curmin
+                                    dataedited = dataedited + 1
+                                if dataList[i] > curmax:
+                                    dataList[i] = curmax
+                                    dataedited = dataedited + 1
+                            print("data edited: ", dataedited, " ", len(dataList))
+                            currentSectorData = normalize_1(dataList, curmin, curmax)
+                            sectorData.append(currentSectorData)
                 if data_index == -1:
                     for i in range(32):   # 这里数据要改成活的
                         resultData.append({

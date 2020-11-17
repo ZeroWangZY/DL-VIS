@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
+useLabelsAsSrcs = True
 
 def softmax(x):
     x_row_max = x.max(axis=-1)
@@ -38,21 +39,40 @@ def get_scale_std(epochNum, stepNum, node_id, data_runner, type, graph_name):
         df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(
             stepNum) + "-" + node_id + "-" + type + ".npy")
         sectorData = []
-        for i in range(8):
-            leftMargin = -7 / 8 * math.pi + i * math.pi / 4
-            rightMargin = -5 / 8 * math.pi + i * math.pi / 4
-            currentSectorData = list(
-                filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
-                       df.iloc))
-            if len(currentSectorData) != 0:
-                currentSectorData = np.array(currentSectorData)
-                mean = np.mean(currentSectorData)
-                std = np.std(currentSectorData)
-                max = mean + 2 * std
-                min = mean - 2 * std
-                sectorData.append([min, max])
-            else:
-                sectorData.append(0, 0)
+        if useLabelsAsSrcs == True:
+            for i in range(10):
+                leftMargin = -9 / 10 * math.pi + i * math.pi / 5
+                rightMargin = -7 / 10 * math.pi + i * math.pi / 5
+                currentSectorData = list(
+                    filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                           df.iloc))
+                if len(currentSectorData) != 0:
+                    currentSectorData = np.array(currentSectorData)
+                    currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                    mean = np.mean(currentSectorData)
+                    std = np.std(currentSectorData)
+                    max = mean + 2 * std
+                    min = mean - 2 * std
+                    sectorData.append([min, max])
+                else:
+                    sectorData.append([0, 0])
+        else:
+            for i in range(8):
+                leftMargin = -7 / 8 * math.pi + i * math.pi / 4
+                rightMargin = -5 / 8 * math.pi + i * math.pi / 4
+                currentSectorData = list(
+                    filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
+                           df.iloc))
+                if len(currentSectorData) != 0:
+                    currentSectorData = np.array(currentSectorData)
+                    currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                    mean = np.mean(currentSectorData)
+                    std = np.std(currentSectorData)
+                    max = mean + 2 * std
+                    min = mean - 2 * std
+                    sectorData.append([min, max])
+                else:
+                    sectorData.append([0, 0])
         if not os.path.exists(SUMMARY_DIR + graph_name + "/scale"):
             os.mkdir(SUMMARY_DIR + graph_name + "/scale")
         np.save(SUMMARY_DIR + graph_name + "/scale" + os.sep + "-" + str(epochNum) + "_" + str(
