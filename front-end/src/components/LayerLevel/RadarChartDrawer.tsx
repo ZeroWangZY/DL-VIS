@@ -148,190 +148,150 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       }
     };
 
-    let radviz = radvizComponent(config, size, radarChartWidth, radarChartHeight, radarChartMargin);
-
-    radviz.render(data1);
+    radvizComponent(data1, config, size, radarChartWidth, radarChartHeight, radarChartMargin);
   }
 
-  let radvizComponent = function (config, size, radarChartWidth, radarChartHeight, radarChartMargin) {
+  let radvizComponent = function (data, config, size, radarChartWidth, radarChartHeight, radarChartMargin) {
+    if (data.length === 0) {
+      return;
+    }
 
-    const render = function (data) {
+    let dimensionNames = config.dimensions.map(function (d) {
+      return d;
+    });
+    let thetaScale = d3.scaleLinear().domain([0, dimensionNames.length]).range([0, Math.PI * 2]);
 
-      if (data.length === 0) {
-        return;
-      }
+    let chartRadius = config.size / 2 - config.margin;
+    let nodeCount = data.length;
+    let panelSize = config.size - config.margin * 2;
 
-      // data = addNormalizedValues(data);
-      let normalizeSuffix = '_normalized';
-      let dimensionNamesNormalized = config.dimensions.map(function (d) {
-        return d + normalizeSuffix;
-      });
-      let thetaScale = d3.scaleLinear().domain([0, dimensionNamesNormalized.length]).range([0, Math.PI * 2]);
+    data.forEach(function (d) {
+      d.x = panelSize / 2 - 100;
+      d.y = panelSize / 2 - 100;
+    });
 
-      let chartRadius = config.size / 2 - config.margin;
-      let nodeCount = data.length;
-      let panelSize = config.size - config.margin * 2;
+    let dimensionNodes = config.dimensions.map(function (d, i) {
+      let angle = thetaScale(i);
+      let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor - 100;
+      let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor - 100;
+      return {
+        index: nodeCount + i,
+        x: x,
+        y: y,
+        fixed: true,
+        name: d,
+        fx: x,
+        fy: y
+      };
+    });
 
-      data.forEach(function (d) {
-        d.x = panelSize / 2 - 100;
-        d.y = panelSize / 2 - 100;
-      });
-
-      let dimensionNodes = config.dimensions.map(function (d, i) {
-        let angle = thetaScale(i);
-        let x = chartRadius + Math.cos(angle - Math.PI / 2) * chartRadius * config.zoomFactor - 100;
-        let y = chartRadius + Math.sin(angle - Math.PI / 2) * chartRadius * config.zoomFactor - 100;
-        return {
-          index: nodeCount + i,
-          x: x,
-          y: y,
-          fixed: true,
-          name: d,
-          fx: x,
-          fy: y
-        };
-      });
-
-      let linksData = [];
-      data.forEach(function (d, i) {
-        dimensionNamesNormalized.forEach(function (dB, iB) {
-          linksData.push({
-            source: i,
-            target: nodeCount + iB,
-            value: d[dB]
-          });
+    let linksData = [];
+    data.forEach(function (d, i) {
+      dimensionNames.forEach(function (dB, iB) {
+        linksData.push({
+          source: i,
+          target: nodeCount + iB,
+          value: d[dB]
         });
       });
+    });
 
-      let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
+    let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
 
-      const simulation = d3.forceSimulation()
-        .force("charge", null)
-        .alphaDecay(0.1);
+    const simulation = d3.forceSimulation()
+      .force("charge", null)
+      .alphaDecay(0.1);
 
-      simulation
-        .nodes(data.concat(dimensionNodes))
-        .force("link", d3.forceLink(linksData).strength((link) => {
-          const { source, target } = link;
-          const name = target.name;
-          return source[name];
-        }));
+    simulation
+      .nodes(data.concat(dimensionNodes))
+      .force("link", d3.forceLink(linksData).strength((link) => {
+        const { source, target } = link;
+        const name = target.name;
+        return source[name];
+      }));
 
-      simulation.tick(10);
+    simulation.tick(10);
 
-      let panel = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer").select("circle.forceDirectedGraphContainerCircle")
+    let panel = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer").select("circle.forceDirectedGraphContainerCircle")
 
-      // Links
-      let links = root.selectAll('.link')
-        .data(linksData)
-        .enter().append('line')
-        .classed('layerLevelLink', true);
+    // Links
+    let links = root.selectAll('.link')
+      .data(linksData)
+      .enter().append('line')
+      .classed('layerLevelLink', true);
 
-      // Nodes
-      let nodes = root.selectAll('circle.dot')
-        .data(data)
-        .enter().append('circle')
-        .attr("class", function (d) { return "dot id_" + (d as any).index })
-        .attr('cx', d => (d as any).x)
-        .attr('cy', d => (d as any).y)
-        .attr("r", config.dotRadius)
-        .attr("fill", function (d: any, i): any {
-          return config.color(d.colorIndex + "");
+    // Nodes
+    let nodes = root.selectAll('circle.dot')
+      .data(data)
+      .enter().append('circle')
+      .attr("class", function (d) { return "dot id_" + (d as any).index })
+      .attr('cx', d => (d as any).x)
+      .attr('cy', d => (d as any).y)
+      .attr("r", config.dotRadius)
+      .attr("fill", function (d: any, i): any {
+        return config.color(d.colorIndex + "");
+      })
+      .on('mouseenter', function (d: any) {
+
+        d3.selectAll(".radarStroke")
+          .style("stroke-opacity", 0.1);
+
+        d3.select(".radarWrapper").selectAll("#line" + d.index)
+          .style("stroke-width", 7 + "px")
+          .style("stroke-opacity", 1); // 改变当前区域的透明度
+
+        this.classList.add('active');
+
+        let newDetailInfoOfCurrentStep = [];
+        newDetailInfoOfCurrentStep.push({
+          "step": step ? step : d.step,
+          "label": d.colorIndex,
+          "index": d.dataIndex,
         })
-        .on('mouseenter', function (d: any) {
+        setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
 
-          d3.selectAll(".radarStroke")
-            .style("stroke-opacity", 0.1);
+        setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
+      })
+      .on('mouseout', function (d: any) {
+        d3.select(".radarWrapper").selectAll("#line" + d.index)
+          .style("stroke-width", currentValue.strokeWidth + "px")
 
-          d3.select(".radarWrapper").selectAll("#line" + d.index)
-            .style("stroke-width", 7 + "px")
-            .style("stroke-opacity", 1); // 改变当前区域的透明度
+        d3.selectAll(".radarStroke")
+          .style("stroke-opacity", currentValue.opacity);
 
-          this.classList.add('active');
+        this.classList.remove('active');
 
-          let newDetailInfoOfCurrentStep = [];
-          newDetailInfoOfCurrentStep.push({
-            "step": step ? step : d.step,
-            "label": d.colorIndex,
-            "index": d.dataIndex,
-          })
-          setDetailInfoOfCurrentStep(newDetailInfoOfCurrentStep);
-
-          setMousePos([d3.mouse(this)[0] + radarChartWidth / 2, d3.mouse(this)[1] + radarChartWidth / 2]);
-        })
-        .on('mouseout', function (d: any) {
-          d3.select(".radarWrapper").selectAll("#line" + d.index)
-            .style("stroke-width", currentValue.strokeWidth + "px")
-
-          d3.selectAll(".radarStroke")
-            .style("stroke-opacity", currentValue.opacity);
-
-          this.classList.remove('active');
-
-          setMousePos(null);
-          setDetailInfoOfCurrentStep([]);
-        });
-
-      // Labels n1 - n12
-      let labelNodes = root.selectAll('circle.label-node')
-        .data(dimensionNodes)
-        .enter().append('circle')
-        .classed('label-node', true)
-        .attr("cx", function (d) {
-          return (d as any).x;
-        })
-        .attr("cy", function (d) {
-          return (d as any).y;
-        })
-        .attr("r", 2);
-
-      // Update force
-      simulation.on('tick', function () {
-
-        links.attr("x1", function (d) { return d.source.x; })
-          .attr("y1", function (d) { return d.source.y; })
-          .attr("x2", function (d) { return d.target.x; })
-          .attr("y2", function (d) { return d.target.y; })
-
-        nodes.attr("cx", function (d: any) { return d.x; })
-          .attr("cy", function (d: any) { return d.y; })
-
-        labelNodes.attr("cx", function (d: any) { return d.x; })
-          .attr("cy", function (d: any) { return d.y; })
+        setMousePos(null);
+        setDetailInfoOfCurrentStep([]);
       });
 
-      return this;
-    };
+    // Labels n1 - n12
+    let labelNodes = root.selectAll('circle.label-node')
+      .data(dimensionNodes)
+      .enter().append('circle')
+      .classed('label-node', true)
+      .attr("cx", function (d) {
+        return (d as any).x;
+      })
+      .attr("cy", function (d) {
+        return (d as any).y;
+      })
+      .attr("r", 2);
 
-    const addNormalizedValues = function (data) {
-      data.forEach(function (d) {
-        config.dimensions.forEach(function (dimension) {
-          d[dimension] = +d[dimension];
-        });
-      });
+    // Update force
+    simulation.on('tick', function () {
 
-      let normalizationScales = {};
-      config.dimensions.forEach(function (dimension) {
-        let dimension1 = dimension;
-        normalizationScales[dimension] = d3.scaleLinear()
-          .domain(
-            d3.extent(data.map(function (d, i) {
-              return d[dimension1];
-            })) as [number, number]).range([0, 1]);
-      });
+      links.attr("x1", function (d) { return d.source.x; })
+        .attr("y1", function (d) { return d.source.y; })
+        .attr("x2", function (d) { return d.target.x; })
+        .attr("y2", function (d) { return d.target.y; })
 
-      data.forEach(function (d) {
-        config.dimensions.forEach(function (dimension) {
-          d[dimension + '_normalized'] = normalizationScales[dimension](d[dimension]);
-        });
-      });
+      nodes.attr("cx", function (d: any) { return d.x; })
+        .attr("cy", function (d: any) { return d.y; })
 
-      return data;
-    };
-
-    let exports = { render: render };
-
-    return exports;
+      labelNodes.attr("cx", function (d: any) { return d.x; })
+        .attr("cy", function (d: any) { return d.y; })
+    });
   };
 
   const drawRadarChart = (rawData, margin, width, height) => {
@@ -364,18 +324,31 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       let colorIndex = rawData[i]["label"];
       let dataIndex = rawData[i]["index"];
       let obj = [];
+      let minValue = Infinity,
+        maxValue = -Infinity;
       for (let j = 0; j < value.length; j++) {
         let temp = {};
         temp["axis"] = j + 1;
         temp["value"] = value[j];
         temp["colorIndex"] = colorIndex;
         temp["dataIndex"] = dataIndex;
+
+        minValue = Math.min(minValue, value[j]);
+        maxValue = Math.max(maxValue, value[j]);
+
         obj.push(temp);
       }
+
+      let opacityScale = d3.scaleLinear().domain([minValue, maxValue]).range([0.2, 1]);
+      for (let d of obj) {
+        d["opacity"] = opacityScale(d["value"]);
+      }
+
       obj['data_index'] = i;
       obj['step'] = rawData[i]["step"];
       data.push(obj);
     }
+
     radarChart(".radarChart", data, radarChartOptions, width); // 画雷达图
   }
 
@@ -415,12 +388,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     // 如果数据中的最大值比maxValue还要大，更新maxValue;
     let radarChartMaxValue = -Infinity,
       radarChartMinValue = Infinity;
-    // for (let elem of data) {
-    //   for (let d of elem) {
-    //     radarChartMaxValue = Math.max(d.value, radarChartMaxValue);
-    //     radarChartMinValue = Math.min(d.value, radarChartMinValue);
-    //   }
-    // }
     radarChartMaxValue = 1, radarChartMinValue = 0;
 
     let allAxis = (data[0].map(function (i, j) {
@@ -597,7 +564,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       return res;
     }
 
-    function disintegrate(pointsNumber, pointsString) {
+    const disintegrate = (pointsString) => {
       let res = [];
       let segment = "";
       for (let i = 0; i < pointsString.length - 3; i += 3) {
@@ -612,7 +579,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       return res;
     }
 
-    function direction(pointsNumber, pointsString, segmentIdx): string[] { // segmentIdx为第几段，[3*segmentIdx, 3*segmentIdx+3]
+    const judgeDirection = (pointsNumber, segmentIdx): string[] => { // segmentIdx为第几段，[3*segmentIdx, 3*segmentIdx+3]
       let startPoint: [number, number] = pointsNumber[3 * segmentIdx];
       let endPoint: [number, number] = pointsNumber[3 * segmentIdx + 3];
 
@@ -642,38 +609,27 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       return [x1, y1, x2, y2];
     }
 
+    console.log(data);
     for (let j = 0; j < data.length; j++) {
       let testD = data[j];
 
-      let minValue = Infinity,
-        maxValue = -Infinity;
-      for (let d of testD) {
-        minValue = Math.min(minValue, d["value"]);
-        maxValue = Math.max(maxValue, d["value"]);
-      }
 
-      let opacityScale = d3.scaleLinear().domain([minValue, maxValue]).range([0.2, 1]); // 对于一个数据实例来说
       let stokeColor = cfg.color(testD[0].colorIndex);
       let testPathD = radarLine(testD);
 
       const [pointsNumber, pointsString] = parsePointsFromPath(testPathD); // 返回二维数组，第一维是一个浮点数数组，表示每个点的位置，第二维是第一维的字符串形式
 
-      let segments = disintegrate(pointsNumber, pointsString); // 形成segments.length条路径 每条路径是一个三次贝塞尔曲线 M C  
+      let segments = disintegrate(pointsString); // 形成segments.length条路径 每条路径是一个三次贝塞尔曲线 M C  
 
       for (let i = 0; i < segments.length; i++) {
         let segment = segments[i];
         let defsId = "myTest" + Math.random().toString(36).slice(-8);
 
         // 对于第i段，它的起始透明度
-        let startOpacity = opacityScale(testD[i]["value"]);
-        let endOpacity = (i === segments.length - 1) ? opacityScale(testD[0]["value"]) : opacityScale(testD[i + 1]["value"]);
-        const [x1, y1, x2, y2] = direction(pointsNumber, pointsString, i);
+        let startOpacity = testD[i]["opacity"];
+        let endOpacity = (i === segments.length - 1) ? testD[0]["opacity"] : testD[i + 1]["opacity"];
 
-        if (j === 18) {
-          console.log(pointsNumber);
-          console.log([x1, y1, x2, y2]);
-        }
-
+        const [x1, y1, x2, y2] = judgeDirection(pointsNumber, i);
 
         let linearGradientOpacity = g.append('defs')
           .append('linearGradient')
