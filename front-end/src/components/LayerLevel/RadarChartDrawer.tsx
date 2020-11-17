@@ -151,7 +151,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     radvizComponent(data1, config, size, radarChartWidth, radarChartHeight, radarChartMargin);
   }
 
-  let radvizComponent = function (data, config, size, radarChartWidth, radarChartHeight, radarChartMargin) {
+  const radvizComponent = (data, config, size, radarChartWidth, radarChartHeight, radarChartMargin) => {
     if (data.length === 0) {
       return;
     }
@@ -348,7 +348,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       obj['step'] = rawData[i]["step"];
       data.push(obj);
     }
-
     radarChart(".radarChart", data, radarChartOptions, width); // 画雷达图
   }
 
@@ -609,7 +608,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       return [x1, y1, x2, y2];
     }
 
-    console.log(data);
     for (let j = 0; j < data.length; j++) {
       let testD = data[j];
 
