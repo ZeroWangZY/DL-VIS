@@ -65,7 +65,7 @@ const GraphSelector = (props) => {
   const [graphMetadatas, setGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [msGraphMetadatas, setMsGraphMetadatas] = useState<GraphMetadata[]>([]);
   const [showSelector, setShowSelector] = useState<boolean>(true);
-  const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(0);
+  const [currentTfGraphIndex, setCurrentTfGraphIndex] = useState<number>(1);
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   const canvasContext = useContext(UpdateRectInCanvasContext);
   useGraphPipeline();
@@ -77,10 +77,7 @@ const GraphSelector = (props) => {
     conceptualGraphMode,
   } = useGlobalConfigurations();
 
-  const isTfGraph =
-    currentLayout === LayoutType.DAGRE_FOR_TF ||
-    currentLayout === LayoutType.TENSORBOARD ||
-    currentLayout === LayoutType.ELK_FOR_TF;
+  const isTfGraph = true
 
   const isMsGraph =
     currentLayout === LayoutType.DAGRE_FOR_MS ||
@@ -171,6 +168,7 @@ const GraphSelector = (props) => {
       null
     )
       .then((graph) => {
+        console.log(graph)
         const rawGraphoptimizer = new RawGraphOptimizer(preprocessingPlugins);
         return rawGraphoptimizer.withTracker()(graph);
       })

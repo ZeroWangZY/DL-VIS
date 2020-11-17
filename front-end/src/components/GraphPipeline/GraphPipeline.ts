@@ -28,18 +28,14 @@ export default function useGraphPipeline() {
   const layoutGraph = useLayoutGraph()
   const { diagnosisMode } = useGlobalConfigurations();
 
-  const isTfGraph =
-    currentLayout === LayoutType.DAGRE_FOR_TF ||
-    currentLayout === LayoutType.TENSORBOARD ||
-    currentLayout === LayoutType.ELK_FOR_TF;
+  const isTfGraph = true
 
-  const isMsGraph =
-    currentLayout === LayoutType.DAGRE_FOR_MS ||
-    currentLayout === LayoutType.ELK_FOR_MS;
+  const isMsGraph = false
 
   // RawGraph --> ProcessedGraph
   useEffect(() => {
     if (isMsGraph && msRawGraph) {
+      console.log(msRawGraph)
       const hGraph = buildMsGraph(msRawGraph);
       if (conceptualGraphMode) {
         const processedGraphOptimizer = new ProcessedGraphOptimizer();
@@ -49,6 +45,8 @@ export default function useGraphPipeline() {
     }
 
     if (isTfGraph && tfRawGraph) {
+      console.log(tfRawGraph)
+      if (!tfRawGraph.node) return
       buildGraph(tfRawGraph).then((pGraph) => {
         if (conceptualGraphMode) {
           const processedGraphOptimizer = new ProcessedGraphOptimizer();
