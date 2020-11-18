@@ -27,7 +27,8 @@ let globalStates: GlobalStates = {
   currentLayerType: null,
   filterLayerType: 'ALL',
   currentLabelType: [],
-  filterLabelType: []
+  filterLabelType: [],
+  completeLayerType: ['ALL']
 };
 
 const broadcast = () => {
@@ -97,19 +98,24 @@ export const modifyGlobalStates = (
       });
       break;
     case GlobalStatesModificationType.SET_FILTER_LAYER_TYPE:
-      globalStates = Object.assign( Object.assign({}, globalStates, {
+      globalStates = Object.assign({}, globalStates, {
         filterLayerType: payload,
-      }));
+      });
       break;
     case GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE:
-      globalStates = Object.assign(Object.assign({}, globalStates, {
+      globalStates = Object.assign({}, globalStates, {
         currentLabelType: payload,
-      }));
+      });
       break;
     case GlobalStatesModificationType.SET_FILTER_LABEL_TYPE:
-      globalStates = Object.assign(Object.assign({}, globalStates, {
+      globalStates = Object.assign({}, globalStates, {
         filterLabelType: payload,
-      }));
+      });
+      break;
+    case GlobalStatesModificationType.SET_COMPLETE_LAYER_TYPE:
+      globalStates = Object.assign({}, globalStates, {
+        completeLayerType: payload,
+      });
       break;
     default:
       break;

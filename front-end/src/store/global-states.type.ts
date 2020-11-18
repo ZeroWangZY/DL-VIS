@@ -18,6 +18,7 @@ export interface GlobalStates {
   filterLayerType: string,
   currentLabelType: number[],
   filterLabelType: number[],
+  completeLayerType: string[]
 };
 
 export enum GlobalStatesModificationType {
@@ -34,7 +35,8 @@ export enum GlobalStatesModificationType {
   SET_CURRENT_LAYER_TYPE,
   SET_FILTER_LAYER_TYPE,
   SET_CURRENT_LABEL_TYPE,
-  SET_FILTER_LABEL_TYPE
+  SET_FILTER_LABEL_TYPE,
+  SET_COMPLETE_LAYER_TYPE
 }
 
 export enum ShowActivationOrGradient {

@@ -252,8 +252,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     root.on('click', () => {
       d3.select('g.forceDirectedGraphContainer')
-      .select('g.forceBrush')
-      .call(brush.move, null);
+        .select('g.forceBrush')
+        .call(brush.move, null);
     });
 
     const simulation = d3.forceSimulation()
@@ -352,21 +352,21 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     });
 
     const forceBrush = d3.select('g.forceDirectedGraphContainer')
-        .append('g')
-        .attr('class', 'forceBrush')
-        .attr('transform', 'translate(-100, -100)')
-        .call(brush)
-        .call((g) => {
-          g.select('.selection').on('contextmenu', () => {
-            setIsShowPopover(true);
-            const e = d3.event;
-            e.preventDefault();
-            setLeft(e.pageX);
-            setTop(e.pageY);
-          })
-        });
+      .append('g')
+      .attr('class', 'forceBrush')
+      .attr('transform', 'translate(-100, -100)')
+      .call(brush)
+      .call((g) => {
+        g.select('.selection').on('contextmenu', () => {
+          setIsShowPopover(true);
+          const e = d3.event;
+          e.preventDefault();
+          setLeft(e.pageX);
+          setTop(e.pageY);
+        })
+      });
 
-      forceBrush.select('rect.overlay').attr('cursor', 'default');
+    forceBrush.select('rect.overlay').attr('cursor', 'default');
   };
 
   const drawRadarChart = (rawData, margin, width, height) => {
@@ -688,7 +688,6 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     for (let j = 0; j < data.length; j++) {
       let testD = data[j];
 
-
       let stokeColor = cfg.color(testD[0].colorIndex);
       let testPathD = radarLine(testD);
 
@@ -754,7 +753,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           })
           .on('mousemove', function (d) {
             let newDetailInfoOfCurrentStep = [];
-            
+
             newDetailInfoOfCurrentStep.push({
               "step": step ? step : data[j].step,
               "label": testD[0].colorIndex,
@@ -769,6 +768,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
             setIsShowPopover(true);
             const e = d3.event;
             e.preventDefault();
+            // console.log('rawData: ', rawData);
+            // console.log('testD: ', testD);
             setCurrentData(rawData[testD["data_index"]]);
             setLeft(e.pageX);
             setTop(e.pageY);
@@ -869,15 +870,21 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     }
 
     const labels = globalStates.currentLabelType.slice();
+    const completeLayerType = globalStates.completeLayerType.slice();
 
     if (isNeededPush) {
       if (currentData) {
         currentData.step = step;
+        // console.log('currentData: ', currentData);
         currentData.layerType = globalStates.currentLayerType;
         collectionDataSet.push(currentData);
         const label = currentData.label;
+        const layerType = currentData.layerType;
         if (!labels.includes(label)) {
           labels.push(label);
+        }
+        if (!completeLayerType.includes(layerType)) {
+          completeLayerType.push(layerType);
         }
       }
       else {
@@ -886,8 +893,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           d.layerType = globalStates.currentLayerType;
           collectionDataSet.push(d);
           const label = d.label;
+          const layerType = d.layerType;
           if (!labels.includes(label)) {
             labels.push(label);
+          }
+          if (!completeLayerType.includes(layerType)) {
+            completeLayerType.push(layerType);
           }
         }
       }
@@ -899,13 +910,16 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
       message.info('在Collection中已存在.');
     }
 
-    console.log('collectionDataSet: ', collectionDataSet);
+    // console.log('collectionDataSet: ', collectionDataSet);
     // console.log('labels: ', labels);
 
     d3.select('g.forceDirectedGraphContainer')
       .select('g.forceBrush')
       .call(brush.move, null);
 
+    // console.log('completeLayerType: ', completeLayerType);
+
+    modifyGlobalStates(GlobalStatesModificationType.SET_COMPLETE_LAYER_TYPE, completeLayerType);
     modifyGlobalStates(GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE, labels);
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
 
@@ -916,12 +930,18 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     // TODO：一次性从张量集中删除多个张量
     const collectionDataSet = globalStates.collectionDataSet.slice();
-    const labels = globalStates.currentLabelType.slice();
+    let labels = globalStates.currentLabelType.slice();
+    let completeLayerType = globalStates.completeLayerType.slice();
 
     let index = -1;
     let isNeededDel = false;
-    let label = currentData.label;
+    console.log('currentData: ', currentData);
+    console.log('multipleData: ', multipleData);
+    console.log('collectionDataSet: ', collectionDataSet);
+    let label = currentData ? currentData.label : '';
+    let layerType = currentData ? currentData.layerType : '';
 
+    // console.log('layerType: ', layerType);
     if (currentData) {
       for (let d of collectionDataSet) {
         index++;
@@ -931,11 +951,25 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         }
       }
     }
+    else {
+      isNeededDel = true;
+    }
 
     let count = 0;
-    for (let d of collectionDataSet) {
-      if ((d as any).label === label) {
-        count++;
+    if (currentData) {
+      for (let d of collectionDataSet) {
+        if ((d as any).label === label) {
+          count++;
+        }
+      }
+    }
+
+    let count1 = 0;
+    if (currentData) {
+      for (let d of collectionDataSet) {
+        if ((d as any).layerType === layerType) {
+          count1++;
+        }
       }
     }
 
@@ -946,6 +980,33 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
           const labelIndex = labels.indexOf(label);
           labels.splice(labelIndex, 1);
         }
+        if (count1 === 1) {
+          const layerTypeIndex = completeLayerType.indexOf(layerType);
+          completeLayerType.splice(layerTypeIndex, 1);
+        }
+      }
+      else {
+        // 一次性删除多个张量
+        for (let d of multipleData) {
+          for (let i = 0; i < collectionDataSet.length; i++) {
+            if (_.isEqual(d, collectionDataSet[i])) {
+              collectionDataSet.splice(i, 1);
+              break;
+            }
+          }
+        }
+        // 更新Layer Type
+        const completeLayerTypeSet = new Set<string>();
+        completeLayerTypeSet.add('ALL');
+        const labelsSet = new Set<number>();
+
+        for(let d of collectionDataSet) {
+          completeLayerTypeSet.add((d as any).layerType);
+          labelsSet.add((d as any).label);
+        }
+
+        completeLayerType = Array.from(completeLayerTypeSet);
+        labels = Array.from(labelsSet);
       }
       message.info('已成功从Collection中删除.');
     }
@@ -959,7 +1020,9 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
 
     // console.log('删除：collectionDataSet', collectionDataSet);
     // console.log('删除：labels', labels);
+    // console.log('删除: completeLayerType', completeLayerType);
 
+    modifyGlobalStates(GlobalStatesModificationType.SET_COMPLETE_LAYER_TYPE, completeLayerType);
     modifyGlobalStates(GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE, labels);
     modifyGlobalStates(GlobalStatesModificationType.DEL_COLLECTION, collectionDataSet);
     setLabelsData([]);
@@ -1077,11 +1140,20 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
                 value={layerType}
                 onChange={handleSelectLayerTypeChange}
               >
-                <MenuItem value={'ALL'}>ALL</MenuItem>
+                {/* <MenuItem value={'ALL'}>ALL</MenuItem>
                 <MenuItem value={'FC'}>FC</MenuItem>
                 <MenuItem value={'CONV'}>CONV</MenuItem>
                 <MenuItem value={'RNN'}>RNN</MenuItem>
-                <MenuItem value={'OTHER'}>OTHER</MenuItem>
+                <MenuItem value={'OTHER'}>OTHER</MenuItem> */}
+                {
+                  globalStates.completeLayerType.map((layerType) => {
+                    return (
+                      <MenuItem key={layerType} value={layerType}>
+                        {layerType}
+                      </MenuItem>
+                    )
+                  })
+                }
               </Select>
               <Typography id="label-type-opacity-slider" gutterBottom>
                 Label Type

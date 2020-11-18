@@ -54,6 +54,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const styledGraph = useStyledGraph();
 
   const getLayerType = (node) => {
+    // console.log('node: ', node);
     if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
       return 'FC';
     } else if (node.class.indexOf(`layertype-${LayerType.CONV}`) > -1) {
@@ -74,9 +75,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
       if(node.type === NodeType.LAYER) {
         // console.log('layer type: ', getLayerType(node));
+        // modifyGlobalStates(
+        //   GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE,
+        //   getLayerType(node)
+        // );
         modifyGlobalStates(
           GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE,
-          getLayerType(node)
+          node.label
         );
       }
     }
