@@ -319,16 +319,90 @@ const PixiDraw = () => {
     })
   }
 
+  const drawRoundCorner = (beginPos, endPos, r, direction, width, color, alpha) => { // direction分为 rd ul .....
+    // 首先将pos.x较小的作为起点
+    let begin, end;
+    if (beginPos.x < endPos.x) {
+      begin = beginPos;
+      end = endPos;
+    } else {
+      begin = endPos;
+      end = beginPos;
+    }
+
+    const bezier = new PIXI.Graphics();
+    bezier.lineStyle(width, color, alpha);
+
+    if (direction === "rd" || direction === "ul") { // 左上 -> 右下
+      bezier.moveTo(0, 0);
+      bezier.quadraticCurveTo(r, 0, r, r);
+      bezier.position.x = begin.x; // 第一象限圆弧，中点在起始点
+      bezier.position.y = begin.y;
+    } else if (direction === "dl" || direction === "ru") {
+      bezier.moveTo(0, r);
+      bezier.quadraticCurveTo(r, r, r, 0);
+      bezier.position.x = begin.x; // 第二象限圆弧
+      bezier.position.y = begin.y - r;
+    } else if (direction === "lu" || direction === "dr") {
+      bezier.moveTo(0, 0);
+      bezier.quadraticCurveTo(0, r, r, r);
+      bezier.position.x = begin.x;
+      bezier.position.y = begin.y;
+    } else if (direction === "ur" || direction === "ld") {
+      bezier.moveTo(0, r);
+      bezier.quadraticCurveTo(0, 0, r, 0);
+      bezier.position.x = begin.x;
+      bezier.position.y = begin.y - r;
+    }
+
+    return bezier;
+  }
+
+  const judgeDirection = (beginPos, endPos) => {  // 返回 l r u d 分别表示左右上下
+    if (beginPos.x === endPos.x) { // 上下
+      if (beginPos.y > endPos.y)
+        return "u";
+      else
+        return "d";
+    } else if (beginPos.x < endPos.x)
+      return "r";
+    else return "l";
+  }
+
+  const adjustLinepos = (begin, end, d1, r, i, arrayLength) => {
+    if (d1 === "r") {
+      if (i !== 1)  // 不能直接操作begin， 因为begin是数组中的地址，直接修改begin则修改了数组中的值
+        begin = Object.assign({}, { x: begin.x + r, y: begin.y });
+      if (i !== arrayLength - 1) // 线的最后一段end的不变
+        end = Object.assign({}, { x: end.x - r, y: end.y });
+    } else if (d1 === "l") {
+      if (i !== 1) begin = Object.assign({}, { x: begin.x - r, y: begin.y });
+      if (i !== arrayLength - 1) end = Object.assign({}, { x: end.x + r, y: end.y });
+    } else if (d1 === 'd') {
+      if (i !== 1) begin = Object.assign({}, { x: begin.x, y: begin.y + r }); // begin.y += 3;
+      if (i !== arrayLength - 1) end = Object.assign({}, { x: end.x, y: end.y - r }); //end.y -= 3;
+    } else if (d1 === "u") {
+      if (i !== 1) begin = Object.assign({}, { x: begin.x, y: begin.y - r }); // begin.y -= 3;
+      if (i !== arrayLength - 1) end = Object.assign({}, { x: end.x, y: end.y + r }); // end.y += 3;
+    }
+    return [begin, end];
+  }
+
   const addLines = (container, styledGraph) => {
+    const roundR = 5; // 圆角半径
     styledGraph.linkStyles.forEach((d) => {
       const linkData = d.data.linkData;
       let line = new PIXI.Graphics();
 
+      let lineColor;
       if (d.data.isModuleEdge)
-        line.lineStyle(3, 0xff931e, 1)
+        lineColor = 0xff931e;
       else
-        line.lineStyle(3, 0x999999, 1); // 0x999999
+        lineColor = 0x999999;
 
+      line.lineStyle(3, lineColor, 1)
+
+      // 圆角折线
       for (let i = 1; i < linkData.length; i++) {
         let begin = linkData[i - 1], end = linkData[i];
         if (i === linkData.length - 1) { // 最后一根直线
@@ -336,7 +410,27 @@ const PixiDraw = () => {
           let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
           if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
           end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
+
+          let d1 = judgeDirection(begin, end);
+          [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
         }
+
+        if (i !== linkData.length - 1) { // 最后一根折线末尾不需要加圆角
+          let nextEnd = linkData[i + 1]; // 下一个起始点
+          let nextBegin = linkData[i];
+          // 前一条线: begin -> end
+          // 后一条线：end - > nextEnd
+          let d1 = judgeDirection(begin, end);
+          let d2 = judgeDirection(nextBegin, nextEnd);
+
+          [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+
+          [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
+
+          let corner = drawRoundCorner(end, nextBegin, roundR, d1 + d2, 3, lineColor, 1);
+          container.addChild(corner);
+        }
+
         line.moveTo(begin.x, begin.y);
         line.lineTo(end.x, end.y);
 
