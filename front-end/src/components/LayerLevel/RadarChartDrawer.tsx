@@ -100,7 +100,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
   const brushedend = () => {
     // console.log('brushedend');
     d3.select('g.forceDirectedGraphContainer')
-      .select('.forceBrush').select('rect.overlay').attr('cursor', 'default');
+      .select('.forceBrush')
+      .select('rect.overlay').attr('cursor', 'default');
     const event = d3.event;
     if (!event.selection) {
       return;
@@ -248,6 +249,12 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     });
 
     let root = d3.select("g.axisWrapper").select("g.forceDirectedGraphContainer");
+
+    root.on('click', () => {
+      d3.select('g.forceDirectedGraphContainer')
+      .select('g.forceBrush')
+      .call(brush.move, null);
+    });
 
     const simulation = d3.forceSimulation()
       .force("charge", null)
@@ -896,7 +903,8 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
     // console.log('labels: ', labels);
 
     d3.select('g.forceDirectedGraphContainer')
-      .select('g.forceBrush').call(brush.move, null);
+      .select('g.forceBrush')
+      .call(brush.move, null);
 
     modifyGlobalStates(GlobalStatesModificationType.SET_CURRENT_LABEL_TYPE, labels);
     modifyGlobalStates(GlobalStatesModificationType.ADD_COLLECTION, collectionDataSet);
