@@ -23,6 +23,8 @@ const toggleExpanded = (id) => {
   });
 };
 
+let zoomFactor = 1;
+
 const PixiDraw = () => {
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
@@ -68,6 +70,11 @@ const PixiDraw = () => {
       graphContainer.x = graphContainerInitialPos.x;
       graphContainer.y = graphContainerInitialPos.y;
     }
+    if (zoomFactor !== 1) {
+      // 对graphContainer中的所有元素进行初始化的放大缩小，并且调整分辨率
+      graphContainer.width *= zoomFactor;
+      graphContainer.height *= zoomFactor;
+    }
 
     window.addEventListener('resize', resize);
     // Resize function window
@@ -79,8 +86,9 @@ const PixiDraw = () => {
     resize();
 
     addDragGraphEvent(divContainer);
+    addZoomEvent(divContainer);
 
-    TweenMax.to(graphContainer, 1, { x: 100, y: 100 });
+    // TweenMax.to(graphContainer, 1, { x: 100, y: 100 });
 
   }, [styledGraph]);
 
@@ -113,13 +121,16 @@ const PixiDraw = () => {
       graphContainer.y = (e.offsetY - offsetY);
       setGraphContainerInitialPos({ x: graphContainer.x, y: graphContainer.y });
     })
+  }
 
+  const addZoomEvent = (divContainer) => {
     // 滚轮事件
     divContainer.current.addEventListener("mousewheel", function (event) {
       // event.wheelDelta > 0 放大， event.wheelDelta < 0 缩小
       if (event.wheelDelta > 0) {
         graphContainer.width *= 1.1;
         graphContainer.height *= 1.1;
+        zoomFactor *= 1.1;
 
         // 以鼠标位置为中心放大
         graphContainer.x = 1.1 * (graphContainer.x - event.offsetX) + event.offsetX;
@@ -128,12 +139,12 @@ const PixiDraw = () => {
         for (let obj of graphContainer.children) { // 文字分辨率
           if (obj instanceof PIXI.Text) {
             obj.resolution *= 1.1;
-            setTextResolution(obj.resolution);
           }
         }
       } else {
         graphContainer.width /= 1.1;
         graphContainer.height /= 1.1;
+        zoomFactor /= 1.1;
 
         // 以鼠标位置为中心放大
         graphContainer.x = (graphContainer.x - event.offsetX) / 1.1 + event.offsetX;
@@ -142,7 +153,6 @@ const PixiDraw = () => {
         for (let obj of graphContainer.children) {
           if (obj instanceof PIXI.Text) {
             obj.resolution /= 1.1;
-            setTextResolution(obj.resolution);
           }
         }
       }
