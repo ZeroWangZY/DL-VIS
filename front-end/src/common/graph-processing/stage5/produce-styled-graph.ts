@@ -19,7 +19,7 @@ import { link } from "fs";
 let nodeKeyMap = {},
   linkKeyMap = {};
 
-let portTypeMap: Map<string/*=id4Style*/, {type:{level_1: boolean, level_2: boolean}, index:number}> = new Map();
+let portTypeMap: Map<string/*=id4Style*/, { type: { level_1: boolean, level_2: boolean }, index: number }> = new Map();
 
 export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   let newNodeStyles = [];
@@ -64,6 +64,9 @@ export const generateEdgeStyles = (
       { x: ofs.x + endPoint.x, y: ofs.y + endPoint.y },
     ];
     const ofs_x = 3; //控制和port重叠的问题
+
+    const [_drawData, _lineStrokeWidth] = drawArcPath(ofs_x, linkData, linksCountMap, ofs);
+
     styles.push({
       key: `${id4Style}_${linkKeyMap[id4Style]}`,
       data: {
@@ -73,7 +76,8 @@ export const generateEdgeStyles = (
         originalTarget: link.originalTarget,
         linkData,
         lineData: hoverPath(ofs_x, linkData),
-        drawData: strokeWidthAdaption(drawArcPath(ofs_x, linkData, linksCountMap, ofs)),
+        lineStrokeWidth: _lineStrokeWidth,
+        drawData: _drawData,
         junctionPoints:
           junctionPoints === undefined
             ? []
@@ -167,8 +171,8 @@ export const generateNodeStyles = (
     const inHiddenEdges = node.hiddenEdges["in"];
     const outHiddenEdges = node.hiddenEdges["out"];
     if (inPortType === PortType.Module) {
-      const type = {"level_1":true,"level_2":false};
-      portTypeMap.set("in>"+id4Style, {type:type,index: portStyles.length})
+      const type = { "level_1": true, "level_2": false };
+      portTypeMap.set("in>" + id4Style, { type: type, index: portStyles.length })
       portStyles.push({
         //key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `inPort_${node.id}`,
@@ -189,8 +193,8 @@ export const generateNodeStyles = (
         },
       });
     } else if (inPortType === PortType.hasHiddenEdge) {
-      const type = {"level_1":false,"level_2":true};
-      portTypeMap.set("in>"+id4Style, {type:type,index:portStyles.length})
+      const type = { "level_1": false, "level_2": true };
+      portTypeMap.set("in>" + id4Style, { type: type, index: portStyles.length })
       portStyles.push({
         //key: `inPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `inPort_${node.id}`,
@@ -212,8 +216,8 @@ export const generateNodeStyles = (
       });
     }
     if (outPortType === PortType.Module) {
-      const type = {"level_1":true,"level_2":false};
-      portTypeMap.set("out>"+id4Style, {type:type,index:portStyles.length})
+      const type = { "level_1": true, "level_2": false };
+      portTypeMap.set("out>" + id4Style, { type: type, index: portStyles.length })
       portStyles.push({
         //key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `outPort_${node.id}`,
@@ -234,8 +238,8 @@ export const generateNodeStyles = (
         },
       });
     } else if (outPortType === PortType.hasHiddenEdge) {
-      const type = {"level_1":false,"level_2":true};
-      portTypeMap.set("out>"+id4Style, {type:type,index:portStyles.length})
+      const type = { "level_1": false, "level_2": true };
+      portTypeMap.set("out>" + id4Style, { type: type, index: portStyles.length })
       portStyles.push({
         //key: `outPort_${id4Style}_${nodeKeyMap[id4Style]}`,
         key: `outPort_${node.id}`,
@@ -257,72 +261,72 @@ export const generateNodeStyles = (
       });
     }
     //先计算level_1
-    for(let i = 0; i < portStyles.length; i++){
+    for (let i = 0; i < portStyles.length; i++) {
       let style = portStyles[i];
-      let {nodeId} = style.data;
+      let { nodeId } = style.data;
       style.data.hiddenEdges.forEach(hiddenEdge => {
         const { source, target } = hiddenEdge;
         let _nodeId = ""
-        if(style.data.direction === "in" && target === nodeId){
+        if (style.data.direction === "in" && target === nodeId) {
           _nodeId = source;
-          nodeId = "in>"+nodeId;
-          _nodeId = "in>"+_nodeId;
+          nodeId = "in>" + nodeId;
+          _nodeId = "in>" + _nodeId;
         }
-        if(style.data.direction === "out" && source === nodeId){
+        if (style.data.direction === "out" && source === nodeId) {
           _nodeId = target;
-          nodeId = "out>"+nodeId;
-          _nodeId = "out>"+_nodeId;
+          nodeId = "out>" + nodeId;
+          _nodeId = "out>" + _nodeId;
         }
-        if(_nodeId!==""){
-          if(portTypeMap.get(nodeId).type["level_1"]){
+        if (_nodeId !== "") {
+          if (portTypeMap.get(nodeId).type["level_1"]) {
             let info = portTypeMap.get(_nodeId);
             info["type"]["level_1"] = true;
             info["type"]["level_2"] = false;
-            portTypeMap.set(_nodeId,info);
+            portTypeMap.set(_nodeId, info);
             portStyles[info["index"]]["data"]["type"] = info["type"]
-          } else if(portTypeMap.get(_nodeId).type["level_1"]){
+          } else if (portTypeMap.get(_nodeId).type["level_1"]) {
             let info = portTypeMap.get(nodeId);
             info["type"]["level_1"] = true;
             info["type"]["level_2"] = false;
-            portTypeMap.set(nodeId,info);
+            portTypeMap.set(nodeId, info);
             portStyles[info["index"]]["data"]["type"] = info["type"]
           }
         }
       });
     }
     //level_1遍历完成之后再计算level_2
-    for(let i = 0; i < portStyles.length; i++){
+    for (let i = 0; i < portStyles.length; i++) {
       let style = portStyles[i];
-      let {nodeId} = style.data;
+      let { nodeId } = style.data;
       style.data.hiddenEdges.forEach(hiddenEdge => {
         const { source, target } = hiddenEdge;
         let _nodeId = ""
-        if(style.data.direction === "in" && target === nodeId){
+        if (style.data.direction === "in" && target === nodeId) {
           _nodeId = source;
-          nodeId = "in>"+nodeId;
-          _nodeId = "in>"+_nodeId;
+          nodeId = "in>" + nodeId;
+          _nodeId = "in>" + _nodeId;
         }
-        if(style.data.direction === "out" && source === nodeId){
+        if (style.data.direction === "out" && source === nodeId) {
           _nodeId = target;
-          nodeId = "out>"+nodeId;
-          _nodeId = "out>"+_nodeId;
+          nodeId = "out>" + nodeId;
+          _nodeId = "out>" + _nodeId;
         }
-        if(_nodeId!==""){
-          if(portTypeMap.get(nodeId).type["level_2"]){
+        if (_nodeId !== "") {
+          if (portTypeMap.get(nodeId).type["level_2"]) {
             let info = portTypeMap.get(_nodeId);
             info["type"]["level_2"] = true;
-            portTypeMap.set(_nodeId,info);
+            portTypeMap.set(_nodeId, info);
             portStyles[info["index"]]["data"]["type"] = info["type"]
-          } else if(portTypeMap.get(_nodeId).type["level_2"]){
+          } else if (portTypeMap.get(_nodeId).type["level_2"]) {
             let info = portTypeMap.get(nodeId);
             info["type"]["level_2"] = true;
-            portTypeMap.set(nodeId,info);
+            portTypeMap.set(nodeId, info);
             portStyles[info["index"]]["data"]["type"] = info["type"]
           }
         }
       });
     }
-    
+
     if (node.hasOwnProperty("children")) {
       //node有"children"属性<=>有"edge"属性
       generateEdgeStyles(node["edges"], linkStyles, {
@@ -363,21 +367,24 @@ function ofsLinks(edges: Array<LayoutEdge>) {
 }
 
 const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
+  let path = [];
+  const lineStrokeWidth = [];
   let preStrokeWidth =
     linksCountMap[
     `${lineData[0].x - ofs.x}-${lineData[0].y - ofs.y}-${lineData[1].x - ofs.x}-${lineData[1].y - ofs.y}`
     ];
-  if (lineData.length < 3)
-    return [
-      {
-        d: `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x - ofs_x} ${lineData[1].y}`,
-        strokeWidth: preStrokeWidth,
-      },
-    ];
+  if (lineData.length < 3) {
+    const _lineWidth = strokeWidthAdaption(preStrokeWidth);
+    lineStrokeWidth.push(_lineWidth);
+    path.push({
+      d: `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x - ofs_x} ${lineData[1].y}`,
+      strokeWidth: _lineWidth,
+    });
+    return [path, lineStrokeWidth];
+  }
   let prePoint;
   let nowPoint;
   let firstPoint;
-  let path = [];
   let nextStrokeWidth;
   let pathBuff = [`M${lineData[0].x} ${lineData[0].y}`];
   for (let i = 2; i < lineData.length; i++) {
@@ -386,21 +393,21 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
     nowPoint = lineData[i];
     preStrokeWidth =
       linksCountMap[
-      `${firstPoint.x - ofs.x}-${firstPoint.y - ofs.y}-${
-      prePoint.x - ofs.x
+      `${firstPoint.x - ofs.x}-${firstPoint.y - ofs.y}-${prePoint.x - ofs.x
       }-${prePoint.y - ofs.y}`
       ];
     nextStrokeWidth =
       linksCountMap[
-      `${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x}-${
-      nowPoint.y - ofs.y
+      `${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x}-${nowPoint.y - ofs.y
       }`
       ];
     pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)];
+    const _lineWidth = strokeWidthAdaption(preStrokeWidth);
+    lineStrokeWidth.push(_lineWidth);
     if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
       path.push({
         d: pathBuff.join(" "),
-        strokeWidth: preStrokeWidth,
+        strokeWidth: _lineWidth,
         arrowhead: false,
       });
       pathBuff = [`M${prePoint.x} ${prePoint.y}`];
@@ -410,13 +417,15 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
     }
   }
   //最后一段path
+  const _lineWidth = strokeWidthAdaption(nextStrokeWidth);
+  lineStrokeWidth.push(_lineWidth);
   pathBuff.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
   path.push({
     d: pathBuff.join(" "),
-    strokeWidth: nextStrokeWidth,
+    strokeWidth: strokeWidthAdaption(nextStrokeWidth),
     arrowhead: true,
   });
-  return path;
+  return [path, lineStrokeWidth];
 };
 const hoverPath = (ofs_x, lineData) => {
   if (lineData.length < 3)
@@ -479,10 +488,6 @@ const textSize = (text: string): number => {
   return width;
 };
 
-function strokeWidthAdaption(links) {
-  for (const link of links) {
-    // console.log(link)
-    link.strokeWidth = Math.sqrt(link.strokeWidth) * 2
-  }
-  return links
+function strokeWidthAdaption(width) {
+  return Math.sqrt(width) * 2;
 }

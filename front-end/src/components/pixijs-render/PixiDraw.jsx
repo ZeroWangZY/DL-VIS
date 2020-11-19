@@ -427,19 +427,20 @@ const PixiDraw = () => {
     const roundR = 5; // 圆角半径
     styledGraph.linkStyles.forEach((d, i) => {
       const linkData = d.data.linkData;
-      let line = new PIXI.Graphics();
-
-      let lineColor;
-      if (d.data.isModuleEdge)
-        lineColor = 0xff931e;
-      else
-        lineColor = 0x999999;
-
-      const lineWidth = d.data.drawData[0].strokeWidth;
-      line.lineStyle(lineWidth, lineColor, 1)
+      const lineStrokeWidth = d.data.lineStrokeWidth;
 
       // 圆角折线
       for (let i = 1; i < linkData.length; i++) {
+        let line = new PIXI.Graphics();
+        let lineColor;
+        if (d.data.isModuleEdge)
+          lineColor = 0xff931e;
+        else
+          lineColor = 0x999999;
+
+        const lineWidth = lineStrokeWidth[i - 1];
+        line.lineStyle(lineWidth, lineColor, 1)
+
         let begin = linkData[i - 1], end = linkData[i];
         if (i === linkData.length - 1) { // 最后一根直线
           let lineData = d.data.lineData;
