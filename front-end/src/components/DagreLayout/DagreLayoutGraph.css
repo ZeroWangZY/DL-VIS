@@ -86,7 +86,7 @@
 
 /* 展开的聚合节点 */
 .cluster .label-container {
-  fill: none;
+  fill: #b2b2b2;
   fill-opacity: 0.2;
   stroke-width: 1px;
   stroke:#c7c7c7;
