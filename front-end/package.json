@@ -48,6 +48,7 @@
         "file-loader": "4.3.0",
         "fs-extra": "^8.1.0",
         "graphlib": "^1.0.7",
+        "gsap": "^3.5.1",
         "html-webpack-plugin": "4.0.0-beta.5",
         "http-proxy-middleware": "^1.0.5",
         "identity-obj-proxy": "3.0.0",

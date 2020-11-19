@@ -15,6 +15,7 @@ import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage5/styled-graph.type"
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
 import * as PIXI from "pixi.js";
+import { TweenMax } from "gsap/all"
 
 const toggleExpanded = (id) => {
   modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
@@ -72,11 +73,14 @@ const PixiDraw = () => {
     // Resize function window
     function resize() {
       const parent = divContainer.current;
-      app.renderer.resize(parent.clientWidth, parent.clientHeight);
+      if (parent)
+        app.renderer.resize(parent.clientWidth, parent.clientHeight);
     }
     resize();
 
     addDragGraphEvent(divContainer);
+
+    TweenMax.to(graphContainer, 1, { x: 100, y: 100 });
 
   }, [styledGraph]);
 
