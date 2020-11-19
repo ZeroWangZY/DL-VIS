@@ -24,13 +24,13 @@ const toggleExpanded = (id) => {
 };
 
 let zoomFactor = 1;
+const rectNodeSizeAndPos = new Map(); // id -> {x: ,y : ,width: ,height:}
 
 const PixiDraw = () => {
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
   const maxLabelLength = 10;
   const [graphContainerInitialPos, setGraphContainerInitialPos] = useState(null);
-  const [textResolution, setTextResolution] = useState(null);
   const { selectedNodeId } = useGlobalStates();
   const selectedGraph = [];
 
@@ -74,6 +74,17 @@ const PixiDraw = () => {
       // 对graphContainer中的所有元素进行初始化的放大缩小，并且调整分辨率
       graphContainer.width *= zoomFactor;
       graphContainer.height *= zoomFactor;
+      for (let obj of graphContainer.children) {
+        if (obj instanceof PIXI.Text) {
+          obj.resolution *= zoomFactor;
+        }
+      }
+    } else {
+      for (let obj of graphContainer.children) {
+        if (obj instanceof PIXI.Text) {
+          obj.resolution *= 2;
+        }
+      }
     }
 
     window.addEventListener('resize', resize);
@@ -195,6 +206,19 @@ const PixiDraw = () => {
     }
   }
 
+  const addAnimation = (nodeId, xPos, yPos, width, height) => {
+    if (rectNodeSizeAndPos.has(nodeId)) { // 动画
+      let _sizeAndPos = rectNodeSizeAndPos.get(nodeId);
+      TweenMax.fromTo(
+        roundBox,
+        0.5,
+        { x: _sizeAndPos.x, y: _sizeAndPos.y, width: _sizeAndPos.width, height: _sizeAndPos.height },
+        { x: xPos, y: yPos, width: width, height: height }
+      )
+    }
+    rectNodeSizeAndPos.set(nodeId, { x: xPos, y: yPos, width: width, height: height });
+  }
+
   const addNodes = (container, styledGraph) => {
     styledGraph.nodeStyles.forEach((d) => {
       const node = d.data;
@@ -268,29 +292,26 @@ const PixiDraw = () => {
           container.addChild(circle);
         }
       } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
-        let roundBox = drawRoundRect(
-          node.id,
-          d.style._gNodeTransX - d.style._rectWidth / 2,
-          d.style._gNodeTransY - d.style._rectHeight / 2,
-          d.style._rectWidth,
-          d.style._rectHeight,
-          5);
+        const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
+          yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
+          width = d.style._rectWidth,
+          height = d.style._rectHeight;
 
+        let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5);
         container.addChild(roundBox);
 
+        addAnimation(node.id, xPos, yPos, width, height);
         addRoundRectClickEvent(roundBox, node.id);
-
-
       } else if (node.type === NodeType.LAYER) {
-        let roundBox = drawRoundRect(
-          node.id,
-          d.style._gNodeTransX - d.style._rectWidth / 2,
-          d.style._gNodeTransY - d.style._rectHeight / 2,
-          d.style._rectWidth,
-          d.style._rectHeight,
-          5);
+        const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
+          yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
+          width = d.style._rectWidth,
+          height = d.style._rectHeight;
+
+        let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5);
         container.addChild(roundBox);
 
+        addAnimation(node.id, xPos, yPos, width, height);
         addRoundRectClickEvent(roundBox, node.id);
       }
     })
@@ -308,7 +329,7 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.resolution = textResolution === null ? 1 : textResolution;
+        message.resolution = 1;
         message.anchor.x = 0;
 
         let textCanvasWidth = message.width;
@@ -323,7 +344,7 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.resolution = textResolution === null ? 1 : textResolution;
+        message.resolution = 1;
 
         let textCanvasWidth = message.width;
         message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
@@ -348,23 +369,23 @@ const PixiDraw = () => {
     bezier.lineStyle(width, color, alpha);
 
     if (direction === "rd" || direction === "ul") { // 左上 -> 右下
-      bezier.moveTo(0, 0);
-      bezier.quadraticCurveTo(r, 0, r, r);
+      bezier.moveTo(0 - 1, 0); // 为了避免圆角与折线之间的间隙，所以，圆角向前和向后多占用一个像素的位置
+      bezier.quadraticCurveTo(r, 0, r, r + 1);
       bezier.position.x = begin.x; // 第一象限圆弧，中点在起始点
       bezier.position.y = begin.y;
     } else if (direction === "dl" || direction === "ru") {
-      bezier.moveTo(0, r);
-      bezier.quadraticCurveTo(r, r, r, 0);
+      bezier.moveTo(0 - 1, r);
+      bezier.quadraticCurveTo(r, r, r, 0 - 1);
       bezier.position.x = begin.x; // 第二象限圆弧
       bezier.position.y = begin.y - r;
     } else if (direction === "lu" || direction === "dr") {
-      bezier.moveTo(0, 0);
-      bezier.quadraticCurveTo(0, r, r, r);
+      bezier.moveTo(0, 0 - 1);
+      bezier.quadraticCurveTo(0, r, r + 1, r);
       bezier.position.x = begin.x;
       bezier.position.y = begin.y;
     } else if (direction === "ur" || direction === "ld") {
-      bezier.moveTo(0, r);
-      bezier.quadraticCurveTo(0, 0, r, 0);
+      bezier.moveTo(0, r + 1);
+      bezier.quadraticCurveTo(0, 0, r + 1, 0);
       bezier.position.x = begin.x;
       bezier.position.y = begin.y - r;
     }
@@ -404,7 +425,7 @@ const PixiDraw = () => {
 
   const addLines = (container, styledGraph) => {
     const roundR = 5; // 圆角半径
-    styledGraph.linkStyles.forEach((d) => {
+    styledGraph.linkStyles.forEach((d, i) => {
       const linkData = d.data.linkData;
       let line = new PIXI.Graphics();
 
@@ -414,7 +435,8 @@ const PixiDraw = () => {
       else
         lineColor = 0x999999;
 
-      line.lineStyle(3, lineColor, 1)
+      const lineWidth = d.data.drawData[0].strokeWidth;
+      line.lineStyle(lineWidth, lineColor, 1)
 
       // 圆角折线
       for (let i = 1; i < linkData.length; i++) {
@@ -441,7 +463,7 @@ const PixiDraw = () => {
 
           [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
 
-          let corner = drawRoundCorner(end, nextBegin, roundR, d1 + d2, 3, lineColor, 1);
+          let corner = drawRoundCorner(end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
           container.addChild(corner);
         }
 
@@ -477,7 +499,7 @@ const PixiDraw = () => {
           d.style.gNodeTransY.val + ofs[1] + 5.5,
           5,
           0xFFFFFF,
-          0);
+          1);
 
         let circle1 = drawCircleCurve(
           d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 5.5,
@@ -495,7 +517,7 @@ const PixiDraw = () => {
             d.style.gNodeTransY.val + ofs[1] + 7.5,
             7,
             0xFFFFFF,
-            0);
+            1);
 
           let circle1 = drawCircleCurve(
             d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
@@ -537,7 +559,7 @@ const PixiDraw = () => {
               d.style.gNodeTransY.val + ofs[1] + 7.5,
               7,
               0xFFFFFF,
-              0);
+              1);
 
             let circle1 = drawCircleCurve(
               d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 7.5,
@@ -554,7 +576,7 @@ const PixiDraw = () => {
               d.style.gNodeTransY.val + ofs[1] + 7.5,
               7,
               0xFFFFFF,
-              0);
+              1);
 
             let circle1 = drawCircleCurve(
               d.style.gNodeTransX.val + (d.data.direction === "in" ? ofs_x + ofs[0] : ofs_x - ofs[0]) + 5.4,

@@ -18,18 +18,20 @@ export const drawElippseCurve = (id, x, y, width, height, dash) => {
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius) => {
+export const drawRoundRect = (id, x, y, width, height, cornerRadius) => { // x y为左上角
   let roundBox = new PIXI.Graphics();
   window.roundBox = roundBox;
   roundBox.lineStyle(1, 0x808080, 1); // width color alpha
   roundBox.beginFill(0xffffff, 0); // 填充白色
   //drawRoundedRect(x, y, width, height, cornerRadius)
-  roundBox.drawRoundedRect(x, y, width, height, cornerRadius);
+  roundBox.drawRoundedRect(0, 0, width, height, cornerRadius);
+  roundBox.x = x;
+  roundBox.y = y;
   roundBox.endFill();
 
   roundBox.interactive = true;
   roundBox.buttonMode = true;
-  roundBox.hitArea = new PIXI.Rectangle(x, y, width, height, cornerRadius);
+  roundBox.hitArea = new PIXI.Rectangle(0, 0, width, height, cornerRadius); // x, y均为左上角
 
   return roundBox;
 }
