@@ -99,8 +99,6 @@ const PixiDraw = () => {
     addDragGraphEvent(divContainer);
     addZoomEvent(divContainer);
 
-    // TweenMax.to(graphContainer, 1, { x: 100, y: 100 });
-
   }, [styledGraph]);
 
 
@@ -483,7 +481,59 @@ const PixiDraw = () => {
     })
   }
 
+  const addPortHoverEvent = (container, port, d, portPosition) => {
+    const portIdSplited = d.data.id4Style.split("_");
+    const portId = portIdSplited.length >= 2 ?     // portId以 inPort_ 或者 outport_开头
+      portIdSplited[0] + "_" + portIdSplited[1] :
+      d.data.id4Style;
+
+    portPosition.set(portId, { x: port.hitArea.x, y: port.hitArea.y });
+
+    let hoverEdgeAdded = null;
+    port.mouseover = function (e) {
+      console.log("portPosition", portPosition);
+      console.log("portId", portId);
+      for (let i = 0; i < d.data.hiddenEdges.length; i++) {
+        const { source, target } = d.data.hiddenEdges[i]; // 因为source 不以in out开头
+        console.log("source, target", [source, target]);
+
+        if (source !== portId.split("_")[1] && target !== portId.split("_")[1]) continue;
+
+        let sourcePos, targetPos;
+        if (portId.startsWith("in")) {
+          sourcePos = portPosition.get("outPort_" + source);
+          targetPos = portPosition.get(portId);
+        } else if (portId.startsWith("out")) {
+          sourcePos = portPosition.get(portId);
+          targetPos = portPosition.get("inPort_" + target);
+        }
+        // if (source === portId.split("_")[1]) {
+        //   sourcePos = portPosition.get(portId);
+        //   targetPos = portPosition.get("inPort_" + target);
+        // } else if (target === portId.split("_")[1]) {
+        //   sourcePos = portPosition.get("outPort_" + source);
+        //   targetPos = portPosition.get(portId);
+        // }
+
+        const hoverEdge = new PIXI.Graphics();
+        hoverEdge.lineStyle(2, 0x00679f, 1);
+        hoverEdge.moveTo(sourcePos.x, sourcePos.y);
+        hoverEdge.lineTo(targetPos.x, targetPos.y);
+        container.addChild(hoverEdge);
+        hoverEdgeAdded = hoverEdge;
+      }
+    }
+    port.mouseout = function (e) {
+      if (hoverEdgeAdded !== null) {
+        container.removeChild(hoverEdgeAdded);
+        hoverEdgeAdded = null;
+      }
+    }
+
+  }
+
   const addPorts = (container, styledGraph) => {
+    const portPosition = new Map(); //  id -> {x, y}
     styledGraph.portStyles.forEach((d) => {
       const ofs_x = -7.5;
       const ofs_y = -7.4;
@@ -568,6 +618,10 @@ const PixiDraw = () => {
               1.4,
               0x333333,
               1);
+            window.circle = circle;
+
+            addPortHoverEvent(container, circle, d, portPosition); // 给circle添加hover事件
+
             container.addChild(circle);
             container.addChild(circle1);
           } else {
