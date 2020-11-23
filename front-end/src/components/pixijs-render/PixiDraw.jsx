@@ -24,7 +24,8 @@ const toggleExpanded = (id) => {
 };
 
 let zoomFactor = 1;
-const rectNodeSizeAndPos = new Map(); // id -> {x: ,y : ,width: ,height:}
+let rectNodeSizeAndPos = new Map(); // id -> {x: ,y : ,width: ,height:}
+const graphContainer = new PIXI.Container();// 放在全局，如果放在内部，则会因为每次setState重新调用导致每次更新
 
 const PixiDraw = () => {
   const styledGraph = useStyledGraph();
@@ -33,6 +34,7 @@ const PixiDraw = () => {
   const [graphContainerInitialPos, setGraphContainerInitialPos] = useState(null);
   const { selectedNodeId } = useGlobalStates();
   const selectedGraph = [];
+  const [graphContainerAdded, setGraphContainerAdded] = useState(false);
 
   const handleClick = (id) => {
     if (selectedNodeId !== id)
@@ -42,12 +44,9 @@ const PixiDraw = () => {
       );
   };
 
-  useEffect(() => {
-    if (!styledGraph || styledGraph.nodeStyles.length === 0) return;
+  useEffect(() => { // 初始化
     if (!divContainer.current || !divContainer.current.clientWidth) return;
-
     divContainer.current.innerHTML = "";
-
     const app = new PIXI.Application({
       width: 256,         // default: 800
       height: 256,        // default: 600
@@ -55,11 +54,34 @@ const PixiDraw = () => {
       transparent: true, // default: false
       resolution: 1       // default: 1
     })
-    const graphContainer = new PIXI.Container(); // 将所有的图形 线段 label 文字全部放入整个container中 方便拖拽
-    window.graphContainer = graphContainer
-
     app.stage.addChild(graphContainer);
     divContainer.current.appendChild(app.view);
+
+    window.addEventListener('resize', resize);
+    // Resize function window
+    function resize() {
+      const parent = divContainer.current;
+      if (parent)
+        app.renderer.resize(parent.clientWidth, parent.clientHeight);
+    }
+    resize();
+  }, []); // 初始化
+
+  useEffect(() => {
+    if (!styledGraph || styledGraph.nodeStyles.length === 0) return;
+
+    // if (graphContainerAdded) { // 如果不是第一次绘制，则将原来的图中，除了矩形之外的其他图形删除，矩形在变换后删除
+    let indexToBeDeleted = [];
+    for (let i = 0; i < graphContainer.children.length; i++) {
+      let obj = graphContainer.children[i];
+      if (!obj.hitArea || !(obj.hitArea instanceof PIXI.Rectangle)) {
+        indexToBeDeleted.push(i);
+      }
+    }
+    for (let i = indexToBeDeleted.length - 1; i >= 0; i--) {
+      graphContainer.removeChildAt(indexToBeDeleted[i]);
+    }
+    // }
 
     addNodes(graphContainer, styledGraph);
     addLabels(graphContainer, styledGraph);
@@ -87,22 +109,14 @@ const PixiDraw = () => {
       }
     }
 
-    window.addEventListener('resize', resize);
-    // Resize function window
-    function resize() {
-      const parent = divContainer.current;
-      if (parent)
-        app.renderer.resize(parent.clientWidth, parent.clientHeight);
-    }
-    resize();
+    addDragGraphEvent(divContainer, graphContainer);
+    addZoomEvent(divContainer, graphContainer);
 
-    addDragGraphEvent(divContainer);
-    addZoomEvent(divContainer);
-
+    setGraphContainerAdded(true);
   }, [styledGraph]);
 
 
-  const addDragGraphEvent = (divContainer) => {
+  const addDragGraphEvent = (divContainer, graphContainer) => {
     // 拖动
     let mousedown = false;
     let offsetX, offsetY;
@@ -132,7 +146,7 @@ const PixiDraw = () => {
     })
   }
 
-  const addZoomEvent = (divContainer) => {
+  const addZoomEvent = (divContainer, graphContainer) => {
     // 滚轮事件
     divContainer.current.addEventListener("mousewheel", function (event) {
       // event.wheelDelta > 0 放大， event.wheelDelta < 0 缩小
@@ -218,6 +232,7 @@ const PixiDraw = () => {
   }
 
   const addNodes = (container, styledGraph) => {
+    const newRectNodeSizeAndPos = new Map();
     styledGraph.nodeStyles.forEach((d) => {
       const node = d.data;
       if (node.type === NodeType.OPERATION) {
@@ -295,11 +310,32 @@ const PixiDraw = () => {
           width = d.style._rectWidth,
           height = d.style._rectHeight;
 
-        let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5);
-        container.addChild(roundBox);
+        if (graphContainerAdded === false || !rectNodeSizeAndPos.has(node.id)) { // 第一次进行绘制 或者这个矩形之前没有画过
+          console.log(node.id, "第一次绘制")
+          let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5);
+          container.addChild(roundBox);
+          newRectNodeSizeAndPos.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox });
+          addRoundRectClickEvent(roundBox, node.id);
+        } else { // 这一矩形之前画过 
+          console.log(node.id, "需要放大或者缩小")
+          let _sizeAndPos = rectNodeSizeAndPos.get(node.id);
+          let oldRoundBox = _sizeAndPos.pixiGraph; // 原来的矩形
+          TweenMax.fromTo(
+            oldRoundBox,
+            0.5,
+            { x: _sizeAndPos.x, y: _sizeAndPos.y, width: _sizeAndPos.width, height: _sizeAndPos.height },
+            { x: xPos, y: yPos, width: width, height: height }
+          )
+          newRectNodeSizeAndPos.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox });
 
-        addAnimation(node.id, xPos, yPos, width, height);
-        addRoundRectClickEvent(roundBox, node.id);
+          // container.removeChild(oldRoundBox); // 删除原来的矩形
+
+          // let newRoundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5); // 动画结束过后重新绘制，并且加上交互
+          // container.addChild(newRoundBox);
+          // addRoundRectClickEvent(newRoundBox, node.id);
+
+          // rectNodeSizeAndPos.set(node.id, { x: xPos, y: yPos, width: width, height: height, newRoundBox });
+        }
       } else if (node.type === NodeType.LAYER) {
         const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
           yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
@@ -313,6 +349,17 @@ const PixiDraw = () => {
         addRoundRectClickEvent(roundBox, node.id);
       }
     })
+
+    // 将图中没有的多余矩形删除：
+    // console.log(newRectNodeSizeAndPos);
+    for (let [key, value] of rectNodeSizeAndPos) {
+      if (!newRectNodeSizeAndPos.has(key)) {
+        let rect = value.pixiGraph;
+        console.log(key, rect);
+        container.removeChild(rect);
+      }
+    }
+    rectNodeSizeAndPos = newRectNodeSizeAndPos;
   }
 
   const addLabels = (container, styledGraph) => {
