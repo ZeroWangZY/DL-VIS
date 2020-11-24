@@ -36,7 +36,7 @@ let globalConfigurations: GlobalConfigurations = {
   modelLevelcolorMap: modelLevelcolorMap,
   layerLevelcolorMap: layerLevelcolorMap,
   isPathFindingMode: false,
-  dataMode: "mock",
+  dataMode: "realtime",
 };
 
 const broadcast = () => {

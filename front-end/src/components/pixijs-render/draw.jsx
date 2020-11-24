@@ -3,6 +3,8 @@ import {
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
 import * as PIXI from "pixi.js";
+import { set } from "d3";
+import { fetchNodeLineDataBlueNoiceSampling } from "../../api/layerlevel";
 
 export const drawElippseCurve = (id, x, y, width, height, dash) => {
   let ellipse = new PIXI.Graphics();
@@ -18,13 +20,14 @@ export const drawElippseCurve = (id, x, y, width, height, dash) => {
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius) => { // x y为左上角
+export const drawRoundRect = (id, x, y, width, height, cornerRadius, container) => { // x y为左上角
+  let roundBoxAgent = {};
+
   let roundBox = new PIXI.Graphics();
   window.roundBox = roundBox;
   roundBox.lineStyle(1, 0x808080, 1); // width color alpha
   roundBox.beginFill(0xffffff, 0); // 填充白色
-  //drawRoundedRect(x, y, width, height, cornerRadius)
-  roundBox.drawRoundedRect(0, 0, width, height, cornerRadius);
+  roundBox.myRect = roundBox.drawRoundedRect(0, 0, width, height, cornerRadius)
   roundBox.x = x;
   roundBox.y = y;
   roundBox.endFill();
@@ -33,7 +36,67 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius) => { // x y
   roundBox.buttonMode = true;
   roundBox.hitArea = new PIXI.Rectangle(0, 0, width, height, cornerRadius); // x, y均为左上角
 
-  return roundBox;
+  let initialWidth = width;
+  let initialHeight = height;
+  let initialX = x;
+  let initialY = y;
+  Object.defineProperty(roundBoxAgent, "myWidth", {
+    get: function () {
+      return initialWidth;
+    },
+    set: function (val) {
+      initialWidth = val;
+      container.removeChild(roundBoxAgent.value)
+      let newRoundBox = new PIXI.Graphics();
+      newRoundBox.lineStyle(1, 0x808080, 1); // width color alpha
+      newRoundBox.beginFill(0xffffff, 0); // 填充白色
+
+      newRoundBox.myRect = newRoundBox.drawRoundedRect(0, 0, val, initialHeight, cornerRadius);
+
+      newRoundBox.x = initialX;
+      newRoundBox.y = initialY;
+      newRoundBox.endFill();
+
+      newRoundBox.interactive = true;
+      newRoundBox.buttonMode = true;
+      newRoundBox.hitArea = new PIXI.Rectangle(0, 0, val, height, cornerRadius);
+
+      roundBoxAgent.value = newRoundBox;
+
+      window.newRoundBox = newRoundBox;
+      container.addChild(newRoundBox);
+    }
+  })
+
+  Object.defineProperty(roundBoxAgent, "myHeight", {
+    get: function () {
+      return initialHeight;
+    },
+    set: function (val) {
+      initialHeight = val;
+    }
+  })
+
+  Object.defineProperty(roundBoxAgent, "x", {
+    get: function () {
+      return initialX;
+    },
+    set: function (val) {
+      initialX = val;
+    }
+  })
+
+  Object.defineProperty(roundBoxAgent, "y", {
+    get: function () {
+      return initialY;
+    },
+    set: function (val) {
+      initialY = val;
+    }
+  })
+
+  roundBoxAgent.value = roundBox;
+  return roundBoxAgent;
 }
 
 export const drawCircleCurve = (x, y, r, fillColor, alpha) => {

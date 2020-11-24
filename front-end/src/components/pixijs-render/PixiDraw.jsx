@@ -16,6 +16,7 @@ import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
 import * as PIXI from "pixi.js";
 import { TweenMax } from "gsap/all"
+import { zoom } from "d3";
 
 const toggleExpanded = (id) => {
   modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
@@ -24,8 +25,9 @@ const toggleExpanded = (id) => {
 };
 
 let zoomFactor = 1;
-let rectNodeSizeAndPos = new Map(); // id -> {x: ,y : ,width: ,height:}
-const graphContainer = new PIXI.Container();// 放在全局，如果放在内部，则会因为每次setState重新调用导致每次更新
+let rectNodeInfo = new Map(); // id -> {x: ,y : ,width: ,height:}
+let graphContainer = new PIXI.Container();// 放在全局，如果放在内部，则会因为每次setState重新调用导致每次更新
+const selectedGraph = [];
 
 const PixiDraw = () => {
   const styledGraph = useStyledGraph();
@@ -33,7 +35,6 @@ const PixiDraw = () => {
   const maxLabelLength = 10;
   const [graphContainerInitialPos, setGraphContainerInitialPos] = useState(null);
   const { selectedNodeId } = useGlobalStates();
-  const selectedGraph = [];
   const [graphContainerAdded, setGraphContainerAdded] = useState(false);
 
   const handleClick = (id) => {
@@ -47,6 +48,8 @@ const PixiDraw = () => {
   useEffect(() => { // 初始化
     if (!divContainer.current || !divContainer.current.clientWidth) return;
     divContainer.current.innerHTML = "";
+    graphContainer = new PIXI.Container();
+
     const app = new PIXI.Application({
       width: 256,         // default: 800
       height: 256,        // default: 600
@@ -88,17 +91,11 @@ const PixiDraw = () => {
     addLines(graphContainer, styledGraph);
     addPorts(graphContainer, styledGraph);
 
-    if (graphContainerInitialPos) {
-      graphContainer.x = graphContainerInitialPos.x;
-      graphContainer.y = graphContainerInitialPos.y;
-    }
     if (zoomFactor !== 1) {
       // 对graphContainer中的所有元素进行初始化的放大缩小，并且调整分辨率
-      graphContainer.width *= zoomFactor;
-      graphContainer.height *= zoomFactor;
       for (let obj of graphContainer.children) {
         if (obj instanceof PIXI.Text) {
-          obj.resolution *= zoomFactor;
+          obj.resolution *= zoomFactor > 1 ? zoomFactor : 2;
         }
       }
     } else {
@@ -219,8 +216,8 @@ const PixiDraw = () => {
   }
 
   const addAnimation = (nodeId, xPos, yPos, width, height) => {
-    if (rectNodeSizeAndPos.has(nodeId)) { // 动画
-      let _sizeAndPos = rectNodeSizeAndPos.get(nodeId);
+    if (rectNodeInfo.has(nodeId)) { // 动画
+      let _sizeAndPos = rectNodeInfo.get(nodeId);
       TweenMax.fromTo(
         roundBox,
         0.5,
@@ -228,11 +225,11 @@ const PixiDraw = () => {
         { x: xPos, y: yPos, width: width, height: height }
       )
     }
-    rectNodeSizeAndPos.set(nodeId, { x: xPos, y: yPos, width: width, height: height });
+    rectNodeInfo.set(nodeId, { x: xPos, y: yPos, width: width, height: height });
   }
 
   const addNodes = (container, styledGraph) => {
-    const newRectNodeSizeAndPos = new Map();
+    const newRectNodeInfo = new Map();
     styledGraph.nodeStyles.forEach((d) => {
       const node = d.data;
       if (node.type === NodeType.OPERATION) {
@@ -310,31 +307,21 @@ const PixiDraw = () => {
           width = d.style._rectWidth,
           height = d.style._rectHeight;
 
-        if (graphContainerAdded === false || !rectNodeSizeAndPos.has(node.id)) { // 第一次进行绘制 或者这个矩形之前没有画过
-          console.log(node.id, "第一次绘制")
-          let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5);
-          container.addChild(roundBox);
-          newRectNodeSizeAndPos.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox });
-          addRoundRectClickEvent(roundBox, node.id);
+        if (graphContainerAdded === false || !rectNodeInfo.has(node.id)) { // 第一次进行绘制 或者这个矩形之前没有画过
+          let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5, container);
+          container.addChild(roundBox.value);
+          newRectNodeInfo.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox });
+          addRoundRectClickEvent(roundBox.value, node.id);
         } else { // 这一矩形之前画过 
-          console.log(node.id, "需要放大或者缩小")
-          let _sizeAndPos = rectNodeSizeAndPos.get(node.id);
-          let oldRoundBox = _sizeAndPos.pixiGraph; // 原来的矩形
+          let _nodeInfo = rectNodeInfo.get(node.id);
+          let oldRoundBox = _nodeInfo.pixiGraph; // 原来的矩形
           TweenMax.fromTo(
             oldRoundBox,
             0.5,
-            { x: _sizeAndPos.x, y: _sizeAndPos.y, width: _sizeAndPos.width, height: _sizeAndPos.height },
-            { x: xPos, y: yPos, width: width, height: height }
+            { x: _nodeInfo.x, y: _nodeInfo.y, myWidth: _nodeInfo.width, myHeight: _nodeInfo.height },
+            { x: xPos, y: yPos, myWidth: width, myHeight: height }
           )
-          newRectNodeSizeAndPos.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox });
-
-          // container.removeChild(oldRoundBox); // 删除原来的矩形
-
-          // let newRoundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5); // 动画结束过后重新绘制，并且加上交互
-          // container.addChild(newRoundBox);
-          // addRoundRectClickEvent(newRoundBox, node.id);
-
-          // rectNodeSizeAndPos.set(node.id, { x: xPos, y: yPos, width: width, height: height, newRoundBox });
+          newRectNodeInfo.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: oldRoundBox });
         }
       } else if (node.type === NodeType.LAYER) {
         const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
@@ -342,24 +329,23 @@ const PixiDraw = () => {
           width = d.style._rectWidth,
           height = d.style._rectHeight;
 
-        let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5);
-        container.addChild(roundBox);
+        let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5, container);
+        container.addChild(roundBox.value);
 
         addAnimation(node.id, xPos, yPos, width, height);
-        addRoundRectClickEvent(roundBox, node.id);
+        addRoundRectClickEvent(roundBox.value, node.id);
       }
     })
 
     // 将图中没有的多余矩形删除：
-    // console.log(newRectNodeSizeAndPos);
-    for (let [key, value] of rectNodeSizeAndPos) {
-      if (!newRectNodeSizeAndPos.has(key)) {
+    for (let [key, value] of rectNodeInfo) {
+      if (!newRectNodeInfo.has(key)) {
         let rect = value.pixiGraph;
         console.log(key, rect);
         container.removeChild(rect);
       }
     }
-    rectNodeSizeAndPos = newRectNodeSizeAndPos;
+    rectNodeInfo = newRectNodeInfo;
   }
 
   const addLabels = (container, styledGraph) => {
