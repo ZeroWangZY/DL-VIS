@@ -34,7 +34,7 @@ def get_scale_std(epochNum, stepNum, node_id, data_runner, type, graph_name):
             resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
         else:
             resdata = resdata.swapaxes(0, 1)
-
+        resdata = (np.abs(resdata) + resdata) / 2.0  # relu整流
         df = pd.DataFrame(resdata)
         df['angle'] = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(
             stepNum) + "-" + node_id + "-" + type + ".npy")

@@ -115,8 +115,8 @@ def get_summary_graph(request):
             "message": str(ex),
             "data": None
         }), content_type="application/json")
-        response.status_code = 500
-        return response
+    response.status_code = 500
+    return response
 
 
 def get_local_ms_graph(request):
@@ -169,14 +169,18 @@ def get_metadata(request):
         # data_helper = DataHelper(db_file)
         mode = request.GET.get('mode', default='mock')
         graph_name = request.GET.get('graph_name', default='lenet')
-
-        if mode == "mock":
-            data_helper = DataHelper(db_file)
-            db_max_step = int(data_helper.get_metadata('max_step'))
-        elif mode == "realtime":
-            data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
-            db_max_step = int(data_helper.get_realtime_metadata('max_step'))
-            
+        try:
+            if mode == "mock":
+                data_helper = DataHelper(db_file)
+                db_max_step = int(data_helper.get_metadata('max_step'))
+            elif mode == "realtime":
+                data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
+                db_max_step = int(data_helper.get_realtime_metadata('max_step'))
+        except Exception:
+            return HttpResponse(json.dumps({
+                "message": "db not exist",
+                "data": None
+            }), content_type="application/json")
         db_is_training = data_helper.get_metadata('is_training') == 'true'
 
         data_helper.close()
@@ -187,7 +191,7 @@ def get_metadata(request):
                     "max_step": max_step,
                     "is_training": is_training
                 }
-            }), content_type="application/json")
+            }), content_type="application/json", status="422")
         elif mode == "realtime":
             return HttpResponse(json.dumps({
                 "message": "success",
@@ -389,7 +393,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                     resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
                 else:
                     resdata = resdata.swapaxes(0, 1)
-                # resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
+                resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
                 print(resdata.shape) # 64 * 32 一个batch有32个数据，64个神经元
                 if usePCAMatrix == True:
                     pcaMatrix = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + "-matrix" + ".npy")

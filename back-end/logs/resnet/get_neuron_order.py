@@ -7,7 +7,7 @@ import numpy as np
 import math
 import pandas as pd
 from logs.resnet.get_pca_matrix import PCAMatrix
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
@@ -55,17 +55,19 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
                 currentList = list(filter(lambda item: item['labels'] == i, df.iloc))
                 data.append(np.mean(np.array(currentList), axis=0)[:-1])
             data = np.array(data).swapaxes(0, 1)
+            data = (np.abs(data) + data) / 2.0  # relu整流
             df = pd.DataFrame(data, columns=['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10'])
             m = 10
         else:
             data = resdata.swapaxes(0, 1)
+            data = (np.abs(data) + data) / 2.0  # relu整流
             pca = PCA(n_components=8)
             data = pca.fit_transform(data)
             df = pd.DataFrame(data, columns=['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8'])
             m = 8
 
-        for i in range(resdata.shape[1]):
-            data[i] = softmax(np.sign(data[i]) * (2 ** abs(data[i])))
+        # for i in range(resdata.shape[1]):
+        #     data[i] = softmax(np.sign(data[i]) * (2 ** abs(data[i])))
 
 
         to_plot = [[], []]
@@ -111,6 +113,6 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
         if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
             os.mkdir(SUMMARY_DIR + graph_name + "/order")
         np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy", angleList)
-        # plt.figure()
-        # plt.scatter(to_plot[0], to_plot[1])
-        # plt.show()
+        plt.figure()
+        plt.scatter(to_plot[0], to_plot[1])
+        plt.show()
