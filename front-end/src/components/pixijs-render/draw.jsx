@@ -20,7 +20,7 @@ export const drawElippseCurve = (id, x, y, width, height, dash) => {
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius, container) => { // x y为左上角
+export const drawRoundRect = (id, x, y, width, height, cornerRadius, container, addRoundRectClickEvent) => { // x y为左上角
   let roundBoxAgent = {};
 
   let roundBox = new PIXI.Graphics();
@@ -35,6 +35,8 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, container) 
   roundBox.interactive = true;
   roundBox.buttonMode = true;
   roundBox.hitArea = new PIXI.Rectangle(0, 0, width, height, cornerRadius); // x, y均为左上角
+
+  addRoundRectClickEvent(roundBox, id);
 
   let initialWidth = width;
   let initialHeight = height;
@@ -59,12 +61,12 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, container) 
 
       newRoundBox.interactive = true;
       newRoundBox.buttonMode = true;
-      newRoundBox.hitArea = new PIXI.Rectangle(0, 0, val, height, cornerRadius);
+      newRoundBox.hitArea = new PIXI.Rectangle(0, 0, val, initialHeight, cornerRadius);
+      addRoundRectClickEvent(newRoundBox, id);
 
       roundBoxAgent.value = newRoundBox;
 
-      window.newRoundBox = newRoundBox;
-      container.addChild(newRoundBox);
+      container.addChildAt(newRoundBox, 0);
     }
   })
 
