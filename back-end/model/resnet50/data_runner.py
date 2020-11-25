@@ -16,7 +16,7 @@ import random
 import os
 
 
-os.environ['CUDA_VISIBLE_DEVICES']="2"
+os.environ['CUDA_VISIBLE_DEVICES']="3"
 random.seed(1)
 data_home = "./dataset/10-batches-bin"
 batch_size = 32
