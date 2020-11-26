@@ -280,9 +280,15 @@ def get_node_scalars(request):
                 if type == 'activation':
                     res[node_id] = data_helper.get_activation_scalars(node_id, start_step, end_step)
                 elif type == 'gradient':
-                    res[node_id] = data_helper.get_gradient_scalars(node_id, start_step, end_step)
+                    if graph_name.find("resnet") != -1:
+                        res[node_id] = data_helper.get_gradient_scalars(node_id + ".weight", start_step, end_step)
+                    else:
+                        res[node_id] = data_helper.get_gradient_scalars(node_id, start_step, end_step)
                 elif type == 'weight':
-                    res[node_id] = data_helper.get_weight_scalars(node_id, start_step, end_step)
+                    if graph_name.find("resnet") != -1:
+                        res[node_id] = data_helper.get_weight_scalars(node_id + ".weight", start_step, end_step)
+                    else:
+                        res[node_id] = data_helper.get_weight_scalars(node_id, start_step, end_step)
                 continue
                 data = []
                 last_value = [random.random(), random.random(), random.random()]

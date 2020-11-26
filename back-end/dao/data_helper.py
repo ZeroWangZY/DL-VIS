@@ -55,7 +55,7 @@ class DataHelper():
         return res
 
     def get_gradient_scalars(self, node, start_step, end_step):
-        cursor = self.c.execute("select * from GRADIENT_SCALARS where step >= %d and step < %d and node = '%s'" % (start_step, end_step, node + ".weight"))
+        cursor = self.c.execute("select * from GRADIENT_SCALARS where step >= %d and step < %d and node = '%s'" % (start_step, end_step, node))
         res = []
         for row in cursor:
             res.append({
@@ -70,7 +70,7 @@ class DataHelper():
         return res
 
     def get_weight_scalars(self, node, start_step, end_step):
-        cursor = self.c.execute("select * from WEIGHT_SCALARS where step >= %d and step < %d and node = '%s'" % (start_step, end_step, node + ".weight"))
+        cursor = self.c.execute("select * from WEIGHT_SCALARS where step >= %d and step < %d and node = '%s'" % (start_step, end_step, node))
         res = []
         for row in cursor:
             res.append({
