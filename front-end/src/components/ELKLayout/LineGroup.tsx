@@ -77,7 +77,7 @@ const LineGroup: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (layerNodeId === "" || !layerNodeId || !stepDomain) return;
     let newNodeId = "";
-    if (layerNodeId.startsWith("dense_")) {
+    if (layerNodeId.indexOf("dense_") !== -1) {
       let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, layerNodeId); // findChildNodeId(selectedNodeId);
       if (_childNodeId.length === 0) return;
       // _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
