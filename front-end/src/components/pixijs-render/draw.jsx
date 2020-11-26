@@ -20,10 +20,11 @@ export const drawElippseCurve = (id, x, y, width, height, dash) => {
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius, container, addRoundRectClickEvent) => { // x y为左上角
+export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, container, addRoundRectClickEvent) => { // x y为左上角
   let roundBoxAgent = {};
 
   let roundBox = new PIXI.Graphics();
+  roundBox.zIndex = zIndex;
   window.roundBox = roundBox;
   roundBox.lineStyle(1, 0x808080, 1); // width color alpha
   roundBox.beginFill(0xffffff, 0); // 填充白色
@@ -42,6 +43,7 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, container, 
   let initialHeight = height;
   let initialX = x;
   let initialY = y;
+  let initialZIndex = zIndex;
   Object.defineProperty(roundBoxAgent, "myWidth", {
     get: function () {
       return initialWidth;
@@ -50,6 +52,7 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, container, 
       initialWidth = val;
       container.removeChild(roundBoxAgent.value)
       let newRoundBox = new PIXI.Graphics();
+      newRoundBox.zIndex = initialZIndex;
       newRoundBox.lineStyle(1, 0x808080, 1); // width color alpha
       newRoundBox.beginFill(0xffffff, 0); // 填充白色
 
@@ -67,6 +70,15 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, container, 
       roundBoxAgent.value = newRoundBox;
 
       container.addChildAt(newRoundBox, 0);
+      container.sortChildren();
+    }
+  })
+  Object.defineProperty(roundBoxAgent, "myZIndex", {
+    get: function () {
+      return initialZIndex;
+    },
+    set: function (val) {
+      initialZIndex = Math.round(val);
     }
   })
 

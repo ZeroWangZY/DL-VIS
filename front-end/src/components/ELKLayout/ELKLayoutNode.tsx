@@ -39,7 +39,6 @@ interface Props {
 }
 
 const antiShakeDistance = 2;
-const svg = d3.select("#output-svg");
 const maxLabelLength = 10;
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
@@ -54,7 +53,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const styledGraph = useStyledGraph();
 
   const getLayerType = (node) => {
-    // console.log('node: ', node);
     if (node.class.indexOf(`layertype-${LayerType.FC}`) > -1) {
       return 'FC';
     } else if (node.class.indexOf(`layertype-${LayerType.CONV}`) > -1) {
@@ -73,12 +71,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         id
       );
 
-      if(node.type === NodeType.LAYER) {
-        // console.log('layer type: ', getLayerType(node));
-        // modifyGlobalStates(
-        //   GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE,
-        //   getLayerType(node)
-        // );
+      if (node.type === NodeType.LAYER) {
         modifyGlobalStates(
           GlobalStatesModificationType.SET_CURRENT_LAYER_TYPE,
           node.label
@@ -352,7 +345,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 key={d.key}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onClick={() => {
-                  // console.log(d);
                   handleClick(d.data.id, d.data);
                 }}
                 onDoubleClick={() => toggleExpanded(d.data.id, linkedEdges)}
