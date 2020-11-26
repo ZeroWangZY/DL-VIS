@@ -150,15 +150,18 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
 
-    // let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
-    // if (_childNodeId.length === 0) return;
-    // _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
-    // setChildNodeId(_childNodeId);
-    let newNodeId = selectedNodeId.split("/").splice(3).join(".");
-    let idx = newNodeId.indexOf("_copy");
-    if (idx !== -1)
-      newNodeId = newNodeId.slice(0, idx);
-    setNewSelectedNodeId(newNodeId);
+    if (selectedNodeId.indexOf("dense_") !== -1) {
+      let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
+      if (_childNodeId.length === 0) return;
+      _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
+      setNewSelectedNodeId(_childNodeId);
+    } else {
+      let newNodeId = selectedNodeId.split("/").splice(3).join(".");
+      let idx = newNodeId.indexOf("_copy");
+      if (idx !== -1)
+        newNodeId = newNodeId.slice(0, idx);
+      setNewSelectedNodeId(newNodeId);
+    }
     const _fetchDataType =
       showActivationOrGradient === ShowActivationOrGradient.ACTIVATION
         ? "activation"

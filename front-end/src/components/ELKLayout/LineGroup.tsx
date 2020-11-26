@@ -76,12 +76,18 @@ const LineGroup: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     if (layerNodeId === "" || !layerNodeId || !stepDomain) return;
-
-    let newNodeId = layerNodeId.split("/").splice(3).join(".");
-    let idx = newNodeId.indexOf("_copy");
-    if (idx !== -1)
-      newNodeId = newNodeId.slice(0, idx);
-
+    let newNodeId = "";
+    if (layerNodeId.startsWith("dense_")) {
+      let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, layerNodeId); // findChildNodeId(selectedNodeId);
+      if (_childNodeId.length === 0) return;
+      // _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
+      newNodeId = _childNodeId[0];
+    } else {
+      newNodeId = layerNodeId.split("/").splice(3).join(".");
+      let idx = newNodeId.indexOf("_copy");
+      if (idx !== -1)
+        newNodeId = newNodeId.slice(0, idx);
+    }
     getNodeScalars(currentMSGraphName, [newNodeId], stepDomain[0], stepDomain[1], nodeScalarType);
   }, [layerNodeId, stepDomain, nodeScalarType]);
 
