@@ -37,7 +37,7 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
   roundBox.buttonMode = true;
   roundBox.hitArea = new PIXI.Rectangle(0, 0, width, height, cornerRadius); // x, y均为左上角
 
-  addRoundRectClickEvent(roundBox, id);
+  addRoundRectClickEvent(container, roundBox, id);
 
   let initialWidth = width;
   let initialHeight = height;
@@ -65,7 +65,7 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
       newRoundBox.interactive = true;
       newRoundBox.buttonMode = true;
       newRoundBox.hitArea = new PIXI.Rectangle(0, 0, val, initialHeight, cornerRadius);
-      addRoundRectClickEvent(newRoundBox, id);
+      addRoundRectClickEvent(container, newRoundBox, id);
 
       roundBoxAgent.value = newRoundBox;
 
@@ -115,6 +115,7 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
 
 export const drawCircleCurve = (x, y, r, fillColor, alpha) => {
   let circle = new PIXI.Graphics();
+  circle.zIndex = 50000;
   circle.lineStyle(1, 0x333333, 1); // width color alpha
   circle.beginFill(fillColor, alpha); // 填充白色，透明度为0
   circle.drawCircle(x, y, r);

@@ -31,6 +31,24 @@ let graphContainer = new PIXI.Container();// 放在全局，如果放在内部�
 const selectedGraph = [];
 let app = null;
 
+function stopBubble(e) {
+  //如果提供了事件对象，则这是一个非IE浏览器 
+  if (e && e.stopPropagation)  //因此它支持W3C的stopPropagation()方法 
+    e.stopPropagation();
+  else  //否则，我们需要使用IE的方式来取消事件冒泡 
+    window.event.cancelBubble = true;
+}
+
+function stopDefault(e) {
+  //阻止默认浏览器动作(W3C) 
+  if (e && e.preventDefault)
+    e.preventDefault();
+  //IE中阻止函数器默认动作的方式 
+  else
+    window.event.returnValue = false;
+  return false;
+}
+
 const PixiDraw = () => {
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
@@ -122,13 +140,21 @@ const PixiDraw = () => {
     // 拖动
     let mousedown = false;
     let offsetX, offsetY;
+    let mouseMoved = false;
     divContainer.current.addEventListener("mousedown", function (e) {
+      console.log("mousedown");
+      stopBubble(e);
+      stopDefault(e);
       mousedown = true;
       offsetX = e.offsetX - graphContainer.x;
       offsetY = e.offsetY - graphContainer.y;
     })
     divContainer.current.addEventListener("mousemove", function (e) {
       if (mousedown) {
+        console.log("mousemove");
+        mouseMoved = true;
+        stopBubble(e);
+        stopDefault(e);
         graphContainer.x = (e.offsetX - offsetX); // 偏移
         graphContainer.y = (e.offsetY - offsetY);
         if (e.offsetX <= 2 ||
@@ -141,10 +167,23 @@ const PixiDraw = () => {
       }
     })
     divContainer.current.addEventListener("mouseup", function (e) {
+      console.log("mouseup");
+      stopBubble(e);
+      stopDefault(e);
       mousedown = false;
       graphContainer.x = (e.offsetX - offsetX); // 偏移
       graphContainer.y = (e.offsetY - offsetY);
       setGraphContainerInitialPos({ x: graphContainer.x, y: graphContainer.y });
+
+      if (mouseMoved === false) { // 如果鼠标没有拖动，相当于点击空白区域
+        handleClick(""); // 取消单选
+        if (selectedGraph.length === 1) { // 消除矩形框
+          selectedGraph[0].tint = 0xFFFFFF;
+          selectedGraph.pop();
+        }
+      }
+      mouseMoved = false;
+
     })
   }
 
@@ -184,16 +223,46 @@ const PixiDraw = () => {
     })
   }
 
-  function addRoundRectClickEvent(roundBox, id) {
+  function addRoundRectClickEvent(graphContainer, roundBox, id) {
     // 双击展开
     let clickTimes = 0;
     let timer = null;
-    roundBox.click = function (e) {
-      //pixi中断事件冒泡
-      e.stopPropagation()
+    let mousedown = false;
+    let offsetX, offsetY;
+    let mousemove = false;
 
-      console.log("click Rect");
+    roundBox.mousedown = function (e) {
+      // pixi中断事件冒泡
+      stopBubble(e);
+      stopDefault(e);
+      mousedown = true;
+      offsetX = e.data.global.x - graphContainer.x;
+      offsetY = e.data.global.y - graphContainer.y;
+    }
+
+    roundBox.mousemove = function (e) {
+      if (mousedown) {
+        mousemove = true;
+        stopBubble(e);
+        stopDefault(e);
+        graphContainer.x = (e.data.global.x - offsetX); // 偏移
+        graphContainer.y = (e.data.global.y - offsetY);
+        if (e.data.global.x <= 2 ||
+          e.data.global.y <= 2 ||
+          divContainer.current.clientWidth - e.data.global.x <= 2 ||
+          divContainer.current.clientHeight - e.data.global.y <= 2) { // 设置一定的界限，
+          mousedown = false;
+        }
+      }
+    }
+
+    roundBox.mouseup = function (e) {
+      // pixi中断事件冒泡
+      stopBubble(e);
+      stopDefault(e);
+      mousedown = false;
       clearTimeout(timer);
+
       timer = setTimeout(() => { // 单击事件
         clickTimes = 0;
         // 单击事件 
@@ -210,9 +279,10 @@ const PixiDraw = () => {
 
         selectedGraph.push(roundBox); // 被选中
       }, 200);
+
       clickTimes++;
 
-      if (clickTimes == 2) { // 双击
+      if (clickTimes === 2) { // 双击
         clearTimeout(timer);
         clickTimes = 0;
         toggleExpanded(id);
@@ -259,7 +329,9 @@ const PixiDraw = () => {
 
         ellipse.click = function (e) {
           //pixi中断事件冒泡
-          e.stopPropagation()
+          stopBubble(e);
+          stopDefault(e);
+
           handleClick(node.id);
           // 先将之前选择的图形的tint还原
           if (selectedGraph.length === 1) {
@@ -361,7 +433,6 @@ const PixiDraw = () => {
     for (let [key, value] of rectNodeInfo) {
       if (!newRectNodeInfo.has(key)) {
         let rect = value.pixiGraph;
-        console.log(key, rect);
         container.removeChild(rect.value);
       }
     }
@@ -534,6 +605,7 @@ const PixiDraw = () => {
     })
   }
 
+  // TODO : 到底是什么样的逻辑？？
   const addPortHoverEvent = (container, port, d, portPosition) => {
     const portIdSplited = d.data.id4Style.split("_");
     const portId = portIdSplited.length >= 2 ?     // portId以 inPort_ 或者 outport_开头
@@ -544,11 +616,11 @@ const PixiDraw = () => {
 
     let hoverEdgeAdded = null;
     port.mouseover = function (e) {
-      console.log("portPosition", portPosition);
-      console.log("portId", portId);
+      // console.log("portPosition", portPosition);
+      // console.log("portId", portId);
       for (let i = 0; i < d.data.hiddenEdges.length; i++) {
         const { source, target } = d.data.hiddenEdges[i]; // 因为source 不以in out开头
-        console.log("source, target", [source, target]);
+        // console.log("source, target", [source, target]);
 
         if (source !== portId.split("_")[1] && target !== portId.split("_")[1]) continue;
 
@@ -704,11 +776,6 @@ const PixiDraw = () => {
           }
         }
       }
-
-
-
-
-
 
     })
   }
