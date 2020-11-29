@@ -142,7 +142,6 @@ const PixiDraw = () => {
     let offsetX, offsetY;
     let mouseMoved = false;
     divContainer.current.addEventListener("mousedown", function (e) {
-      console.log("mousedown");
       stopBubble(e);
       stopDefault(e);
       mousedown = true;
@@ -151,7 +150,6 @@ const PixiDraw = () => {
     })
     divContainer.current.addEventListener("mousemove", function (e) {
       if (mousedown) {
-        console.log("mousemove");
         mouseMoved = true;
         stopBubble(e);
         stopDefault(e);
@@ -167,7 +165,6 @@ const PixiDraw = () => {
       }
     })
     divContainer.current.addEventListener("mouseup", function (e) {
-      console.log("mouseup");
       stopBubble(e);
       stopDefault(e);
       mousedown = false;
@@ -230,6 +227,7 @@ const PixiDraw = () => {
     let mousedown = false;
     let offsetX, offsetY;
     let mousemove = false;
+    let mouseChoose = false;
 
     roundBox.mousedown = function (e) {
       // pixi中断事件冒泡
@@ -238,11 +236,13 @@ const PixiDraw = () => {
       mousedown = true;
       offsetX = e.data.global.x - graphContainer.x;
       offsetY = e.data.global.y - graphContainer.y;
+      mouseChoose = true;
     }
 
     roundBox.mousemove = function (e) {
       if (mousedown) {
         mousemove = true;
+        mouseChoose = false;
         stopBubble(e);
         stopDefault(e);
         graphContainer.x = (e.data.global.x - offsetX); // 偏移
@@ -265,19 +265,22 @@ const PixiDraw = () => {
 
       timer = setTimeout(() => { // 单击事件
         clickTimes = 0;
-        // 单击事件 
-        handleClick(id);
+        if (mouseChoose) {
+          // 单击事件 
+          handleClick(id);
 
-        // 先将之前选择的图形的tint还原
-        if (selectedGraph.length === 1) {
-          selectedGraph[0].tint = 0xFFFFFF;
-          selectedGraph.pop();
+          // 先将之前选择的图形的tint还原
+          if (selectedGraph.length === 1) {
+            selectedGraph[0].tint = 0xFFFFFF;
+            selectedGraph.pop();
+          }
+          roundBox.blendMode = PIXI.BLEND_MODES.COLOR;
+          roundBox.tint = 0xc7000b;
+          roundBox.geometry.invalidate();
+
+          selectedGraph.push(roundBox); // 被选中
+          mouseChoose = false;
         }
-        roundBox.blendMode = PIXI.BLEND_MODES.COLOR;
-        roundBox.tint = 0xc7000b;
-        roundBox.geometry.invalidate();
-
-        selectedGraph.push(roundBox); // 被选中
       }, 200);
 
       clickTimes++;
@@ -327,23 +330,55 @@ const PixiDraw = () => {
         ); // drawEllipse(x, y, width, height);
         ellipse.zIndex = idx;
 
-        ellipse.click = function (e) {
-          //pixi中断事件冒泡
+
+        let mousedown = false;
+        let mouseChoose = false;
+        let offsetX, offsetY;
+
+        ellipse.mousedown = function (e) {
           stopBubble(e);
           stopDefault(e);
+          mousedown = true;
+          mouseChoose = true;
+          offsetX = e.data.global.x - container.x;
+          offsetY = e.data.global.y - container.y;
+        }
 
-          handleClick(node.id);
-          // 先将之前选择的图形的tint还原
-          if (selectedGraph.length === 1) {
-            selectedGraph[0].tint = 0xFFFFFF;
-            selectedGraph.pop();
+        ellipse.mousemove = function (e) {
+          if (mousedown) {
+            mouseChoose = false;
+
+            stopBubble(e);
+            stopDefault(e);
+            container.x = (e.data.global.x - offsetX); // 偏移
+            container.y = (e.data.global.y - offsetY);
+            if (e.data.global.x <= 2 ||
+              e.data.global.y <= 2 ||
+              divContainer.current.clientWidth - e.data.global.x <= 2 ||
+              divContainer.current.clientHeight - e.data.global.y <= 2) { // 设置一定的界限，
+              mousedown = false;
+            }
+
           }
+        }
 
-          ellipse.blendMode = PIXI.BLEND_MODES.COLOR_BURN;
-          ellipse.tint = 0xc7000b;// 2, 0xc7000b, 1
-          ellipse.geometry.invalidate();
+        ellipse.mouseup = function (e) {
+          stopBubble(e);
+          stopDefault(e);
+          mousedown = false;
+          if (mouseChoose) {
+            // 先将之前选择的图形的tint还原
+            if (selectedGraph.length === 1) {
+              selectedGraph[0].tint = 0xFFFFFF;
+              selectedGraph.pop();
+            }
 
-          selectedGraph.push(ellipse); // 被选中
+            ellipse.blendMode = PIXI.BLEND_MODES.COLOR_BURN;
+            ellipse.tint = 0xc7000b;// 2, 0xc7000b, 1
+            ellipse.geometry.invalidate();
+
+            selectedGraph.push(ellipse); // 被选中
+          }
         }
 
         container.addChild(ellipse);
