@@ -23,11 +23,14 @@ import pandas as pd
 import math
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
-from logs.resnet.data_runner import DataRunner
+from logs.resnet.resnet_data_runner import ResnetDataRunner
+# from logs.bert.bert_data_runner import BertDataRunner
+
 from logs.resnet.get_neuron_order import get_neuron_order
 from logs.resnet.get_scale_std import get_scale_std
 
-data_runner = DataRunner()
+resnet_data_runner = ResnetDataRunner()
+# bert_data_runner = BertDataRunner()
 useLabelsAsSrcs = True
 
 from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
@@ -377,6 +380,14 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         epochNum = abs((int)(epochAndStep[0]))
         stepNum = (int)(epochAndStep[1])
 
+        if graph_name.find("resnet") != -1:
+            data_runner = resnet_data_runner
+            batch_size = 32
+            labelsNum = 10
+        else:
+            batch_size = 16
+            labelsNum = 15
+            # data_runner = bert_data_runner
         if usePCAMatrix == True:
             if not os.path.exists(
                     SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(
@@ -392,22 +403,24 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
             jsonPath = SUMMARY_DIR + os.sep + graph_name + os.sep + "indices" + os.sep + str(epochNum) +".json"
             with open(jsonPath, 'r', encoding='utf-8') as fp:  # 拿到数据编号
                 indices = json.load(fp)
-                indices = indices[(step - 1) * 32 : step * 32]   # 找到对应的数据编号，需要调用data_runner.py中的函数
+                indices = indices[(step - 1) * batch_size : step * batch_size]   # 找到对应的数据编号，需要调用data_runner.py中的函数
 
                 [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id, data_type=type, ckpt_file=ckpt_file_path)
-                if not "fc" in node_id:
+                if graph_name.find("resnet") != -1:
+                    labels = labels.asnumpy()
+                if not "fc" in node_id and graph_name.find("resnet") != -1:
                     resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
                 else:
                     resdata = resdata.swapaxes(0, 1)
                 resdata = (np.abs(resdata) + resdata) / 2.0 # relu整流
-                print(resdata.shape) # 64 * 32 一个batch有32个数据，64个神经元
+                print(resdata.shape) # 64 * batch_size 一个batch有batch_size个数据，64个神经元
                 if usePCAMatrix == True:
                     pcaMatrix = np.load(SUMMARY_DIR + graph_name + os.sep + "order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + "-matrix" + ".npy")
                     resdata = np.dot(resdata.swapaxes(0, 1), pcaMatrix)
-                    for i in range(32):   # 这里数据要改成活的
+                    for i in range(batch_size):   # 这里数据要改成活的
                         resultData.append({
                             "value": normalize(resdata[i]).tolist(),
-                            "label": labels.asnumpy().tolist()[i],
+                            "label": labels.tolist()[i],
                             "index": indices[i]
                         })
                     return HttpResponse(json.dumps({
@@ -415,10 +428,10 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                         "data": resultData
                     }), content_type="application/json")
                 if resdata.shape[0] <= 16:
-                    for i in range(32):   # 这里数据要改成活的
+                    for i in range(batch_size):   # 这里数据要改成活的
                         resultData.append({
                             "value": normalize(resdata.swapaxes(0, 1)[i]).tolist(),
-                            "label": labels.asnumpy().tolist()[i],
+                            "label": labels.tolist()[i],
                             "index": indices[i]
                         })
                     return HttpResponse(json.dumps({
@@ -432,9 +445,9 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                 scaleStd = np.load(SUMMARY_DIR + graph_name + os.sep + "scale" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy")
                 sectorData = []
                 if useLabelsAsSrcs == True:
-                    for i in range(10):
-                        leftMargin = -9 / 10 * math.pi + i * math.pi / 5
-                        rightMargin = -7 / 10 * math.pi + i * math.pi / 5
+                    for i in range(labelsNum):
+                        leftMargin = -(batch_size - 1) / batch_size * math.pi + i * math.pi / (batch_size / 2)
+                        rightMargin = -(batch_size - 3) / batch_size * math.pi + i * math.pi / (batch_size / 2)
                         currentSectorData = list(
                             filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
                                    df.iloc))
@@ -481,16 +494,16 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                             currentSectorData = normalize_1(dataList, curmin, curmax)
                             sectorData.append(currentSectorData)
                 if data_index == -1:
-                    for i in range(32):   # 这里数据要改成活的
+                    for i in range(batch_size):   # 这里数据要改成活的
                         resultData.append({
                             "value": np.array(sectorData).swapaxes(0, 1)[i].tolist(), # (8,)
-                            "label": labels.asnumpy().tolist()[i],
+                            "label": labels.tolist()[i],
                             "index": indices[i]
                         })
                 else:
                     resultData.append({
                         "value": np.array(sectorData).swapaxes(0, 1)[data_index].tolist(),
-                        "label": labels.asnumpy().tolist()[data_index],
+                        "label": labels.tolist()[data_index],
                         "index": indices[data_index]
                     })
         return HttpResponse(json.dumps({

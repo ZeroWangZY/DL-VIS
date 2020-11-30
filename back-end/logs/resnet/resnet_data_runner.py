@@ -334,7 +334,7 @@ monitored_operations = {'Conv2D',
                         'MaxPool', 'Reshape'}
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
-os.environ['CUDA_VISIBLE_DEVICES']="3"
+os.environ['CUDA_VISIBLE_DEVICES']="1"
 random.seed(1)
 data_home = "./logs/resnet/dataset/10-batches-bin"
 batch_size = 32
@@ -493,7 +493,7 @@ class DataEvolutionCallback(Callback):
         self.labels = params.train_dataset_element[1]
 
 
-class DataRunner:
+class ResnetDataRunner:
     def __init__(self):
         context.set_context(reserve_class_name_in_scope=False)
         net = resnet50(batch_size, num_classes)

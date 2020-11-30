@@ -23,14 +23,24 @@ def softmax(x):
 
 
 def get_scale_std(epochNum, stepNum, node_id, data_runner, type, graph_name):
-    indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
+    if graph_name.find("resnet") != -1:
+        indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
+    else:
+        indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + "1.json"
     with open(indicesFilePath, 'r', encoding='utf-8') as fp:
         indices = json.load(fp)
         if type != "activation":
             node_id = node_id + ".weight"
         ckpt_file = SUMMARY_DIR + graph_name + os.sep + "weights" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + ".ckpt"
-        [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
-        if not "fc" in node_id:
+        if graph_name.find("resnet") != -1:
+            [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file,
+                                                                     node_name=node_id, data_type=type)
+            labelsNum = 10
+        else:
+            [resdata, labels] = data_runner.get_tensor_from_training(indices[0:16], ckpt_file=ckpt_file,
+                                                                     node_name=node_id, data_type=type)
+            labelsNum = 15
+        if not "fc" in node_id and graph_name.find("resnet") != -1:
             resdata = np.mean(resdata, axis=(2, 3)).swapaxes(0, 1)
         else:
             resdata = resdata.swapaxes(0, 1)
@@ -40,9 +50,9 @@ def get_scale_std(epochNum, stepNum, node_id, data_runner, type, graph_name):
             stepNum) + "-" + node_id + "-" + type + ".npy")
         sectorData = []
         if useLabelsAsSrcs == True:
-            for i in range(10):
-                leftMargin = -9 / 10 * math.pi + i * math.pi / 5
-                rightMargin = -7 / 10 * math.pi + i * math.pi / 5
+            for i in range(labelsNum):
+                leftMargin = -(labelsNum - 1) / labelsNum * math.pi + i * math.pi / (labelsNum / 2)
+                rightMargin = -(labelsNum - 3) / labelsNum * math.pi + i * math.pi / (labelsNum / 2)
                 currentSectorData = list(
                     filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
                            df.iloc))

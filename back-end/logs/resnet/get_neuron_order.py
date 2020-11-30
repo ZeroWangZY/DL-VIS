@@ -7,7 +7,7 @@ import numpy as np
 import math
 import pandas as pd
 from logs.resnet.get_pca_matrix import PCAMatrix
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
@@ -26,21 +26,31 @@ def softmax(x):
 
 
 def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
-    indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
+    if graph_name.find("resnet") != -1:
+        indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
+        labelsNum = 10
+        labelsCols = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10']
+    else:
+        indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + "1.json"
+        labelsNum = 15
+        labelsCols = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10', 'n11', 'n12', 'n13', 'n14', 'n15']
     with open(indicesFilePath, 'r', encoding='utf-8') as fp:
         indices = json.load(fp)
         if type != "activation":
             node_id = node_id + ".weight"
         ckpt_file = SUMMARY_DIR + graph_name + os.sep + "weights" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + ".ckpt"
-        [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
-        if not "fc" in node_id:
+        if graph_name.find("resnet") != -1:
+            [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
+        else:
+            [resdata, labels] = data_runner.get_tensor_from_training(indices[0:6784:106], ckpt_file=ckpt_file, node_name=node_id, data_type=type, type="gno")
+        if not "fc" in node_id and graph_name.find("resnet") != -1:
             resdata = np.mean(np.array(resdata), axis=(2, 3))
 
         dataNum = resdata.shape[1] # batch_size * neroun nums
 
         if usePCAMatrix == True:
             pcaMatrix = PCAMatrix()
-            resMatrix = pcaMatrix.fit_transform(resdata, 10).swapaxes(0, 1)
+            resMatrix = pcaMatrix.fit_transform(resdata, labelsNum).swapaxes(0, 1)
             if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
                 os.mkdir(SUMMARY_DIR + graph_name + "/order")
             np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(
@@ -49,15 +59,18 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
 
         if useLabelsAsSrcs == True:  # 使用标签作为力源
             df = pd.DataFrame(resdata)
-            df['labels'] = labels.asnumpy()
+            if graph_name.find("resnet") != -1:
+                df['labels'] = labels.asnumpy()
+            else:
+                df['labels'] = labels
             data = []
-            for i in range(10):
+            for i in range(labelsNum):
                 currentList = list(filter(lambda item: item['labels'] == i, df.iloc))
                 data.append(np.mean(np.array(currentList), axis=0)[:-1])
             data = np.array(data).swapaxes(0, 1)
             data = (np.abs(data) + data) / 2.0  # relu整流
-            df = pd.DataFrame(data, columns=['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10'])
-            m = 10
+            df = pd.DataFrame(data, columns=labelsCols)
+            m = labelsNum
         else:
             data = resdata.swapaxes(0, 1)
             data = (np.abs(data) + data) / 2.0  # relu整流
@@ -104,15 +117,18 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
             theta = math.atan2(y, x)
             # print(theta)
             if useLabelsAsSrcs == True:
-                if theta < -9 / 10 * math.pi:
+                if theta < -(labelsNum - 1) / labelsNum * math.pi:
                     theta = theta + 2 * math.pi
             else:
                 if theta < -7 / 8 * math.pi:
                     theta = theta + 2 * math.pi
-            angleList.append(theta)
+            if math.isnan(theta):
+                angleList.append(-100)
+            else:
+                angleList.append(theta)
         if not os.path.exists(SUMMARY_DIR + graph_name + "/order"):
             os.mkdir(SUMMARY_DIR + graph_name + "/order")
         np.save(SUMMARY_DIR + graph_name + "/order" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + "-" + node_id + "-" + type + ".npy", angleList)
-        plt.figure()
-        plt.scatter(to_plot[0], to_plot[1])
-        plt.show()
+        # plt.figure()
+        # plt.scatter(to_plot[0], to_plot[1])
+        # plt.show()
