@@ -29,7 +29,7 @@ let zoomFactor = 1;
 let zoomInTimes = 0;
 let rectNodeInfo = new Map(); // id -> {x: ,y : ,width: ,height:}
 let graphContainer = new PIXI.Container();// 放在全局，如果放在内部，则会因为每次setState重新调用导致每次更新
-const selectedGraph = [];
+let strokeLine = null;
 let app = null;
 
 function stopBubble(e) {
@@ -54,7 +54,6 @@ const PixiDraw = () => {
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
   const maxLabelLength = 10;
-  const [graphContainerInitialPos, setGraphContainerInitialPos] = useState(null);
   const { selectedNodeId } = useGlobalStates();
   const [graphContainerAdded, setGraphContainerAdded] = useState(false);
 
@@ -161,7 +160,6 @@ const PixiDraw = () => {
           divContainer.current.clientWidth - e.offsetX <= 2 ||
           divContainer.current.clientHeight - e.offsetY <= 2) { // 设置一定的界限，
           mousedown = false;
-          setGraphContainerInitialPos({ x: graphContainer.x, y: graphContainer.y });
         }
       }
     })
@@ -171,13 +169,12 @@ const PixiDraw = () => {
       mousedown = false;
       graphContainer.x = (e.offsetX - offsetX); // 偏移
       graphContainer.y = (e.offsetY - offsetY);
-      setGraphContainerInitialPos({ x: graphContainer.x, y: graphContainer.y });
 
       if (mouseMoved === false) { // 如果鼠标没有拖动，相当于点击空白区域
         handleClick(""); // 取消单选
-        if (selectedGraph.length === 1) { // 消除矩形框
-          selectedGraph[0].tint = 0xFFFFFF;
-          selectedGraph.pop();
+        if (strokeLine) {
+          graphContainer.removeChild(strokeLine);
+          strokeLine = null;
         }
       }
       mouseMoved = false;
@@ -270,16 +267,21 @@ const PixiDraw = () => {
           // 单击事件 
           handleClick(id);
 
-          // 先将之前选择的图形的tint还原
-          if (selectedGraph.length === 1) {
-            selectedGraph[0].tint = 0xFFFFFF;
-            selectedGraph.pop();
+          if (strokeLine) {
+            graphContainer.removeChild(strokeLine);
+            strokeLine = null;
           }
-          roundBox.blendMode = PIXI.BLEND_MODES.COLOR;
-          roundBox.tint = 0xc7000b;
-          roundBox.geometry.invalidate();
 
-          selectedGraph.push(roundBox); // 被选中
+          let roundStoke = new PIXI.Graphics();
+          roundStoke.zIndex = roundBox.zIndex;
+          roundStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
+          roundStoke.beginFill(0x000000, 0);
+          roundStoke.drawRoundedRect(0, 0, roundBox.width, roundBox.height, 5);
+          roundStoke.x = roundBox.x;
+          roundStoke.y = roundBox.y;
+          graphContainer.addChild(roundStoke);
+
+          strokeLine = roundStoke;
           mouseChoose = false;
         }
       }, 200);
@@ -368,16 +370,22 @@ const PixiDraw = () => {
           mousedown = false;
           if (mouseChoose) {
             // 先将之前选择的图形的tint还原
-            if (selectedGraph.length === 1) {
-              selectedGraph[0].tint = 0xFFFFFF;
-              selectedGraph.pop();
+            if (strokeLine) {
+              graphContainer.removeChild(strokeLine);
+              strokeLine = null;
             }
 
-            ellipse.blendMode = PIXI.BLEND_MODES.COLOR_BURN;
-            ellipse.tint = 0xc7000b;// 2, 0xc7000b, 1
-            ellipse.geometry.invalidate();
+            let ellipseStoke = new PIXI.Graphics();
+            ellipseStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
+            ellipseStoke.beginFill(0x000000, 0); // 填充白色，透明度为0
+            ellipseStoke.drawEllipse(d.style._gNodeTransX, d.style._gNodeTransY, ellipse.hitArea.width, ellipse.hitArea.height);
+            ellipseStoke.zIndex = ellipse.zIndex;
+            ellipseStoke.endFill();
 
-            selectedGraph.push(ellipse); // 被选中
+            handleClick(node.id);
+
+            strokeLine = ellipseStoke;
+            graphContainer.addChild(ellipseStoke);
           }
         }
 
@@ -688,7 +696,6 @@ const PixiDraw = () => {
     })
   }
 
-  // TODO : 到底是什么样的逻辑？？
   const addPortHoverEvent = (container, port, d, portPosition) => {
     const portIdSplited = d.data.id4Style.split("_");
     const portId = portIdSplited.length >= 2 ?     // portId以 inPort_ 或者 outport_开头
@@ -699,31 +706,22 @@ const PixiDraw = () => {
 
     let hoverEdgeAdded = null;
     port.mouseover = function (e) {
-      // console.log("portPosition", portPosition);
-      // console.log("portId", portId);
       for (let i = 0; i < d.data.hiddenEdges.length; i++) {
         const { source, target } = d.data.hiddenEdges[i]; // 因为source 不以in out开头
-        // console.log("source, target", [source, target]);
 
         if (source !== portId.split("_")[1] && target !== portId.split("_")[1]) continue;
 
         let sourcePos, targetPos;
         if (portId.startsWith("in")) {
-          sourcePos = portPosition.get("outPort_" + source);
+          sourcePos = portPosition.get("inPort_" + source);
           targetPos = portPosition.get(portId);
         } else if (portId.startsWith("out")) {
           sourcePos = portPosition.get(portId);
-          targetPos = portPosition.get("inPort_" + target);
+          targetPos = portPosition.get("outPort_" + target);
         }
-        // if (source === portId.split("_")[1]) {
-        //   sourcePos = portPosition.get(portId);
-        //   targetPos = portPosition.get("inPort_" + target);
-        // } else if (target === portId.split("_")[1]) {
-        //   sourcePos = portPosition.get("outPort_" + source);
-        //   targetPos = portPosition.get(portId);
-        // }
 
         const hoverEdge = new PIXI.Graphics();
+        hoverEdge.zIndex = 500000;
         hoverEdge.lineStyle(2, 0x00679f, 1);
         hoverEdge.moveTo(sourcePos.x, sourcePos.y);
         hoverEdge.lineTo(targetPos.x, targetPos.y);

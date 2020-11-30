@@ -24,8 +24,8 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
   let roundBoxAgent = {};
 
   let roundBox = new PIXI.Graphics();
-  roundBox.zIndex = zIndex;
   window.roundBox = roundBox;
+  roundBox.zIndex = zIndex;
   roundBox.lineStyle(1, 0x000000, 1); // width color alpha
   roundBox.beginFill(color, alpha); // 
   roundBox.myRect = roundBox.drawRoundedRect(0, 0, width, height, cornerRadius)
