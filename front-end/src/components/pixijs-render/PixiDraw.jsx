@@ -17,6 +17,7 @@ import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./d
 import * as PIXI from "pixi.js";
 import { TweenMax } from "gsap/all"
 import { zip, zoom } from "d3";
+import { Icon } from "@material-ui/core";
 
 const toggleExpanded = (id) => {
   modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
@@ -116,13 +117,13 @@ const PixiDraw = () => {
     if (zoomFactor !== 1) {
       // 对graphContainer中的所有元素进行初始化的放大缩小，并且调整分辨率
       for (let obj of graphContainer.children) {
-        if (obj instanceof PIXI.Text) {
+        if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
           obj.resolution *= zoomFactor > 1 ? zoomFactor : 2;
         }
       }
     } else {
       for (let obj of graphContainer.children) {
-        if (obj instanceof PIXI.Text) {
+        if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
           obj.resolution *= 2;
         }
       }
@@ -198,7 +199,7 @@ const PixiDraw = () => {
         graphContainer.y = 1.1 * (graphContainer.y - event.offsetY) + event.offsetY;
 
         for (let obj of graphContainer.children) { // 文字分辨率
-          if (obj instanceof PIXI.Text) {
+          if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
             obj.resolution *= 1.1;
           }
         }
@@ -212,7 +213,7 @@ const PixiDraw = () => {
         graphContainer.y = (graphContainer.y - event.offsetY) / 1.1 + event.offsetY;
 
         for (let obj of graphContainer.children) {
-          if (obj instanceof PIXI.Text) {
+          if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
             obj.resolution /= 1.1;
           }
         }
@@ -330,7 +331,6 @@ const PixiDraw = () => {
         ); // drawEllipse(x, y, width, height);
         ellipse.zIndex = idx;
 
-
         let mousedown = false;
         let mouseChoose = false;
         let offsetX, offsetY;
@@ -391,6 +391,7 @@ const PixiDraw = () => {
               const dashCircle = new PIXI.Sprite(
                 loader.resources["dashCircle"].texture
               );
+              dashCircle.zIndex = 500001;
               dashCircle.width = d.style._ellipseY;
               dashCircle.height = d.style._ellipseY;
               dashCircle.x = d.style._gNodeTransX + d.style._ellipseY;
@@ -407,6 +408,7 @@ const PixiDraw = () => {
               const solidCircle = new PIXI.Sprite(
                 loader.resources["solidCircle"].texture
               );
+              solidCircle.zIndex = 500002;
               solidCircle.width = d.style._ellipseY;
               solidCircle.height = d.style._ellipseY;
               solidCircle.x = d.style._gNodeTransX - d.style._ellipseY;
@@ -420,9 +422,14 @@ const PixiDraw = () => {
           yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
           width = d.style._rectWidth,
           height = d.style._rectHeight;
+        let color = 0xffffff, alpha = 1;
+        if (node.expand) {
+          color = 0xfff6ef;
+          alpha = 1;
+        }
 
         if (graphContainerAdded === false || !rectNodeInfo.has(node.id)) { // 第一次进行绘制 或者这个矩形之前没有画过
-          let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5, idx, container, addRoundRectClickEvent);
+          let roundBox = drawRoundRect(node.id, xPos, yPos, color, alpha, width, height, 5, idx, container, addRoundRectClickEvent);
           container.addChild(roundBox.value);
           newRectNodeInfo.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox, zIndex: idx });
         } else { // 这一矩形之前画过 
@@ -431,23 +438,30 @@ const PixiDraw = () => {
           TweenMax.fromTo(
             oldRoundBox,
             0.5,
-            { x: _nodeInfo.x, y: _nodeInfo.y, myWidth: _nodeInfo.width, myHeight: _nodeInfo.height, myZIndex: _nodeInfo.zIndex },
-            { x: xPos, y: yPos, myWidth: width + 0.000001, myHeight: height, myZIndex: idx }
+            { x: _nodeInfo.x, y: _nodeInfo.y, myWidth: _nodeInfo.width, myHeight: _nodeInfo.height, myZIndex: _nodeInfo.zIndex, myFillColor: color, myFillOpacity: alpha },
+            { x: xPos, y: yPos, myWidth: width + 0.000001, myHeight: height, myZIndex: idx, myFillColor: color, myFillOpacity: alpha }
           )
           newRectNodeInfo.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: oldRoundBox, zIndex: idx });
 
         }
-
-
-        window.container = container;
       } else if (node.type === NodeType.LAYER) {
         const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
           yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
           width = d.style._rectWidth,
           height = d.style._rectHeight;
 
+        let color = 0xffffff, alpha = 1;
+        console.log(node.label);
+        if (node.label.startsWith("fc")) {
+          color = 0xffcb9e;
+        } else if (node.label.startsWith("conv")) {
+          color = 0xaad9aa;
+        } else if (node.label.startsWith("rnn")) {
+          color = 0xffffff;
+        }
+
         if (graphContainerAdded === false || !rectNodeInfo.has(node.id)) { // 第一次进行绘制 或者这个矩形之前没有画过
-          let roundBox = drawRoundRect(node.id, xPos, yPos, width, height, 5, idx, container, addRoundRectClickEvent);
+          let roundBox = drawRoundRect(node.id, xPos, yPos, color, alpha, width, height, 5, idx, container, addRoundRectClickEvent);
           container.addChild(roundBox.value);
           newRectNodeInfo.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: roundBox, zIndex: idx });
         } else { // 这一矩形之前画过 
@@ -456,8 +470,8 @@ const PixiDraw = () => {
           TweenMax.fromTo(
             oldRoundBox,
             0.5,
-            { x: _nodeInfo.x, y: _nodeInfo.y, myWidth: _nodeInfo.width, myHeight: _nodeInfo.height, myZIndex: _nodeInfo.zIndex },
-            { x: xPos, y: yPos, myWidth: width + 0.000001, myHeight: height, myZIndex: _nodeInfo.zIndex }
+            { x: _nodeInfo.x, y: _nodeInfo.y, myWidth: _nodeInfo.width, myHeight: _nodeInfo.height, myZIndex: _nodeInfo.zIndex, myFillColor: color, myFillOpacity: alpha },
+            { x: xPos, y: yPos, myWidth: width + 0.000001, myHeight: height, myZIndex: _nodeInfo.zIndex, myFillColor: color, myFillOpacity: alpha }
           )
           newRectNodeInfo.set(node.id, { x: xPos, y: yPos, width: width, height: height, pixiGraph: oldRoundBox, zIndex: idx });
         }
@@ -475,7 +489,7 @@ const PixiDraw = () => {
   }
 
   const addLabels = (container, styledGraph) => {
-    styledGraph.nodeStyles.forEach((d) => {
+    styledGraph.nodeStyles.forEach((d, i) => {
       const node = d.data;
       if (node.type === NodeType.OPERATION) {
         const fontSize = 8;
@@ -486,13 +500,14 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
+        message.zIndex = 500000;
         message.resolution = 1;
         message.anchor.x = 0;
 
         let textCanvasWidth = message.width;
         message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2 - fontSize);
         container.addChild(message);
-      } else {
+      } else { // layer层 文字前面需要加上图标
         const fontSize = 16;
         let style = new PIXI.TextStyle({
           fontFamily: "Arial",
@@ -501,13 +516,43 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
+        message.zIndex = 500000;
         message.resolution = 1;
 
         let textCanvasWidth = message.width;
-        message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
-        container.addChild(message);
-      }
+        if (node.type === NodeType.LAYER) {
+          let iconSize = 13;
+          message.position.set(d.style._gNodeTransX - textCanvasWidth / 2 + iconSize, d.style._gNodeTransY - d.style._rectHeight / 2);
 
+          const loader = new PIXI.Loader();
+          let path = process.env.PUBLIC_URL + "/assets/";
+          if (d.data.label.startsWith("conv"))
+            path += "cnn.png";
+          else if (d.data.label.startsWith("fc"))
+            path += "fc.png";
+          else if (d.data.label.startsWith("rnn"))
+            path += "rnn.png";
+
+          loader
+            .add('icon', path)
+            .load(() => {
+              const icon = new PIXI.Sprite(loader.resources["icon"].texture);
+              icon.width = iconSize;
+              icon.height = iconSize;
+              icon.resolution = 1;
+              icon.zIndex = 500000;
+              icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
+              icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
+
+              container.addChild(message);
+              container.addChild(icon);
+            })
+
+        } else {
+          message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
+          container.addChild(message);
+        }
+      }
     })
   }
 
@@ -589,11 +634,12 @@ const PixiDraw = () => {
       // 圆角折线
       for (let i = 1; i < linkData.length; i++) {
         let line = new PIXI.Graphics();
+        line.zIndex = 500000;
         let lineColor;
         if (d.data.isModuleEdge)
           lineColor = 0xff931e;
         else
-          lineColor = 0x999999;
+          lineColor = 0x000000;
 
         const lineWidth = lineStrokeWidth[i - 1];
         line.lineStyle(lineWidth, lineColor, 1)
@@ -622,6 +668,7 @@ const PixiDraw = () => {
           [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
 
           let corner = drawRoundCorner(end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
+          corner.zIndex = 500000;
           container.addChild(corner);
         }
 
@@ -633,7 +680,8 @@ const PixiDraw = () => {
         if (i === linkData.length - 1) {
           // 增加一个箭头
           end = linkData[i];
-          const arrow = drawArrow(begin, end, "0x999999"); //0x999999
+          const arrow = drawArrow(begin, end, 0x000000); //0x999999
+          arrow.zIndex = 500000;
           container.addChild(arrow);
         }
       }

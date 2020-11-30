@@ -6,10 +6,10 @@ import * as PIXI from "pixi.js";
 import { set } from "d3";
 import { fetchNodeLineDataBlueNoiceSampling } from "../../api/layerlevel";
 
-export const drawElippseCurve = (id, x, y, width, height, dash) => {
+export const drawElippseCurve = (id, x, y, width, height) => {
   let ellipse = new PIXI.Graphics();
-  ellipse.lineStyle(1, 0x808080, 1); // width color alpha
-  ellipse.beginFill(0xFFFFFF, 0); // 填充白色，透明度为0
+  ellipse.lineStyle(1, 0x000000, 1); // width color alpha
+  ellipse.beginFill(0xFFFFFF, 1); // 填充白色，透明度为0
   ellipse.drawEllipse(x, y, width, height); // drawEllipse(x, y, width, height);
   ellipse.endFill(); // 填充白色
 
@@ -20,14 +20,14 @@ export const drawElippseCurve = (id, x, y, width, height, dash) => {
   return ellipse;
 }
 
-export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, container, addRoundRectClickEvent) => { // x y为左上角
+export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadius, zIndex, container, addRoundRectClickEvent) => { // x y为左上角
   let roundBoxAgent = {};
 
   let roundBox = new PIXI.Graphics();
   roundBox.zIndex = zIndex;
   window.roundBox = roundBox;
-  roundBox.lineStyle(1, 0x808080, 1); // width color alpha
-  roundBox.beginFill(0xffffff, 0); // 填充白色
+  roundBox.lineStyle(1, 0x000000, 1); // width color alpha
+  roundBox.beginFill(color, alpha); // 
   roundBox.myRect = roundBox.drawRoundedRect(0, 0, width, height, cornerRadius)
   roundBox.x = x;
   roundBox.y = y;
@@ -44,6 +44,8 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
   let initialX = x;
   let initialY = y;
   let initialZIndex = zIndex;
+  let initialFillColor = color;
+  let initialFillOpacity = alpha;
   Object.defineProperty(roundBoxAgent, "myWidth", {
     get: function () {
       return initialWidth;
@@ -53,8 +55,8 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
       container.removeChild(roundBoxAgent.value)
       let newRoundBox = new PIXI.Graphics();
       newRoundBox.zIndex = initialZIndex;
-      newRoundBox.lineStyle(1, 0x808080, 1); // width color alpha
-      newRoundBox.beginFill(0xffffff, 0); // 填充白色
+      newRoundBox.lineStyle(1, 0x000000, 1); // width color alpha
+      newRoundBox.beginFill(initialFillColor, initialFillOpacity); // 填充白色
 
       newRoundBox.myRect = newRoundBox.drawRoundedRect(0, 0, val, initialHeight, cornerRadius);
 
@@ -73,6 +75,25 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
       container.sortChildren();
     }
   })
+  Object.defineProperty(roundBoxAgent, "myFillColor", {
+    get: function () {
+      return initialFillColor;
+    },
+    set: function (val) {
+      initialFillColor = val;
+    }
+  })
+
+  Object.defineProperty(roundBoxAgent, "myFillOpacity", {
+    get: function () {
+      return initialFillOpacity;
+    },
+    set: function (val) {
+      initialFillOpacity = val;
+    }
+  })
+
+
   Object.defineProperty(roundBoxAgent, "myZIndex", {
     get: function () {
       return initialZIndex;
@@ -116,7 +137,7 @@ export const drawRoundRect = (id, x, y, width, height, cornerRadius, zIndex, con
 export const drawCircleCurve = (x, y, r, fillColor, alpha) => {
   let circle = new PIXI.Graphics();
   circle.zIndex = 50000;
-  circle.lineStyle(1, 0x333333, 1); // width color alpha
+  circle.lineStyle(1, 0x000000, 1); // width color alpha
   circle.beginFill(fillColor, alpha); // 填充白色，透明度为0
   circle.drawCircle(x, y, r);
   circle.endFill();
