@@ -391,8 +391,8 @@ const PixiDraw = () => {
 
         container.addChild(ellipse);
 
-        const loader = new PIXI.Loader();
         if (node.parameters.length !== 0) {
+          const loader = new PIXI.Loader();
           loader
             .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
             .load(() => {
@@ -410,6 +410,8 @@ const PixiDraw = () => {
         }
 
         if (node.constVals.length !== 0) {
+          const loader = new PIXI.Loader();
+
           loader
             .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
             .load(() => {
@@ -419,7 +421,7 @@ const PixiDraw = () => {
               solidCircle.zIndex = 500002;
               solidCircle.width = d.style._ellipseY;
               solidCircle.height = d.style._ellipseY;
-              solidCircle.x = d.style._gNodeTransX - d.style._ellipseY;
+              solidCircle.x = d.style._gNodeTransX - d.style._ellipseY * 2;
               solidCircle.y = d.style._gNodeTransY + d.style._ellipseY - solidCircle.height / 2;
 
               container.addChild(solidCircle);
