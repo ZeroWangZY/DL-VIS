@@ -31,6 +31,10 @@ let rectNodeInfo = new Map(); // id -> {x: ,y : ,width: ,height:}
 let graphContainer = new PIXI.Container();// 放在全局，如果放在内部，则会因为每次setState重新调用导致每次更新
 let strokeLine = null;
 let app = null;
+let divMouseDownHandler = null;
+let divMouseMoveHandler = null;
+let divMouseupHandler = null;
+let divMouseWheelHandler = null;
 
 function stopBubble(e) {
   //如果提供了事件对象，则这是一个非IE浏览器 
@@ -95,7 +99,6 @@ const PixiDraw = () => {
   useEffect(() => {
     if (!styledGraph || styledGraph.nodeStyles.length === 0) return;
 
-    // if (graphContainerAdded) { // 如果不是第一次绘制，则将原来的图中，除了矩形之外的其他图形删除，矩形在变换后删除
     let indexToBeDeleted = [];
     for (let i = 0; i < graphContainer.children.length; i++) {
       let obj = graphContainer.children[i];
@@ -106,7 +109,6 @@ const PixiDraw = () => {
     for (let i = indexToBeDeleted.length - 1; i >= 0; i--) {
       graphContainer.removeChildAt(indexToBeDeleted[i]);
     }
-    // }
 
     addNodes(graphContainer, styledGraph);
     addLabels(graphContainer, styledGraph);
@@ -117,13 +119,19 @@ const PixiDraw = () => {
       // 对graphContainer中的所有元素进行初始化的放大缩小，并且调整分辨率
       for (let obj of graphContainer.children) {
         if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-          obj.resolution *= zoomFactor > 1 ? zoomFactor : 2;
+          if (obj.resolution * zoomFactor > 50)
+            obj.resolution = 50;
+          else if (obj.resolution * zoomFactor < 2) {
+            obj.resolution = 2;
+          } else {
+            obj.resolution *= zoomFactor;
+          }
         }
       }
     } else {
       for (let obj of graphContainer.children) {
         if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-          obj.resolution *= 2;
+          obj.resolution = 2;
         }
       }
     }
@@ -141,14 +149,20 @@ const PixiDraw = () => {
     let mousedown = false;
     let offsetX, offsetY;
     let mouseMoved = false;
-    divContainer.current.addEventListener("mousedown", function (e) {
+
+    divMouseDownHandler && divContainer.current.removeEventListener("mousedown", divMouseDownHandler);
+    divMouseMoveHandler && divContainer.current.removeEventListener("mousemove", divMouseMoveHandler);
+    divMouseupHandler && divContainer.current.removeEventListener("mouseup", divMouseupHandler);
+
+    divMouseDownHandler = (e) => {
       stopBubble(e);
       stopDefault(e);
       mousedown = true;
       offsetX = e.offsetX - graphContainer.x;
       offsetY = e.offsetY - graphContainer.y;
-    })
-    divContainer.current.addEventListener("mousemove", function (e) {
+    };
+
+    divMouseMoveHandler = (e) => {
       if (mousedown) {
         mouseMoved = true;
         stopBubble(e);
@@ -162,8 +176,9 @@ const PixiDraw = () => {
           mousedown = false;
         }
       }
-    })
-    divContainer.current.addEventListener("mouseup", function (e) {
+    };
+
+    divMouseupHandler = (e) => {
       stopBubble(e);
       stopDefault(e);
       mousedown = false;
@@ -179,13 +194,22 @@ const PixiDraw = () => {
       }
       mouseMoved = false;
 
-    })
+    };
+
+    divContainer.current.addEventListener("mousedown", divMouseDownHandler)
+    divContainer.current.addEventListener("mousemove", divMouseMoveHandler)
+    divContainer.current.addEventListener("mouseup", divMouseupHandler)
   }
 
   const addZoomEvent = (divContainer, graphContainer) => {
     // 滚轮事件
-    divContainer.current.addEventListener("mousewheel", function (event) {
+
+    divMouseWheelHandler && divContainer.current.removeEventListener("mousewheel", divMouseWheelHandler);
+
+    divMouseWheelHandler = (event) => {
       // event.wheelDelta > 0 放大， event.wheelDelta < 0 缩小
+      stopBubble(event);
+      stopDefault(event);
       if (event.wheelDelta > 0) {
         graphContainer.width *= 1.1;
         graphContainer.height *= 1.1;
@@ -197,7 +221,7 @@ const PixiDraw = () => {
 
         for (let obj of graphContainer.children) { // 文字分辨率
           if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-            obj.resolution *= 1.1;
+            obj.resolution = obj.resolution * 1.1 > 50 ? 50 : obj.resolution * 1.1;
           }
         }
       } else {
@@ -211,11 +235,13 @@ const PixiDraw = () => {
 
         for (let obj of graphContainer.children) {
           if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-            obj.resolution /= 1.1;
+            obj.resolution = obj.resolution / 1.1 < 2 ? 2 : obj.resolution / 1.1;
           }
         }
       }
-    })
+    }
+
+    divContainer.current.addEventListener("mousewheel", divMouseWheelHandler);
   }
 
   function addRoundRectClickEvent(graphContainer, roundBox, id) {
