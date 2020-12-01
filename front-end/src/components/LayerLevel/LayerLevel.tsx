@@ -150,7 +150,7 @@ const LayerLevel: React.FC = () => {
   useEffect(() => {
     if (!(nodeMap[selectedNodeId] instanceof LayerNodeImp)) return; // 不是layerNode
 
-    if (selectedNodeId.indexOf("dense_") !== -1) {
+    if (selectedNodeId.indexOf("dense") !== -1 || selectedNodeId.indexOf("Dense") !== -1) {
       let _childNodeId = FindChildNodeUnderLayerNode(nodeMap, selectedNodeId); // findChildNodeId(selectedNodeId);
       if (_childNodeId.length === 0) return;
       _childNodeId = _childNodeId.slice(0, 1); // 目前截取找出的第一个元素
