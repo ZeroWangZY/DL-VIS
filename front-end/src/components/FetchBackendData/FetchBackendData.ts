@@ -21,6 +21,7 @@ const fetchBackendData = () => {
 
     timer = setInterval(function fetch() {
       fetchMetadata({ graph_name: currentMSGraphName, mode: dataMode }).then((data) => {
+        if (data.data.message !== "success") return;
         const maxStep = data.data.data.max_step;
         const isTraining = data.data.data.is_training;
 
