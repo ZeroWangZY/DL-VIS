@@ -73,7 +73,7 @@ const PixiDraw = () => {
     if (!divContainer.current || !divContainer.current.clientWidth) return;
     divContainer.current.innerHTML = "";
     graphContainer = new PIXI.Container();
-    graphContainer.sortableChildren = true;
+    // graphContainer.sortableChildren = true;
     window.graphContainer = graphContainer;
 
     app = new PIXI.Application({
@@ -219,11 +219,11 @@ const PixiDraw = () => {
         graphContainer.x = 1.1 * (graphContainer.x - event.offsetX) + event.offsetX;
         graphContainer.y = 1.1 * (graphContainer.y - event.offsetY) + event.offsetY;
 
-        for (let obj of graphContainer.children) { // 文字分辨率
-          if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-            obj.resolution = obj.resolution * 1.1 > 50 ? 50 : obj.resolution * 1.1;
-          }
-        }
+        // for (let obj of graphContainer.children) { // 文字分辨率
+        //   if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
+        //     obj.resolution = obj.resolution * 1.1 > 50 ? 50 : obj.resolution * 1.1;
+        //   }
+        // }
       } else {
         graphContainer.width /= 1.1;
         graphContainer.height /= 1.1;
@@ -233,11 +233,11 @@ const PixiDraw = () => {
         graphContainer.x = (graphContainer.x - event.offsetX) / 1.1 + event.offsetX;
         graphContainer.y = (graphContainer.y - event.offsetY) / 1.1 + event.offsetY;
 
-        for (let obj of graphContainer.children) {
-          if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-            obj.resolution = obj.resolution / 1.1 < 2 ? 2 : obj.resolution / 1.1;
-          }
-        }
+        // for (let obj of graphContainer.children) {
+        //   if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
+        //     obj.resolution = obj.resolution / 1.1 < 2 ? 2 : obj.resolution / 1.1;
+        //   }
+        // }
       }
     }
 
@@ -299,7 +299,6 @@ const PixiDraw = () => {
           }
 
           let roundStoke = new PIXI.Graphics();
-          roundStoke.zIndex = roundBox.zIndex;
           roundStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
           roundStoke.beginFill(0x000000, 0);
           roundStoke.drawRoundedRect(0, 0, roundBox.width, roundBox.height, 5);
@@ -336,7 +335,6 @@ const PixiDraw = () => {
             d.style._ellipseX,
             d.style._ellipseY,
           ); // drawEllipse(x, y, width, height);
-          ellipse2.zIndex = idx;
           container.addChild(ellipse2);
 
           let ellipse1 = drawElippseCurve(
@@ -346,7 +344,6 @@ const PixiDraw = () => {
             d.style._ellipseX,
             d.style._ellipseY,
           ); // drawEllipse(x, y, width, height);
-          ellipse1.zIndex = idx;
           container.addChild(ellipse1);
         }
 
@@ -357,7 +354,6 @@ const PixiDraw = () => {
           d.style._ellipseX,
           d.style._ellipseY,
         ); // drawEllipse(x, y, width, height);
-        ellipse.zIndex = idx;
 
         let mousedown = false;
         let mouseChoose = false;
@@ -405,7 +401,6 @@ const PixiDraw = () => {
             ellipseStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
             ellipseStoke.beginFill(0x000000, 0); // 填充白色，透明度为0
             ellipseStoke.drawEllipse(d.style._gNodeTransX, d.style._gNodeTransY, ellipse.hitArea.width, ellipse.hitArea.height);
-            ellipseStoke.zIndex = ellipse.zIndex;
             ellipseStoke.endFill();
 
             handleClick(node.id);
@@ -425,7 +420,6 @@ const PixiDraw = () => {
               const dashCircle = new PIXI.Sprite(
                 loader.resources["dashCircle"].texture
               );
-              dashCircle.zIndex = 500001;
               dashCircle.width = d.style._ellipseY;
               dashCircle.height = d.style._ellipseY;
               dashCircle.x = d.style._gNodeTransX + d.style._ellipseY;
@@ -444,7 +438,6 @@ const PixiDraw = () => {
               const solidCircle = new PIXI.Sprite(
                 loader.resources["solidCircle"].texture
               );
-              solidCircle.zIndex = 500002;
               solidCircle.width = d.style._ellipseY;
               solidCircle.height = d.style._ellipseY;
               solidCircle.x = d.style._gNodeTransX - d.style._ellipseY * 2;
@@ -536,7 +529,6 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.zIndex = 500000;
         message.resolution = 1;
         message.anchor.x = 0;
 
@@ -552,7 +544,6 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.zIndex = 500000;
         message.resolution = 1;
 
         let textCanvasWidth = message.width;
@@ -576,7 +567,6 @@ const PixiDraw = () => {
               icon.width = iconSize;
               icon.height = iconSize;
               icon.resolution = 1;
-              icon.zIndex = 500000;
               icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
               icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
 
@@ -670,7 +660,6 @@ const PixiDraw = () => {
       // 圆角折线
       for (let i = 1; i < linkData.length; i++) {
         let line = new PIXI.Graphics();
-        line.zIndex = 500000;
         let lineColor;
         if (d.data.isModuleEdge)
           lineColor = 0xff931e;
@@ -704,7 +693,6 @@ const PixiDraw = () => {
           [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
 
           let corner = drawRoundCorner(end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
-          corner.zIndex = 500000;
           container.addChild(corner);
         }
 
@@ -717,7 +705,6 @@ const PixiDraw = () => {
           // 增加一个箭头
           end = linkData[i];
           const arrow = drawArrow(begin, end, 0x000000); //0x999999
-          arrow.zIndex = 500000;
           container.addChild(arrow);
         }
       }
@@ -749,7 +736,6 @@ const PixiDraw = () => {
         }
 
         const hoverEdge = new PIXI.Graphics();
-        hoverEdge.zIndex = 500000;
         hoverEdge.lineStyle(2, 0x00679f, 1);
         hoverEdge.moveTo(sourcePos.x, sourcePos.y);
         hoverEdge.lineTo(targetPos.x, targetPos.y);

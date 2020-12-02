@@ -71,8 +71,8 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
 
       roundBoxAgent.value = newRoundBox;
 
-      container.addChildAt(newRoundBox, 0);
-      container.sortChildren();
+      container.addChildAt(newRoundBox, initialZIndex);
+      // container.sortChildren();
     }
   })
   Object.defineProperty(roundBoxAgent, "myFillColor", {
