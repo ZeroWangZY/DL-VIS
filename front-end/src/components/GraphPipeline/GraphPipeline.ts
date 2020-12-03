@@ -61,7 +61,7 @@ export default function useGraphPipeline() {
 
   // ProcessedGraph --> VisGraph
   useEffect(() => {
-    if (!processedGraph) return;
+    if (!processedGraph || Object.keys( processedGraph.nodeMap).length===0 ) return;
 
     let vGraph = produceVisGraph(processedGraph, { isDiggingEdgeBundlingMode: true })
     const visGraphOptimizer = new VisGraphOptimizer()

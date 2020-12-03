@@ -412,40 +412,40 @@ const PixiDraw = () => {
 
         container.addChild(ellipse);
 
-        if (node.parameters.length !== 0) {
-          const loader = new PIXI.Loader();
-          loader
-            .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
-            .load(() => {
-              const dashCircle = new PIXI.Sprite(
-                loader.resources["dashCircle"].texture
-              );
-              dashCircle.width = d.style._ellipseY;
-              dashCircle.height = d.style._ellipseY;
-              dashCircle.x = d.style._gNodeTransX + d.style._ellipseY;
-              dashCircle.y = d.style._gNodeTransY + d.style._ellipseY - dashCircle.height / 2;
+        // if (node.parameters.length !== 0) {
+        //   const loader = new PIXI.Loader();
+        //   loader
+        //     .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
+        //     .load(() => {
+        //       const dashCircle = new PIXI.Sprite(
+        //         loader.resources["dashCircle"].texture
+        //       );
+        //       dashCircle.width = d.style._ellipseY;
+        //       dashCircle.height = d.style._ellipseY;
+        //       dashCircle.x = d.style._gNodeTransX + d.style._ellipseY;
+        //       dashCircle.y = d.style._gNodeTransY + d.style._ellipseY - dashCircle.height / 2;
 
-              container.addChild(dashCircle);
-            })
-        }
+        //       container.addChild(dashCircle);
+        //     })
+        // }
 
-        if (node.constVals.length !== 0) {
-          const loader = new PIXI.Loader();
+        // if (node.constVals.length !== 0) {
+        //   const loader = new PIXI.Loader();
 
-          loader
-            .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
-            .load(() => {
-              const solidCircle = new PIXI.Sprite(
-                loader.resources["solidCircle"].texture
-              );
-              solidCircle.width = d.style._ellipseY;
-              solidCircle.height = d.style._ellipseY;
-              solidCircle.x = d.style._gNodeTransX - d.style._ellipseY * 2;
-              solidCircle.y = d.style._gNodeTransY + d.style._ellipseY - solidCircle.height / 2;
+        //   loader
+        //     .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
+        //     .load(() => {
+        //       const solidCircle = new PIXI.Sprite(
+        //         loader.resources["solidCircle"].texture
+        //       );
+        //       solidCircle.width = d.style._ellipseY;
+        //       solidCircle.height = d.style._ellipseY;
+        //       solidCircle.x = d.style._gNodeTransX - d.style._ellipseY * 2;
+        //       solidCircle.y = d.style._gNodeTransY + d.style._ellipseY - solidCircle.height / 2;
 
-              container.addChild(solidCircle);
-            })
-        }
+        //       container.addChild(solidCircle);
+        //     })
+        // }
       } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
         const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
           yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
