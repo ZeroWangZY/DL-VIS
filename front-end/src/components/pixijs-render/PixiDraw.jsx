@@ -111,30 +111,11 @@ const PixiDraw = () => {
     }
 
     addNodes(graphContainer, styledGraph);
-    addLabels(graphContainer, styledGraph);
+    addLabels(graphContainer, styledGraph, zoomFactor);
     addLines(graphContainer, styledGraph);
     addPorts(graphContainer, styledGraph);
 
-    if (zoomFactor !== 1) {
-      // 对graphContainer中的所有元素进行初始化的放大缩小，并且调整分辨率
-      for (let obj of graphContainer.children) {
-        if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-          if (obj.resolution * zoomFactor > 50)
-            obj.resolution = 50;
-          else if (obj.resolution * zoomFactor < 2) {
-            obj.resolution = 2;
-          } else {
-            obj.resolution *= zoomFactor;
-          }
-        }
-      }
-    } else {
-      for (let obj of graphContainer.children) {
-        if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-          obj.resolution = 2;
-        }
-      }
-    }
+
 
     addDragGraphEvent(divContainer, graphContainer);
     zoomInTimes = 0;
@@ -323,6 +304,8 @@ const PixiDraw = () => {
 
   const addNodes = (container, styledGraph) => {
     const newRectNodeInfo = new Map();
+    const littleCircleArr = []; // [{style: 0 for solid, 1 for dash; x: ,y: ,size:}]
+
     styledGraph.nodeStyles.forEach((d, idx) => {
       const node = d.data;
       if (node.type === NodeType.OPERATION) {
@@ -412,40 +395,25 @@ const PixiDraw = () => {
 
         container.addChild(ellipse);
 
-        // if (node.parameters.length !== 0) {
-        //   const loader = new PIXI.Loader();
-        //   loader
-        //     .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
-        //     .load(() => {
-        //       const dashCircle = new PIXI.Sprite(
-        //         loader.resources["dashCircle"].texture
-        //       );
-        //       dashCircle.width = d.style._ellipseY;
-        //       dashCircle.height = d.style._ellipseY;
-        //       dashCircle.x = d.style._gNodeTransX + d.style._ellipseY;
-        //       dashCircle.y = d.style._gNodeTransY + d.style._ellipseY - dashCircle.height / 2;
+        if (node.parameters.length !== 0) {
+          // [{style: 0 for solid, 1 for dash; x: ,y: ,size:}]
+          littleCircleArr.push({
+            style: 1,
+            x: d.style._gNodeTransX + d.style._ellipseY,
+            y: d.style._gNodeTransY + d.style._ellipseY - d.style._ellipseY / 2,
+            size: d.style._ellipseY
+          });
+        }
 
-        //       container.addChild(dashCircle);
-        //     })
-        // }
-
-        // if (node.constVals.length !== 0) {
-        //   const loader = new PIXI.Loader();
-
-        //   loader
-        //     .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
-        //     .load(() => {
-        //       const solidCircle = new PIXI.Sprite(
-        //         loader.resources["solidCircle"].texture
-        //       );
-        //       solidCircle.width = d.style._ellipseY;
-        //       solidCircle.height = d.style._ellipseY;
-        //       solidCircle.x = d.style._gNodeTransX - d.style._ellipseY * 2;
-        //       solidCircle.y = d.style._gNodeTransY + d.style._ellipseY - solidCircle.height / 2;
-
-        //       container.addChild(solidCircle);
-        //     })
-        // }
+        if (node.constVals.length !== 0) {
+          // [{style: 0 for solid, 1 for dash; x: ,y: ,size:}]
+          littleCircleArr.push({
+            style: 0,
+            x: d.style._gNodeTransX - d.style._ellipseY * 2,
+            y: d.style._gNodeTransY + d.style._ellipseY - d.style._ellipseY / 2,
+            size: d.style._ellipseY
+          });
+        }
       } else if (node.type === NodeType.GROUP || node.type === NodeType.DATA) {
         const xPos = d.style._gNodeTransX - d.style._rectWidth / 2,
           yPos = d.style._gNodeTransY - d.style._rectHeight / 2,
@@ -515,9 +483,40 @@ const PixiDraw = () => {
       }
     }
     rectNodeInfo = newRectNodeInfo;
+
+    // 绘制小圆形
+    const loader = new PIXI.Loader();
+    loader
+      .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
+      .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
+      .load(() => {
+
+        for (let circle of littleCircleArr) {
+          if (circle.style === 1) {
+            const dashCircle = new PIXI.Sprite(
+              loader.resources["dashCircle"].texture
+            );
+            dashCircle.width = circle.size;
+            dashCircle.height = circle.size;
+            dashCircle.x = circle.x;
+            dashCircle.y = circle.y;
+            container.addChild(dashCircle);
+          } else if (circle.style === 0) {
+            const solidCircle = new PIXI.Sprite(
+              loader.resources["solidCircle"].texture
+            );
+            solidCircle.width = circle.size;
+            solidCircle.height = circle.size;
+            solidCircle.x = circle.x;
+            solidCircle.y = circle.y;
+            container.addChild(solidCircle);
+          }
+        }
+
+      })
   }
 
-  const addLabels = (container, styledGraph) => {
+  const addLabels = (container, styledGraph, zoomFactor) => {
     styledGraph.nodeStyles.forEach((d, i) => {
       const node = d.data;
       if (node.type === NodeType.OPERATION) {
@@ -529,7 +528,8 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.resolution = 1;
+        // message.resolution = 1;
+        adJustResolution(message, zoomFactor);
         message.anchor.x = 0;
 
         let textCanvasWidth = message.width;
@@ -544,7 +544,9 @@ const PixiDraw = () => {
         })
         let text = d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "");
         let message = new PIXI.Text(text, style);
-        message.resolution = 1;
+        // message.resolution = 1;
+        adJustResolution(message, zoomFactor);
+
 
         let textCanvasWidth = message.width;
         if (node.type === NodeType.LAYER) {
@@ -566,7 +568,8 @@ const PixiDraw = () => {
               const icon = new PIXI.Sprite(loader.resources["icon"].texture);
               icon.width = iconSize;
               icon.height = iconSize;
-              icon.resolution = 1;
+              // icon.resolution = 1;
+              adJustResolution(icon, zoomFactor);
               icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
               icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
 
@@ -580,6 +583,20 @@ const PixiDraw = () => {
         }
       }
     })
+
+    function adJustResolution(obj, zoomFactor) {
+      if (zoomFactor !== 1) {
+        if (obj.resolution * zoomFactor > 50)
+          obj.resolution = 50;
+        else if (obj.resolution * zoomFactor < 2) {
+          obj.resolution = 2;
+        } else {
+          obj.resolution *= zoomFactor;
+        }
+      } else {
+        obj.resolution = 2;
+      }
+    }
   }
 
   const drawRoundCorner = (beginPos, endPos, r, direction, width, color, alpha) => { // direction分为 rd ul .....
