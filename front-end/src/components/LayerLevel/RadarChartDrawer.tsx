@@ -351,22 +351,36 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         .attr("cy", function (d: any) { return d.y; })
     });
 
-    const forceBrush = d3.select('g.forceDirectedGraphContainer')
-      .append('g')
-      .attr('class', 'forceBrush')
-      .attr('transform', 'translate(-100, -100)')
-      .call(brush)
-      .call((g) => {
-        g.select('.selection').on('contextmenu', () => {
-          setIsShowPopover(true);
-          const e = d3.event;
-          e.preventDefault();
-          setLeft(e.pageX);
-          setTop(e.pageY);
-        })
-      });
+    let keyDown = false;
+    document.addEventListener("keydown", event => {
+      if (!keyDown && event.code === "ControlLeft") {
+        const forceBrush = d3.select('g.forceDirectedGraphContainer')
+          .append('g')
+          .attr('class', 'forceBrush')
+          .attr('transform', 'translate(-100, -100)')
+          .call(brush)
+          .call((g) => {
+            g.select('.selection').on('contextmenu', () => {
+              setIsShowPopover(true);
+              const e = d3.event;
+              e.preventDefault();
+              setLeft(e.pageX);
+              setTop(e.pageY);
+            })
+          });
 
-    forceBrush.select('rect.overlay').attr('cursor', 'default');
+        forceBrush.select('rect.overlay').attr('cursor', 'default');
+        keyDown = true;
+      }
+    });
+
+    document.addEventListener("keyup", event => {
+      if (event.isComposing || event.code === "ControlLeft") {
+        keyDown = false;
+        d3.select('g.forceDirectedGraphContainer').select("g.forceBrush").remove();
+      }
+    });
+
   };
 
   const drawRadarChart = (rawData, margin, width, height) => {
@@ -1000,7 +1014,7 @@ const RadarChartDrawer: React.FC<Props> = (props: Props) => {
         completeLayerTypeSet.add('ALL');
         const labelsSet = new Set<number>();
 
-        for(let d of collectionDataSet) {
+        for (let d of collectionDataSet) {
           completeLayerTypeSet.add((d as any).layerType);
           labelsSet.add((d as any).label);
         }
