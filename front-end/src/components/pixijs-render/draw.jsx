@@ -71,7 +71,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
 
       roundBoxAgent.value = newRoundBox;
 
-      container.addChildAt(newRoundBox, initialZIndex);
+      container.addChildAt(newRoundBox, Math.min(initialZIndex, container.children.length));
       // container.sortChildren();
     }
   })
