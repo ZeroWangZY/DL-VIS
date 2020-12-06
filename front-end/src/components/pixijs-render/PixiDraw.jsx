@@ -110,7 +110,9 @@ const PixiDraw = () => {
       graphContainer.removeChildAt(indexToBeDeleted[i]);
     }
 
-    addNodes(graphContainer, styledGraph);
+    const clearControl = { toBeClear: true };
+
+    addNodes(graphContainer, styledGraph, clearControl);
     addLabels(graphContainer, styledGraph, zoomFactor);
     addLines(graphContainer, styledGraph);
     addPorts(graphContainer, styledGraph);
@@ -302,7 +304,7 @@ const PixiDraw = () => {
     }
   }
 
-  const addNodes = (container, styledGraph) => {
+  const addNodes = (container, styledGraph, clearControl) => {
     const newRectNodeInfo = new Map();
     const littleCircleArr = []; // [{style: 0 for solid, 1 for dash; x: ,y: ,size:}]
 
@@ -317,6 +319,7 @@ const PixiDraw = () => {
             d.style._gNodeTransY + 6,
             d.style._ellipseX,
             d.style._ellipseY,
+            clearControl
           ); // drawEllipse(x, y, width, height);
           container.addChild(ellipse2);
 
@@ -326,6 +329,7 @@ const PixiDraw = () => {
             d.style._gNodeTransY + 3,
             d.style._ellipseX,
             d.style._ellipseY,
+            clearControl
           ); // drawEllipse(x, y, width, height);
           container.addChild(ellipse1);
         }
@@ -336,7 +340,9 @@ const PixiDraw = () => {
           d.style._gNodeTransY,
           d.style._ellipseX,
           d.style._ellipseY,
+          clearControl
         ); // drawEllipse(x, y, width, height);
+        window.ellipse = ellipse;
 
         let mousedown = false;
         let mouseChoose = false;

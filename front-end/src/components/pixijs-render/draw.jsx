@@ -7,10 +7,16 @@ import { set } from "d3";
 import { fetchNodeLineDataBlueNoiceSampling } from "../../api/layerlevel";
 
 let reuseRoundRect = new PIXI.Graphics();
-// let reuseRoundRectGeometry = reuseRoundRect.geometry;
+let reuseEllipse = new PIXI.Graphics();
 
-export const drawElippseCurve = (id, x, y, width, height) => {
-  let ellipse = new PIXI.Graphics();
+export const drawElippseCurve = (id, x, y, width, height, clearControl) => {
+  if (clearControl.toBeClear) {
+    reuseEllipse.clear();
+    clearControl.toBeClear = false;
+  }
+  let ellipse = new PIXI.Graphics(reuseEllipse.geometry);
+  reuseEllipse = ellipse;
+
   ellipse.lineStyle(1, 0x000000, 1); // width color alpha
   ellipse.beginFill(0xFFFFFF, 1); // 填充白色，透明度为0
   ellipse.drawEllipse(x, y, width, height); // drawEllipse(x, y, width, height);
@@ -27,6 +33,8 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
   let roundBoxAgent = {};
 
   let roundBox = new PIXI.Graphics();
+  // let roundBox = new PIXI.Graphics(reuseRoundRect.geometry);
+  // reuseRoundRect = roundBox;
 
   roundBox.lineStyle(1, 0x000000, 1); // width color alpha
   roundBox.beginFill(color, alpha); // 
