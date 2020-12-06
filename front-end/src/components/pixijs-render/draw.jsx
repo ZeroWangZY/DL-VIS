@@ -6,6 +6,9 @@ import * as PIXI from "pixi.js";
 import { set } from "d3";
 import { fetchNodeLineDataBlueNoiceSampling } from "../../api/layerlevel";
 
+let reuseRoundRect = new PIXI.Graphics();
+// let reuseRoundRectGeometry = reuseRoundRect.geometry;
+
 export const drawElippseCurve = (id, x, y, width, height) => {
   let ellipse = new PIXI.Graphics();
   ellipse.lineStyle(1, 0x000000, 1); // width color alpha
@@ -24,8 +27,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
   let roundBoxAgent = {};
 
   let roundBox = new PIXI.Graphics();
-  window.roundBox = roundBox;
-  roundBox.zIndex = zIndex;
+
   roundBox.lineStyle(1, 0x000000, 1); // width color alpha
   roundBox.beginFill(color, alpha); // 
   roundBox.myRect = roundBox.drawRoundedRect(0, 0, width, height, cornerRadius)
@@ -46,20 +48,26 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
   let initialZIndex = zIndex;
   let initialFillColor = color;
   let initialFillOpacity = alpha;
+
+  const pool = [];
   Object.defineProperty(roundBoxAgent, "myWidth", {
     get: function () {
       return initialWidth;
     },
     set: function (val) {
       initialWidth = val;
-      container.removeChild(roundBoxAgent.value)
-      let newRoundBox = new PIXI.Graphics();
-      newRoundBox.zIndex = initialZIndex;
+
+      pool.push(roundBoxAgent.value); // 待删除child
+      roundBoxAgent.value.clear();
+      container.removeChild(roundBoxAgent.value);
+
+      let newRoundBox = new PIXI.Graphics(pool[0].geometry);
+      pool.pop();
+
       newRoundBox.lineStyle(1, 0x000000, 1); // width color alpha
       newRoundBox.beginFill(initialFillColor, initialFillOpacity); // 填充白色
 
       newRoundBox.myRect = newRoundBox.drawRoundedRect(0, 0, val, initialHeight, cornerRadius);
-
       newRoundBox.x = initialX;
       newRoundBox.y = initialY;
       newRoundBox.endFill();
@@ -74,7 +82,8 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
       container.addChildAt(newRoundBox, Math.min(initialZIndex, container.children.length));
       // container.sortChildren();
     }
-  })
+  });
+
   Object.defineProperty(roundBoxAgent, "myFillColor", {
     get: function () {
       return initialFillColor;
@@ -82,7 +91,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
     set: function (val) {
       initialFillColor = val;
     }
-  })
+  });
 
   Object.defineProperty(roundBoxAgent, "myFillOpacity", {
     get: function () {
@@ -91,7 +100,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
     set: function (val) {
       initialFillOpacity = val;
     }
-  })
+  });
 
 
   Object.defineProperty(roundBoxAgent, "myZIndex", {
@@ -101,7 +110,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
     set: function (val) {
       initialZIndex = Math.round(val);
     }
-  })
+  });
 
   Object.defineProperty(roundBoxAgent, "myHeight", {
     get: function () {
@@ -110,7 +119,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
     set: function (val) {
       initialHeight = val;
     }
-  })
+  });
 
   Object.defineProperty(roundBoxAgent, "x", {
     get: function () {
@@ -119,7 +128,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
     set: function (val) {
       initialX = val;
     }
-  })
+  });
 
   Object.defineProperty(roundBoxAgent, "y", {
     get: function () {
@@ -128,7 +137,7 @@ export const drawRoundRect = (id, x, y, color, alpha, width, height, cornerRadiu
     set: function (val) {
       initialY = val;
     }
-  })
+  });
 
   roundBoxAgent.value = roundBox;
   return roundBoxAgent;
