@@ -247,7 +247,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           rx="5"
           ry="5"
           transform={`translate(-${rectWidth / 2}, -${rectHeight / 2})`}
-          fillOpacity={node.expand ? 0 : 1}
+          // fillOpacity={node.expand ? 0 : 1}
           pointerEvents="visibleStroke"
         ></rect>
       );
@@ -384,19 +384,29 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
 
                   {!showLineChart(d.data) &&
                     d.data.type !== NodeType.OPERATION && (
-                      <foreignObject
-                        x={-d.style.rectWidth / 2}
-                        y={-d.style.rectHeight / 2}
+                      <text
+                      dominantBaseline={"baseline"}
+                      //  x={-d.style.rectWidth / 2}
+                        y={-d.style.rectHeight / 2 + 20}
                         width={d.style.rectWidth}
                         height={d.style.rectHeight}
-                      >
-                        <div className="label">
-                          <text>
-                            {/* 增加一层text是为了让伪类中的before生效；否则不展示layerNode折线图的时候，图标不会显示 */}
-                            {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
-                          </text>
-                        </div>
-                      </foreignObject>
+                      // style={{ fontSize: 10 }}
+                    >
+                       {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                    </text>
+                      // <foreignObject
+                      //   x={-d.style.rectWidth / 2}
+                      //   y={-d.style.rectHeight / 2}
+                      //   width={d.style.rectWidth}
+                      //   height={d.style.rectHeight}
+                      // >
+                      //   <div className="label">
+                      //     <text>
+                      //       {/* 增加一层text是为了让伪类中的before生效；否则不展示layerNode折线图的时候，图标不会显示 */}
+                      //       {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                      //     </text>
+                      //   </div>
+                      // </foreignObject>
                     )}
                 </g>
               </g>
