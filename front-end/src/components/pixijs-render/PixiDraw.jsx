@@ -19,6 +19,8 @@ import { TweenMax } from "gsap/all"
 import { zip, zoom } from "d3";
 import { Icon } from "@material-ui/core";
 
+window.PIXI = PIXI;
+
 const toggleExpanded = (id) => {
   modifyProcessedGraph(ProcessedGraphModificationType.TOGGLE_EXPANDED, {
     nodeId: id,
@@ -304,6 +306,63 @@ const PixiDraw = () => {
     }
   }
 
+  function addEllipseClickEvent(container, ellipse, id) {
+    let mousedown = false;
+    let mouseChoose = false;
+    let offsetX, offsetY;
+
+    ellipse.mousedown = function (e) {
+      stopBubble(e);
+      stopDefault(e);
+      mousedown = true;
+      mouseChoose = true;
+      offsetX = e.data.global.x - container.x;
+      offsetY = e.data.global.y - container.y;
+    }
+
+    ellipse.mousemove = function (e) {
+      if (mousedown) {
+        mouseChoose = false;
+
+        stopBubble(e);
+        stopDefault(e);
+        container.x = (e.data.global.x - offsetX); // 偏移
+        container.y = (e.data.global.y - offsetY);
+        if (e.data.global.x <= 2 ||
+          e.data.global.y <= 2 ||
+          divContainer.current.clientWidth - e.data.global.x <= 2 ||
+          divContainer.current.clientHeight - e.data.global.y <= 2) { // 设置一定的界限，
+          mousedown = false;
+        }
+
+      }
+    }
+
+    ellipse.mouseup = function (e) {
+      stopBubble(e);
+      stopDefault(e);
+      mousedown = false;
+      if (mouseChoose) {
+        // 先将之前选择的图形的tint还原
+        if (strokeLine) {
+          container.removeChild(strokeLine);
+          strokeLine = null;
+        }
+
+        let ellipseStoke = new PIXI.Graphics();
+        ellipseStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
+        ellipseStoke.beginFill(0x000000, 0); // 填充白色，透明度为0
+        ellipseStoke.drawEllipse(d.style._gNodeTransX, d.style._gNodeTransY, ellipse.hitArea.width, ellipse.hitArea.height);
+        ellipseStoke.endFill();
+
+        handleClick(node.id);
+
+        strokeLine = ellipseStoke;
+        container.addChild(ellipseStoke);
+      }
+    }
+  }
+
   const addNodes = (container, styledGraph, clearControl) => {
     const newRectNodeInfo = new Map();
     const littleCircleArr = []; // [{style: 0 for solid, 1 for dash; x: ,y: ,size:}]
@@ -344,60 +403,7 @@ const PixiDraw = () => {
         ); // drawEllipse(x, y, width, height);
         window.ellipse = ellipse;
 
-        let mousedown = false;
-        let mouseChoose = false;
-        let offsetX, offsetY;
-
-        ellipse.mousedown = function (e) {
-          stopBubble(e);
-          stopDefault(e);
-          mousedown = true;
-          mouseChoose = true;
-          offsetX = e.data.global.x - container.x;
-          offsetY = e.data.global.y - container.y;
-        }
-
-        ellipse.mousemove = function (e) {
-          if (mousedown) {
-            mouseChoose = false;
-
-            stopBubble(e);
-            stopDefault(e);
-            container.x = (e.data.global.x - offsetX); // 偏移
-            container.y = (e.data.global.y - offsetY);
-            if (e.data.global.x <= 2 ||
-              e.data.global.y <= 2 ||
-              divContainer.current.clientWidth - e.data.global.x <= 2 ||
-              divContainer.current.clientHeight - e.data.global.y <= 2) { // 设置一定的界限，
-              mousedown = false;
-            }
-
-          }
-        }
-
-        ellipse.mouseup = function (e) {
-          stopBubble(e);
-          stopDefault(e);
-          mousedown = false;
-          if (mouseChoose) {
-            // 先将之前选择的图形的tint还原
-            if (strokeLine) {
-              graphContainer.removeChild(strokeLine);
-              strokeLine = null;
-            }
-
-            let ellipseStoke = new PIXI.Graphics();
-            ellipseStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
-            ellipseStoke.beginFill(0x000000, 0); // 填充白色，透明度为0
-            ellipseStoke.drawEllipse(d.style._gNodeTransX, d.style._gNodeTransY, ellipse.hitArea.width, ellipse.hitArea.height);
-            ellipseStoke.endFill();
-
-            handleClick(node.id);
-
-            strokeLine = ellipseStoke;
-            graphContainer.addChild(ellipseStoke);
-          }
-        }
+        addEllipseClickEvent(container, ellipse, node.id);
 
         container.addChild(ellipse);
 
@@ -676,16 +682,19 @@ const PixiDraw = () => {
 
   const addLines = (container, styledGraph) => {
     const roundR = 5; // 圆角半径
+    let line = new PIXI.Graphics();
+
     styledGraph.linkStyles.forEach((d, i) => {
       const linkData = d.data.linkData;
       const lineStrokeWidth = d.data.lineStrokeWidth;
 
       // 圆角折线
       for (let i = 1; i < linkData.length; i++) {
-        let line = new PIXI.Graphics();
         let lineColor;
-        if (d.data.isModuleEdge)
+        if (d.data.isModuleEdge) {
           lineColor = 0xff931e;
+          window.line = line;
+        }
         else
           lineColor = 0x000000;
 
