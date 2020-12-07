@@ -468,7 +468,7 @@ export const generateNode = (
         ? 20
         : node.type === NodeType.LAYER && fixedNodeHeight
           ? LAYERNODESIZEINDIAGNOSISMODE.height
-          : 40 + 4 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
+          : 40 + 1.2 * Math.floor(Math.sqrt(leafNum)), //简单子节点数量编码
     labels: genLabel(node.id + "_label", node, needToSetMinWidth),
     isStacked: node instanceof StackedOpNodeImp,
   };

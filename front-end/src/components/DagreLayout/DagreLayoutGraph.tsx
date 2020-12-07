@@ -778,7 +778,7 @@ const DagreLayoutGraph: React.FC<{ iteration: number }> = (props: { iteration })
 
   useEffect(() => { // rect拖动后，改变outputSVG的起始位置。
     const svg = d3.select(svgRef.current);
-    svg.call(d3.zoom().transform, d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k))
+    // svg.call(d3.zoom().transform, d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k))
   }, [transform])
 
   useEffect(() => {
