@@ -14,6 +14,9 @@ import {
   useGlobalConfigurations
 } from "../../../store/global-configuration";
 
+let bottomVisibility = false;
+let rightVisibility = false;
+
 export default () => {
   const [fixedHeight, setFixedHeight] = useState("360px");
   const { conceptualGraphMode, webGLMode, pixiJSMode } = useGlobalConfigurations();
@@ -31,6 +34,7 @@ export default () => {
                 className="expand-btn"
                 onClick={visibility ? onHide : onShow}
               >
+                {bottomVisibility = visibility}
                 {visibility ? (
                   <img
                     src={process.env.PUBLIC_URL + "/assets/down.svg"}
@@ -59,7 +63,9 @@ export default () => {
                   {/* {!webGLMode && <ELKLayout />}
                   {webGLMode && <RenderGraph />} */}
                   {!pixiJSMode && <ELKLayout />}
-                  {pixiJSMode && <PixiDraw />}
+                  {pixiJSMode && <PixiDraw
+                    bottomVisibility={bottomVisibility}
+                    rightVisibility={rightVisibility} />}
                 </Route>
               </Switch>
             )}
@@ -69,6 +75,7 @@ export default () => {
                   className="expand-btn"
                   onClick={visibility ? onHide : onShow}
                 >
+                  {rightVisibility = visibility}
                   {visibility ? (
                     <img
                       src={process.env.PUBLIC_URL + "/assets/right.svg"}

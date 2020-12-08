@@ -56,7 +56,8 @@ function stopDefault(e) {
   return false;
 }
 
-const PixiDraw = () => {
+const PixiDraw = (props) => {
+  const { bottomVisibility, rightVisibility } = props;
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
   const maxLabelLength = 10;
@@ -70,6 +71,12 @@ const PixiDraw = () => {
         id
       );
   };
+
+  function resize() {
+    const parent = divContainer.current;
+    if (parent && app)
+      app.renderer.resize(parent.clientWidth, parent.clientHeight);
+  }
 
   useEffect(() => { // 初始化
     if (!divContainer.current || !divContainer.current.clientWidth) return;
@@ -90,18 +97,17 @@ const PixiDraw = () => {
 
     window.addEventListener('resize', resize);
     // Resize function window
-    function resize() {
-      const parent = divContainer.current;
-      if (parent)
-        app.renderer.resize(parent.clientWidth, parent.clientHeight);
-    }
     resize();
   }, []); // 初始化
 
   useEffect(() => {
+    resize();
+  }, [bottomVisibility, rightVisibility])
+
+  useEffect(() => {
     if (!styledGraph || styledGraph.nodeStyles.length === 0) return;
 
-    let indexToBeDeleted = [];
+    let indexToBeDeleted = []; // 删除所有非矩形矩形， 不用的矩形由addNodes函数的末尾处理
     for (let i = 0; i < graphContainer.children.length; i++) {
       let obj = graphContainer.children[i];
       if (!obj.hitArea || !(obj.hitArea instanceof PIXI.Rectangle)) {
@@ -118,8 +124,6 @@ const PixiDraw = () => {
     addLabels(graphContainer, styledGraph, zoomFactor);
     addLines(graphContainer, styledGraph);
     addPorts(graphContainer, styledGraph);
-
-
 
     addDragGraphEvent(divContainer, graphContainer);
     zoomInTimes = 0;
@@ -306,63 +310,6 @@ const PixiDraw = () => {
     }
   }
 
-  function addEllipseClickEvent(container, ellipse, id) {
-    let mousedown = false;
-    let mouseChoose = false;
-    let offsetX, offsetY;
-
-    ellipse.mousedown = function (e) {
-      stopBubble(e);
-      stopDefault(e);
-      mousedown = true;
-      mouseChoose = true;
-      offsetX = e.data.global.x - container.x;
-      offsetY = e.data.global.y - container.y;
-    }
-
-    ellipse.mousemove = function (e) {
-      if (mousedown) {
-        mouseChoose = false;
-
-        stopBubble(e);
-        stopDefault(e);
-        container.x = (e.data.global.x - offsetX); // 偏移
-        container.y = (e.data.global.y - offsetY);
-        if (e.data.global.x <= 2 ||
-          e.data.global.y <= 2 ||
-          divContainer.current.clientWidth - e.data.global.x <= 2 ||
-          divContainer.current.clientHeight - e.data.global.y <= 2) { // 设置一定的界限，
-          mousedown = false;
-        }
-
-      }
-    }
-
-    ellipse.mouseup = function (e) {
-      stopBubble(e);
-      stopDefault(e);
-      mousedown = false;
-      if (mouseChoose) {
-        // 先将之前选择的图形的tint还原
-        if (strokeLine) {
-          container.removeChild(strokeLine);
-          strokeLine = null;
-        }
-
-        let ellipseStoke = new PIXI.Graphics();
-        ellipseStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
-        ellipseStoke.beginFill(0x000000, 0); // 填充白色，透明度为0
-        ellipseStoke.drawEllipse(d.style._gNodeTransX, d.style._gNodeTransY, ellipse.hitArea.width, ellipse.hitArea.height);
-        ellipseStoke.endFill();
-
-        handleClick(node.id);
-
-        strokeLine = ellipseStoke;
-        container.addChild(ellipseStoke);
-      }
-    }
-  }
-
   const addNodes = (container, styledGraph, clearControl) => {
     const newRectNodeInfo = new Map();
     const littleCircleArr = []; // [{style: 0 for solid, 1 for dash; x: ,y: ,size:}]
@@ -403,7 +350,60 @@ const PixiDraw = () => {
         ); // drawEllipse(x, y, width, height);
         window.ellipse = ellipse;
 
-        addEllipseClickEvent(container, ellipse, node.id);
+        let mousedown = false;
+        let mouseChoose = false;
+        let offsetX, offsetY;
+
+        ellipse.mousedown = function (e) {
+          stopBubble(e);
+          stopDefault(e);
+          mousedown = true;
+          mouseChoose = true;
+          offsetX = e.data.global.x - container.x;
+          offsetY = e.data.global.y - container.y;
+        }
+
+        ellipse.mousemove = function (e) {
+          if (mousedown) {
+            mouseChoose = false;
+
+            stopBubble(e);
+            stopDefault(e);
+            container.x = (e.data.global.x - offsetX); // 偏移
+            container.y = (e.data.global.y - offsetY);
+            if (e.data.global.x <= 2 ||
+              e.data.global.y <= 2 ||
+              divContainer.current.clientWidth - e.data.global.x <= 2 ||
+              divContainer.current.clientHeight - e.data.global.y <= 2) { // 设置一定的界限，
+              mousedown = false;
+            }
+
+          }
+        }
+
+        ellipse.mouseup = function (e) {
+          stopBubble(e);
+          stopDefault(e);
+          mousedown = false;
+          if (mouseChoose) {
+            // 先将之前选择的图形的tint还原
+            if (strokeLine) {
+              container.removeChild(strokeLine);
+              strokeLine = null;
+            }
+
+            let ellipseStoke = new PIXI.Graphics();
+            ellipseStoke.lineStyle(3, 0xc7000b, 1); // width color alpha
+            ellipseStoke.beginFill(0x000000, 0); // 填充白色，透明度为0
+            ellipseStoke.drawEllipse(d.style._gNodeTransX, d.style._gNodeTransY, ellipse.hitArea.width, ellipse.hitArea.height);
+            ellipseStoke.endFill();
+
+            handleClick(node.id);
+
+            strokeLine = ellipseStoke;
+            container.addChild(ellipseStoke);
+          }
+        }
 
         container.addChild(ellipse);
 
@@ -611,7 +611,7 @@ const PixiDraw = () => {
     }
   }
 
-  const drawRoundCorner = (beginPos, endPos, r, direction, width, color, alpha) => { // direction分为 rd ul .....
+  const drawRoundCorner = (bezier, beginPos, endPos, r, direction, width, color, alpha) => { // direction分为 rd ul .....
     // 首先将pos.x较小的作为起点
     let begin, end;
     if (beginPos.x < endPos.x) {
@@ -622,29 +622,36 @@ const PixiDraw = () => {
       end = beginPos;
     }
 
-    const bezier = new PIXI.Graphics();
+    // const bezier = new PIXI.Graphics();
     bezier.lineStyle(width, color, alpha);
 
     if (direction === "rd" || direction === "ul") { // 左上 -> 右下
-      bezier.moveTo(0 - 1, 0); // 为了避免圆角与折线之间的间隙，所以，圆角向前和向后多占用一个像素的位置
-      bezier.quadraticCurveTo(r, 0, r, r + 1);
-      bezier.position.x = begin.x; // 第一象限圆弧，中点在起始点
-      bezier.position.y = begin.y;
+      let offsetX = begin.x, offsetY = begin.y;
+      bezier.moveTo(offsetX + 0 - 1, offsetY + 0); // 为了避免圆角与折线之间的间隙，所以，圆角向前和向后多占用一个像素的位置
+      bezier.quadraticCurveTo(offsetX + r, offsetY + 0, offsetX + r, offsetY + r + 1);
+      // bezier.position.x = begin.x; // 第一象限圆弧，中点在起始点
+      // bezier.position.y = begin.y;
     } else if (direction === "dl" || direction === "ru") {
-      bezier.moveTo(0 - 1, r);
-      bezier.quadraticCurveTo(r, r, r, 0 - 1);
-      bezier.position.x = begin.x; // 第二象限圆弧
-      bezier.position.y = begin.y - r;
+      let offsetX = begin.x, offsetY = begin.y - r;
+
+      bezier.moveTo(offsetX + 0 - 1, offsetY + r);
+      bezier.quadraticCurveTo(offsetX + r, offsetY + r, offsetX + r, offsetY + 0 - 1);
+      // bezier.position.x = begin.x; // 第二象限圆弧
+      // bezier.position.y = begin.y - r;
     } else if (direction === "lu" || direction === "dr") {
-      bezier.moveTo(0, 0 - 1);
-      bezier.quadraticCurveTo(0, r, r + 1, r);
-      bezier.position.x = begin.x;
-      bezier.position.y = begin.y;
+      let offsetX = begin.x, offsetY = begin.y;
+
+      bezier.moveTo(offsetX + 0, offsetY + 0 - 1);
+      bezier.quadraticCurveTo(offsetX + 0, offsetY + r, offsetX + r + 1, offsetY + r);
+      // bezier.position.x = begin.x;
+      // bezier.position.y = begin.y;
     } else if (direction === "ur" || direction === "ld") {
-      bezier.moveTo(0, r + 1);
-      bezier.quadraticCurveTo(0, 0, r + 1, 0);
-      bezier.position.x = begin.x;
-      bezier.position.y = begin.y - r;
+      let offsetX = begin.x, offsetY = begin.y - r;
+
+      bezier.moveTo(offsetX + 0, offsetY + r + 1);
+      bezier.quadraticCurveTo(offsetX + 0, offsetY + 0, offsetX + r + 1, offsetY + 0);
+      // bezier.position.x = begin.x;
+      // bezier.position.y = begin.y - r;
     }
 
     return bezier;
@@ -724,7 +731,7 @@ const PixiDraw = () => {
 
           [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
 
-          let corner = drawRoundCorner(end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
+          let corner = drawRoundCorner(line, end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
           container.addChild(corner);
         }
 

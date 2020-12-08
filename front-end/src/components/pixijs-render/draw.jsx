@@ -27,7 +27,7 @@ export const drawElippseCurve = (id, x, y, width, height, clearControl) => {
 
   ellipse.interactive = true;
   ellipse.buttonMode = true;
-  ellipse.hitArea = new PIXI.Ellipse(x, y, width, height);
+  ellipse.hitArea = new PIXI.Ellipse(0, 0, width, height);
 
   return ellipse;
 }
