@@ -118,11 +118,12 @@ const PixiDraw = (props) => {
       graphContainer.removeChildAt(indexToBeDeleted[i]);
     }
 
-    const clearControl = { toBeClear: true };
+    const ellipseClearControl = { toBeClear: true };
+    const arrowClearControl = { toBeClear: true };
 
-    addNodes(graphContainer, styledGraph, clearControl);
+    addNodes(graphContainer, styledGraph, ellipseClearControl);
     addLabels(graphContainer, styledGraph, zoomFactor);
-    addLines(graphContainer, styledGraph);
+    addLines(graphContainer, styledGraph, arrowClearControl);
     addPorts(graphContainer, styledGraph);
 
     addDragGraphEvent(divContainer, graphContainer);
@@ -687,7 +688,7 @@ const PixiDraw = (props) => {
     return [begin, end];
   }
 
-  const addLines = (container, styledGraph) => {
+  const addLines = (container, styledGraph, arrowClearControl) => {
     const roundR = 5; // 圆角半径
     let line = new PIXI.Graphics();
 
@@ -743,7 +744,7 @@ const PixiDraw = (props) => {
         if (i === linkData.length - 1) {
           // 增加一个箭头
           end = linkData[i];
-          const arrow = drawArrow(begin, end, 0x000000); //0x999999
+          const arrow = drawArrow(begin, end, 0x000000, arrowClearControl); //0x999999
           container.addChild(arrow);
         }
       }

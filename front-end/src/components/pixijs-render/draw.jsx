@@ -167,47 +167,81 @@ export const drawCircleCurve = (x, y, r, fillColor, alpha) => {
   return circle;
 }
 
-export const drawArrow = (begin, end, color) => {
-  let points = [];
+let reuseRightArrow = new PIXI.Graphics();
+let reuseLeftArrow = new PIXI.Graphics();
+let reuseUpArrow = new PIXI.Graphics();
+let reuseDownArrow = new PIXI.Graphics();
+
+export const drawArrow = (begin, end, color, clearControl) => {
+  if (clearControl.toBeClear) { // 第一次调用，负责清空上一次所画的所有椭圆形
+    reuseRightArrow.clear();
+    reuseLeftArrow.clear();
+    reuseUpArrow.clear();
+    reuseDownArrow.clear();
+
+    clearControl.toBeClear = false;
+
+    reuseRightArrow.beginFill(color);
+    let points = [ // 顺时针方向，第一个点为箭头的 尖
+      0, 0,
+      0 - 5, 0 + 5,
+      0 - 3.5, 0,
+      0 - 5, 0 - 5,
+    ];
+    reuseRightArrow.drawPolygon(points);
+    reuseRightArrow.endFill();
+
+    reuseLeftArrow.beginFill(color);
+    points = [
+      0, 0,
+      0 + 5, 0 - 5,
+      0 + 3.5, 0,
+      0 + 5, 0 + 5,
+    ];
+    reuseLeftArrow.drawPolygon(points);
+    reuseLeftArrow.endFill();
+
+    reuseUpArrow.beginFill(color);
+    points = [
+      0, 0,
+      0 + 5, 0 + 5,
+      0, 0 + 3.5,
+      0 - 5, 0 + 5,
+    ];
+    reuseUpArrow.drawPolygon(points);
+    reuseUpArrow.endFill();
+
+    reuseDownArrow.beginFill(color);
+    points = [
+      0, 0,
+      0 - 5, 0 - 5,
+      0, 0 - 3.5,
+      0 + 5, 0 - 5
+    ];
+    reuseDownArrow.drawPolygon(points);
+    reuseDownArrow.endFill();
+  }
+
+  let arrow = null;
+
   if (begin.y === end.y) { // 水平方向
     if (begin.x < end.x) { // 向右
-      points = [ // 顺时针方向，第一个点为箭头的 尖
-        end.x, end.y,
-        end.x - 5, end.y + 5,
-        end.x - 3.5, end.y,
-        end.x - 5, end.y - 5,
-      ];
+      arrow = new PIXI.Graphics(reuseRightArrow.geometry);
     }
     else { // 向左
-      points = [
-        end.x, end.y,
-        end.x + 5, end.y - 5,
-        end.x + 3.5, end.y,
-        end.x + 5, end.y + 5,
-      ];
+      arrow = new PIXI.Graphics(reuseLeftArrow.geometry);
     }
   } else { // 竖直方向
     if (begin.y > end.y) { // 向上
-      points = [
-        end.x, end.y,
-        end.x + 5, end.y + 5,
-        end.x, end.y + 3.5,
-        end.x - 5, end.y + 5,
-      ];
+      arrow = new PIXI.Graphics(reuseUpArrow.geometry);
+
     }
     else { // 向下
-      points = [
-        end.x, end.y,
-        end.x - 5, end.y - 5,
-        end.x, end.y - 3.5,
-        end.x + 5, end.y - 5
-      ];
+      arrow = new PIXI.Graphics(reuseDownArrow.geometry);
     }
   }
+  arrow.position.x = end.x
+  arrow.position.y = end.y
 
-  let arrow = new PIXI.Graphics();
-  arrow.beginFill(color);
-  arrow.drawPolygon(points);
-  arrow.endFill();
   return arrow;
 }
