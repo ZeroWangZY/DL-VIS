@@ -7,6 +7,8 @@ import Fade from "@material-ui/core/Fade";
 import Popover from "@material-ui/core/Popover";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { fetchTensorHeatmapBase64 } from "../../api/layerlevel";
+import { useGlobalStates } from "../../store/global-states";
+import { fetchNodeTensor } from "../../api/layerlevel";
 
 export interface TensorMetadata {
   type: ShowActivationOrGradient | null;
@@ -18,7 +20,7 @@ export interface TensorMetadata {
 export interface TensorHeatmapProps {
   tensorMetadata: TensorMetadata;
   isShowing: boolean;
-  anchorPosition: { top: number, left: number };
+  anchorPosition: { top: number; left: number };
   setIsShowing: (boolean) => void;
 }
 
@@ -46,6 +48,7 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
   const show = isValid && isShowing;
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [showLoading, setShowLoading] = useState<boolean>(false);
+  const { currentMSGraphName } = useGlobalStates();
   const handleClose = () => {
     setIsShowing(false);
   };
@@ -60,18 +63,36 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
     if (type === ShowActivationOrGradient.GRADIENT) {
       typeParam = "gradient";
     }
-    fetchTensorHeatmapBase64({
-      graph_name: "alexnet",
+    fetchNodeTensor({
+      graph_name: currentMSGraphName,
       node_id: nodeId,
-      type: typeParam,
       step: step,
       data_index: dataIndex,
+      type: typeParam,
+      mode: "heatmap",
+      dim: 1,
+      scale: false
     }).then((res) => {
       if (res.data.message === "success") {
-        setImgSrc(res.data.data);
+        let rawData = res.data.data;
         setShowLoading(false);
-      } else console.warn("获取张量热力图失败: " + res.data.message);
-    });
+        setImgSrc(rawData);
+      } else {
+        console.log("获取layer数据失败：" + res.data.message);
+      }
+    })
+    // fetchTensorHeatmapBase64({
+    //   graph_name: currentMSGraphName,
+    //   node_id: nodeId,
+    //   type: typeParam,
+    //   step: step,
+    //   data_index: dataIndex,
+    // }).then((res) => {
+    //   if (res.data.message === "success") {
+    //     setImgSrc(res.data.data);
+    //     setShowLoading(false);
+    //   } else console.warn("获取张量热力图失败: " + res.data.message);
+    // });
   }, [type, step, dataIndex, show]);
 
   return (
@@ -82,12 +103,12 @@ const TensorHeatmap: React.FC<TensorHeatmapProps> = (
         anchorReference="anchorPosition"
         anchorPosition={anchorPosition}
         anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
+          vertical: "top",
+          horizontal: "right",
         }}
         transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         }}
       >
         <div className={classes.paper}>

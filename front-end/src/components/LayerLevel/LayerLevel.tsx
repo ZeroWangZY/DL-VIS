@@ -21,15 +21,6 @@ import { makeStyles } from "@material-ui/core/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { template } from "@babel/core";
 
-interface layerNodeScalar {
-  step: number;
-  activation_min: number;
-  activation_max: number;
-  activation_mean: number;
-  gradient_min: number;
-  gradient_max: number;
-  gradient_mean: number;
-}
 export interface Point {
   x: number;
   y: number;
@@ -85,12 +76,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const LayerLevel: React.FC = () => {
-  const linedata = useLineData();
   const classes = useStyles();
-  const history = useHistory();
-  const goback = () => {
-    history.push("/");
-  };
 
   const processedGraph = useProcessedGraph();
   const { nodeMap } = processedGraph;
@@ -101,7 +87,6 @@ const LayerLevel: React.FC = () => {
     currentMSGraphName,
     isTraining,
     maxStep,
-    currentStep,
   } = useGlobalStates();
 
   const svgRef = useRef();
@@ -649,10 +634,9 @@ const LayerLevel: React.FC = () => {
 
       setAnchorPosition({ top: d3.event.clientY, left: d3.event.clientX });
 
-      if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.FC ||
-        (nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.CONV)
+      if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.FC)
         setIsShowingRadarChart(true);
-      else
+      else if ((nodeMap[selectedNodeId] as LayerNodeImp).layerType === LayerType.CONV)
         setIsShowingTensorHeatmap(true);
     }
 
@@ -727,26 +711,6 @@ const LayerLevel: React.FC = () => {
       </div>
     )
   };
-
-  const getReservoirSamplingScalarData = (stream: LayerScalar[], k: number): LayerScalar[] => { // 从 stream中等概率提取k个元素，时间复杂度为O(n)
-    if (k > stream.length) return stream;
-    let reservoir = new Array(k);
-
-    for (let i = 0; i < k; i++)
-      reservoir[i] = stream[i];
-
-    for (let i = k; i < stream.length; i++) {
-      let p = Math.floor(Math.random() * (i + 1 - 0) + 0); // [0, i+1)之间的随机数 
-      if (p < k) reservoir[p] = stream[i];
-    }
-
-    reservoir.sort((a: LayerScalar, b: LayerScalar) => { // 排序
-      if (a.step === b.step) return a.dataIndex - b.dataIndex;
-      else return a.step - b.step;
-    })
-
-    return reservoir;
-  }
 
   const getAverageSamplingScalarData = (stream: LayerScalar[], k: number): LayerScalar[] => { // 从 stream中等概率提取k个元素，时间复杂度为O(n)
     if (k > stream.length) return stream; // k至少为640
