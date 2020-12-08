@@ -36,7 +36,7 @@ lenet_data_runner = LenetDataRunner()
 useLabelsAsSrcs = False
 
 from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
-    get_tensor_heatmap_service
+    get_tensor_heatmap_service, get_tensor_heatmap_service_realtime
 
 DB_FILES = {
     'normal': 'data/alex-normal-8000.db',
@@ -375,7 +375,7 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
         data_index = int(request.GET.get('data_index', default='-1'))    # 默认是整个step
         type = request.GET.get('type', default='activation')
         # mode = request.GET.get('mode', default='normal')
-        mode = request.GET.get('mode', default='radial')
+        mode = request.GET.get('mode', default='radial')                 # mode可选radial或者heatmap
         dim = request.GET.get('dim', default='radial')                   # 维度，做扇区采样就没有维度了呀，radviz的维度就是这个
         scale = request.GET.get('scale', default='false')
 
@@ -544,6 +544,15 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                         "label": labels.tolist()[data_index],
                         "index": indices[data_index]
                     })
+        elif mode == "heatmap":
+            jsonPath = SUMMARY_DIR + os.sep + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
+            with open(jsonPath, 'r', encoding='utf-8') as fp:  # 拿到数据编号
+                indices = json.load(fp)
+                indices = indices[(step - 1) * batch_size: step * batch_size]  # 找到对应的数据编号，需要调用data_runner.py中的函数
+
+                [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id, data_type=type,
+                                                                         ckpt_file=ckpt_file_path)
+                resultData = get_tensor_heatmap_service_realtime(resdata, data_index)
         return HttpResponse(json.dumps({
             "message": "success",
             "data": resultData
@@ -630,7 +639,6 @@ def get_tensor_heatmap(request):
         "message": "method undefined",
         "data": None
     }), content_type="application/json")
-
 
 def emit_action(request):
     if request.method != 'GET':

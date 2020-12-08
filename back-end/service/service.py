@@ -32,10 +32,51 @@ def get_tensor_heatmap_service(step, node_id, data_index, type):
     sio = BytesIO()
     fig.savefig(sio, format='png', bbox_inches='tight', pad_inches=0.0)
     sio.seek(0)
-    data = base64.b64encode(sio.read())
+    data = base64.b64encode(so.read())
     src = 'data:image/png;base64,' + data.decode('utf-8')
     plt.close()
 
+    return src
+
+def get_tensor_heatmap_service_realtime(resdata, data_index):
+    print("get_tensor_heatmap_service_realtime start")
+    print(resdata.shape)
+    src = []
+    convs = resdata[data_index]  # 2048 * 7 * 7
+    channels_num = convs.shape[0]
+    kernel_size = convs.shape[1]
+    width = math.ceil(math.sqrt(channels_num))
+    height = math.ceil(channels_num / math.sqrt(channels_num))
+    img = np.zeros((width * kernel_size, height * kernel_size))
+    print(img.shape)
+
+    for i in range(channels_num):
+        row_id = math.floor(i / width)
+        col_id = i % width
+        img[row_id * kernel_size : (row_id + 1) * kernel_size, col_id * kernel_size : (col_id + 1) * kernel_size] = convs[i]
+
+    fig = plt.figure()
+    plt.imshow(img, cmap='hot', interpolation='nearest')
+    sio = BytesIO()
+    fig.savefig(sio, format='png', bbox_inches='tight', pad_inches=0.0)
+    sio.seek(0)
+    data = base64.b64encode(sio.read())
+    cur = 'data:image/png;base64,' + data.decode('utf-8')
+    src.append(cur)
+    plt.close()
+    # for i in range(2):
+    #     print("处理一张图")
+    #     tensor = convs[i]
+    #     fig = plt.figure()
+    #     plt.imshow(tensor, cmap='hot', interpolation='nearest')
+    #     sio = BytesIO()
+    #     fig.savefig(sio, format='png', bbox_inches='tight', pad_inches=0.0)
+    #     sio.seek(0)
+    #     data = base64.b64encode(sio.read())
+    #     cur = 'data:image/png;base64,' + data.decode('utf-8')
+    #     src.append(cur)
+    #     print("添加完成")
+    #     plt.close()
     return src
 
 def get_node_data(start_step, end_step, node_id, type):
