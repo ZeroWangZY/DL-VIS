@@ -38,7 +38,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 _cur_dir = os.getcwd()
 count = 0
 countList = []
-os.environ['CUDA_VISIBLE_DEVICES']="1"
+os.environ['CUDA_VISIBLE_DEVICES']="2"
 
 class DataInterceptionCallback(Callback):
     def __init__(self, node_name, data_type, type):

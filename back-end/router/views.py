@@ -24,6 +24,7 @@ import math
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from logs.resnet.resnet_data_runner import ResnetDataRunner
+from logs.lenet.lenet_data_runner import LenetDataRunner
 # from logs.bert.bert_data_runner import BertDataRunner
 
 from logs.resnet.get_neuron_order import get_neuron_order
@@ -31,7 +32,8 @@ from logs.resnet.get_scale_std import get_scale_std
 
 resnet_data_runner = ResnetDataRunner()
 # bert_data_runner = BertDataRunner()
-useLabelsAsSrcs = True
+lenet_data_runner = LenetDataRunner()
+useLabelsAsSrcs = False
 
 from service.service import get_node_line_service, get_cluster_data_service, get_model_scalars_service, \
     get_tensor_heatmap_service
@@ -279,17 +281,35 @@ def get_node_scalars(request):
         elif mode == "realtime":
             data_helper = DataHelper(SUMMARY_DIR + os.sep + graph_name + os.sep + "data.db")
             res = {}
+            lenet_dict = {
+                '9': "fc1.weight",
+                '12': "fc2.weight",
+                '15': "fc3.weight",
+            }
             for node_id in node_ids:
                 if type == 'activation':
-                    res[node_id] = data_helper.get_activation_scalars(node_id, start_step, end_step)
+                    if graph_name.find("lenet") != -1 and node_id.find("_") != -1:
+                        res[node_id] = data_helper.get_activation_scalars(node_id.split("_")[0] + ".weight", start_step, end_step)
+                    else:
+                        res[node_id] = data_helper.get_activation_scalars(node_id, start_step, end_step)
                 elif type == 'gradient':
                     if graph_name.find("resnet") != -1:
                         res[node_id] = data_helper.get_gradient_scalars(node_id + ".weight", start_step, end_step)
+                    elif graph_name.find("lenet") != -1:
+                        if node_id.find("_") != -1:
+                            res[node_id] = data_helper.get_gradient_scalars(node_id.split("_")[0] + ".weight", start_step, end_step)
+                        else:
+                            res[node_id] = data_helper.get_gradient_scalars(lenet_dict[node_id], start_step, end_step)
                     else:
                         res[node_id] = data_helper.get_gradient_scalars(node_id, start_step, end_step)
                 elif type == 'weight':
                     if graph_name.find("resnet") != -1:
                         res[node_id] = data_helper.get_weight_scalars(node_id + ".weight", start_step, end_step)
+                    elif graph_name.find("lenet") != -1:
+                        if node_id.find("_") != -1:
+                            res[node_id] = data_helper.get_weight_scalars(node_id.split("_")[0] + ".weight", start_step, end_step)
+                        else:
+                            res[node_id] = data_helper.get_weight_scalars(lenet_dict[node_id], start_step, end_step)
                     else:
                         res[node_id] = data_helper.get_weight_scalars(node_id, start_step, end_step)
                 continue
@@ -319,7 +339,7 @@ def get_node_scalars(request):
     }), content_type="application/json")
 
 
-def get_node_tensors(request):  # 鼠标点击step时，返回雷达图数据
+def get_node_tensors(request):
     if request.method == 'GET':
         graph_name = request.GET.get('graph_name', default='lenet')
         node_id = request.GET.get('node_id')
@@ -384,6 +404,10 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
             data_runner = resnet_data_runner
             batch_size = 32
             labelsNum = 10
+        elif graph_name.find("lenet") != -1:
+            batch_size = 32
+            labelsNum = 10
+            data_runner = lenet_data_runner
         else:
             batch_size = 16
             labelsNum = 15
@@ -406,6 +430,8 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                 indices = indices[(step - 1) * batch_size : step * batch_size]   # 找到对应的数据编号，需要调用data_runner.py中的函数
 
                 [resdata, labels] = data_runner.get_tensor_from_training(indices, node_name=node_id, data_type=type, ckpt_file=ckpt_file_path)
+                print(indices)
+                print(labels)
                 if graph_name.find("resnet") != -1:
                     labels = labels.asnumpy()
                 if not "fc" in node_id and graph_name.find("resnet") != -1:
@@ -428,9 +454,13 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                         "data": resultData
                     }), content_type="application/json")
                 if resdata.shape[0] <= 16:
+                    sectorData = []
+                    for i in range(resdata.shape[0]):
+                        currentSectorData = normalize(resdata[i])
+                        sectorData.append(currentSectorData)
                     for i in range(batch_size):   # 这里数据要改成活的
                         resultData.append({
-                            "value": normalize(resdata.swapaxes(0, 1)[i]).tolist(),
+                            "value": np.array(sectorData).swapaxes(0, 1)[i].tolist(),  # (8,)
                             "label": labels.tolist()[i],
                             "index": indices[i]
                         })
@@ -451,24 +481,28 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                         currentSectorData = list(
                             filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
                                    df.iloc))
+
                         if len(currentSectorData) != 0:
-                            curScaleData = scaleStd[i]
-                            curmin = curScaleData[0]
-                            curmax = curScaleData[1]
                             currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                            dataList = [item for item in currentSectorData]
-                            dataedited = 0
-                            for i in range(len(dataList)):
-                                if dataList[i] < curmin:
-                                    dataList[i] = curmin
-                                    dataedited = dataedited + 1
-                                if dataList[i] > curmax:
-                                    dataList[i] = curmax
-                                    dataedited = dataedited + 1
-                            print("data edited: ", dataedited, " ", len(dataList))
-                            currentSectorData = normalize_1(dataList, curmin, curmax)
-                            # currentSectorData = currentSectorData ** 3
+                            currentSectorData = normalize(currentSectorData)
                             sectorData.append(currentSectorData)
+                        #     curScaleData = scaleStd[i]
+                        #     curmin = curScaleData[0]
+                        #     curmax = curScaleData[1]
+                        #     currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                        #     dataList = [item for item in currentSectorData]
+                        #     dataedited = 0
+                        #     for i in range(len(dataList)):
+                        #         if dataList[i] < curmin:
+                        #             dataList[i] = curmin
+                        #             dataedited = dataedited + 1
+                        #         if dataList[i] > curmax:
+                        #             dataList[i] = curmax
+                        #             dataedited = dataedited + 1
+                        #     print("data edited: ", dataedited, " ", len(dataList))
+                        #     currentSectorData = normalize_1(dataList, curmin, curmax)
+                        #     # currentSectorData = currentSectorData ** 3
+                        #     sectorData.append(currentSectorData)
                 else:
                     for i in range(8):
                         leftMargin = -7 / 8 * math.pi + i * math.pi / 4
@@ -477,22 +511,26 @@ def get_node_tensor(request):   # 鼠标点击某一个数据时，返回雷达�
                             filter(lambda item: item['angle'] > leftMargin and item['angle'] < rightMargin,
                                    df.iloc))
                         if len(currentSectorData) != 0:
-                            curScaleData = scaleStd[i]
-                            curmin = curScaleData[0]
-                            curmax = curScaleData[1]
                             currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
-                            dataList = [item for item in currentSectorData]
-                            dataedited = 0
-                            for i in range(len(dataList)):
-                                if dataList[i] < curmin:
-                                    dataList[i] = curmin
-                                    dataedited = dataedited + 1
-                                if dataList[i] > curmax:
-                                    dataList[i] = curmax
-                                    dataedited = dataedited + 1
-                            print("data edited: ", dataedited, " ", len(dataList))
-                            currentSectorData = normalize_1(dataList, curmin, curmax)
+                            currentSectorData = normalize(currentSectorData)
                             sectorData.append(currentSectorData)
+                        # if len(currentSectorData) != 0:
+                        #     curScaleData = scaleStd[i]
+                        #     curmin = curScaleData[0]
+                        #     curmax = curScaleData[1]
+                        #     currentSectorData = np.mean(currentSectorData, axis=0)[:-1]
+                        #     dataList = [item for item in currentSectorData]
+                        #     dataedited = 0
+                        #     for i in range(len(dataList)):
+                        #         if dataList[i] < curmin:
+                        #             dataList[i] = curmin
+                        #             dataedited = dataedited + 1
+                        #         if dataList[i] > curmax:
+                        #             dataList[i] = curmax
+                        #             dataedited = dataedited + 1
+                        #     print("data edited: ", dataedited, " ", len(dataList))
+                        #     currentSectorData = normalize_1(dataList, curmin, curmax)
+                        #     sectorData.append(currentSectorData)
                 if data_index == -1:
                     for i in range(batch_size):   # 这里数据要改成活的
                         resultData.append({

@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 SUMMARY_DIR = os.getenv("SUMMARY_DIR")
 
 usePCAMatrix = False
-useLabelsAsSrcs = True
+useLabelsAsSrcs = False
 
 def softmax(x):
     x_row_max = x.max(axis=-1)
@@ -26,7 +26,7 @@ def softmax(x):
 
 
 def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
-    if graph_name.find("resnet") != -1:
+    if graph_name.find("resnet") != -1 or graph_name.find("lenet") != -1:
         indicesFilePath = SUMMARY_DIR + graph_name + os.sep + "indices" + os.sep + str(epochNum) + ".json"
         labelsNum = 10
         labelsCols = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10']
@@ -39,7 +39,7 @@ def get_neuron_order(epochNum, stepNum, node_id, data_runner, type, graph_name):
         if type != "activation":
             node_id = node_id + ".weight"
         ckpt_file = SUMMARY_DIR + graph_name + os.sep + "weights" + os.sep + "-" + str(epochNum) + "_" + str(stepNum) + ".ckpt"
-        if graph_name.find("resnet") != -1:
+        if graph_name.find("resnet") != -1 or graph_name.find("lenet") != -1:
             [resdata, labels] = data_runner.get_tensor_from_training(indices[0:32], ckpt_file=ckpt_file, node_name=node_id, data_type=type)
         else:
             [resdata, labels] = data_runner.get_tensor_from_training(indices[0:6784:106], ckpt_file=ckpt_file, node_name=node_id, data_type=type, type="gno")
