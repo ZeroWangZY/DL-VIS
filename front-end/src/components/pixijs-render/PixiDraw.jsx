@@ -11,6 +11,9 @@ import {
   modifyProcessedGraph,
   ProcessedGraphModificationType,
 } from "../../store/processedGraph";
+import {
+  useGlobalConfigurations
+} from "../../store/global-configuration";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage5/styled-graph.type"
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
@@ -57,6 +60,7 @@ function stopDefault(e) {
 }
 
 const PixiDraw = (props) => {
+  const { conceptualGraphMode } = useGlobalConfigurations();
   const { bottomVisibility, rightVisibility } = props;
   const styledGraph = useStyledGraph();
   const divContainer = useRef();
@@ -98,7 +102,7 @@ const PixiDraw = (props) => {
     window.addEventListener('resize', resize);
     // Resize function window
     resize();
-  }, []); // 初始化
+  }, [conceptualGraphMode]); // 初始化
 
   useEffect(() => {
     resize();
