@@ -201,31 +201,31 @@ const PixiDraw = (props) => {
       stopBubble(event);
       stopDefault(event);
       if (event.wheelDelta > 0) {
-        graphContainer.width *= 1.1;
-        graphContainer.height *= 1.1;
-        zoomFactor *= 1.1;
+        graphContainer.width *= 1.2;
+        graphContainer.height *= 1.2;
+        zoomFactor *= 1.2;
 
         // 以鼠标位置为中心放大
-        graphContainer.x = 1.1 * (graphContainer.x - event.offsetX) + event.offsetX;
-        graphContainer.y = 1.1 * (graphContainer.y - event.offsetY) + event.offsetY;
+        graphContainer.x = 1.2 * (graphContainer.x - event.offsetX) + event.offsetX;
+        graphContainer.y = 1.2 * (graphContainer.y - event.offsetY) + event.offsetY;
 
         // for (let obj of graphContainer.children) { // 文字分辨率
         //   if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-        //     obj.resolution = obj.resolution * 1.1 > 50 ? 50 : obj.resolution * 1.1;
+        //     obj.resolution = obj.resolution * 1.2 > 50 ? 50 : obj.resolution * 1.2;
         //   }
         // }
       } else {
-        graphContainer.width /= 1.1;
-        graphContainer.height /= 1.1;
-        zoomFactor /= 1.1;
+        graphContainer.width /= 1.2;
+        graphContainer.height /= 1.2;
+        zoomFactor /= 1.2;
 
         // 以鼠标位置为中心放大
-        graphContainer.x = (graphContainer.x - event.offsetX) / 1.1 + event.offsetX;
-        graphContainer.y = (graphContainer.y - event.offsetY) / 1.1 + event.offsetY;
+        graphContainer.x = (graphContainer.x - event.offsetX) / 1.2 + event.offsetX;
+        graphContainer.y = (graphContainer.y - event.offsetY) / 1.2 + event.offsetY;
 
         // for (let obj of graphContainer.children) {
         //   if (obj instanceof PIXI.Text || obj instanceof PIXI.Sprite) {
-        //     obj.resolution = obj.resolution / 1.1 < 2 ? 2 : obj.resolution / 1.1;
+        //     obj.resolution = obj.resolution / 1.2 < 2 ? 2 : obj.resolution / 1.2;
         //   }
         // }
       }
@@ -461,7 +461,6 @@ const PixiDraw = (props) => {
           height = d.style._rectHeight;
 
         let color = 0xffffff, alpha = 1;
-        console.log(node.label);
         if (node.label.startsWith("fc")) {
           color = 0xffcb9e;
         } else if (node.label.startsWith("conv")) {
