@@ -56,6 +56,7 @@ def get_tensor_heatmap_service_realtime(resdata, data_index):
         img[row_id * kernel_size : (row_id + 1) * kernel_size, col_id * kernel_size : (col_id + 1) * kernel_size] = convs[i]
 
     fig = plt.figure()
+    plt.rcParams['savefig.dpi'] = 200  # 图片像素
     plt.imshow(img, cmap='hot', interpolation='nearest')
     sio = BytesIO()
     fig.savefig(sio, format='png', bbox_inches='tight', pad_inches=0.0)
