@@ -188,7 +188,6 @@ class DataWriter():
         self.c.execute(
             '''INSERT OR REPLACE INTO MODEL_SCALARS(step, train_loss, learning_rate)  VALUES (%d, %s, %s);''' % (
                 self.cache['step'], str(self.cache['train_loss']), str(self.cache['lr'])))
-        self.conn.commit()
 
         # 插入activations
         sql = "INSERT INTO ACTIVATION_SCALARS(step, node, data_index, activation_min, activation_q1, activation_median, activation_q3, activation_max) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
@@ -197,7 +196,6 @@ class DataWriter():
         for i in range(len(activations)):
             args.append(tuple(activations[i]))
         self.c.executemany(sql, args)
-        self.conn.commit()
 
         # 插入weights
         sql = "INSERT INTO WEIGHT_SCALARS(step, node, weight_min, weight_q1, weight_median, weight_q3, weight_max) VALUES(?, ?, ?, ?, ?, ?, ?)"
@@ -206,7 +204,6 @@ class DataWriter():
         for i in range(len(weights)):
             args.append(tuple(weights[i]))
         self.c.executemany(sql, args)
-        self.conn.commit()
 
         # 插入gradients
         sql = "INSERT INTO GRADIENT_SCALARS(step, node, gradient_min, gradient_q1, gradient_median, gradient_q3, gradient_max) VALUES(?, ?, ?, ?, ?, ?, ?)"
@@ -215,8 +212,14 @@ class DataWriter():
         for i in range(len(gradients)):
             args.append(tuple(gradients[i]))
         self.c.executemany(sql, args)
-        self.conn.commit()
-
+        while True:
+            try:
+                self.conn.commit()
+            except Exception:
+                print("DataBase is locked. Retrying...")
+                time.sleep(0.2)
+            else:
+                break
         time_end = time.time()
         print('insert into sqlite time cost', time_end - time_start, 's')
         self.reset_cache()
