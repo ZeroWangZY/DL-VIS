@@ -224,7 +224,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
               cx={ellipseY}
               cy={ellipseY}
               r={ellipseY / 2}
-              strokeDasharray={1}
+            // strokeDasharray={1}
             />
           )}
           {node.constVals.length !== 0 && (
@@ -349,9 +349,21 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                 }}
                 onDoubleClick={() => toggleExpanded(d.data.id, linkedEdges)}
                 onMouseEnter={() => {
+                  if (!d.data.expand)
+                    d3.select(".nodes")
+                      .select("#" + d.data.id4Style)
+                      .select("rect.elk-label-container")
+                      .classed("hovered", true);
+
                   showHighlightedLine(linkedEdges)
                 }}
                 onMouseLeave={() => {
+                  if (!d.data.expand)
+                    d3.select(".nodes")
+                      .select("#" + d.data.id4Style)
+                      .select("rect.elk-label-container")
+                      .classed("hovered", false);
+
                   offHighlightedLine(linkedEdges)
                 }}
                 onContextMenu={(e) => handleRightClick(e)}
@@ -390,12 +402,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         width={d.style.rectWidth}
                         height={d.style.rectHeight}
                       >
-                        <div className="label">
+                        {d.data.expand ?
                           <text>
-                            {/* 增加一层text是为了让伪类中的before生效；否则不展示layerNode折线图的时候，图标不会显示 */}
+                            {d.data.label}
+                          </text> :
+                          <text>
                             {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
-                          </text>
-                        </div>
+                          </text>}
                       </foreignObject>
                     )}
                 </g>

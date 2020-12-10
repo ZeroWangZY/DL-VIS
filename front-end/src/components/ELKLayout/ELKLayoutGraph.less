@@ -19,25 +19,25 @@
   fill: white;
 }
 
-.nodeitem-1.layertype-FC text::before {
-  background: url("@{public_url}/assets/FcIcon.svg");
-  @IconsStyle();
-}
+// .nodeitem-1.layertype-FC text::before {
+//   background: url("@{public_url}/assets/FcIcon.svg");
+//   @IconsStyle();
+// }
 
-.nodeitem-1.layertype-CONV text::before {
-  background: url("@{public_url}/assets/ConvIcon.svg");
-  @IconsStyle();
-}
+// .nodeitem-1.layertype-CONV text::before {
+//   background: url("@{public_url}/assets/ConvIcon.svg");
+//   @IconsStyle();
+// }
 
-.nodeitem-1.layertype-RNN text::before {
-  background: url("@{public_url}/assets/RnnIcon.svg");
-  @IconsStyle();
-}
+// .nodeitem-1.layertype-RNN text::before {
+//   background: url("@{public_url}/assets/RnnIcon.svg");
+//   @IconsStyle();
+// }
 
-.nodeitem-1 .my-label text {
-  position: relative;
-  left: 8px;
-}
+// .nodeitem-1 .my-label text {
+//   position: relative;
+//   left: 8px;
+// }
 
 /* 路径模式节点高亮 */
 .node.startNode.expanded-node rect.elk-label-container {
@@ -112,7 +112,7 @@ rect.behind-text {
 }
 
 .node.expanded-node rect.elk-label-container {
-  fill:#fff6ef;
+  fill: #fff6ef;
   fill-opacity: 1;
   stroke-width: 2px;
   stroke: #999999;
@@ -121,6 +121,12 @@ rect.behind-text {
 .node.expanded-node rect.elk-label-container.focus {
   stroke-width: 2px;
   stroke: @focus_node_stroke_color;
+}
+
+.node.child-node rect.elk-label-container.hovered {
+  stroke-width: 2px;
+  stroke: #eb9c58;
+  box-shadow: 5px 5px #eb9c58;
 }
 
 .node .elk-label-container.focus {

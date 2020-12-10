@@ -41,10 +41,28 @@ const ELKLayoutPort: React.FC = () => {
   const fill = "#6791A7",
     stroke = "#666666",
     strokeWidth = "1";
-  const lineFunction = d3
-    .line()
-    .x((d) => d[0])
-    .y((d) => d[1]);
+
+  const lineFunction = (points: [number[], number[]]): string => {
+    let start = points[0], end = points[1]; // 首位端点
+    if (points[0][0] > points[1][0]) [start, end] = [end, start]; // 使得曲线总是从左向右画
+
+    // 如果过于水平 或者过于垂直，则直接连接两个点
+    // if (Math.abs(start[0] - end[0]) <= 15 || Math.abs(start[1] - end[1]) <= 15) {
+    //   return "M" + start[0] + " " + start[1] + "L" + end[0] + " " + end[1];
+    // }
+
+    let control1, control2;
+    control1 = [start[0] + (end[0] - start[0]) / 3, start[1]];
+    control2 = [end[0] - (end[0] - start[0]) / 3, end[1]];
+
+    let dStr = "M" + start[0] + " " + start[1] +
+      "C" + control1[0] + " " + control1[1] + "," +
+      control2[0] + " " + control2[1] + "," +
+      end[0] + " " + end[1];
+
+    return dStr;
+  }
+
   const corCal = (x1, y1, x2, y2, r) => {
     const a = Math.abs(x1 - x2)
     const b = Math.abs(y1 - y2)
@@ -81,10 +99,14 @@ const ELKLayoutPort: React.FC = () => {
                 className={`${d.data.direction}-${d.data.nodeId}`}
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onMouseEnter={() => {
+                  const nodeIdSet = new Set();
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
+                    nodeIdSet.add(source);
+                    nodeIdSet.add(target);
                     if (!hoverEdges.selectAll(`.${edgeName}`).empty()) {
+                      console.log(edgeName);
                       hoverEdges
                         .selectAll(`.${edgeName}`)
                         .select("path")
@@ -146,19 +168,24 @@ const ELKLayoutPort: React.FC = () => {
                         "d",
                         lineFunction([
                           [x1, y1],
-                          // [(x1 + x2) / 2, y1],
-                          // [(x1 + x2) / 2, y2],
                           [x2, y2],
                         ])
                       )
                       .attr("fill", "none")
-                      .style("stroke", "#00679f")
+                      .style("stroke", "#eb9c58")
                       .style("stroke-width", "2")
                       .style("stroke-linecap", "round");
+                  }
+                  // console.log(nodeIdSet);
+                  if (nodeIdSet.size !== 0)
+                    d3.select(".nodes").selectAll(".node").attr("opacity", 0.3);
+                  for (let nodeId of nodeIdSet) {
+                    d3.select(".nodes").select(".node#" + nodeId).attr("opacity", 1);
                   }
                 }}
                 onMouseLeave={() => {
                   d3.selectAll(".hoverEdge").remove();
+                  d3.select(".nodes").selectAll(".node").attr("opacity", 1);
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
