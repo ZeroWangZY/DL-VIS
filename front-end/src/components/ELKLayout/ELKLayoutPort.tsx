@@ -106,12 +106,11 @@ const ELKLayoutPort: React.FC = () => {
                     nodeIdSet.add(source);
                     nodeIdSet.add(target);
                     if (!hoverEdges.selectAll(`.${edgeName}`).empty()) {
-                      console.log(edgeName);
                       hoverEdges
                         .selectAll(`.${edgeName}`)
                         .select("path")
                         .attr("fill", "none")
-                        .style("stroke", "#00679f")
+                        .style("stroke", "#ff931e")
                         .style("stroke-width", "2")
                         .style("stroke-linecap", "round");
                       continue;
@@ -176,7 +175,6 @@ const ELKLayoutPort: React.FC = () => {
                       .style("stroke-width", "2")
                       .style("stroke-linecap", "round");
                   }
-                  // console.log(nodeIdSet);
                   if (nodeIdSet.size !== 0)
                     d3.select(".nodes").selectAll(".node").attr("opacity", 0.3);
                   for (let nodeId of nodeIdSet) {

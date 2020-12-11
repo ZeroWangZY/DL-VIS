@@ -6,6 +6,7 @@ import {
   useGlobalStates
 } from "../../store/global-states";
 import { UpdateRectInCanvasContext } from '../../store/redrawCanvas';
+import { toggleTooltips } from "../ELKLayout/ELKLayoutNode"
 
 let fitK = 1;
 let timer = null;
@@ -61,6 +62,7 @@ const MiniMap: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     let zoom = d3.zoom()
       .on("zoom", function () {
+        toggleTooltips("aaaaaaaaaaaaaaaaaaa", false, 0, 0, false);
         d3.select(outputG).attr("transform", d3.event.transform);
       })
       .on("end", () => {
@@ -94,7 +96,7 @@ const MiniMap: React.FC<Props> = (props: Props) => {
     if (outputSVG_Copy === null) return;
 
     const canvas: HTMLCanvasElement = canvasRef.current;
-    if(!canvas || !canvas.getContext('2d')) return; // 防止webGL与svg模式转换太快
+    if (!canvas || !canvas.getContext('2d')) return; // 防止webGL与svg模式转换太快
     let context = canvas.getContext('2d');
     context.clearRect(0, 0, minimapSize.width, minimapSize.height); // 清空canvas画布
 

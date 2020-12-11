@@ -40,6 +40,27 @@ interface Props {
 
 const antiShakeDistance = 2;
 const maxLabelLength = 10;
+let tooltip = null;
+
+export const toggleTooltips = (label, expanded, left, top, toggle) => {
+  if (expanded || label.length < maxLabelLength) return;
+
+  if (toggle === true)
+    tooltip.html(label)
+      .style("width", "fit-content")
+      .style("height", "fit-content")
+      .style("left", left + 16 + "px")
+      .style("top", top + "px")
+      .style("opacity", .9);
+  else
+    tooltip.style("opacity", 0)
+      .attr("fill", "none")
+      .style("width", "0px")
+      .style("height", "0px")
+      .style("right", "0px")
+      .style("bottom", "0px");
+
+}
 
 const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const hoverEdgePathStrokeColor = styles.hover_edge_path_stroke_color;
@@ -140,7 +161,14 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           width={rectWidth}
           height={rectHeight / 8 + 1}
         >
-          <div>
+          <div
+            onMouseOver={(e) => {
+              toggleTooltips(node.label, node.expand, e.pageX, e.pageY, true);
+            }}
+            onMouseOut={(e) => {
+              toggleTooltips(node.label, node.expand, e.pageX, e.pageY, false);
+            }}
+          >
             <text>
               {node.label.slice(0, maxLabelLength) + (node.label.length > maxLabelLength ? "..." : "")}
             </text>
@@ -314,14 +342,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     }
   });
 
-  // const openNotification = useCallback((id) => {
-  //   notification.open({
-  //     message: '完整的节点ID',
-  //     description:
-  //       id,
-  //     duration: 3
-  //   });
-  // }, []);
+  useEffect(() => {
+    tooltip = d3.select("body") //.select("div.elk-container").select("#elk-graph")
+      .append("div")
+      .attr("class", "textTooltip")
+      .style("opacity", 0)
+      .attr("fill", "none");
+  }, [])
 
   return (
     <TransitionMotion
@@ -384,14 +411,27 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                     )}
 
                   {d.data.type === NodeType.OPERATION && (
-                    <text
-                      dominantBaseline={"baseline"}
-                      y={`${-d.style.rectHeight / 4 - 3}`}
-                      style={{ fontSize: 10 }}
+                    <foreignObject
+                      x={-d.style.rectWidth * 3 / 2}
+                      y={-d.style.rectHeight - 5}
+                      width={d.style.rectWidth * 3}
+                      height={d.style.rectHeight}
                     >
-                      {/* {d.data.label} */}
-                      {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
-                    </text>
+                      <div
+                        onMouseOver={(e) => {
+                          toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, true);
+                        }}
+                        onMouseOut={(e) => {
+                          toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, false);
+                        }}
+                      >
+                        <text
+                          style={{ fontSize: 10 }}
+                        >
+                          {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                        </text>
+                      </div>
+                    </foreignObject>
                   )}
 
                   {!showLineChart(d.data) &&
@@ -402,13 +442,22 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         width={d.style.rectWidth}
                         height={d.style.rectHeight}
                       >
-                        {d.data.expand ?
-                          <text>
-                            {d.data.label}
-                          </text> :
-                          <text>
-                            {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
-                          </text>}
+                        <div
+                          onMouseOver={(e) => {
+                            toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, true);
+                          }}
+                          onMouseOut={(e) => {
+                            toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, false);
+                          }}
+                        >
+                          {d.data.expand ?
+                            <text>
+                              {d.data.label}
+                            </text> :
+                            <text>
+                              {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                            </text>}
+                        </div>
                       </foreignObject>
                     )}
                 </g>
@@ -416,8 +465,9 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
             );
           })}
         </g>
-      )}
-    </TransitionMotion>
+      )
+      }
+    </TransitionMotion >
   );
 };
 
