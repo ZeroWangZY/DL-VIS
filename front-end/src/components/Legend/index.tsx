@@ -7,9 +7,15 @@ export default () => {
       <tbody>
         <tr>
           <td className="icon">
-            <img src={process.env.PUBLIC_URL + "/assets/aggreg.svg"} />
+            <img src={process.env.PUBLIC_URL + "/assets/aggreg_expanded.svg"} />
           </td>
-          <td className="caption">聚合节点</td>
+          <td className="caption">聚合节点(已展开)</td>
+        </tr>
+        <tr>
+          <td className="icon">
+            <img src={process.env.PUBLIC_URL + "/assets/aggreg_notExpanded.svg"} />
+          </td>
+          <td className="caption">聚合节点(未展开)</td>
         </tr>
         <tr>
           <td className="icon">

@@ -63,21 +63,6 @@ const ELKLayoutPort: React.FC = () => {
     return dStr;
   }
 
-  const corCal = (x1, y1, x2, y2, r) => {
-    const a = Math.abs(x1 - x2)
-    const b = Math.abs(y1 - y2)
-    const c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2))
-    const x0 = r * a / c;
-    const y0 = r * b / c;
-
-    if (x1 < x2) { x1 += x0; x2 -= x0; }
-    else { x1 -= x0; x2 += x0; }
-
-    if (y1 < y2) { y1 += y0; y2 -= y0; }
-    else { y1 -= y0; y2 += y0; }
-
-    return { x1, y1, x2, y2 }
-  }
   return (
     <TransitionMotion
       styles={styledGraph === null ? [] : styledGraph.portStyles}
@@ -100,7 +85,13 @@ const ELKLayoutPort: React.FC = () => {
                 transform={`translate(${d.style.gNodeTransX}, ${d.style.gNodeTransY})`}
                 onMouseEnter={() => {
                   const nodeIdSet = new Set();
+                  let changedAllEdgeOpacity = false;
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
+                    if (!changedAllEdgeOpacity) { // 如果hover到port上，将所有的edges的透明度设为0.3
+                      d3.select("#output-svg").select(".edges").selectAll("g.edgePath").select("path").attr("opacity", 0.3);
+                      changedAllEdgeOpacity = true;
+                    }
+
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
                     nodeIdSet.add(source);
@@ -110,9 +101,10 @@ const ELKLayoutPort: React.FC = () => {
                         .selectAll(`.${edgeName}`)
                         .select("path")
                         .attr("fill", "none")
-                        .style("stroke", "#ff931e")
+                        .style("stroke", "#eb9c58")
                         .style("stroke-width", "2")
-                        .style("stroke-linecap", "round");
+                        .style("stroke-linecap", "round")
+                        .attr("opacity", 1);
                       continue;
                     }
                     let x = 0,
@@ -125,6 +117,7 @@ const ELKLayoutPort: React.FC = () => {
                     }
                     const sourcePortParent = d3.select(`.${pos}-${source}`).node() as any;
                     const sourcePort = d3.select(`.${pos}-${source}`).select("g").node() as any;
+                    const sourceCircleR = parseInt(d3.select(`.${pos}-${source}`).select("circle").attr("r"));
                     [x, y] = sourcePortParent
                       .getAttribute("transform")
                       .slice(10, -1)
@@ -139,6 +132,7 @@ const ELKLayoutPort: React.FC = () => {
 
                     const targetPortParent = d3.select(`.${pos}-${target}`).node() as any;
                     const targetPort = d3.select(`.${pos}-${target}`).select("g").node() as any;
+                    const targetCircleR = parseInt(d3.select(`.${pos}-${target}`).select("circle").attr("r"));
 
                     [x, y] = targetPortParent
                       .getAttribute("transform")
@@ -152,13 +146,11 @@ const ELKLayoutPort: React.FC = () => {
                       .map((v) => parseInt(v));
                     const targetBox = { x: x + xc, y: y + yc };
 
-                    const r = 7
-                    let x1 = sourceBox.x + r,
-                      y1 = sourceBox.y + r,
-                      x2 = targetBox.x + r,
-                      y2 = targetBox.y + r;
+                    let x1 = sourceBox.x + sourceCircleR,
+                      y1 = sourceBox.y + sourceCircleR,
+                      x2 = targetBox.x + targetCircleR,
+                      y2 = targetBox.y + targetCircleR;
 
-                    ({ x1, y1, x2, y2 } = corCal(x1, y1, x2, y2, r))
                     hoverEdges
                       .append("g")
                       .attr("class", `edgePath hoverEdge ${edgeName}`)
@@ -173,7 +165,8 @@ const ELKLayoutPort: React.FC = () => {
                       .attr("fill", "none")
                       .style("stroke", "#eb9c58")
                       .style("stroke-width", "2")
-                      .style("stroke-linecap", "round");
+                      .style("stroke-linecap", "round")
+                      .attr("opacity", 1);
                   }
                   if (nodeIdSet.size !== 0)
                     d3.select(".nodes").selectAll(".node").attr("opacity", 0.3);
@@ -184,6 +177,7 @@ const ELKLayoutPort: React.FC = () => {
                 onMouseLeave={() => {
                   d3.selectAll(".hoverEdge").remove();
                   d3.select(".nodes").selectAll(".node").attr("opacity", 1);
+                  d3.select("#output-svg").select(".edges").selectAll("g.edgePath").select("path").attr("opacity", 1); // 还原
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
@@ -193,7 +187,7 @@ const ELKLayoutPort: React.FC = () => {
                         .select("path")
                         .attr("fill", "none")
                         .style("stroke", "#ff931e")
-                        .style("stroke-width", "3")
+                        .style("stroke-width", "2")
                         .style("stroke-linecap", "round");
                       continue;
                     }
