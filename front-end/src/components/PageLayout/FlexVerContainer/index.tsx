@@ -26,14 +26,14 @@ const FlexHorContainer: React.FC<PropTypes> = ({
         className="layout-vertical-top-container"
         style={{
           marginTop: topVis ? 0 : `-${fixedHeight}`,
-          ...(stretchItem === "top"
-            ? { bottom: bottomVis ? fixedHeight : 0 }
-            : {
-                bottom: "unset",
-                minHeight: fixedHeight,
-                maxHeight: fixedHeight,
-                height: fixedHeight,
-              }),
+          // ...(stretchItem === "top"
+          //   ? { bottom: bottomVis ? fixedHeight : 0 }
+          //   : {
+          //       bottom: "unset",
+          //       minHeight: fixedHeight,
+          //       maxHeight: fixedHeight,
+          //       height: fixedHeight,
+          //     }),
         }}
       >
         {renderTopChild(hideTop, showTop, topVis)}
@@ -43,7 +43,7 @@ const FlexHorContainer: React.FC<PropTypes> = ({
         style={{
           marginBottom: bottomVis ? 0 : `-${fixedHeight}`,
           ...(stretchItem === "bottom"
-            ? { top: topVis ? fixedHeight : 0 }
+            ? { top : 0 }
             : {
                 top: "unset",
                 minHeight: fixedHeight,

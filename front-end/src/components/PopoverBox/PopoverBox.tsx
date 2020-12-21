@@ -121,7 +121,7 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
             textAlign: 'center'
           }}
         >
-          Modification Options
+          节点修改
       </Typography>
         {currentNodetype < 0 ?
           <div id="group-aggre-container">
@@ -146,7 +146,7 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
               }}
               onClick={handleAggregate}
             >
-              Aggregate
+              新建聚合
           </Button>
           </div> :
           <div id="type-modify-container">
@@ -161,10 +161,10 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
               }}
               onClick={handleUngroup}
             >
-              Ungroup
+              解除聚合
           </Button>
             <div id="nodetype-modify-container">
-              <InputLabel id="nodetype-selector" style={{ fontSize: 10 }}>Node Type</InputLabel>
+              <InputLabel id="nodetype-selector" style={{ fontSize: 10 }}>节点类型</InputLabel>
               <Select
                 value={currentNodetype}
                 onChange={handleNodetypeChange}
@@ -174,8 +174,8 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
                   fontSize: 14
                 }}
               >
-                <MenuItem value={NodeType.LAYER}>layer Node</MenuItem>
-                <MenuItem value={NodeType.GROUP}>group Node</MenuItem>
+                <MenuItem value={NodeType.LAYER}>层节点</MenuItem>
+                <MenuItem value={NodeType.GROUP}>普通聚合节点</MenuItem>
               </Select>
             </div>
             {currentNodetype === NodeType.LAYER &&
@@ -225,7 +225,7 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
               }}
               onClick={handleModifyNodetype}
             >
-              Apply
+              确定
           </Button>
           </div>
         }
@@ -239,7 +239,7 @@ const PopoverBox: React.FC<Props> = (props: Props) => {
           }}
           onClick={handleClosePopover}
         >
-          Cancel
+          取消
       </Button>
       </CardContent>
     )

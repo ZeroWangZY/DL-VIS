@@ -24,26 +24,26 @@ export default () => {
         fixedHeight={fixedHeight}
         stretchItem="top"
         renderBottomChild={(onHide, onShow, visibility) => {
-          return (
-            <div className="vertical-bottom-wrapper">
-              <DanymicInfo setFixedHeight={setFixedHeight} />
-              <div
-                className="expand-btn"
-                onClick={visibility ? onHide : onShow}
-              >
-                {visibility ? (
-                  <img
-                    src={process.env.PUBLIC_URL + "/assets/down.svg"}
-                    alt="收起"
-                  />
-                ) : (
-                    <img
-                      src={process.env.PUBLIC_URL + "/assets/up.svg"}
-                      alt="展开"
-                    />
-                  )}
-              </div>
-            </div>
+          return (<div></div>
+            // <div className="vertical-bottom-wrapper">
+            //   <DanymicInfo setFixedHeight={setFixedHeight} />
+            //   <div
+            //     className="expand-btn"
+            //     onClick={visibility ? onHide : onShow}
+            //   >
+            //     {visibility ? (
+            //       <img
+            //         src={process.env.PUBLIC_URL + "/assets/down.svg"}
+            //         alt="收起"
+            //       />
+            //     ) : (
+            //         <img
+            //           src={process.env.PUBLIC_URL + "/assets/up.svg"}
+            //           alt="展开"
+            //         />
+            //       )}
+            //   </div>
+            // </div>
           );
         }}
         renderTopChild={() => (
@@ -65,7 +65,7 @@ export default () => {
             )}
             renderRightChild={(onHide, onShow, visibility) => (
               <div className="hor-right-wrapper" style={{ height: "100%" }}>
-                <div
+                {/* <div
                   className="expand-btn"
                   onClick={visibility ? onHide : onShow}
                 >
@@ -80,13 +80,13 @@ export default () => {
                         alt="展开"
                       />
                     )}
-                </div>
+                </div> */}
                 <FlexVerContainer
                   fixedHeight="280px"
                   stretchItem="top"
                   renderTopChild={() => (
                     <div className="info-wrapper">
-                      <div className="panel-title">节点属性</div>
+                      <div className="panel-title">节点属性面板</div>
                       <NodeInfoCard />
                     </div>
                   )}

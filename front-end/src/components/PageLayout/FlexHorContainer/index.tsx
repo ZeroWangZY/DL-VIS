@@ -31,12 +31,22 @@ const FlexHorContainer: React.FC<PropTypes> = ({
                 flex: 1,
               }
             : {
-                minWidth: fixedWidth,
-                maxWidth: fixedWidth,
-                width: fixedWidth,
+                // minWidth: fixedWidth,
+                // maxWidth: fixedWidth,
+                width: 320,
               }),
         }}
       >
+        {/* <div
+          style={{
+            position:"absolute",
+            textAlign: 'center',
+            background: '#eee',
+            fontSize: 15,
+            border: '1px solid#333',
+            lineHeight: 40,
+          }}
+        >计算图面板</div> */}
         {renderLeftChild(hideLeft, showLeft, leftVis)}
       </div>
       <div
@@ -47,8 +57,8 @@ const FlexHorContainer: React.FC<PropTypes> = ({
             ? { flex: 1 }
             : {
                 minWidth: fixedWidth,
-                maxWidth: fixedWidth,
-                width: fixedWidth,
+                // maxWidth: fixedWidth,
+                width: 320,
               }),
         }}
       >

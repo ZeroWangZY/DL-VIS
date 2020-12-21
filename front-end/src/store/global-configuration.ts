@@ -23,7 +23,7 @@ let globalConfigurations: GlobalConfigurations = {
   diagnosisMode: false,
   conceptualGraphMode: false,
   webGLMode: false,
-  pixiJSMode: true,
+  pixiJSMode: false,
   preprocessingPlugins: {
     pruneByOutput: false,
     replaceVariable: false,

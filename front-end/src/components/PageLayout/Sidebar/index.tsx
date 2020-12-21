@@ -21,19 +21,19 @@ export const Sidebar: React.FC<PropTypes> = ({
   return (
     <Router>
     <div className="sidebar-wrapper">
-      <div className="panel-title">节点信息</div>
+      <div className="panel-title">控制面板</div>
       <div className="vis-graphselector">
         <GraphSelector />
       </div>
       {/* <Divider /> */}
       <NodeSelector />
-      <div className="expand-btn" onClick={visibility ? onHide : onShow}>
+      {/* <div className="expand-btn" onClick={visibility ? onHide : onShow}>
         {visibility ? (
           <img src={process.env.PUBLIC_URL + "/assets/left.svg"} alt="收起" />
         ) : (
           <img src={process.env.PUBLIC_URL + "/assets/right.svg"} alt="展开" />
         )}
-      </div>
+      </div> */}
     </div>
     </Router>
   );
