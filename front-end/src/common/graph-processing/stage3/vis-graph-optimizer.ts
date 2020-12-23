@@ -500,9 +500,13 @@ export default class VisGraphOptimizer {
     this.visGraphOptimizers = [stackFrequentSubgraph];
   }
   optimize(vGraph: VisGraph) {
+    // console.log("#nodes: "+vGraph.visNodes.length)
+    // console.log("#links: "+vGraph.visEdges.length)
     this.visGraphOptimizers.forEach((optimizer) => {
       optimizer(vGraph);
     });
+    console.log("#nodes: "+vGraph.visNodes.length)
+    console.log("#links: "+vGraph.visEdges.length)
     return vGraph;
   }
 }

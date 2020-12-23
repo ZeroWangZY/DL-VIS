@@ -29,7 +29,7 @@ export function produceVisGraph(
 ): VisGraph {
   const { nodeMap, rootNode, moduleEdges, modules } = processedGraph;
   const { isDiggingEdgeBundlingMode } = options;
-
+  // const isDiggingEdgeBundlingMode = false;
   const visNodes = getVisNodes(processedGraph);
   const visEdges = getVisEdges(
     processedGraph,
