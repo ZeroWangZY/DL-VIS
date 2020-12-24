@@ -88,7 +88,7 @@ const ELKLayoutPort: React.FC = () => {
                   let changedAllEdgeOpacity = false;
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     if (!changedAllEdgeOpacity) { // 如果hover到port上，将所有的edges的透明度设为0.3
-                      d3.select("#output-svg").select(".edges").selectAll("g.edgePath").select("path").attr("opacity", 0.3);
+                      d3.select("#output-svg").select(".edges").selectAll("g.edgePath").selectAll("path").attr("opacity", 0.3);
                       changedAllEdgeOpacity = true;
                     }
 
@@ -99,7 +99,7 @@ const ELKLayoutPort: React.FC = () => {
                     if (!hoverEdges.selectAll(`.${edgeName}`).empty()) {
                       hoverEdges
                         .selectAll(`.${edgeName}`)
-                        .select("path")
+                        .selectAll("path")
                         .attr("fill", "none")
                         .style("stroke", "#eb9c58")
                         .style("stroke-width", "2")
@@ -177,14 +177,14 @@ const ELKLayoutPort: React.FC = () => {
                 onMouseLeave={() => {
                   d3.selectAll(".hoverEdge").remove();
                   d3.select(".nodes").selectAll(".node").attr("opacity", 1);
-                  d3.select("#output-svg").select(".edges").selectAll("g.edgePath").select("path").attr("opacity", 1); // 还原
+                  d3.select("#output-svg").select(".edges").selectAll("g.edgePath").selectAll("path").attr("opacity", 1); // 还原
                   for (let i = 0; i < d.data.hiddenEdges.length; i++) {
                     const { source, target } = d.data.hiddenEdges[i];
                     const edgeName = `${source}to${target}`;
                     if (!hoverEdges.selectAll(`.${edgeName}`).empty()) {
                       hoverEdges
                         .selectAll(`.${edgeName}`)
-                        .select("path")
+                        .selectAll("path")
                         .attr("fill", "none")
                         .style("stroke", "#ff931e")
                         .style("stroke-width", "2")

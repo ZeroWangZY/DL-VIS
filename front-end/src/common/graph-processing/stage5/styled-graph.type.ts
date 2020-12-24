@@ -13,18 +13,9 @@ export interface nodeIO {
   source: Array<string>;
   target: Array<string>;
 }
-
 export interface NodeLinkMap {
   [propName: string]: nodeIO;
 }
-
-// interface NodeStyles {
-
-// }
-
-// interface LinkStyles {
-
-// }
 
 type NodeStyles = Array<Style>;
 

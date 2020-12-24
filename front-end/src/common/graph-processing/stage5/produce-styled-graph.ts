@@ -37,6 +37,62 @@ export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   return new StyledGraphImp(newNodeStyles, newLinkStyles, newPortStyles);
 }
 
+const goThroughPoint = (start, end, point): boolean => { // 判断以[start ,end] 是否经过point
+  if (start.x <= point.x && point.x <= end.x) {
+    if (start.y <= point.y && point.y <= end.y) { // 在线段中间
+      let x1 = start.x, y1 = start.y, x2 = point.x, y2 = point.y, x3 = end.x, y3 = end.y;
+
+      let minNum = Math.min(x1, y1, x2, y2, x3, y3);
+      x1 -= minNum;
+      y1 -= minNum;
+      x2 -= minNum;
+      y2 -= minNum;
+      x3 -= minNum;
+      y3 -= minNum; // 为了防止乘法的结果越界，这里相当于将所有的坐标平移一下
+      return x1 * y2 + x2 * y3 + x3 * y1 - x1 * y3 - x2 * y1 - x3 * y2 == 0; // 面积法判断三点共线
+    }
+  }
+  return false;
+}
+
+const inOneLine = (
+  start1: { x: number, y: number },
+  end1: { x: number, y: number },
+  start2: { x: number, y: number },
+  end2: { x: number, y: number }): number => { // 分别是两条直线的起终点
+  if (start1.y == start2.y && end1.y == end2.y) // 水平共线
+    return 1;
+  else if (start1.x == start2.x && end1.x == end2.x)
+    return 2; // 垂直共线
+  return -1; // 不共线
+}
+
+export const adjustLinePoints = (
+  links: Array<LayoutEdge>
+): void => {
+  // 统计线的粗细
+  let junctionPointsArr = [];
+
+  for (const link of links) {
+    const { junctionPoints, id4Style } = link; // 连接点 id4Style
+    if (junctionPoints) junctionPointsArr.push(...(junctionPoints)); // 统计所有的junction Points
+  }
+
+  for (const link of links) {
+    const { startPoint, endPoint, bendPoints } = link.sections[0]; //连线的各个节点
+    const { junctionPoints, id4Style } = link; // 连接点 id4Style
+
+    if (!junctionPoints && !bendPoints)  // 没有junction Points也没有拐点 一条直线
+      // 判断这条直线是否经过junctionPoints，如果经过的话，就要跑将这条折线断成两短，保证后面统计折线条数的时候不会出错
+      for (let junctionPoint of junctionPointsArr)
+        if (goThroughPoint(startPoint, endPoint, junctionPoint)) {
+          // 断成两条线 即 sections[0] 中 添加 bendPoints 
+          link.sections[0].bendPoints = [];
+          link.sections[0].bendPoints.push(junctionPoint);
+        }
+  }
+}
+
 //直接线性遍历给定的边数组，将对应的每条边的样式添加到已有样式数组
 //Todo:后续根据边的连接情况增加样式可能需要传入新的参数
 export const generateEdgeStyles = (
@@ -44,10 +100,11 @@ export const generateEdgeStyles = (
   styles: Array<Style>,
   ofs: Offset = { x: 0, y: 0 }
 ): void => {
+  adjustLinePoints(links);
   let linksCountMap = ofsLinks(links);
   for (const link of links) {
-    const { startPoint, endPoint, bendPoints } = link.sections[0];
-    const { junctionPoints, id4Style } = link;
+    const { startPoint, endPoint, bendPoints } = link.sections[0]; //连线的各个点
+    const { junctionPoints, id4Style } = link; // 
     if (id4Style in linkKeyMap) {
       linkKeyMap[id4Style] += 1;
     } else {
@@ -62,7 +119,7 @@ export const generateEdgeStyles = (
           y: ofs.y + point.y,
         }))),
       { x: ofs.x + endPoint.x, y: ofs.y + endPoint.y },
-    ];
+    ]; // linkData 就是 折线关键点的 位置 {x,y}
     const ofs_x = 3; //控制和port重叠的问题
 
     const [_drawData, _lineStrokeWidth] = drawArcPath(ofs_x, linkData, linksCountMap, ofs);
@@ -342,6 +399,9 @@ export const generateNodeStyles = (
 };
 
 function ofsLinks(edges: Array<LayoutEdge>) {
+  // 通过每条线段的起始位置坐标 和 终点位置 坐标来统计线的条数
+  // TODO: 这里可能的问题是，重叠的一段线段，比如[10,20] -> [10, 40]; 以及 [10,0]->[10,50]
+  // 或者 用线段的起始位置的不好的地方可能是上层处理的数据万一相差个一点点就不对了。
   let xyMap = {};
   for (const edge of edges) {
     const { startPoint, endPoint, bendPoints } = edge.sections[0];
@@ -349,11 +409,13 @@ function ofsLinks(edges: Array<LayoutEdge>) {
       { x: startPoint.x, y: startPoint.y },
       ...(bendPoints === undefined ? [] : bendPoints),
       { x: endPoint.x, y: endPoint.y },
-    ];
-    //统计线段
+    ]; // 起点到终点的所经过的所有点的坐标
+
+    //统计每段线段出现多少次   ？？？？？ 不对吧！
     for (let i = 0; i < edgeData.length - 1; i++) {
-      let point1 = edgeData[i];
-      let point2 = edgeData[i + 1];
+      let point1 = edgeData[i]; // 线段的起点
+      let point2 = edgeData[i + 1]; // 线段的终点
+
       if (
         xyMap.hasOwnProperty(`${point1.x}-${point1.y}-${point2.x}-${point2.y}`)
       ) {
@@ -366,14 +428,35 @@ function ofsLinks(edges: Array<LayoutEdge>) {
   return xyMap;
 }
 
+const judgeDirection = (start, end): string => {
+  // 根据折线的起始点确定方向，[left, right, up, down]
+  if (start.x == end.x) { // 水平方向
+    return start.y > end.y ? "up" : "down";
+  } else {
+    return start.x > end.x ? "left" : "right";
+  }
+}
+
+const adjustLength = (prePoint, nowPoint): number[] => {
+  let direction = judgeDirection(prePoint, nowPoint);
+  let newX = nowPoint.x, newY = nowPoint.y;
+  if (direction == "up") newY += 4;
+  else if (direction == "down") newY -= 4;
+  else if (direction == "left") newX += 4;
+  else if (direction == "right") newX -= 4;
+  return [newX, newY];
+}
+
 const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
   let path = [];
   const lineStrokeWidth = [];
+
   let preStrokeWidth =
     linksCountMap[
     `${lineData[0].x - ofs.x}-${lineData[0].y - ofs.y}-${lineData[1].x - ofs.x}-${lineData[1].y - ofs.y}`
     ];
-  if (lineData.length < 3) {
+
+  if (lineData.length === 2) { // 一条线
     const _lineWidth = strokeWidthAdaption(preStrokeWidth);
     lineStrokeWidth.push(_lineWidth);
     path.push({
@@ -382,51 +465,109 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
     });
     return [path, lineStrokeWidth];
   }
+
+  // 多段线 , 每一段线的 width不一样 ，并且两个不在同一直线上的直线，之间存在一个圆弧连接
   let prePoint;
   let nowPoint;
-  let firstPoint;
-  let nextStrokeWidth;
+  let postPoint;
   let pathBuff = [`M${lineData[0].x} ${lineData[0].y}`];
-  for (let i = 2; i < lineData.length; i++) {
-    firstPoint = lineData[i - 2];
+  for (let i = 1; i < lineData.length - 1; i++) { // 多段折线 length >= 3
     prePoint = lineData[i - 1];
     nowPoint = lineData[i];
-    preStrokeWidth =
-      linksCountMap[
-      `${firstPoint.x - ofs.x}-${firstPoint.y - ofs.y}-${prePoint.x - ofs.x
-      }-${prePoint.y - ofs.y}`
-      ];
-    nextStrokeWidth =
-      linksCountMap[
-      `${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x}-${nowPoint.y - ofs.y
-      }`
-      ];
-    pathBuff = [...pathBuff, ...pointToPath(firstPoint, prePoint, nowPoint)];
-    const _lineWidth = strokeWidthAdaption(preStrokeWidth);
-    lineStrokeWidth.push(_lineWidth);
-    if (nextStrokeWidth !== preStrokeWidth || preStrokeWidth < 1) {
-      path.push({
-        d: pathBuff.join(" "),
-        strokeWidth: _lineWidth,
-        arrowhead: false,
-      });
-      pathBuff = [`M${prePoint.x} ${prePoint.y}`];
-      linksCountMap[
-        `${firstPoint.x}-${firstPoint.y}-${prePoint.x}-${prePoint.y}`
-      ] = 0;
+    postPoint = lineData[i + 1];
+
+    preStrokeWidth = // 前一条折线的宽度
+      linksCountMap[`${prePoint.x - ofs.x}-${prePoint.y - ofs.y}-${nowPoint.x - ofs.x
+      }-${nowPoint.y - ofs.y}`];
+    let postStrokeWidth = // 后一条折线的宽度
+      linksCountMap[`${nowPoint.x - ofs.x}-${nowPoint.y - ofs.y}-${postPoint.x - ofs.x
+      }-${postPoint.y - ofs.y}`];
+
+    if (Math.abs(preStrokeWidth - postStrokeWidth) < 0.001) { // 前后两条折线的width相同
+      if (goThroughPoint(prePoint, postPoint, nowPoint)) { // 共线
+        pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
+
+        // TODO : 最后一个点 postPoint
+        if (i == lineData.length - 2) { // 倒数第二个点
+          // nowPoint是倒数第二个点， postPoint是最后一个点 
+          pathBuff.push(`L${postPoint.x - ofs_x} ${postPoint.y}`);
+          const _lineWidth = strokeWidthAdaption(preStrokeWidth);
+          lineStrokeWidth.push(_lineWidth);
+          path.push({ // 第一段线结束
+            d: pathBuff.join(""),
+            strokeWidth: _lineWidth,
+            arrowhead: true,
+          });
+        }
+      } else { // 不共线, 则存在圆弧
+        // 如果下一个要增加圆角，则上一条线要根据方向缩短距离，给末尾的圆角一定 空间
+        let [newX, newY] = adjustLength(prePoint, nowPoint);
+        pathBuff.push(`L${newX} ${newY}`);
+
+        pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
+
+        if (i == lineData.length - 2) { // 倒数第二个点
+          // nowPoint是倒数第二个点， postPoint是最后一个点 
+          pathBuff.push(`L${postPoint.x - ofs_x} ${postPoint.y}`);
+          const _lineWidth = strokeWidthAdaption(preStrokeWidth);
+          lineStrokeWidth.push(_lineWidth);
+          path.push({ // 第一段线结束
+            d: pathBuff.join(""),
+            strokeWidth: _lineWidth,
+            arrowhead: true,
+          });
+        }
+      }
+    } else { // 前后两条折线的width不同
+      if (goThroughPoint(prePoint, postPoint, nowPoint)) {  // 前后宽度不同，且共线
+        pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
+        const _lineWidth = strokeWidthAdaption(preStrokeWidth);
+        lineStrokeWidth.push(_lineWidth);
+        path.push({ // 第一段线结束
+          d: pathBuff.join(""),
+          strokeWidth: _lineWidth,
+          arrowhead: false,
+        });
+
+        pathBuff = [`M${nowPoint.x} ${nowPoint.y}`];
+
+        if (i == lineData.length - 2) { // 倒数第二个点
+          // nowPoint是倒数第二个点， postPoint是最后一个点 
+          pathBuff.push(`L${postPoint.x - ofs_x} ${postPoint.y}`);
+          const _lineWidth = strokeWidthAdaption(postStrokeWidth);
+          lineStrokeWidth.push(_lineWidth);
+          path.push({ // 第一段线结束
+            d: pathBuff.join(""),
+            strokeWidth: _lineWidth,
+            arrowhead: true,
+          });
+        }
+
+      } else { // 前后宽度不相同，且不共线
+        // pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
+        let [newX, newY] = adjustLength(prePoint, nowPoint);
+        pathBuff.push(`L${newX} ${newY}`);
+        pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
+
+        if (i == lineData.length - 2) { // 倒数第二个点
+          // nowPoint是倒数第二个点， postPoint是最后一个点 
+          pathBuff.push(`L${postPoint.x - ofs_x} ${postPoint.y}`);
+          const _lineWidth = strokeWidthAdaption(preStrokeWidth);
+          lineStrokeWidth.push(_lineWidth);
+          path.push({ // 第一段线结束
+            d: pathBuff.join(""),
+            strokeWidth: _lineWidth,
+            arrowhead: true,
+          });
+        }
+
+      }
     }
   }
-  //最后一段path
-  const _lineWidth = strokeWidthAdaption(nextStrokeWidth);
-  lineStrokeWidth.push(_lineWidth);
-  pathBuff.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
-  path.push({
-    d: pathBuff.join(" "),
-    strokeWidth: strokeWidthAdaption(nextStrokeWidth),
-    arrowhead: true,
-  });
+
   return [path, lineStrokeWidth];
 };
+
 const hoverPath = (ofs_x, lineData) => {
   if (lineData.length < 3)
     return `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x - ofs_x} ${lineData[1].y}`;
@@ -434,38 +575,49 @@ const hoverPath = (ofs_x, lineData) => {
   let nowPoint;
   let firstPoint;
   let path = [`M${lineData[0].x} ${lineData[0].y}`];
+  let Lpushed = false;
   for (let i = 2; i < lineData.length; i++) {
     firstPoint = lineData[i - 2];
     prePoint = lineData[i - 1];
     nowPoint = lineData[i];
     //根据点位置判断弧度方向
-    path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)];
+
+    // 如果三点共线，或者夹角太小，则直接连接
+    if (goThroughPoint(firstPoint, nowPoint, prePoint)) { // 共线
+      path.push("L" + (nowPoint.x - ofs_x) + " " + nowPoint.y);
+      Lpushed = true;
+    } else {
+      path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)];
+      Lpushed = false;
+    }
   }
-  path.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
+  if (Lpushed === false)
+    path.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
   return path.join(" ");
 };
-function pointToPath(firstPoint, prePoint, nowPoint) {
+
+function pointToPath(prePoint, nowPoint, postPoint) { // (prePoint, nowPoint, postPoint)
   let rx = 4;
   let ry = 4;
   let path = [];
-  if (prePoint.x > firstPoint.x) {
-    path.push(`L ${prePoint.x - rx} ${prePoint.y}`);
-    nowPoint.y > prePoint.y
+  if (nowPoint.x > prePoint.x) {
+    path.push(`L ${nowPoint.x - rx} ${nowPoint.y}`);
+    postPoint.y > nowPoint.y
       ? path.push(`a ${rx} ${ry} 0 0 1 ${rx} ${ry}`)
       : path.push(`a ${rx} ${ry} 0 0 0 ${rx} ${-ry}`);
-  } else if (prePoint.x < firstPoint.x) {
-    path.push(`L ${prePoint.x + rx} ${prePoint.y}`);
-    nowPoint.y > prePoint.y
+  } else if (nowPoint.x < prePoint.x) {
+    path.push(`L ${nowPoint.x + rx} ${nowPoint.y}`);
+    postPoint.y > nowPoint.y
       ? path.push(`a ${rx} ${ry} 0 0 0 ${-rx} ${ry}`)
       : path.push(`a ${rx} ${ry} 0 0 1 ${-rx} ${-ry}`);
-  } else if (prePoint.y > firstPoint.y) {
-    path.push(`L ${prePoint.x} ${prePoint.y - ry}`);
-    nowPoint.x > prePoint.x
+  } else if (nowPoint.y > prePoint.y) {
+    path.push(`L ${nowPoint.x} ${nowPoint.y - ry}`);
+    postPoint.x > nowPoint.x
       ? path.push(`a ${rx} ${ry} 0 0 0 ${rx} ${ry}`)
       : path.push(`a ${rx} ${ry} 0 0 1 ${-rx} ${ry}`);
   } else {
-    path.push(`L ${prePoint.x} ${prePoint.y + ry}`);
-    nowPoint.x > prePoint.x
+    path.push(`L ${nowPoint.x} ${nowPoint.y + ry}`);
+    postPoint.x > nowPoint.x
       ? path.push(`a ${rx} ${ry} 0 0 1 ${rx} ${-ry}`)
       : path.push(`a ${rx} ${ry} 0 0 0 ${-rx} ${-ry}`);
   }
