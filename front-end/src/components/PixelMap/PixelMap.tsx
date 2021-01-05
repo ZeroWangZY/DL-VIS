@@ -7,22 +7,22 @@ const PixelMap: React.FC = () => {
   const [data, setData] = useState(null);
   useEffect(() => {
     getTensorHeatmapSequential({
-      start_step: 5000,
-      end_step: 5500,
+      start_step: 1500,
+      end_step: 1510,
     }).then((data) => setData(data.data.data));
   }, []);
 
   useEffect(() => {
     if (data === null) return;
     console.log(d3.max(data.data));
-    const color = d3.scaleSequential(d3.interpolatePlasma);
+    const color = d3.scaleSequential(d3.interpolateRgb("red", "blue"));
     const svgD3 = d3.select(svgRef.current);
     const x = d3
       .scaleLinear()
       .domain([0, data.data.length])
-      .rangeRound([5, 1550]);
-    const y = d3.scaleLinear().domain([0, 19]).rangeRound([5, 295]);
-    const z = d3.scaleLinear().domain([-0.5, 0.5]).rangeRound([0, 1]);
+      .range([5, 1550]);
+    const y = d3.scaleLinear().domain([0, 19]).range([5, 295]);
+    const z = d3.scaleLinear().domain([-10, 10]).range([0, 1]);
     const yAxis = (g) =>
       g
         .attr("transform", `translate(5,0)`)
