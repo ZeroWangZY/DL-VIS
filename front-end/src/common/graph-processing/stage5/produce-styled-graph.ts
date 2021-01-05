@@ -447,6 +447,22 @@ const adjustLength = (prePoint, nowPoint): number[] => {
   return [newX, newY];
 }
 
+const needArc = (prePoint, nowPoint, postPoint): boolean => {
+  let direction1 = judgeDirection(prePoint, nowPoint);
+  let direction2 = judgeDirection(nowPoint, postPoint);
+
+  if ((direction1 === "up" || direction1 == "down") && Math.abs(prePoint.y - nowPoint.y) <= 4)
+    return false;
+  if ((direction1 === "left" || direction1 == "right") && Math.abs(prePoint.x - nowPoint.x) <= 4)
+    return false;
+  if ((direction2 === "up" || direction2 == "down") && Math.abs(postPoint.y - nowPoint.y) <= 4) {
+    return false;
+  }
+  if ((direction2 === "left" || direction2 == "right") && Math.abs(postPoint.x - nowPoint.x) <= 4)
+    return false;
+  return true;
+}
+
 const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
   let path = [];
   const lineStrokeWidth = [];
@@ -499,12 +515,16 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
             arrowhead: true,
           });
         }
-      } else { // 不共线, 则存在圆弧
-        // 如果下一个要增加圆角，则上一条线要根据方向缩短距离，给末尾的圆角一定 空间
-        let [newX, newY] = adjustLength(prePoint, nowPoint);
-        pathBuff.push(`L${newX} ${newY}`);
+      } else { // 不共线
+        if (needArc(prePoint, nowPoint, postPoint)) { // 如果需要增加圆角
+          // 如果下一个要增加圆角，则上一条线要根据方向缩短距离，给末尾的圆角一定 空间
+          let [newX, newY] = adjustLength(prePoint, nowPoint);
+          pathBuff.push(`L${newX} ${newY}`);
 
-        pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
+          pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
+        } else {
+          pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
+        }
 
         if (i == lineData.length - 2) { // 倒数第二个点
           // nowPoint是倒数第二个点， postPoint是最后一个点 
@@ -520,7 +540,11 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
       }
     } else { // 前后两条折线的width不同
       if (goThroughPoint(prePoint, postPoint, nowPoint)) {  // 前后宽度不同，且共线
-        pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
+        if (preStrokeWidth < postStrokeWidth) { // 前一个宽度小 后一个宽度大
+          pathBuff.push(`L${nowPoint.x + ofs_x} ${nowPoint.y}`);
+        } else {
+          pathBuff.push(`L${nowPoint.x - ofs_x} ${nowPoint.y}`);
+        }
         const _lineWidth = strokeWidthAdaption(preStrokeWidth);
         lineStrokeWidth.push(_lineWidth);
         path.push({ // 第一段线结束
@@ -529,7 +553,12 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
           arrowhead: false,
         });
 
-        pathBuff = [`M${nowPoint.x} ${nowPoint.y}`];
+        if (preStrokeWidth < postStrokeWidth) { // 前一个宽度小 后一个宽度大
+          pathBuff = [`M${nowPoint.x + ofs_x} ${nowPoint.y}`];
+        } else {
+          pathBuff = [`M${nowPoint.x - ofs_x} ${nowPoint.y}`];
+        }
+        // pathBuff = [`M${nowPoint.x} ${nowPoint.y}`];
 
         if (i == lineData.length - 2) { // 倒数第二个点
           // nowPoint是倒数第二个点， postPoint是最后一个点 
@@ -545,9 +574,20 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
 
       } else { // 前后宽度不相同，且不共线
         // pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
-        let [newX, newY] = adjustLength(prePoint, nowPoint);
-        pathBuff.push(`L${newX} ${newY}`);
-        pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
+
+        if (needArc(prePoint, nowPoint, postPoint)) { // 如果需要增加圆角
+          // 如果下一个要增加圆角，则上一条线要根据方向缩短距离，给末尾的圆角一定 空间
+          let [newX, newY] = adjustLength(prePoint, nowPoint);
+          pathBuff.push(`L${newX} ${newY}`);
+
+          pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
+        } else {
+          pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
+        }
+
+        // let [newX, newY] = adjustLength(prePoint, nowPoint);
+        // pathBuff.push(`L${newX} ${newY}`);
+        // pathBuff.push(...pointToPath(prePoint, nowPoint, postPoint));
 
         if (i == lineData.length - 2) { // 倒数第二个点
           // nowPoint是倒数第二个点， postPoint是最后一个点 
@@ -564,35 +604,38 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
       }
     }
   }
-
   return [path, lineStrokeWidth];
 };
 
 const hoverPath = (ofs_x, lineData) => {
   if (lineData.length < 3)
     return `M${lineData[0].x} ${lineData[0].y} L${lineData[1].x - ofs_x} ${lineData[1].y}`;
-  let prePoint;
   let nowPoint;
-  let firstPoint;
+  let postPoint;
+  let prePoint;
   let path = [`M${lineData[0].x} ${lineData[0].y}`];
   let Lpushed = false;
   for (let i = 2; i < lineData.length; i++) {
-    firstPoint = lineData[i - 2];
-    prePoint = lineData[i - 1];
-    nowPoint = lineData[i];
+    prePoint = lineData[i - 2];
+    nowPoint = lineData[i - 1];
+    postPoint = lineData[i];
     //根据点位置判断弧度方向
 
     // 如果三点共线，或者夹角太小，则直接连接
-    if (goThroughPoint(firstPoint, nowPoint, prePoint)) { // 共线
+
+    if (goThroughPoint(prePoint, postPoint, nowPoint)) { // 共线
+      path.push("L" + (postPoint.x - ofs_x) + " " + postPoint.y);
+      Lpushed = true;
+    } else if (!needArc(prePoint, nowPoint, postPoint)) { // 不需要圆角
       path.push("L" + (nowPoint.x - ofs_x) + " " + nowPoint.y);
       Lpushed = true;
     } else {
-      path = [...path, ...pointToPath(firstPoint, prePoint, nowPoint)];
+      path = [...path, ...pointToPath(prePoint, nowPoint, postPoint)];
       Lpushed = false;
     }
   }
   if (Lpushed === false)
-    path.push(`L ${nowPoint.x - ofs_x} ${nowPoint.y}`);
+    path.push(`L ${postPoint.x - ofs_x} ${postPoint.y}`);
   return path.join(" ");
 };
 
