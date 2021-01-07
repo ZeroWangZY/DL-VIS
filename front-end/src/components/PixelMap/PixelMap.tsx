@@ -23,29 +23,27 @@ const PixelMap: React.FC = () => {
   const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
   const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下热力图图比例是 5: 1
 
+  const samplingDataLength = 100; // 采样过后数据的长度
+  const startStep = 1500, endStep = 1510;
+
   useEffect(() => {
     getTensorHeatmapSequential({
-      start_step: 1500,
-      end_step: 1510,
+      start_step: startStep,
+      end_step: endStep,
+      length: samplingDataLength,
     }).then((data) => setRawData(data.data.data));
   }, []);
 
   useEffect(() => {
     if (rawData === null) return;
-    let data = rawData.data;
-    console.log(rawData);
-    console.log(data);
+    let data = rawData.values;
+    let minVal = rawData.vmin, maxVal = rawData.vmax;
+
+    // console.log(rawData);
+    // console.log(data);
 
     const numNeuron = data[0].length;
     const dataLength = data.length;
-
-    let minVal = Infinity, maxVal = -Infinity;
-    for (let i = 0; i < data.length; i++) {
-      for (let j = 0; j < data[0].length; j++) {
-        minVal = Math.min(minVal, data[i][j]);
-        maxVal = Math.max(maxVal, data[i][j]);
-      }
-    }
 
     const color = d3.scaleSequential(d3.interpolateRgb("red", "blue"));
     const focus = d3.select(svgRef.current).select("g.focus");
@@ -91,6 +89,18 @@ const PixelMap: React.FC = () => {
         .call(AxisX);
     }
 
+    focus.select("g.pixelMap").remove();
+    const heatMap = focus.append("g").attr("class", "pixelMap")
+
+    drawPixelMap(heatMap, width, height, data);
+    x1CurrentScale.domain([0, dataLength - 1]); // 目前数据范围
+    // 坐标轴
+    const focusAxisX = d3.axisBottom(x1Scale);
+    // 增加坐标和横线 
+    // 绘制x坐标轴
+    focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+    drawXAxis(focus.select(".focus-axis"), height, focusAxisX);
+
     // --------------------context部分-----------------------------
     context.selectAll(".brush").remove();
 
@@ -108,11 +118,46 @@ const PixelMap: React.FC = () => {
       s[b] = temp;
     }
 
-    const brushHandler = () => {
-
-    };
-
     const brushEnd = () => {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+      if (!(d3.event.sourceEvent instanceof MouseEvent)) return
+      let s = d3.event.selection // s是刷选的实际范围
+      if (s[1] < s[0]) swapArrayElement(s, 0, 1);
+      // s[0] 
+      const domain = s.map(x1Scale.invert).map(d => { return Math.round(d) });
+
+      let [tempStartStep, tempEndStep] = domain.map(d => {
+        // domain对应的原始的startStep 和 endStep
+        let t = d / (samplingDataLength - 1);
+        return Math.ceil(t * (endStep - startStep) + startStep);
+      })
+
+      console.log(tempStartStep, tempEndStep);
+
+      getTensorHeatmapSequential({
+        start_step: tempStartStep,
+        end_step: tempEndStep,
+        length: samplingDataLength * 2
+      }).then((data) => {
+        // console.log(data.data.data)
+
+        let tempFocusPartData = data.data.data.values;
+        // console.log("tempFocusPartData", tempFocusPartData);
+        focus.select("g.pixelMap").remove();
+        const heatMap = focus.append("g").attr("class", "pixelMap")
+
+        drawPixelMap(heatMap, width, height, tempFocusPartData);
+        x1CurrentScale.domain([0, tempFocusPartData.length - 1]); // 目前数据范围
+        // // 坐标轴
+        // const focusAxisX = d3.axisBottom(x1Scale);
+        // // 增加坐标和横线 
+        // // 绘制x坐标轴
+        // focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+        // drawXAxis(focus.select(".focus-axis"), height, focusAxisX);
+      })
+    }
+
+    const brushHandler = () => {
       if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
       if (!(d3.event.sourceEvent instanceof MouseEvent)) return
       let s = d3.event.selection // s是刷选的实际范围
@@ -135,17 +180,17 @@ const PixelMap: React.FC = () => {
     };
 
     const brushStart = () => { // 重新画一张完整的热力图
-      focus.select("g.pixelMap").remove();
-      const heatMap = focus.append("g").attr("class", "pixelMap")
+      // focus.select("g.pixelMap").remove();
+      // const heatMap = focus.append("g").attr("class", "pixelMap")
 
-      drawPixelMap(heatMap, width, height, data);
-      x1CurrentScale.domain([0, dataLength - 1]); // 目前数据范围
-      // 坐标轴
-      const focusAxisX = d3.axisBottom(x1Scale);
-      // 增加坐标和横线 
-      // 绘制x坐标轴
-      focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
-      drawXAxis(focus.select(".focus-axis"), height, focusAxisX);
+      // drawPixelMap(heatMap, width, height, data);
+      // x1CurrentScale.domain([0, dataLength - 1]); // 目前数据范围
+      // // 坐标轴
+      // const focusAxisX = d3.axisBottom(x1Scale);
+      // // 增加坐标和横线 
+      // // 绘制x坐标轴
+      // focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+      // drawXAxis(focus.select(".focus-axis"), height, focusAxisX);
     }
 
     const brush = d3.brushX()
@@ -153,8 +198,8 @@ const PixelMap: React.FC = () => {
         [0, 0],
         [width, height2],
       ])
-      .on("start", brushStart)
-      .on("brush", brushHandler)
+      // .on("start", brushStart)
+      .on("brush start", brushHandler)
       .on('end', brushEnd);
 
     context
@@ -176,7 +221,7 @@ const PixelMap: React.FC = () => {
 
       // 刷选结束，目前刷选的区域的数据范围是：domain[0] - domain[1];
       const brushedData = data.slice(domain[0], domain[1] + 1);
-      console.log(brushedData);
+      // console.log(brushedData);
 
     }
     const brushFocusPart = d3.brushX()
