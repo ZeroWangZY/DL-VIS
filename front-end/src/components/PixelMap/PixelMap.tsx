@@ -23,8 +23,8 @@ const PixelMap: React.FC = () => {
   const margin2 = { top: height + margin.top + gapHeight, left: margin.left };
   const height2 = (svgHeight - margin.top - margin.bottom - gapHeight * 2) * 1 / 6; // 上下热力图图比例是 5: 1
 
-  const samplingDataLength = 100; // 采样过后数据的长度
-  const startStep = 1500, endStep = 1510;
+  const samplingDataLength = 500; // 采样过后数据的长度
+  const startStep = 1, endStep = 1510;
 
   useEffect(() => {
     getTensorHeatmapSequential({
@@ -45,7 +45,7 @@ const PixelMap: React.FC = () => {
     const numNeuron = data[0].length;
     const dataLength = data.length;
 
-    const color = d3.scaleSequential(d3.interpolateRgb("red", "blue"));
+    const color = d3.scaleSequential(d3.interpolateRgb("white", "blue"));
     const focus = d3.select(svgRef.current).select("g.focus");
     const context = d3.select(svgRef.current).select("g.context");
     // 值映射
@@ -147,13 +147,18 @@ const PixelMap: React.FC = () => {
         const heatMap = focus.append("g").attr("class", "pixelMap")
 
         drawPixelMap(heatMap, width, height, tempFocusPartData);
-        x1CurrentScale.domain([0, tempFocusPartData.length - 1]); // 目前数据范围
-        // // 坐标轴
-        // const focusAxisX = d3.axisBottom(x1Scale);
-        // // 增加坐标和横线 
-        // // 绘制x坐标轴
-        // focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
-        // drawXAxis(focus.select(".focus-axis"), height, focusAxisX);
+
+        // 坐标轴
+        focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
+        const tempX1Scale = d3.scaleLinear()
+          .range([0, width])
+          .domain([tempStartStep, tempEndStep]);
+        const tempAxisX = d3.axisBottom(tempX1Scale);
+        focus.select(".focus-axis")
+          .append("g")
+          .attr("class", "axis axis--x")
+          .attr("transform", "translate(0," + height + ")")
+          .call(tempAxisX);
       })
     }
 
