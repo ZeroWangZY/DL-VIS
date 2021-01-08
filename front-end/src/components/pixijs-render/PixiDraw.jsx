@@ -716,13 +716,14 @@ const PixiDraw = (props) => {
         let begin = linkData[i - 1], end = linkData[i];
 
         if (i === linkData.length - 1) { // 最后一根直线
-          let lineData = d.data.lineData;
-          let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
-          if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
-          // end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
-
-          // let d1 = judgeDirection(begin, end);
-          // [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+          if (linkData.length > 2 && !goThroughPoint(linkData[i - 2], linkData[i], linkData[i - 1])) {
+            let lineData = d.data.lineData;
+            let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
+            if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
+            end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
+            let d1 = judgeDirection(begin, end);
+            [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+          }
         }
 
         if (i !== linkData.length - 1) { // 最后一根折线末尾不需要加圆角
