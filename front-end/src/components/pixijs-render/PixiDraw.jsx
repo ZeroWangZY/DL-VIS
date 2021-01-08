@@ -16,6 +16,7 @@ import {
 } from "../../store/global-configuration";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage5/styled-graph.type"
+import { goThroughPoint } from "../../common/graph-processing/stage5/produce-styled-graph"
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
 import * as PIXI from "pixi.js";
 import { TweenMax } from "gsap/all"
@@ -713,30 +714,33 @@ const PixiDraw = (props) => {
         line.lineStyle(lineWidth, lineColor, 1)
 
         let begin = linkData[i - 1], end = linkData[i];
+
         if (i === linkData.length - 1) { // 最后一根直线
           let lineData = d.data.lineData;
           let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
           if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
-          end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
+          // end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
 
-          let d1 = judgeDirection(begin, end);
-          [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+          // let d1 = judgeDirection(begin, end);
+          // [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
         }
 
         if (i !== linkData.length - 1) { // 最后一根折线末尾不需要加圆角
           let nextEnd = linkData[i + 1]; // 下一个起始点
-          let nextBegin = linkData[i];
-          // 前一条线: begin -> end
-          // 后一条线：end - > nextEnd
-          let d1 = judgeDirection(begin, end);
-          let d2 = judgeDirection(nextBegin, nextEnd);
+          if (!goThroughPoint(begin, nextEnd, end)) {
+            let nextBegin = linkData[i];
+            // 前一条线: begin -> end
+            // 后一条线：end - > nextEnd
+            let d1 = judgeDirection(begin, end);
+            let d2 = judgeDirection(nextBegin, nextEnd);
 
-          [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+            [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
 
-          [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
+            [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
 
-          let corner = drawRoundCorner(line, end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
-          container.addChild(corner);
+            let corner = drawRoundCorner(line, end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
+            container.addChild(corner);
+          }
         }
 
         line.moveTo(begin.x, begin.y);

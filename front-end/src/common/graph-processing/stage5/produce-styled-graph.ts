@@ -37,7 +37,7 @@ export function produceStyledGraph(layoutGraph: LayoutGraph): StyledGraph {
   return new StyledGraphImp(newNodeStyles, newLinkStyles, newPortStyles);
 }
 
-const goThroughPoint = (start, end, point): boolean => { // 判断以[start ,end] 是否经过point
+export const goThroughPoint = (start, end, point): boolean => { // 判断以[start ,end] 是否经过point
   if (start.x <= point.x && point.x <= end.x) {
     if (start.y <= point.y && point.y <= end.y) { // 在线段中间
       let x1 = start.x, y1 = start.y, x2 = point.x, y2 = point.y, x3 = end.x, y3 = end.y;
@@ -501,6 +501,7 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
 
     if (Math.abs(preStrokeWidth - postStrokeWidth) < 0.001) { // 前后两条折线的width相同
       if (goThroughPoint(prePoint, postPoint, nowPoint)) { // 共线
+        lineStrokeWidth.push(strokeWidthAdaption(preStrokeWidth));
         pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
 
         // TODO : 最后一个点 postPoint
@@ -525,6 +526,7 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
         } else {
           pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
         }
+        lineStrokeWidth.push(strokeWidthAdaption(preStrokeWidth));
 
         if (i == lineData.length - 2) { // 倒数第二个点
           // nowPoint是倒数第二个点， postPoint是最后一个点 
@@ -547,6 +549,7 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
         }
         const _lineWidth = strokeWidthAdaption(preStrokeWidth);
         lineStrokeWidth.push(_lineWidth);
+
         path.push({ // 第一段线结束
           d: pathBuff.join(""),
           strokeWidth: _lineWidth,
@@ -563,7 +566,7 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
         if (i == lineData.length - 2) { // 倒数第二个点
           // nowPoint是倒数第二个点， postPoint是最后一个点 
           pathBuff.push(`L${postPoint.x - ofs_x} ${postPoint.y}`);
-          const _lineWidth = strokeWidthAdaption(postStrokeWidth);
+          const _lineWidth = strokeWidthAdaption(preStrokeWidth);
           lineStrokeWidth.push(_lineWidth);
           path.push({ // 第一段线结束
             d: pathBuff.join(""),
@@ -584,6 +587,7 @@ const drawArcPath = (ofs_x, lineData, linksCountMap, ofs) => {
         } else {
           pathBuff.push(`L${nowPoint.x} ${nowPoint.y}`);
         }
+        lineStrokeWidth.push(strokeWidthAdaption(preStrokeWidth));
 
         // let [newX, newY] = adjustLength(prePoint, nowPoint);
         // pathBuff.push(`L${newX} ${newY}`);
