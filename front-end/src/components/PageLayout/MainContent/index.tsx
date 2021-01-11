@@ -24,12 +24,12 @@ export default () => {
   return (
     <Router>
       <FlexVerContainer
-        fixedHeight={fixedHeight}
+        fixedHeight="0px"
         stretchItem="top"
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
             <div className="vertical-bottom-wrapper">
-              <DanymicInfo setFixedHeight={setFixedHeight} />
+              {/* <DanymicInfo setFixedHeight={setFixedHeight} />
               <div
                 className="expand-btn"
                 onClick={visibility ? onHide : onShow}
@@ -46,7 +46,7 @@ export default () => {
                       alt="展开"
                     />
                   )}
-              </div>
+              </div> */}
             </div>
           );
         }}
@@ -89,11 +89,11 @@ export default () => {
                     )}
                 </div>
                 <FlexVerContainer
-                  fixedHeight="280px"
+                  fixedHeight="500px"
                   stretchItem="top"
                   renderTopChild={() => (
                     <div className="info-wrapper">
-                      <div className="panel-title">节点属性</div>
+                      <div className="panel-title">Node Information</div>
                       <NodeInfoCard />
                     </div>
                   )}
@@ -104,7 +104,7 @@ export default () => {
                         className="expand-btn"
                         onClick={visibility ? onHide : onShow}
                       >
-                        <span className="legend-title">图例</span>
+                        <span className="legend-title">Legend</span>
                         <span className="btn">
                           {visibility ? (
                             <img

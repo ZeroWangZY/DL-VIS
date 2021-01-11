@@ -145,7 +145,7 @@ export default function GraphModeSelection() {
         }
         label={
           <ThemeProvider theme={theme}>
-            <Typography variant="body2">PixiJS</Typography>
+            <Typography variant="body2">WebGL</Typography>
           </ThemeProvider>
         }
       />
@@ -156,7 +156,7 @@ export default function GraphModeSelection() {
         }
         label={
           <ThemeProvider theme={theme}>
-            <Typography variant="body2">概念图模式</Typography>
+            <Typography variant="body2">Concept Graph Mode</Typography>
           </ThemeProvider>
         }
       />

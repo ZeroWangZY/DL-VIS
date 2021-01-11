@@ -21,7 +21,7 @@ export const Sidebar: React.FC<PropTypes> = ({
   return (
     <Router>
     <div className="sidebar-wrapper">
-      <div className="panel-title">节点信息</div>
+      <div className="panel-title">Model Configurations</div>
       <div className="vis-graphselector">
         <GraphSelector />
       </div>
