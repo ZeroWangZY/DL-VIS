@@ -90,12 +90,8 @@ export default () => {
                     )}
                 </div>
                 <FlexVerContainer
-<<<<<<< HEAD
                   fixedTopHeight="460px"
                   fixedBottomHeight="420px"
-=======
-                  fixedHeight="500px"
->>>>>>> 28dc021 (feat: 🎸 英文版界面)
                   stretchItem="top"
                   renderTopChild={() => (
                     <div className="info-wrapper">
@@ -107,30 +103,6 @@ export default () => {
                     <div className="legend-wrapper" style={{ height: "100%" }}>
                       <span className="legend-title">Legend</span>
                       <Legend />
-<<<<<<< HEAD
-=======
-                      <div
-                        className="expand-btn"
-                        onClick={visibility ? onHide : onShow}
-                      >
-                        <span className="legend-title">Legend</span>
-                        <span className="btn">
-                          {visibility ? (
-                            <img
-                              src={
-                                process.env.PUBLIC_URL + "/assets/down-b.svg"
-                              }
-                              alt="收起"
-                            />
-                          ) : (
-                              <img
-                                src={process.env.PUBLIC_URL + "/assets/up-b.svg"}
-                                alt="展开"
-                              />
-                            )}
-                        </span>
-                      </div>
->>>>>>> 28dc021 (feat: 🎸 英文版界面)
                     </div>
                   )}
                 />
