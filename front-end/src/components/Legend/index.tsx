@@ -60,19 +60,19 @@ export default () => {
           <td className="caption">Piled Node</td>
         </tr>
         <tr>
-          <td className="icon">
+          <td className="icon edge">
             <img src={process.env.PUBLIC_URL + "/assets/normal-edge.svg"} />
           </td>
           <td className="caption">Normal Edge</td>
         </tr>
         <tr>
-          <td className="icon">
+          <td className="icon edge">
             <img src={process.env.PUBLIC_URL + "/assets/hidden-edge.svg"} />
           </td>
           <td className="caption">Hidden Edge</td>
         </tr>
         <tr>
-          <td className="icon">
+          <td className="icon edge">
             <img src={process.env.PUBLIC_URL + "/assets/module-edge.svg"} />
           </td>
           <td className="caption">Module Edge</td>

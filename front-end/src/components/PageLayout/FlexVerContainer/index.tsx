@@ -3,14 +3,16 @@ import "./index.less";
 
 export interface PropTypes {
   stretchItem: "top" | "bottom";
-  fixedHeight: string;
+  fixedTopHeight: string;
+  fixedBottomHeight: string;
   renderTopChild(onHide, onShow, visibility): React.ReactNode;
   renderBottomChild(onHide, onShow, visibility): React.ReactNode;
 }
 
 const FlexHorContainer: React.FC<PropTypes> = ({
   stretchItem = "bottom",
-  fixedHeight,
+  fixedTopHeight,
+  fixedBottomHeight,
   renderTopChild,
   renderBottomChild,
 }) => {
@@ -25,14 +27,14 @@ const FlexHorContainer: React.FC<PropTypes> = ({
       <div
         className="layout-vertical-top-container"
         style={{
-          marginTop: topVis ? 0 : `-${fixedHeight}`,
+          marginTop: topVis ? 0 : `-${fixedTopHeight}`,
           ...(stretchItem === "top"
-            ? { bottom: bottomVis ? fixedHeight : 0 }
+            ? { bottom: bottomVis ? fixedTopHeight : 0 }
             : {
                 bottom: "unset",
-                minHeight: fixedHeight,
-                maxHeight: fixedHeight,
-                height: fixedHeight,
+                minHeight: fixedTopHeight,
+                maxHeight: fixedTopHeight,
+                height: fixedTopHeight,
               }),
         }}
       >
@@ -41,14 +43,14 @@ const FlexHorContainer: React.FC<PropTypes> = ({
       <div
         className="layout-vertical-bottom-container"
         style={{
-          marginBottom: bottomVis ? 0 : `-${fixedHeight}`,
+          marginBottom: bottomVis ? 0 : `-${fixedBottomHeight}`,
           ...(stretchItem === "bottom"
-            ? { top: topVis ? fixedHeight : 0 }
+            ? { top: topVis ? fixedBottomHeight : 0 }
             : {
                 top: "unset",
-                minHeight: fixedHeight,
-                maxHeight: fixedHeight,
-                height: fixedHeight,
+                minHeight: fixedBottomHeight,
+                maxHeight: fixedBottomHeight,
+                height: fixedBottomHeight,
               }),
         }}
       >

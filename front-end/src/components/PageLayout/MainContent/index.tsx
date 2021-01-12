@@ -24,7 +24,8 @@ export default () => {
   return (
     <Router>
       <FlexVerContainer
-        fixedHeight="0px"
+        fixedTopHeight="0px"
+        fixedBottomHeight="0px"
         stretchItem="top"
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
@@ -53,7 +54,7 @@ export default () => {
         renderTopChild={() => (
           <FlexHorContainer
             stretchItem="left"
-            fixedWidth="200px"
+            fixedWidth="280px"
             renderLeftChild={() => (
               <Switch>
                 <Route path="/layer">
@@ -89,7 +90,8 @@ export default () => {
                     )}
                 </div>
                 <FlexVerContainer
-                  fixedHeight="500px"
+                  fixedTopHeight="460px"
+                  fixedBottomHeight="420px"
                   stretchItem="top"
                   renderTopChild={() => (
                     <div className="info-wrapper">
@@ -99,28 +101,8 @@ export default () => {
                   )}
                   renderBottomChild={(onHide, onShow, visibility) => (
                     <div className="legend-wrapper" style={{ height: "100%" }}>
+                      <span className="legend-title">Legend</span>
                       <Legend />
-                      <div
-                        className="expand-btn"
-                        onClick={visibility ? onHide : onShow}
-                      >
-                        <span className="legend-title">Legend</span>
-                        <span className="btn">
-                          {visibility ? (
-                            <img
-                              src={
-                                process.env.PUBLIC_URL + "/assets/down-b.svg"
-                              }
-                              alt="收起"
-                            />
-                          ) : (
-                              <img
-                                src={process.env.PUBLIC_URL + "/assets/up-b.svg"}
-                                alt="展开"
-                              />
-                            )}
-                        </span>
-                      </div>
                     </div>
                   )}
                 />

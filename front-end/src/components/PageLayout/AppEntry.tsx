@@ -19,7 +19,8 @@ export default () => {
       }}
     >
       <FlexVerContainer
-        fixedHeight="64px"
+        fixedTopHeight="64px"
+        fixedBottomHeight="64px"
         stretchItem="bottom"
         renderTopChild={() => <Header />}
         renderBottomChild={() => {
