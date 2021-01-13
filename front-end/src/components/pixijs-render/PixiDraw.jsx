@@ -504,30 +504,30 @@ const PixiDraw = (props) => {
     // 绘制小圆形
     const loader = new PIXI.Loader();
     loader
-      .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
+      // .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
       .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
       .load(() => {
 
         for (let circle of littleCircleArr) {
-          if (circle.style === 1) {
-            const dashCircle = new PIXI.Sprite(
-              loader.resources["dashCircle"].texture
-            );
-            dashCircle.width = circle.size;
-            dashCircle.height = circle.size;
-            dashCircle.x = circle.x;
-            dashCircle.y = circle.y;
-            container.addChild(dashCircle);
-          } else if (circle.style === 0) {
-            const solidCircle = new PIXI.Sprite(
-              loader.resources["solidCircle"].texture
-            );
-            solidCircle.width = circle.size;
-            solidCircle.height = circle.size;
-            solidCircle.x = circle.x;
-            solidCircle.y = circle.y;
-            container.addChild(solidCircle);
-          }
+          // if (circle.style === 1) {
+          //   const dashCircle = new PIXI.Sprite(
+          //     loader.resources["dashCircle"].texture
+          //   );
+          //   dashCircle.width = circle.size;
+          //   dashCircle.height = circle.size;
+          //   dashCircle.x = circle.x;
+          //   dashCircle.y = circle.y;
+          //   container.addChild(dashCircle);
+          // } else if (circle.style === 0) {
+          const solidCircle = new PIXI.Sprite(
+            loader.resources["solidCircle"].texture
+          );
+          solidCircle.width = circle.size;
+          solidCircle.height = circle.size;
+          solidCircle.x = circle.x;
+          solidCircle.y = circle.y;
+          container.addChild(solidCircle);
+          // }
         }
 
       })
@@ -566,38 +566,38 @@ const PixiDraw = (props) => {
 
 
         let textCanvasWidth = message.width;
-        if (node.type === NodeType.LAYER) {
-          let iconSize = 13;
-          message.position.set(d.style._gNodeTransX - textCanvasWidth / 2 + iconSize, d.style._gNodeTransY - d.style._rectHeight / 2);
+        // if (node.type === NodeType.LAYER) {
+        //   let iconSize = 13;
+        //   message.position.set(d.style._gNodeTransX - textCanvasWidth / 2 + iconSize, d.style._gNodeTransY - d.style._rectHeight / 2);
 
-          const loader = new PIXI.Loader();
-          let path = process.env.PUBLIC_URL + "/assets/";
-          if (d.data.label.startsWith("conv"))
-            path += "cnn.png";
-          else if (d.data.label.startsWith("fc"))
-            path += "fc.png";
-          else if (d.data.label.startsWith("rnn"))
-            path += "rnn.png";
+        //   const loader = new PIXI.Loader();
+        //   let path = process.env.PUBLIC_URL + "/assets/";
+        //   if (d.data.label.startsWith("conv"))
+        //     path += "cnn.png";
+        //   else if (d.data.label.startsWith("fc"))
+        //     path += "fc.png";
+        //   else if (d.data.label.startsWith("rnn"))
+        //     path += "rnn.png";
 
-          loader
-            .add('icon', path)
-            .load(() => {
-              const icon = new PIXI.Sprite(loader.resources["icon"].texture);
-              icon.width = iconSize;
-              icon.height = iconSize;
-              // icon.resolution = 1;
-              adJustResolution(icon, zoomFactor);
-              icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
-              icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
+        //   loader
+        //     .add('icon', path)
+        //     .load(() => {
+        //       const icon = new PIXI.Sprite(loader.resources["icon"].texture);
+        //       icon.width = iconSize;
+        //       icon.height = iconSize;
+        //       // icon.resolution = 1;
+        //       adJustResolution(icon, zoomFactor);
+        //       icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
+        //       icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
 
-              container.addChild(message);
-              container.addChild(icon);
-            })
+        //       container.addChild(message);
+        //       container.addChild(icon);
+        //     })
 
-        } else {
-          message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
-          container.addChild(message);
-        }
+        // } else {
+        message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
+        container.addChild(message);
+        // }
       }
     })
 
