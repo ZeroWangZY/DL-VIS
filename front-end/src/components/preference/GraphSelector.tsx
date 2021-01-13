@@ -25,7 +25,6 @@ import { setTfRawGraph } from "../../store/rawGraph.tf";
 import { fetchLocalMsGraph, fetchSummaryGraph } from "../../api";
 import { setMsRawGraph } from "../../store/rawGraph.ms";
 import useGraphPipeline from "../GraphPipeline/GraphPipeline";
-import fetchBackendData from "../FetchBackendData/FetchBackendData";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Typography from "@material-ui/core/Typography";
 import { useGlobalStates, modifyGlobalStates } from "../../store/global-states";
@@ -69,7 +68,6 @@ const GraphSelector = (props) => {
   const [currentMsGraphIndex, setCurrentMsGraphIndex] = useState<number>(0);
   const canvasContext = useContext(UpdateRectInCanvasContext);
   useGraphPipeline();
-  fetchBackendData();
 
   const {
     preprocessingPlugins,
