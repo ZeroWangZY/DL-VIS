@@ -26,7 +26,6 @@ import {
   modifyGlobalStates,
 } from "../../store/global-states";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
-import LineGroup from "./LineGroup"
 import { produceLayoutGraph, LAYERNODESIZEINDIAGNOSISMODE } from "../../common/graph-processing/stage4/produce-layout-graph";
 
 interface Props {
@@ -181,11 +180,6 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           width={rectWidth}
           height={(rectHeight * 7) / 8}
         >
-          <LineGroup
-            svgWidth={LAYERNODESIZEINDIAGNOSISMODE.width}
-            svgHeight={(LAYERNODESIZEINDIAGNOSISMODE.height * 7) / 8}
-            layerNodeId={node.id}
-          />
         </foreignObject>
       </g>
     );

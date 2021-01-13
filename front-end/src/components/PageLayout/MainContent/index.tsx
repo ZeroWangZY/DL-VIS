@@ -3,13 +3,10 @@ import FlexHorContainer from "../FlexHorContainer";
 import FlexVerContainer from "../FlexVerContainer";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import "./index.less";
-import LayerLevel from "../../LayerLevel/LayerLevel";
 import ELKLayout from "../../ELKLayout/ELKLayout";
-import RenderGraph from "../../threejs-render/RenderGraph";
 import PixiDraw from "../../pixijs-render/PixiDraw";
 import NodeInfoCard from "../../NodeInfoCard/NodeInfoCard";
 import Legend from "../../Legend";
-import DanymicInfo from "../../DynamicInfo";
 import {
   useGlobalConfigurations
 } from "../../../store/global-configuration";
@@ -29,7 +26,6 @@ export default () => {
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
             <div className="vertical-bottom-wrapper">
-              <DanymicInfo setFixedHeight={setFixedHeight} />
               <div
                 className="expand-btn"
                 onClick={visibility ? onHide : onShow}
@@ -56,9 +52,6 @@ export default () => {
             fixedWidth="200px"
             renderLeftChild={() => (
               <Switch>
-                <Route path="/layer">
-                  <LayerLevel />
-                </Route>
                 <Route path="/">
                   {/* {!webGLMode && <ELKLayout />}
                   {webGLMode && <RenderGraph />} */}
