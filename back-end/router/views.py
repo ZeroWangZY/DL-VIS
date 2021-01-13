@@ -6,7 +6,8 @@ from django.http import HttpResponse
 import os
 from graph.data_access.loaders.data_loader import DataLoader
 from graph.data_access.common.enums import PluginNameEnum
-from mindspore.train import anf_ir_pb2
+# from mindspore.train import anf_ir_pb2
+from graph.data_access.proto_files import anf_ir_pb2
 from google.protobuf import json_format
 from threading import Timer
 from dao.data_helper import DataHelper
