@@ -16,7 +16,7 @@
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
-from .tools import save_node_scalar, NODE_SCALAR_TYPE, save_node_tensor
+# from .tools import save_node_scalar, NODE_SCALAR_TYPE, save_node_tensor
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid", sigma=0.02):
     weight = weight_variable(sigma)
@@ -54,33 +54,33 @@ class AlexNet(nn.Cell):
 
     def construct(self, x):
         x = self.conv1(x)
-        save_node_scalar("conv1", x, NODE_SCALAR_TYPE.Activation)
-        save_node_tensor("conv1", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("conv1", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_tensor("conv1", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv2(x)
-        save_node_scalar("conv2", x, NODE_SCALAR_TYPE.Activation)
-        save_node_tensor("conv2", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("conv2", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_tensor("conv2", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv3(x)
-        save_node_scalar("conv3", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("conv3", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.conv4(x)
-        save_node_scalar("conv4", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("conv4", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.conv5(x)
-        save_node_scalar("conv5", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("conv5", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.flatten(x)
         x = self.fc1(x)
-        save_node_scalar("fc1", x, NODE_SCALAR_TYPE.Activation)
-        save_node_tensor("fc1", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("fc1", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_tensor("fc1", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.fc2(x)
-        save_node_scalar("fc2", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("fc2", x, NODE_SCALAR_TYPE.Activation)
         x = self.relu(x)
         x = self.fc3(x)
-        save_node_scalar("fc3", x, NODE_SCALAR_TYPE.Activation)
+        # save_node_scalar("fc3", x, NODE_SCALAR_TYPE.Activation)
         return x

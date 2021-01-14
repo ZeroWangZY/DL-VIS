@@ -14,7 +14,7 @@ events_data = data_loader.get_events_data()
 graph_tag = events_data.list_tags_by_plugin(PluginNameEnum.GRAPH)[0]
 graph_data = events_data.tensors(graph_tag)[0].value
 
-f = open("graph.txt", "w", encoding="utf-8")
+f = open("mobilenetv2.pbtxt", "w", encoding="utf-8")
 
 # 先建一个map
 nodeMap = {}

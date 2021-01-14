@@ -46,7 +46,7 @@ de.config.set_seed(1)
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
-parser.add_argument('--platform', type=str, default=None, help='run platform')
+parser.add_argument('--platform', type=str, default="GPU", help='run platform')
 args_opt = parser.parse_args()
 
 if args_opt.platform == "Ascend":
@@ -57,10 +57,10 @@ if args_opt.platform == "Ascend":
     device_id = int(os.getenv('DEVICE_ID'))
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
-                        device_id=device_id, save_graphs=False)
+                        device_id=device_id, save_graphs=True)
 elif args_opt.platform == "GPU":
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="GPU", save_graphs=False)
+                        device_target="GPU", save_graphs=True)
 else:
     raise ValueError("Unsupport platform.")
 
@@ -157,10 +157,10 @@ if __name__ == '__main__':
         # train on gpu
         print("train args: ", args_opt, "\ncfg: ", config_gpu)
 
-        init('nccl')
-        context.set_auto_parallel_context(parallel_mode="data_parallel",
-                                          mirror_mean=True,
-                                          device_num=get_group_size())
+        # init('nccl')
+        # context.set_auto_parallel_context(parallel_mode="data_parallel",
+        #                                   mirror_mean=True,
+        #                                   device_num=get_group_size())
 
         # define net
         net = mobilenet_v2(num_classes=config_gpu.num_classes, platform="GPU")

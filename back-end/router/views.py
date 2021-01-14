@@ -21,6 +21,7 @@ from dao.node_mapping import alex_node_map
 import random
 import pandas as pd
 import math
+import tables
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from logs.resnet.resnet_data_runner import ResnetDataRunner
@@ -130,6 +131,47 @@ def get_local_ms_graph(request):
         f = open("ms-graph/" + graph_name + ".pb", "rb")
         model = anf_ir_pb2.ModelProto()
         model.ParseFromString(f.read())
+        graph_data = json.loads(json_format.MessageToJson(model.graph))
+        f = open(graph_name + ".pbtxt", "w", encoding="utf-8")
+
+        # 先建一个map
+        nodeMap = {}
+        nodes = graph_data["node"]
+        for i in range(len(nodes)):  # 后面取node方便一点
+            try:
+                nodeMap[nodes[i]["name"]] = nodes[i]
+            except Exception:
+                print(i, "号结点是空结点")
+        for item in nodes:
+            if len(item) == 0:
+                continue
+            nodeName = item["scope"] + "/" + item["opType"] + "_" + item["name"]
+            opType = item["opType"]
+            inputs = []
+
+            try:
+                for inputItem in item["input"]:
+                    try:
+                        inputNode = nodeMap[inputItem["name"]]
+                        inputNodeName = inputNode["scope"] + "/" + inputNode["opType"] + "_" + inputNode["name"]
+                        inputs.append(inputNodeName)
+                    except Exception:
+                        # 生成一个node
+                        inputNodeName = item["scope"] + "/" + inputItem["name"]
+                        f.write("node {\n")
+                        f.write("  name: \"" + inputNodeName + "\"\n")
+                        f.write("  op: \"" + "Const" + "\"\n")
+                        f.write("}\n")
+                        inputs.append(inputNodeName)
+            except Exception:
+                print("no input")
+            f.write("node {\n")
+            f.write("  name: \"" + nodeName + "\"\n")
+            f.write("  op: \"" + opType + "\"\n")
+            for inputItem in inputs:
+                f.write("  input: \"" + inputItem + "\"\n")
+            f.write("}\n")
+
         return HttpResponse(json.dumps({
             "message": "success",
             "data": json.loads(json_format.MessageToJson(model.graph))
@@ -620,6 +662,65 @@ def get_node_line(request):
         "data": None
     }), content_type="application/json")
 
+def get_tensor_heatmap_sequential(request):
+    if request.method == 'GET':
+        graph_name = request.GET.get('graph_name', default='lenet')
+        node_id = request.GET.get('node_id', default='9')
+        start_step = int(request.GET.get('start_step', default='1'))
+        end_step = int(request.GET.get('end_step', default='10'))
+        type = request.GET.get('type', default='activation')
+        length = int(request.GET.get('length', default='-1'))
+
+        filename = "./model/" + graph_name + "/datanpy/lenet_data.h5"
+        f = tables.open_file(filename, mode='r')
+
+        if length != -1 and (end_step - start_step + 1) * 32 > length:   # 需要做平均采样，length是需要留多少个cluster
+            cut_division_value = (end_step - start_step + 1) * 32 / length
+            cur_data = f.root.data[(start_step - 1) * 32:end_step * 32, :]
+            value_data = []
+            for i in range(length):
+                l = round(i * cut_division_value)
+                r = round((i + 1) * cut_division_value)
+                value_data.append(np.mean(cur_data[l:r, :], axis=0).tolist())
+
+            return HttpResponse(json.dumps({
+                "message": "success",
+                "data": {
+                    "values": value_data,
+                    "vmin": np.percentile(value_data, 5),
+                    "vmax": np.percentile(value_data, 95),
+                }
+            }), content_type="application/json")
+            pass
+
+        filenamelabels = "./model/" + graph_name + "/datanpy/lenet_labels.h5"
+        f1 = tables.open_file(filenamelabels, mode='r')
+
+        value_data = f.root.data[(start_step - 1) * 32:end_step * 32, :].tolist()
+
+        indices_list = []
+        start_epoch_num = int(start_step / 1875) + 1
+        end_epoch_num = int(end_step / 1875) + 2
+        for cur_epoch in range(start_epoch_num, end_epoch_num):
+            jsonPath = "./model/lenet/lenet-ckpt1222alldata" + os.sep + "indices" + os.sep + str(cur_epoch) + ".json"
+            with open(jsonPath, 'r', encoding='utf-8') as fp:  # 拿到数据编号
+                indices = json.load(fp)
+                indices_list = indices_list + indices
+        indices_list = indices_list[start_step % 1875: start_step % 1875 + len(value_data)]
+        return HttpResponse(json.dumps({
+            "message": "success",
+            "data": {
+                "values": value_data,
+                "labels": f1.root.data[(start_step - 1):end_step, :].flatten().tolist(),
+                "indexes": indices_list,
+                "vmin": np.percentile(value_data, 5),
+                "vmax": np.percentile(value_data, 95),
+            }
+        }), content_type="application/json")
+    return HttpResponse(json.dumps({
+        "message": "method undefined",
+        "data": None
+    }), content_type="application/json")
 
 def get_tensor_heatmap(request):
     if request.method == 'GET':

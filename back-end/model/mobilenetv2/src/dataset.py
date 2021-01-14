@@ -18,7 +18,7 @@ create train or eval dataset.
 import os
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.c_transforms as C
+# import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
 def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch_size=32):
