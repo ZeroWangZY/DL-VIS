@@ -45,7 +45,6 @@ const PixelMap: React.FC = () => {
     const numNeuron = data[0].length;
     const dataLength = data.length;
 
-    const color = d3.scaleSequential(d3.interpolateRgb("white", "blue"));
     const focus = d3.select(svgRef.current).select("g.focus");
     const context = d3.select(svgRef.current).select("g.context");
     // 值映射
@@ -65,7 +64,14 @@ const PixelMap: React.FC = () => {
 
     const z = d3.scaleLinear().domain([minVal, maxVal]).range([0, 1]);
 
-    const drawPixelMap = (drawArea, width, height, data) => {
+    const drawPixelMap = (drawArea, width, height, data, currMin?, currMax?) => {
+      const color = d3.scaleSequential(d3.interpolateRgb("white", "blue"));
+
+      if (!currMin || !currMax)
+        color.domain([minVal, maxVal]);
+      else
+        color.domain([currMin, currMax]);
+
       const cellWidth = width / data.length;
       const cellHeight = height / data[0].length;
       for (let i = 0; i < data.length; i++) { // i列
@@ -142,11 +148,12 @@ const PixelMap: React.FC = () => {
         // console.log(data.data.data)
 
         let tempFocusPartData = data.data.data.values;
+        let tempMinVal = data.data.data.vmin, tempMaxVal = data.data.data.vmax;
         // console.log("tempFocusPartData", tempFocusPartData);
         focus.select("g.pixelMap").remove();
         const heatMap = focus.append("g").attr("class", "pixelMap")
 
-        drawPixelMap(heatMap, width, height, tempFocusPartData);
+        drawPixelMap(heatMap, width, height, tempFocusPartData, tempMinVal, tempMaxVal);
 
         // 坐标轴
         focus.select('.focus-axis').selectAll(".axis--x").remove(); // 清除原来的坐标
