@@ -65,7 +65,7 @@ const PixelMap: React.FC = () => {
     const z = d3.scaleLinear().domain([minVal, maxVal]).range([0, 1]);
 
     const drawPixelMap = (drawArea, width, height, data, currMin?, currMax?) => {
-      const color = d3.scaleSequential(d3.interpolateRgb("white", "blue"));
+      const color = d3.scaleSequential(d3.interpolateRgb("blue", "white"));
 
       if (!currMin || !currMax)
         color.domain([minVal, maxVal]);
