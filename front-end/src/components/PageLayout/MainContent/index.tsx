@@ -24,12 +24,13 @@ export default () => {
   return (
     <Router>
       <FlexVerContainer
-        fixedHeight={fixedHeight}
+        fixedTopHeight="0px"
+        fixedBottomHeight="0px"
         stretchItem="top"
         renderBottomChild={(onHide, onShow, visibility) => {
           return (
             <div className="vertical-bottom-wrapper">
-              <DanymicInfo setFixedHeight={setFixedHeight} />
+              {/* <DanymicInfo setFixedHeight={setFixedHeight} />
               <div
                 className="expand-btn"
                 onClick={visibility ? onHide : onShow}
@@ -46,14 +47,14 @@ export default () => {
                       alt="展开"
                     />
                   )}
-              </div>
+              </div> */}
             </div>
           );
         }}
         renderTopChild={() => (
           <FlexHorContainer
             stretchItem="left"
-            fixedWidth="200px"
+            fixedWidth="280px"
             renderLeftChild={() => (
               <Switch>
                 <Route path="/layer">
@@ -89,38 +90,19 @@ export default () => {
                     )}
                 </div>
                 <FlexVerContainer
-                  fixedHeight="280px"
+                  fixedTopHeight="460px"
+                  fixedBottomHeight="420px"
                   stretchItem="top"
                   renderTopChild={() => (
                     <div className="info-wrapper">
-                      <div className="panel-title">节点属性</div>
+                      <div className="panel-title">Node Information</div>
                       <NodeInfoCard />
                     </div>
                   )}
                   renderBottomChild={(onHide, onShow, visibility) => (
                     <div className="legend-wrapper" style={{ height: "100%" }}>
+                      <span className="legend-title">Legend</span>
                       <Legend />
-                      <div
-                        className="expand-btn"
-                        onClick={visibility ? onHide : onShow}
-                      >
-                        <span className="legend-title">图例</span>
-                        <span className="btn">
-                          {visibility ? (
-                            <img
-                              src={
-                                process.env.PUBLIC_URL + "/assets/down-b.svg"
-                              }
-                              alt="收起"
-                            />
-                          ) : (
-                              <img
-                                src={process.env.PUBLIC_URL + "/assets/up-b.svg"}
-                                alt="展开"
-                              />
-                            )}
-                        </span>
-                      </div>
                     </div>
                   )}
                 />

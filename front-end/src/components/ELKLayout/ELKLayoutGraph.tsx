@@ -786,7 +786,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
         prompt={"Reset Layout"}
       />
 
-      <Popover
+      {/* <Popover
         placement="right"
         title={<span>Data Type</span>}
         content={nodeScalarTypes}
@@ -807,7 +807,7 @@ const ELKLayoutGraph: React.FC<Props> = (props: Props) => {
           src={process.env.PUBLIC_URL + "/assets/layer-display.svg"}
           title={"Layer Display"}
         />
-      </Popover>
+      </Popover> */}
     </div>
   );
 };

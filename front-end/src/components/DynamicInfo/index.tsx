@@ -13,6 +13,7 @@ import {
 import Button from '@material-ui/core/Button';
 import Box from "@material-ui/core/Box";
 import Snapshot from "../Snapshot/Snapshot";
+import PixelMap from "../PixelMap/PixelMap";
 import "./index.less";
 import LayerLevel from "../LayerLevel/LayerLevel"
 import {
@@ -204,6 +205,13 @@ export default (props: Props) => {
             disabled={!(nodeMap[selectedNodeId] instanceof LayerNodeImp)}
             {...a11yProps(1, "outerBottom")}
           />
+          <Tab
+            style={{ color: value["outerBottom"] === 2 ? "#00a5a7" : "#333" }}
+            className={classes.tabStyle}
+            label="pixel map"
+            disabled={!(nodeMap[selectedNodeId] instanceof LayerNodeImp)}
+            {...a11yProps(1, "outerBottom")}
+          />
         </Tabs>
         <TabPanel value={value["outerBottom"]} index={0} pos={"outerBottom"}>
           <Snapshot />
@@ -246,6 +254,9 @@ export default (props: Props) => {
           </div>
           {/* layer level */}
           <LayerLevel />
+        </TabPanel>
+        <TabPanel value={value["outerBottom"]} index={2} pos={"outerBottom"}>
+          <PixelMap />
         </TabPanel>
         <Popover
           open={showCollection}

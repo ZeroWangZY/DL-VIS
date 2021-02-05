@@ -55,38 +55,37 @@
 @expand-btn-height: 32px;
 .legend-wrapper {
   display: relative;
-  .expand-btn {
-    position: absolute;
-    right: 0;
-    top: -@expand-btn-height;
-    z-index: 1;
-    cursor: pointer;
-    // 美化
-    font-weight: normal;
-    border-radius: 0;
-    border-bottom: 1px solid #ccc;
-    border-top: 1px solid #ccc;
-    width: 200px;
-    height: 30px;
-    text-align: center;
-    line-height: 30px;
+  position: absolute;
+  right: 0;
+  top: -@expand-btn-height;
+  z-index: 1;
+  cursor: pointer;
+  // 美化
+  font-weight: normal;
+  border-radius: 0;
+  // border-bottom: 1px solid #ccc;
+  // border-top: 1px solid #ccc;
+  width: 250px;
+  height: 30px;
+  text-align: center;
+  line-height: 30px;
+  background-color: #fff;
+  color: #333;
+  padding: 0;
+  &:hover {
     background-color: #fff;
-    color: #333;
-    padding: 0;
-    &:hover {
-      background-color: #fff;
+  }
+  .btn {
+    padding-left: 100px;
+    img {
+      height: 16px;
+      vertical-align: middle;
     }
-    .btn {
-      padding-left: 100px;
-      img {
-        height: 16px;
-        vertical-align: middle;
-      }
-    }
-    .legend-title {
-      padding-right: 10px;
-      font-size: 14px;
-    }
+  }
+  .legend-title {
+    // padding-left: 15px;
+    font-weight: bold;
+    font-size: 14px;
   }
 }
 

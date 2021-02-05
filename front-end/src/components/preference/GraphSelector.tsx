@@ -189,7 +189,7 @@ const GraphSelector = (props) => {
   }
   return (
     <div className={classes.container}>
-      <Typography>图数据集</Typography>
+      <Typography>Model</Typography>
       <FormControl className={classes.formControl}>
         <InputLabel id="graph-selector"></InputLabel>
         {isTfGraph && (

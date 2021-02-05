@@ -73,3 +73,6 @@ interface FetchTensorHeatMapDataParam {
 
 export const fetchTensorHeatmapBase64 = (params: FetchTensorHeatMapDataParam): Promise<{ data }> =>
   fireAjax('GET', '/python/api/get_tensor_heatmap', params)
+
+export const getTensorHeatmapSequential = (params: { start_step: number, end_step: number, length?: number }): Promise<{ data }> =>
+  fireAjax('GET', '/python/api/get_tensor_heatmap_sequential', params);

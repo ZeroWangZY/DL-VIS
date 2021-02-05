@@ -106,6 +106,62 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     elkNodeMap = layoutGraph.elkNodeMap;
   }
 
+  const findStackedNodes = (nodes, links, currentNode): any => {
+    // console.log('stackedSize: ', stackedSize);
+    // console.log('nodes: ', nodes);
+    // console.log('links: ', links);
+    // console.log('currentNode: ', currentNode);
+    const nodesId = nodes.map((node) => node.data.id4Style);
+    const connections = {};
+    for (const link of links) {
+      if (!connections.hasOwnProperty(link.data.originalSource)) {
+        connections[link.data.originalSource] = [];
+      }
+      if (!connections.hasOwnProperty(link.data.originalTarget)) {
+        connections[link.data.originalTarget] = [];
+      }
+      connections[link.data.originalSource].push(link.data.originalTarget);
+      connections[link.data.originalTarget].push(link.data.originalSource);
+    }
+    // console.log('connections: ', connections);
+    const nodesSet = new Set();
+    const currentNodeId4Style = currentNode.data.id4Style;
+    const deepSearch = (currentNodeId4Style) => {
+      nodesSet.add(currentNodeId4Style);
+      const targets = connections.hasOwnProperty(currentNodeId4Style) ? connections[currentNodeId4Style] : [];
+      for (const target of targets) {
+        if (!nodesSet.has(target) && nodesId.includes(target)) {
+          deepSearch(target);
+        }
+      }
+    }
+    deepSearch(currentNodeId4Style);
+    const stackedNodes = Array.from(nodesSet);
+    return stackedNodes;
+  }
+
+  const highlightSimilarStackedGraph = (nodes, links, currentNode): void => {
+    const stackedNodes = findStackedNodes(nodes, links, currentNode);
+    for (const node of stackedNodes) {
+      d3.select('.nodes')
+        .select(`#${node}`)
+        .select('g:first-child')
+        .selectAll('ellipse')
+        .style('stroke', 'green');
+    }
+  };
+
+  const unhighlightSimilarStackedGraph = (nodes, links, currentNode): void => {
+    const stackedNodes = findStackedNodes(nodes, links, currentNode);
+    for (const node of stackedNodes) {
+      d3.select('.nodes')
+        .select(`#${node}`)
+        .select('g:first-child')
+        .selectAll('ellipse')
+        .style('stroke', '#000');
+    }
+  };
+
   const showHighlightedLine = (linkedEdges): void => {
     d3.selectAll(linkedEdges)
       .transition()
@@ -348,7 +404,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       .attr("class", "textTooltip")
       .style("opacity", 0)
       .attr("fill", "none");
-  }, [])
+  }, []);
 
   return (
     <TransitionMotion
@@ -382,6 +438,20 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       .select("rect.elk-label-container")
                       .classed("hovered", true);
 
+                  // hover高亮堆叠节点的子图
+                  if (d.data.isStacked) {
+                    let visNodeMap = visGraph.visNodeMap;
+                    const stackedSize = (visNodeMap[d.data.id] as any).nodesContained.size;
+                    const nodes = styledGraph.nodeStyles.filter((node) => node.data.isStacked && (visNodeMap[node.data.id] as any).nodesContained.size === stackedSize);
+                    const nodesId = nodes.map((node) => node.data.id4Style);
+                    const links = styledGraph.linkStyles.filter((link) => {
+                      const originalSource = link.data.originalSource;
+                      const originalTarget = link.data.originalTarget;
+                      return nodesId.includes(originalSource) || nodesId.includes(originalTarget);
+                    });
+                    highlightSimilarStackedGraph(nodes, links, d);
+                  }
+
                   showHighlightedLine(linkedEdges)
                 }}
                 onMouseLeave={() => {
@@ -391,7 +461,21 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                       .select("rect.elk-label-container")
                       .classed("hovered", false);
 
-                  offHighlightedLine(linkedEdges)
+                  // hover高亮堆叠节点的子图
+                  if (d.data.isStacked) {
+                    let visNodeMap = visGraph.visNodeMap;
+                    const stackedSize = (visNodeMap[d.data.id] as any).nodesContained.size;
+                    const nodes = styledGraph.nodeStyles.filter((node) => node.data.isStacked && (visNodeMap[node.data.id] as any).nodesContained.size === stackedSize);
+                    const nodesId = nodes.map((node) => node.data.id4Style);
+                    const links = styledGraph.linkStyles.filter((link) => {
+                      const originalSource = link.data.originalSource;
+                      const originalTarget = link.data.originalTarget;
+                      return nodesId.includes(originalSource) || nodesId.includes(originalTarget);
+                    });
+                    unhighlightSimilarStackedGraph(nodes, links, d);
+                  }
+
+                  offHighlightedLine(linkedEdges);
                 }}
                 onContextMenu={(e) => handleRightClick(e)}
               >
@@ -437,15 +521,15 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                   {!showLineChart(d.data) &&
                     d.data.type !== NodeType.OPERATION && (
                       <text
-                      dominantBaseline={"baseline"}
-                      //  x={-d.style.rectWidth / 2}
+                        dominantBaseline={"baseline"}
+                        //  x={-d.style.rectWidth / 2}
                         y={-d.style.rectHeight / 2 + 20}
                         width={d.style.rectWidth}
                         height={d.style.rectHeight}
                       // style={{ fontSize: 10 }}
-                    >
-                       {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
-                    </text>
+                      >
+                        {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                      </text>
                       // <foreignObject
                       //   x={-d.style.rectWidth / 2}
                       //   y={-d.style.rectHeight / 2}

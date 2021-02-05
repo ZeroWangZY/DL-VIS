@@ -34,7 +34,7 @@ const fetchBackendData = () => {
           maxStep
         );
       })
-      console.log("每隔10秒向后端请求一次数据")
+      // console.log("每隔10秒向后端请求一次数据")
       return fetch;
     }(), 10000);
 

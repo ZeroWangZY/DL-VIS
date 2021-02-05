@@ -58,7 +58,7 @@ const NodeInfoCard: React.FC = () => {
       !processedGraph ||
       !processedGraph.nodeMap
     )
-      return;
+      return; 
 
     if (!selectedNodeId || selectedNodeId.length === 0) {
       setNodeInfoCardContent([]);

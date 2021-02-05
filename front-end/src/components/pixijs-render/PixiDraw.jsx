@@ -16,6 +16,7 @@ import {
 } from "../../store/global-configuration";
 import { GlobalStatesModificationType } from "../../store/global-states.type";
 import { StyledGraphImp, StyledGraph } from "../../common/graph-processing/stage5/styled-graph.type"
+import { goThroughPoint } from "../../common/graph-processing/stage5/produce-styled-graph"
 import { drawCircleCurve, drawRoundRect, drawElippseCurve, drawArrow } from "./draw"
 import * as PIXI from "pixi.js";
 import { TweenMax } from "gsap/all"
@@ -503,30 +504,30 @@ const PixiDraw = (props) => {
     // 绘制小圆形
     const loader = new PIXI.Loader();
     loader
-      .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
+      // .add('dashCircle', process.env.PUBLIC_URL + "/assets/dashCircle.png")
       .add('solidCircle', process.env.PUBLIC_URL + "/assets/solidCircle.png")
       .load(() => {
 
         for (let circle of littleCircleArr) {
-          if (circle.style === 1) {
-            const dashCircle = new PIXI.Sprite(
-              loader.resources["dashCircle"].texture
-            );
-            dashCircle.width = circle.size;
-            dashCircle.height = circle.size;
-            dashCircle.x = circle.x;
-            dashCircle.y = circle.y;
-            container.addChild(dashCircle);
-          } else if (circle.style === 0) {
-            const solidCircle = new PIXI.Sprite(
-              loader.resources["solidCircle"].texture
-            );
-            solidCircle.width = circle.size;
-            solidCircle.height = circle.size;
-            solidCircle.x = circle.x;
-            solidCircle.y = circle.y;
-            container.addChild(solidCircle);
-          }
+          // if (circle.style === 1) {
+          //   const dashCircle = new PIXI.Sprite(
+          //     loader.resources["dashCircle"].texture
+          //   );
+          //   dashCircle.width = circle.size;
+          //   dashCircle.height = circle.size;
+          //   dashCircle.x = circle.x;
+          //   dashCircle.y = circle.y;
+          //   container.addChild(dashCircle);
+          // } else if (circle.style === 0) {
+          const solidCircle = new PIXI.Sprite(
+            loader.resources["solidCircle"].texture
+          );
+          solidCircle.width = circle.size;
+          solidCircle.height = circle.size;
+          solidCircle.x = circle.x;
+          solidCircle.y = circle.y;
+          container.addChild(solidCircle);
+          // }
         }
 
       })
@@ -565,38 +566,38 @@ const PixiDraw = (props) => {
 
 
         let textCanvasWidth = message.width;
-        if (node.type === NodeType.LAYER) {
-          let iconSize = 13;
-          message.position.set(d.style._gNodeTransX - textCanvasWidth / 2 + iconSize, d.style._gNodeTransY - d.style._rectHeight / 2);
+        // if (node.type === NodeType.LAYER) {
+        //   let iconSize = 13;
+        //   message.position.set(d.style._gNodeTransX - textCanvasWidth / 2 + iconSize, d.style._gNodeTransY - d.style._rectHeight / 2);
 
-          const loader = new PIXI.Loader();
-          let path = process.env.PUBLIC_URL + "/assets/";
-          if (d.data.label.startsWith("conv"))
-            path += "cnn.png";
-          else if (d.data.label.startsWith("fc"))
-            path += "fc.png";
-          else if (d.data.label.startsWith("rnn"))
-            path += "rnn.png";
+        //   const loader = new PIXI.Loader();
+        //   let path = process.env.PUBLIC_URL + "/assets/";
+        //   if (d.data.label.startsWith("conv"))
+        //     path += "cnn.png";
+        //   else if (d.data.label.startsWith("fc"))
+        //     path += "fc.png";
+        //   else if (d.data.label.startsWith("rnn"))
+        //     path += "rnn.png";
 
-          loader
-            .add('icon', path)
-            .load(() => {
-              const icon = new PIXI.Sprite(loader.resources["icon"].texture);
-              icon.width = iconSize;
-              icon.height = iconSize;
-              // icon.resolution = 1;
-              adJustResolution(icon, zoomFactor);
-              icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
-              icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
+        //   loader
+        //     .add('icon', path)
+        //     .load(() => {
+        //       const icon = new PIXI.Sprite(loader.resources["icon"].texture);
+        //       icon.width = iconSize;
+        //       icon.height = iconSize;
+        //       // icon.resolution = 1;
+        //       adJustResolution(icon, zoomFactor);
+        //       icon.x = d.style._gNodeTransX - textCanvasWidth / 2 - 3;
+        //       icon.y = d.style._gNodeTransY - d.style._rectHeight / 2 + iconSize / 4;
 
-              container.addChild(message);
-              container.addChild(icon);
-            })
+        //       container.addChild(message);
+        //       container.addChild(icon);
+        //     })
 
-        } else {
-          message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
-          container.addChild(message);
-        }
+        // } else {
+        message.position.set(d.style._gNodeTransX - textCanvasWidth / 2, d.style._gNodeTransY - d.style._rectHeight / 2);
+        container.addChild(message);
+        // }
       }
     })
 
@@ -713,30 +714,34 @@ const PixiDraw = (props) => {
         line.lineStyle(lineWidth, lineColor, 1)
 
         let begin = linkData[i - 1], end = linkData[i];
-        if (i === linkData.length - 1) { // 最后一根直线
-          let lineData = d.data.lineData;
-          let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
-          if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
-          end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
 
-          let d1 = judgeDirection(begin, end);
-          [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+        if (i === linkData.length - 1) { // 最后一根直线
+          if (linkData.length > 2 && !goThroughPoint(linkData[i - 2], linkData[i], linkData[i - 1])) {
+            let lineData = d.data.lineData;
+            let temp = lineData.split(" ").slice(-2); // 有可能是L开头。
+            if (temp[0][0] === "L") temp[0] = temp[0].slice(1);
+            end = { x: parseFloat(temp[0]), y: parseFloat(temp[1]) };
+            let d1 = judgeDirection(begin, end);
+            [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+          }
         }
 
         if (i !== linkData.length - 1) { // 最后一根折线末尾不需要加圆角
           let nextEnd = linkData[i + 1]; // 下一个起始点
-          let nextBegin = linkData[i];
-          // 前一条线: begin -> end
-          // 后一条线：end - > nextEnd
-          let d1 = judgeDirection(begin, end);
-          let d2 = judgeDirection(nextBegin, nextEnd);
+          if (!goThroughPoint(begin, nextEnd, end)) {
+            let nextBegin = linkData[i];
+            // 前一条线: begin -> end
+            // 后一条线：end - > nextEnd
+            let d1 = judgeDirection(begin, end);
+            let d2 = judgeDirection(nextBegin, nextEnd);
 
-          [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
+            [begin, end] = adjustLinepos(begin, end, d1, roundR, i, linkData.length); // 根据线的起点和中点，调整
 
-          [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
+            [nextBegin, nextEnd] = adjustLinepos(nextBegin, nextEnd, d2, roundR, i + 1, linkData.length);
 
-          let corner = drawRoundCorner(line, end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
-          container.addChild(corner);
+            let corner = drawRoundCorner(line, end, nextBegin, roundR, d1 + d2, lineWidth, lineColor, 1);
+            container.addChild(corner);
+          }
         }
 
         line.moveTo(begin.x, begin.y);
