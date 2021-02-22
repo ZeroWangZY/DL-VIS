@@ -1,23 +1,8 @@
 [
   {
-    "name": "alexnets"
+    "name": "graph1"
   },
   {
-    "name": "bert_finetune"
-  },
-  {
-    "name": "bert_pretrain"
-  },
-  {
-    "name": "lenet"
-  },
-  {
-    "name": "mobilenetv2"
-  },
-  {
-    "name": "resnet"
-  },
-  {
-    "name": "lenet-err"
+    "name": "graph2"
   }
 ]

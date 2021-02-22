@@ -117,10 +117,10 @@ const GraphSelector = (props) => {
     setLoadingGraphData(true);
 
     const hashPath = location.hash.split("/");
-    let graphName = msGraphMetadatas[currentMsGraphIndex].name;
-    if (hashPath.length >= 3) { // 路径中包含graphname时，读取summary数据，禁用选择器
-      setShowSelector(false);
-      graphName = hashPath[2];
+    let graphName = "";
+    if(msGraphMetadatas[currentMsGraphIndex].name === "graph1"){//resnet
+      // 路径中包含graphname时，读取summary数据，禁用选择器
+      graphName = "resnet-202011051120";
       fetchSummaryGraph(graphName).then((RawData) => {
         let parsedGraph = RawData.data.data; // 处理
         if (conceptualGraphMode) {
@@ -138,7 +138,8 @@ const GraphSelector = (props) => {
         setLoadingGraphData(false);
         setMsRawGraph(parsedGraph);
       });
-    } else {                                                        // 路径中不包含graphname时，读取local数据，激活选择器
+    } else {// 路径中不包含graphname时，读取local数据，激活选择器
+      graphName = "bert_pretrain";
       setShowSelector(true);
       fetchLocalMsGraph(graphName).then((RawData) => {
         let parsedGraph = RawData.data.data; // 处理
