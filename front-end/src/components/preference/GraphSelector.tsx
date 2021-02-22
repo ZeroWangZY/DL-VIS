@@ -139,7 +139,10 @@ const GraphSelector = (props) => {
         setMsRawGraph(parsedGraph);
       });
     } else {// 路径中不包含graphname时，读取local数据，激活选择器
-      graphName = "bert_pretrain";
+      graphName = msGraphMetadatas[currentMsGraphIndex].name;
+      if(graphName === "graph2"){
+        graphName = "bert_pretrain";
+      }
       setShowSelector(true);
       fetchLocalMsGraph(graphName).then((RawData) => {
         let parsedGraph = RawData.data.data; // 处理
