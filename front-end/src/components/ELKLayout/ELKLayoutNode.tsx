@@ -332,7 +332,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
           ry="5"
           transform={`translate(-${rectWidth / 2}, -${rectHeight / 2})`}
           // fillOpacity={node.expand ? 0 : 1}
-          pointerEvents="visibleStroke"
+          // pointerEvents="visibleStroke"
         ></rect>
       );
     } else if (node.type === NodeType.LAYER) {
