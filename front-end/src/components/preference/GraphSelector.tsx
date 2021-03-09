@@ -118,7 +118,27 @@ const GraphSelector = (props) => {
 
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
-    if (hashPath.length >= 3) { // 路径中包含graphname时，读取summary数据，禁用选择器
+    if(graphName === "resnet"){//resnet
+      graphName = "resnet-202011051120";
+      fetchSummaryGraph(graphName).then((RawData) => {
+        let parsedGraph = RawData.data.data; // 处理
+        if (conceptualGraphMode) {
+          const msGraphOptimizer = new MsRawGraphOptimizer();
+          msGraphOptimizer.optimize(parsedGraph);
+        }
+        modifyGlobalStates(
+          GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+          graphName
+        );
+        modifyGlobalConfigurations(
+          GlobalConfigurationsModificationType.SET_DATA_MODE,
+          "realtime"
+        )
+        setLoadingGraphData(false);
+        setMsRawGraph(parsedGraph);
+      });
+    } 
+    else if (hashPath.length >= 3) { // 路径中包含graphname时，读取summary数据，禁用选择器
       setShowSelector(false);
       graphName = hashPath[2];
       fetchSummaryGraph(graphName).then((RawData) => {
