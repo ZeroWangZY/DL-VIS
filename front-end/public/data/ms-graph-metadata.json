@@ -3,9 +3,27 @@
     "name": "alexnets"
   },
   {
-    "name": "graph1"
+    "name": "bert_finetune"
   },
   {
-    "name": "graph2"
+    "name": "bert_pretrain"
+  },
+  {
+    "name": "lenet"
+  },
+  {
+    "name": "mobilenetv2"
+  },
+  {
+    "name": "resnet50"
+  },
+  {
+    "name": "resnet34"
+  },
+  {
+    "name": "inception-resnetv2"
+  },
+  {
+    "name": "lenet-err"
   }
 ]
