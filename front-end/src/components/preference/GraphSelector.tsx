@@ -117,10 +117,16 @@ const GraphSelector = (props) => {
     setLoadingGraphData(true);
 
     const hashPath = location.hash.split("/");
-    let graphName = "";
-    if(msGraphMetadatas[currentMsGraphIndex].name === "graph1"){//resnet
-      // 路径中包含graphname时，读取summary数据，禁用选择器
-      graphName = "resnet-202011051120";
+    let graphName = msGraphMetadatas[currentMsGraphIndex].name;
+    if (hashPath.length >= 3 || graphName==="resnet" || graphName==="bert_finetune") { // 路径中包含graphname时，读取summary数据，禁用选择器
+      if(hashPath.length >= 3){
+        graphName = hashPath[2];
+        setShowSelector(false);
+      } else if(graphName==="resnet"){
+        graphName = "resnet-202011051120";
+      } else {
+        graphName = "bert";
+      }
       fetchSummaryGraph(graphName).then((RawData) => {
         let parsedGraph = RawData.data.data; // 处理
         if (conceptualGraphMode) {
