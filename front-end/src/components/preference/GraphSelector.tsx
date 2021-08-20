@@ -115,7 +115,6 @@ const GraphSelector = (props) => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
 
     setLoadingGraphData(true);
-
     const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
     if (hashPath.length >= 3 || ["resnet50","resnet34", "bert_finetune", "inception-resnetv2"].indexOf(graphName)>-1) { // 路径中包含graphname时，读取summary数据，禁用选择器
