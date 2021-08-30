@@ -123,9 +123,9 @@ const GraphSelector = (props) => {
       case "task1-2":
         graphName = "inceptionv3";
         break;
-      case "task1-3":
-        graphName = "bert";
-        break;
+      // case "task1-3":
+      //   graphName = "bert";
+      //   break;
       case "task2":
         graphName = "resnet34";
         break;

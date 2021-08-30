@@ -213,8 +213,8 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
     // .replace(/resnet/gi, "net")//没有出现过resnet这个关键词
     .replace(/inceptionV3/gi, "net")
     .replace(/inception/gi, "net")
-    .replace(/bert/gi, "net")
-    .replace(/query_layer/gi, "layer")
+    // .replace(/bert/gi, "net")
+    // .replace(/query_layer/gi, "layer")
 
     return (
       <g className="LineChartInNode">
@@ -421,11 +421,11 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         <g className="nodes">
           {interpolatedStyles.map((d) => {
             let label = d.data.label
-              .replace(/resnet/gi, "net")
+              // .replace(/resnet/gi, "net")
               .replace(/inceptionV3/gi, "net")
               .replace(/inception/gi, "net")
-              .replace(/bert/gi, "net")
-              .replace(/query_layer/gi, "net")
+              // .replace(/bert/gi, "net")
+              // .replace(/query_layer/gi, "net")
             if (d.data.class === "dummy") {
               return;
             }
