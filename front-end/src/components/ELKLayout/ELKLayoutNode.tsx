@@ -147,7 +147,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         .select(`#${node}`)
         .select('g:first-child')
         .selectAll('ellipse')
-        .style('stroke', 'green');
+        .style('stroke', '#3F4AFF');
     }
   };
 
