@@ -494,10 +494,23 @@ function stackFrequentSubgraph(visGraph: VisGraph) {
   updateHiddenEdgeMap(visGraph);
 }
 
+function removeUselessNode(graph: VisGraph) {
+  const { visEdges, visNodes } = graph;
+  const s = new Set();
+  for (const edge of visEdges) {
+    s.add(edge.source);
+    s.add(edge.target);
+  }
+  console.log(visNodes)
+  console.log(visEdges)
+  graph.visNodes = visNodes.filter(val => graph.visNodeMap[val].type !== NodeType.OPERATION || s.has(val));
+  console.log(graph.visNodes)
+}
+
 export default class VisGraphOptimizer {
   visGraphOptimizers = [];
   constructor() {
-    this.visGraphOptimizers = [stackFrequentSubgraph];
+    this.visGraphOptimizers = [stackFrequentSubgraph, removeUselessNode];
   }
   optimize(vGraph: VisGraph) {
     // console.log("#nodes: "+vGraph.visNodes.length)
@@ -505,8 +518,8 @@ export default class VisGraphOptimizer {
     this.visGraphOptimizers.forEach((optimizer) => {
       optimizer(vGraph);
     });
-    console.log("#nodes: "+vGraph.visNodes.length)
-    console.log("#links: "+vGraph.visEdges.length)
+    console.log("#nodes: " + vGraph.visNodes.length)
+    console.log("#links: " + vGraph.visEdges.length)
     return vGraph;
   }
 }
