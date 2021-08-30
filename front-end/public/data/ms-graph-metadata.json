@@ -1,29 +1,20 @@
 [
   {
-    "name": "alexnets"
+    "name": "task1-1"
   },
   {
-    "name": "bert_finetune"
+    "name": "task1-2"
   },
   {
-    "name": "bert_pretrain"
+    "name": "task1-3"
   },
   {
-    "name": "lenet"
+    "name": "task2"
   },
   {
-    "name": "mobilenetv2"
+    "name": "task3"
   },
   {
-    "name": "resnet50"
-  },
-  {
-    "name": "resnet34"
-  },
-  {
-    "name": "inception-resnetv2"
-  },
-  {
-    "name": "lenet-err"
+    "name": "task4"
   }
 ]

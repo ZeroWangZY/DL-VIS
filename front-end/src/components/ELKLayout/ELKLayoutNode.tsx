@@ -209,6 +209,13 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
   const getLineChartAndText = (node, rectWidth, rectHeight) => {
     // 使用外部 LAYERNODESIZEINDIAGNOSISMODE 的长宽
     // 注意： 目前折线图处于中间3/4之类。所以上方和下方分别剩余1/8的空余
+    let label = node.label
+    // .replace(/resnet/gi, "net")//没有出现过resnet这个关键词
+    .replace(/inceptionV3/gi, "net")
+    .replace(/inception/gi, "net")
+    .replace(/bert/gi, "net")
+    .replace(/query_layer/gi, "layer")
+
     return (
       <g className="LineChartInNode">
         <foreignObject
@@ -219,14 +226,14 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
         >
           <div
             onMouseOver={(e) => {
-              toggleTooltips(node.label, node.expand, e.pageX, e.pageY, true);
+              toggleTooltips(label, node.expand, e.pageX, e.pageY, true);
             }}
             onMouseOut={(e) => {
-              toggleTooltips(node.label, node.expand, e.pageX, e.pageY, false);
+              toggleTooltips(label, node.expand, e.pageX, e.pageY, false);
             }}
           >
             <text>
-              {node.label.slice(0, maxLabelLength) + (node.label.length > maxLabelLength ? "..." : "")}
+              {label.slice(0, maxLabelLength) + (label.length > maxLabelLength ? "..." : "")}
             </text>
           </div>
         </foreignObject>
@@ -413,6 +420,12 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       {(interpolatedStyles) => (
         <g className="nodes">
           {interpolatedStyles.map((d) => {
+            let label = d.data.label
+              .replace(/resnet/gi, "net")
+              .replace(/inceptionV3/gi, "net")
+              .replace(/inception/gi, "net")
+              .replace(/bert/gi, "net")
+              .replace(/query_layer/gi, "net")
             if (d.data.class === "dummy") {
               return;
             }
@@ -503,16 +516,16 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                     >
                       <div
                         onMouseOver={(e) => {
-                          toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, true);
+                          toggleTooltips(label, d.data.expand, e.pageX, e.pageY, true);
                         }}
                         onMouseOut={(e) => {
-                          toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, false);
+                          toggleTooltips(label, d.data.expand, e.pageX, e.pageY, false);
                         }}
                       >
                         <text
                           style={{ fontSize: 10 }}
                         >
-                          {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                          {label.slice(0, maxLabelLength) + (label.length > maxLabelLength ? "..." : "")}
                         </text>
                       </div>
                     </foreignObject>
@@ -528,7 +541,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         height={d.style.rectHeight}
                       // style={{ fontSize: 10 }}
                       >
-                        {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                        {label.slice(0, maxLabelLength) + (label.length > maxLabelLength ? "..." : "")}
                       </text>
                       // <foreignObject
                       //   x={-d.style.rectWidth / 2}

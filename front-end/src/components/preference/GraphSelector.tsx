@@ -115,50 +115,46 @@ const GraphSelector = (props) => {
     if (!isMsGraph || msGraphMetadatas.length < 1) return; // MSGraph
 
     setLoadingGraphData(true);
-    const hashPath = location.hash.split("/");
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
-    if (hashPath.length >= 3 || ["resnet50","resnet34", "bert_finetune", "inception-resnetv2"].indexOf(graphName)>-1) { // 路径中包含graphname时，读取summary数据，禁用选择器
-      if(hashPath.length >= 3){
-        graphName = hashPath[2];
-        setShowSelector(false);
-      } else if(graphName==="resnet50"){
-        graphName = "resnet-202011051120";
-      } else if(graphName==="bert_finetune"){
+    switch(graphName){
+      case "task1-1":
+        graphName = "resnet-202011051120";//resnet50
+        break;
+      case "task1-2":
+        graphName = "inceptionv3";
+        break;
+      case "task1-3":
         graphName = "bert";
-      }
-      fetchSummaryGraph(graphName).then((RawData) => {
-        let parsedGraph = RawData.data.data; // 处理
-        if (conceptualGraphMode) {
-          const msGraphOptimizer = new MsRawGraphOptimizer();
-          msGraphOptimizer.optimize(parsedGraph);
-        }
-        modifyGlobalStates(
-          GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
-          graphName
-        );
-        modifyGlobalConfigurations(
-          GlobalConfigurationsModificationType.SET_DATA_MODE,
-          "realtime"
-        )
-        setLoadingGraphData(false);
-        setMsRawGraph(parsedGraph);
-      });
-    } else { // 路径中不包含graphname时，读取local数据，激活选择器
-      setShowSelector(true);
-      fetchLocalMsGraph(graphName).then((RawData) => {
-        let parsedGraph = RawData.data.data; // 处理
-        if (conceptualGraphMode) {
-          const msGraphOptimizer = new MsRawGraphOptimizer();
-          msGraphOptimizer.optimize(parsedGraph);
-        }
-        modifyGlobalStates(
-          GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
-          graphName
-        );
-        setMsRawGraph(parsedGraph);
-        setLoadingGraphData(false);
-      });
+        break;
+      case "task2":
+        graphName = "resnet34";
+        break;
+      case "task3":
+        graphName = "resnet101-finetune3";
+        break;
+      case "task4":
+        graphName = "lenet-manual-mixed-precision";
+        break;
+      default:
+        break;
     }
+    fetchSummaryGraph(graphName).then((RawData) => {
+      let parsedGraph = RawData.data.data; // 处理
+      if (conceptualGraphMode) {
+        const msGraphOptimizer = new MsRawGraphOptimizer();
+        msGraphOptimizer.optimize(parsedGraph);
+      }
+      modifyGlobalStates(
+        GlobalStatesModificationType.SET_CURRENT_MS_GRAPH_NAME,
+        graphName
+      );
+      modifyGlobalConfigurations(
+        GlobalConfigurationsModificationType.SET_DATA_MODE,
+        "realtime"
+      )
+      setLoadingGraphData(false);
+      setMsRawGraph(parsedGraph);
+    });
 
   }, [
     currentMsGraphIndex,
