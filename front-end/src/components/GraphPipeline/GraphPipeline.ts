@@ -41,7 +41,7 @@ export default function useGraphPipeline() {
   useEffect(() => {
     if (isMsGraph && msRawGraph) {
       const hGraph = buildMsGraph(msRawGraph);
-      console.log(hGraph)
+      // console.log(hGraph)
       if (conceptualGraphMode) {
         const processedGraphOptimizer = new ProcessedGraphOptimizer();
         processedGraphOptimizer.optimize(hGraph);

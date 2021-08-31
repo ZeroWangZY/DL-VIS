@@ -501,8 +501,8 @@ function removeUselessNode(graph: VisGraph) {
     s.add(edge.source);
     s.add(edge.target);
   }
-  console.log(visNodes)
-  console.log(visEdges)
+  // console.log(visNodes)
+  // console.log(visEdges)
   graph.visNodes = visNodes.filter(val => graph.visNodeMap[val].type !== NodeType.OPERATION || s.has(val));
   console.log(graph.visNodes)
 }
@@ -518,8 +518,8 @@ export default class VisGraphOptimizer {
     this.visGraphOptimizers.forEach((optimizer) => {
       optimizer(vGraph);
     });
-    console.log("#nodes: " + vGraph.visNodes.length)
-    console.log("#links: " + vGraph.visEdges.length)
+    // console.log("#nodes: " + vGraph.visNodes.length)
+    // console.log("#links: " + vGraph.visEdges.length)
     return vGraph;
   }
 }
