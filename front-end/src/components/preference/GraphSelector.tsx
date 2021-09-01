@@ -117,22 +117,25 @@ const GraphSelector = (props) => {
     setLoadingGraphData(true);
     let graphName = msGraphMetadatas[currentMsGraphIndex].name;
     switch(graphName){
-      case "task1-1":
+      case "——示例——":
+        graphName = "alexnets";
+        break;
+      case "判断网络家族-1":
         graphName = "resnet-202011051120";//resnet50
         break;
-      case "task1-2":
+      case "判断网络家族-2":
         graphName = "inceptionv3";
         break;
       // case "task1-3":
       //   graphName = "bert";
       //   break;
-      case "task2":
+      case "估计网络深度":
         graphName = "resnet34";
         break;
-      case "task3":
+      case "模型代码纠错":
         graphName = "resnet101-finetune3";
         break;
-      case "task4":
+      case "模型算子定位":
         graphName = "lenet-manual-mixed-precision";
         break;
       default:
