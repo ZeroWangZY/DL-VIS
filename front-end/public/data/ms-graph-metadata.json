@@ -25,5 +25,8 @@
   },
   {
     "name": "lenet-err"
+  },
+  {
+    "name": "ssd300"
   }
 ]
