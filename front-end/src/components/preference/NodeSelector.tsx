@@ -285,6 +285,8 @@ export default function NodeSelector() {
     return Array.from(childNodes).map((nodeId: NodeId, index) => {
       const visNode = visNodeMap[nodeId];
       // if (!visNode) return (<div />);
+      let displayedName = visNode.displayedName
+      .replace(/Default/g, "Main")
       return (
         <TreeItem
           key={visNode.id}
@@ -298,9 +300,9 @@ export default function NodeSelector() {
                 onClick={(e) => highlight(e, visNode.id)}
                 onDoubleClick={(e) => toggleExpanded(visNode.id)}
               >
-                {visNode.displayedName.length > 25
-                  ? visNode.displayedName.slice(0, 25) + "..."
-                  : visNode.displayedName}
+                {displayedName.length > 25
+                  ? displayedName.slice(0, 25) + "..."
+                  : displayedName}
               </span>
               {!(visNode instanceof StackedOpNodeImp) &&
                 (
