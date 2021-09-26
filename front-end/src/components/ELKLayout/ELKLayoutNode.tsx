@@ -415,6 +415,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
       {(interpolatedStyles) => (
         <g className="nodes">
           {interpolatedStyles.map((d) => {
+            let label = d.data.label.replace(/Default/g,"Main")
             if (d.data.class === "dummy") {
               return;
             }
@@ -505,16 +506,16 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                     >
                       <div
                         onMouseOver={(e) => {
-                          toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, true);
+                          toggleTooltips(label, d.data.expand, e.pageX, e.pageY, true);
                         }}
                         onMouseOut={(e) => {
-                          toggleTooltips(d.data.label, d.data.expand, e.pageX, e.pageY, false);
+                          toggleTooltips(label, d.data.expand, e.pageX, e.pageY, false);
                         }}
                       >
                         <text
                           style={{ fontSize: 10 }}
                         >
-                          {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                          {label.slice(0, maxLabelLength) + (label.length > maxLabelLength ? "..." : "")}
                         </text>
                       </div>
                     </foreignObject>
@@ -530,7 +531,7 @@ const ELKLayoutNode: React.FC<Props> = (props: Props) => {
                         height={d.style.rectHeight}
                       // style={{ fontSize: 10 }}
                       >
-                        {d.data.label.slice(0, maxLabelLength) + (d.data.label.length > maxLabelLength ? "..." : "")}
+                        {label.slice(0, maxLabelLength) + (label.length > maxLabelLength ? "..." : "")}
                       </text>
                       // <foreignObject
                       //   x={-d.style.rectWidth / 2}
